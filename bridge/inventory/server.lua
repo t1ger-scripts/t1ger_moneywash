@@ -324,8 +324,8 @@ function _API.Stash.AddItem(storageId, item, amount)
 end
 
 -- Server event to open stash if no client exports/triggerserver events
-RegisterServerEvent("t1ger_mechanic:server:openStash")
-AddEventHandler("t1ger_mechanic:server:openStash", function(id, label, slots, weight, owner)
+RegisterServerEvent("t1ger_moneywash:server:openStash")
+AddEventHandler("t1ger_moneywash:server:openStash", function(id, label, slots, weight, owner)
     local src = source
     if _Inventory == "qb-inventory" then
         local data = { label = label, maxweight = weight, slots = slots }

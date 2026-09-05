@@ -69,11 +69,11 @@ function _API.ShowNotification(text, type, data)
 end
 
 --- Event handler for displaying notifications from the server.
---- Listens for the `t1ger_mechanic:client:notification` event and calls `_API.ShowNotification`.
+--- Listens for the `t1ger_moneywash:client:notification` event and calls `_API.ShowNotification`.
 --- @param text string The notification message.
 --- @param type string The type of notification (e.g., "inform", "success", "error").
 --- @param data table|nil Optional parameters for customizing the notification.
-RegisterNetEvent('t1ger_mechanic:client:notification', function(text, type, data)
+RegisterNetEvent('t1ger_moneywash:client:notification', function(text, type, data)
     _API.ShowNotification(text, type, data)
 end)
 

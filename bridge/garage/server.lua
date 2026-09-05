@@ -257,7 +257,7 @@ end
 -- This allows other scripts to request vehicle data asynchronously.
 ---@param source number The player's ID/source.
 ---@return table|nil GetOwnedVehicles The player's owned vehicles, structured as a table.
-lib.callback.register("t1ger_mechanic:server:getOwnedVehicles", function(source)
+lib.callback.register("t1ger_moneywash:server:getOwnedVehicles", function(source)
     return _API.GetOwnedVehicles(source)
 end)
 
@@ -265,7 +265,7 @@ end)
 ---@param source number The player's ID/source.
 ---@param plate string The vehicle's plate number to check for
 ---@return boolean DoesVehiclePlateExist whether the plate exists or not 
-lib.callback.register("t1ger_mechanic:server:doesVehiclePlateExist", function(source, plate)
+lib.callback.register("t1ger_moneywash:server:doesVehiclePlateExist", function(source, plate)
     return _API.DoesVehiclePlateExist(plate)
 end)
 
@@ -273,15 +273,15 @@ end)
 ---@param source number The player's ID/source.
 ---@param plate string The vehicle's plate number to check for
 ---@return boolean DoesVehiclePlateExist whether the plate exists or not 
-lib.callback.register("t1ger_mechanic:server:spawnVehicle", function(source, model, coords, heading, warp)
+lib.callback.register("t1ger_moneywash:server:spawnVehicle", function(source, model, coords, heading, warp)
     local src = source
     local netId = qbx.spawnVehicle({ spawnSource = vector4(coords.x, coords.y, coords.z, heading), model = model, warp = warp})
     return netId
 end)
 
 -- Server event to set vehicle impounded
-RegisterServerEvent("t1ger_mechanic:server:impoundVehicle")
-AddEventHandler("t1ger_mechanic:server:impoundVehicle", function(plate, props)
+RegisterServerEvent("t1ger_moneywash:server:impoundVehicle")
+AddEventHandler("t1ger_moneywash:server:impoundVehicle", function(plate, props)
     _API.SetVehicleImpounded(plate, props)
 end)
 

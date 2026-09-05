@@ -51,7 +51,7 @@ Bridge = {
     -- "qbx_vehiclekeys"
     -- "qb-vehiclekeys"
 
-    UseFrameworkVehicleProps = true, -- "uses my built-in improved vehicle properties, else use framework's vehicle properties"
+    UseFrameworkVehicleProps = false, -- "use framework's vehicle properties or use my built-in improved vehicle properties"
     TrimPlates = true, -- trimplates is default in ESX/QBCore/Qbox inside vehicle props. 
 
     -- Notifications System
@@ -83,7 +83,7 @@ Bridge.CompatibleTargets = {
 -- List of pre-supported job account systems for given frameworks. Add your own for your framework below.
 Bridge.CompatibleJobAccounts = {
     esx = {"esx_addonaccount", "okokBanking", "wasabi_banking", "crm-banking", "snipe-banking", "RxBanking"},
-    qbox = {"Renewed-Banking", "tgg-banking", "fd_banking", "crm-banking", "RxBanking", "okokBanking"},
+    qbox = {"Renewed-Banking", "tgg-banking", "fd_banking", "crm-banking", "RxBanking"},
     qbcore = {"qb-banking", "qb-management", "okokBanking", "wasabi_banking", "fd_banking", "crm-banking", "snipe-banking", "RxBanking"}
 }
 

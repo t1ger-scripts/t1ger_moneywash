@@ -100,7 +100,7 @@ function _API.Stash.Open(id, label, slots, weight, owner)
     if _Inventory == "ox_inventory" then
         exports[_Inventory]:openInventory("stash", {id = id})
     elseif _Inventory == "qb-inventory" then
-        TriggerServerEvent("t1ger_mechanic:server:openStash", id, label, slots, weight, owner)
+        TriggerServerEvent("t1ger_moneywash:server:openStash", id, label, slots, weight, owner)
         
         -- if using old qb-inventory, then comment out the TriggerServerEvent and uncomment the below events:
 

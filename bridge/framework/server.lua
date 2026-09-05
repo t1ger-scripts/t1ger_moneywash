@@ -139,7 +139,7 @@ end
 
 --- Set player's job and grade.
 --- @param src number Player ID
---- @param jobName string Job name (e.g., 'mechanic')
+--- @param jobName string Job name (e.g., 'tuner')
 --- @param grade number Job grade level
 function _API.Player.SetJob(src, jobName, grade)
     local player = _API.Player.GetFromId(src)
@@ -158,7 +158,7 @@ end
 
 --- Sets an offline player's job and grade by identifier 
 --- @param identifier string The player identifier
---- @param jobName string Job name (e.g., 'mechanic')
+--- @param jobName string Job name (e.g., 'tuner')
 --- @param grade integer The job grade
 function _API.Player.SetJobOffline(identifier, jobName, grade)
     if type(identifier) ~= "string" or not identifier:match("%S") then return end
@@ -199,7 +199,7 @@ end
 
 --- Removes a player from a job
 --- @param src number Player ID
---- @param jobName string Job name (e.g., 'mechanic')
+--- @param jobName string Job name (e.g., 'tuner')
 function _API.Player.RemoveFromJob(src, jobName)
     local player = _API.Player.GetFromId(src)
     if not player then return end
@@ -215,7 +215,7 @@ end
 
 --- Sets an offline player's job and grade by identifier 
 --- @param identifier string The player identifier
---- @param jobName string Job name (e.g., 'mechanic')
+--- @param jobName string Job name (e.g., 'tuner')
 function _API.Player.RemoveFromJobOffline(identifier, jobName)
     if type(identifier) ~= "string" or not identifier:match("%S") then return end
 
@@ -732,7 +732,7 @@ end
 -- ## CALLBACKS ## --
 
 --- Checks to see if player is admin
-lib.callback.register("t1ger_mechanic:server:isAdmin", function(source)
+lib.callback.register("t1ger_moneywash:server:isAdmin", function(source)
     local src = source
     if _API.Player.IsAdmin(src) then 
         return true 

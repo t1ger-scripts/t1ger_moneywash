@@ -74,7 +74,7 @@ function Player:GetPlayerData()
         Wait(10)
     end
     self.data = _API.GetPlayerData()
-    self.isAdmin = lib.callback.await("t1ger_mechanic:server:isAdmin", false)
+    self.isAdmin = lib.callback.await("t1ger_moneywash:server:isAdmin", false)
     -- Update player properties
     self:UpdatePlayerData(self.data)
 end
@@ -162,7 +162,7 @@ local function OnPlayerLoaded()
     _API.Player:GetPlayerData() -- Fetch updated player data
     if _API.Player.data and next(_API.Player.data) then
         PlayerLoaded = true
-        TriggerEvent("t1ger_mechanic:client:playerLoaded")
+        TriggerEvent("t1ger_moneywash:client:playerLoaded")
     else
         error("[OnPlayerLoaded] Player data failed to load!")
     end
@@ -183,7 +183,7 @@ local function OnJobUpdate(job, lastJob)
     Wait(1000)
 
     -- Trigger job update event
-    TriggerEvent('t1ger_mechanic:client:onJobUpdate', _API.Player:GetJob())
+    TriggerEvent('t1ger_moneywash:client:onJobUpdate', _API.Player:GetJob())
 end
 
 --- Function called when a framework updates the player’s data
@@ -206,7 +206,7 @@ local function OnResourceStart(resourceName)
     _API.Player:GetPlayerData()
     if _API.Player.data and next(_API.Player.data) then
         PlayerLoaded = true
-        TriggerEvent("t1ger_mechanic:client:playerLoaded")
+        TriggerEvent("t1ger_moneywash:client:playerLoaded")
     else
         error("[OnResourceStart] Player data failed to load!")
     end

@@ -71,7 +71,7 @@ function _API.SpawnVehicle(model, vehicleCoords, heading, warp, cb, networked)
     if Framework == "esx" then
         _FW[Framework].Game.SpawnVehicle(model, vehicleCoords, heading, cb, networked)
     elseif Framework == "qbox" then
-        local netId = lib.callback.await("t1ger_mechanic:server:spawnVehicle", false, model, vehicleCoords, heading, warp)
+        local netId = lib.callback.await("t1ger_moneywash:server:spawnVehicle", false, model, vehicleCoords, heading, warp)
         if not netId then cb(0) end
 
         local vehicle = lib.waitFor(function()
@@ -140,7 +140,7 @@ end
 -- Public export — sets props via statebag so it replicates to all clients
 local function SetVehicleProperties(vehicle, props)
     local ent = Entity(vehicle).state
-    ent:set("t1ger_mechanic:setVehicleProps", props, true)
+    ent:set("t1ger_moneywash:setVehicleProps", props, true)
 end
 exports("SetVehicleProperties", SetVehicleProperties)
 
@@ -430,7 +430,7 @@ function _API.ImpoundVehicle(vehicle)
     local props = _API.GetVehicleProperties(vehicle)
 
     -- if u have a custom client export/event, then use that and comment out this trigger server event
-    TriggerServerEvent("t1ger_mechanic:server:impoundVehicle", props.plate, props)
+    TriggerServerEvent("t1ger_moneywash:server:impoundVehicle", props.plate, props)
 
     -- delete the vehicle? Comment out if your own export/event deletes a vehicle
     _API.DeleteVehicle(vehicle)
@@ -774,7 +774,7 @@ local function ApplyVehicleProperties(vehicle, props)
 end
 
 --- State bag change handler — applies props on whichever client owns the vehicle
-AddStateBagChangeHandler("t1ger_mechanic:setVehicleProps", nil, function(bagName, key, value, _unused, replicated)
+AddStateBagChangeHandler("t1ger_moneywash:setVehicleProps", nil, function(bagName, key, value, _unused, replicated)
     Wait(0)
 
     if replicated then return end
