@@ -1,0 +1,17 @@
+{
+    "target": {
+        "accountant_npc": "Talk"
+    },
+    "menu_title": {
+        "accountant_main": "???",
+        "reputation": "Reputation"
+    },
+    "menu_description": {
+        "reputation": "%s (Current Rep Points: %s)"
+    },
+    "menu_metadata": {
+        "points": "Points",
+        "level": "Level",
+        "progress": "Progress"
+    }
+}

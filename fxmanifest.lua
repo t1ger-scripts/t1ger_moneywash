@@ -25,21 +25,23 @@ client_scripts {
     'bridge/framework/client.lua', -- Framework
     'bridge/target/client.lua', -- Target
     'bridge/inventory/client.lua', -- Inventory
-    'bridge/garage/client.lua', -- Garage
     'bridge/notification/client.lua', -- Notification
 
+	'client/functions.lua', -- Functions
+	'client/reputation.lua', -- Reputation
+	'client/menu.lua', -- Menu
 	'client/main.lua', -- Main
 }
 
 server_scripts {
-	'@mysql-async/lib/MySQL.lua', -- or '@oxmysql/lib/MySQL.lua' if using oxmysql
-	
+	'@oxmysql/lib/MySQL.lua', -- oxmysql
+
     'bridge/framework/server.lua', -- Framework
     'bridge/inventory/server.lua', -- Inventory
     'bridge/jobaccount/server.lua', -- Job Account / Society Account
-    'bridge/garage/server.lua', -- Garage
     'bridge/notification/server.lua', -- Notification
-    
+
+	'server/reputation.lua', -- Reputation
 	'server/main.lua', -- Main
 }
 
