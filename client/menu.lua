@@ -24,7 +24,18 @@ function OpenAccountantMenu()
         }
     end
 
-    -- TODO: Street Contracts option
+    -- runner exchange option
+    if Config.RunnerExchange and Config.RunnerExchange.Enable then
+        menuOptions[#menuOptions+1] = {
+            title = locale("menu_title.runner_exchange"),
+            description = locale("menu_description.runner_exchange"),
+            icon = Config.RunnerExchange.MenuIcon,
+            onSelect = function()
+                OpenRunnerExchangeMenu()
+            end
+        }
+    end
+
     -- TODO: Business Access option
     -- TODO: Books Cleaner Service option
     -- TODO: Transfer Business Ownership option

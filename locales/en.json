@@ -1,17 +1,46 @@
 {
     "target": {
-        "accountant_npc": "Talk"
+        "accountant_npc": "Talk",
+        "runner_handoff": "Hand Off Cash"
+    },
+    "blip": {
+        "runner_exchange": "Runner Exchange"
     },
     "menu_title": {
         "accountant_main": "???",
-        "reputation": "Reputation"
+        "reputation": "Reputation",
+        "runner_exchange": "Runner Exchange"
     },
     "menu_description": {
-        "reputation": "%s (Current Rep Points: %s)"
+        "reputation": "%s (Current Rep Points: %s)",
+        "runner_exchange": "Trade dirty cash for a quick, discounted payout to your bank"
     },
     "menu_metadata": {
         "points": "Points",
         "level": "Level",
         "progress": "Progress"
+    },
+    "input": {
+        "runnerexchange_amount": "Amount to Exchange",
+        "runnerexchange_amount_desc": "Between %s%s and %s%s"
+    },
+    "progress": {
+        "runnerexchange_handoff": "Handing off cash..."
+    },
+    "textui": {
+        "runnerexchange_timer": "Reach the runner - %s seconds remaining (/cancelexchange to cancel)"
+    },
+    "notification": {
+        "runnerexchange_cooldown": "You need to wait %s more seconds before requesting another exchange.",
+        "runnerexchange_not_enough_police": "Not enough heat on the streets right now.",
+        "runnerexchange_invalid_amount": "Amount must be between %s%s and %s%s.",
+        "runnerexchange_insufficient_cash": "You don't have enough dirty cash on you.",
+        "runnerexchange_already_active": "You already have an exchange in progress.",
+        "runnerexchange_failed": "Something went wrong with the exchange.",
+        "runnerexchange_too_far": "You're too far from the runner.",
+        "runnerexchange_expired": "The runner got tired of waiting and left.",
+        "runnerexchange_hustle": "It's a setup! The runner is armed!",
+        "runnerexchange_success": "Exchanged for %s%s, cleaned and wired to your bank.",
+        "runnerexchange_cancelled": "Exchange cancelled. Your reputation took a hit for backing out."
     }
 }

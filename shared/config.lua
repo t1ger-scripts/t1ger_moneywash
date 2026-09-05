@@ -4,6 +4,23 @@ Config.Debug = true
 
 Config.Currency = "$" -- Currency used for pricing
 
+--- Defines how "dirty" (unlaundered) money is represented on your server.
+--- Mirrors the same pattern used in t1ger_atmrobbery's Config.RewardDefaults.cash,
+--- so servers using an account-based dirty money (e.g. 'black_money') or an item
+--- (stacked or metadata-based, e.g. 'markedbills') both work without touching any logic.
+Config.DirtyMoney = {
+    useItem = true, -- set to false to use an account-based balance instead of an item
+    account = "black_money", -- account type used when useItem = false (e.g. 'black_money', 'crypto')
+
+    item = {
+        name = "markedbills", -- name of your dirty cash item ('markedbills' is default in qbcore)
+        metadata = false, -- set to true if your item requires metadata when given (e.g. qbcore markedbills)
+        metadataTemplate = function(amount) -- customize what metadata looks like when dirty money is added
+            return {worth = amount}
+        end,
+    }
+}
+
 -- Define your police jobs in here. Players with these jobs cannot interact with the Accountant NPC at all.
 Config.PoliceJobs = {"police", "sheriff"}
 
@@ -51,4 +68,51 @@ Config.Reputation = {
         { threshold = 80, color = "#22c55e" },  -- Bright Green
         { threshold = 100, color = "#16a34a" }, -- Deep Green
     }
+}
+
+--- Runner Exchange: a fast, on-demand cash-for-clean-money exchange offered by the Accountant.
+--- No ownership, no queue - just an instant trade of speed for a worse rate than any owned business.
+Config.RunnerExchange = {
+    Enable = true,
+    MenuIcon = "fa-bolt", -- icon in accountant menu
+
+    AmountLimits = {min = 500, max = 5000}, -- base min/max dirty cash per exchange
+
+    TrustLimits = { -- reputation-gated increases to the max amount allowed per exchange
+        [0] = 5000,
+        [1000] = 7500,
+        [2750] = 10000,
+        [5500] = 15000,
+        [10000] = 25000,
+    },
+
+    Commission = 30, -- flat % cut taken by the runner, regardless of reputation
+
+    RequiredPolice = {enable = true, minimum = 1}, -- minimum on-duty police required to use this option
+
+    Cooldown = {enable = true, duration = 4}, -- minutes, applies after ANY outcome (success/hustle/expire/cancel)
+
+    Timer = {enable = true, duration = 180}, -- seconds to reach the runner before the exchange expires
+
+    CancelPenalty = {enable = true, reputationLoss = 10}, -- reputation points lost if player manually cancels
+
+    ReputationReward = 5, -- points earned per successful exchange
+
+    RunnerLocations = require("shared/runnerlocations"), -- pool of possible runner spawn points
+
+    RunnerModels = { -- pool of ped models, randomized per spawn
+        "g_m_y_ballaeast_01",
+        "g_m_y_lost_01",
+        "a_m_y_hipster_01",
+    },
+
+    Hustle = {
+        chance = 15, -- % chance runner tries to rob instead of paying
+        weapons = { -- random weapon picked from this table when a hustle triggers
+            "WEAPON_BAT",
+            "WEAPON_KNIFE",
+            "WEAPON_PISTOL",
+            "WEAPON_SWITCHBLADE",
+        },
+    },
 }
