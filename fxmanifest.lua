@@ -29,8 +29,11 @@ client_scripts {
 
 	'client/functions.lua', -- Functions
 	'client/reputation.lua', -- Reputation
+	'client/runnerexchange.lua', -- Runner Exchange
 	'client/menu.lua', -- Menu
 	'client/main.lua', -- Main
+
+	'devtools/client.lua', -- DEV TOOL - remove before shipping to a live server
 }
 
 server_scripts {
@@ -41,8 +44,12 @@ server_scripts {
     'bridge/jobaccount/server.lua', -- Job Account / Society Account
     'bridge/notification/server.lua', -- Notification
 
+	'server/functions.lua', -- Functions
 	'server/reputation.lua', -- Reputation
+	'server/runnerexchange.lua', -- Runner Exchange
 	'server/main.lua', -- Main
+
+	'devtools/server.lua', -- DEV TOOL - remove before shipping to a live server
 }
 
 files {
