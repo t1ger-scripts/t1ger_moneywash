@@ -74,19 +74,54 @@ Config.Reputation = {
 --- unlocks the tier, no sequential-ownership requirement. `weight` feeds into the Portfolio
 --- system below (total owned weight can't exceed Config.Business.PortfolioLimit).
 --- `type` must match a key in shared/business_locations.lua.
+---
+--- `npc` - ped model for the Handler NPC that spawns once a location is purchased.
+--- `price` - base purchase price (a location's own `price` field in business_locations.lua
+---   overrides this). First-pass placeholder values - tune during balancing.
+--- `requiresPaperwork` - whether this tier needs the "file sales records" mechanic to
+---   suppress suspicion gain (bigger/more complex operations need more active management).
 Config.Business = {
     PortfolioLimit = 6, -- total weight of businesses a player can own at once
 
+    HandlerScenario = "WORLD_HUMAN_STAND_IMPATIENT", -- idle animation shared by every Handler NPC
+
     Tiers = {
-        [1] = {type = "coffee_shop", weight = 1, requiredPoints = 0},
-        [2] = {type = "gas_station", weight = 1, requiredPoints = 500},
-        [3] = {type = "restaurant", weight = 2, requiredPoints = 1500},
-        [4] = {type = "laundromat", weight = 2, requiredPoints = 2750},
-        [5] = {type = "bar", weight = 3, requiredPoints = 4000},
-        [6] = {type = "nightclub", weight = 3, requiredPoints = 5500},
-        [7] = {type = "stripclub", weight = 3, requiredPoints = 7500},
-        [8] = {type = "carwash", weight = 4, requiredPoints = 10000},
-        [9] = {type = "casino", weight = 4, requiredPoints = 15000},
+        [1] = {
+            type = "coffee_shop", label = "Coffee Shop", weight = 1, requiredPoints = 0,
+            price = 15000, npc = "s_m_y_waiter_01", requiresPaperwork = false,
+        },
+        [2] = {
+            type = "gas_station", label = "Gas Station", weight = 1, requiredPoints = 500,
+            price = 25000, npc = "s_m_y_xmech_02", requiresPaperwork = false,
+        },
+        [3] = {
+            type = "restaurant", label = "Restaurant", weight = 2, requiredPoints = 1500,
+            price = 40000, npc = "s_m_y_chef_01", requiresPaperwork = true,
+        },
+        [4] = {
+            type = "laundromat", label = "Laundromat", weight = 2, requiredPoints = 2750,
+            price = 55000, npc = "s_m_o_busker_01", requiresPaperwork = true,
+        },
+        [5] = {
+            type = "bar", label = "Bar", weight = 3, requiredPoints = 4000,
+            price = 75000, npc = "s_m_y_barman_01", requiresPaperwork = true,
+        },
+        [6] = {
+            type = "nightclub", label = "Nightclub", weight = 3, requiredPoints = 5500,
+            price = 100000, npc = "s_m_y_clubbar_01", requiresPaperwork = true,
+        },
+        [7] = {
+            type = "stripclub", label = "Strip Club", weight = 3, requiredPoints = 7500,
+            price = 150000, npc = "s_m_y_doorman_01", requiresPaperwork = true,
+        },
+        [8] = {
+            type = "carwash", label = "Car Wash", weight = 5, requiredPoints = 10000,
+            price = 250000, npc = "s_m_y_winclean_01", requiresPaperwork = true,
+        },
+        [9] = {
+            type = "casino", label = "Casino", weight = 6, requiredPoints = 15000,
+            price = 750000, npc = "s_m_y_casino_01", requiresPaperwork = true,
+        },
     }
 }
 
