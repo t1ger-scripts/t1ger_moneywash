@@ -70,6 +70,26 @@ Config.Reputation = {
     }
 }
 
+--- Business ownership ladder. Progression is a pure reputation gate - reaching `requiredPoints`
+--- unlocks the tier, no sequential-ownership requirement. `weight` feeds into the Portfolio
+--- system below (total owned weight can't exceed Config.Business.PortfolioLimit).
+--- `type` must match a key in shared/business_locations.lua.
+Config.Business = {
+    PortfolioLimit = 6, -- total weight of businesses a player can own at once
+
+    Tiers = {
+        [1] = {type = "coffee_shop", weight = 1, requiredPoints = 0},
+        [2] = {type = "gas_station", weight = 1, requiredPoints = 500},
+        [3] = {type = "restaurant", weight = 2, requiredPoints = 1500},
+        [4] = {type = "laundromat", weight = 2, requiredPoints = 2750},
+        [5] = {type = "bar", weight = 3, requiredPoints = 4000},
+        [6] = {type = "nightclub", weight = 3, requiredPoints = 5500},
+        [7] = {type = "stripclub", weight = 3, requiredPoints = 7500},
+        [8] = {type = "carwash", weight = 4, requiredPoints = 10000},
+        [9] = {type = "casino", weight = 4, requiredPoints = 15000},
+    }
+}
+
 --- Runner Exchange: a fast, on-demand cash-for-clean-money exchange offered by the Accountant.
 --- No ownership, no queue - just an instant trade of speed for a worse rate than any owned business.
 Config.RunnerExchange = {
