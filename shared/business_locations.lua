@@ -28,10 +28,11 @@ return {
         [14] = {coords = vector4(-271.279114, -977.010986, 31.200684, 181.417328), brand = "Bean Machine"},
         [15] = {coords = vector4(-1345.265991, -610.021973, 28.605835, 291.968506), brand = "Bean Machine"},
         [16] = {coords = vector4(-1548.237305, -434.610992, 35.885010, 240.944885), brand = "Bean Machine"},
-        [17] = {coords = vector4(-1280.610962, -875.261536, 11.924561, 138.897629), brand = "Cool Beans"},
-        [18] = {coords = vector4(1177.318726, -405.560425, 67.764893, 266.456696), brand = "Cool Beans"},
-        [19] = {coords = vector4(265.292297, -981.731873, 29.347290, 70.866142), brand = "Cool Beans"},
-        [20] = {coords = vector4(-1206.210938, -1136.043945, 7.678345, 110.551186), brand = "Cool Beans"},
+        [17] = {coords = vector4(462.843964, -718.153870, 27.510620, 85.039368), brand = "Bean Machine"},
+        [18] = {coords = vector4(-1280.610962, -875.261536, 11.924561, 138.897629), brand = "Cool Beans"},
+        [19] = {coords = vector4(1177.318726, -405.560425, 67.764893, 266.456696), brand = "Cool Beans"},
+        [20] = {coords = vector4(265.292297, -981.731873, 29.347290, 70.866142), brand = "Cool Beans"},
+        [21] = {coords = vector4(-1206.210938, -1136.043945, 7.678345, 110.551186), brand = "Cool Beans"},
     },
 
     -- TIER 2: Gas Station
