@@ -10,63 +10,65 @@ description 'T1GER Money Wash'
 version '1.0.0'
 
 dependencies {
-    '/server:7290',     	-- ⚠️PLEASE READ⚠️; Requires at least SERVER build 7290.
-    '/gameBuild:3258',  	-- ⚠️PLEASE READ⚠️; Requires at least GAME build 3095.
+    '/server:7290',
+    '/gameBuild:3258',
 }
 
 shared_scripts {
     '@ox_lib/init.lua',
-	'bridge/config.lua',
-	'bridge/init.lua',
-	'shared/*.lua',
+    'bridge/config.lua',
+    'bridge/init.lua',
+
+    -- IMPORTANT: config.lua MUST load first
+    -- Do NOT switch back to shared/*.lua wildcard
+    'shared/config.lua',
+    'shared/business.lua',
+    'shared/suspicion.lua',
 }
 
 client_scripts {
-    'bridge/framework/client.lua', -- Framework
-    'bridge/target/client.lua', -- Target
-    'bridge/inventory/client.lua', -- Inventory
-    'bridge/notification/client.lua', -- Notification
+    'bridge/framework/client.lua',
+    'bridge/target/client.lua',
+    'bridge/inventory/client.lua',
+    'bridge/notification/client.lua',
 
-	'client/functions.lua', -- Functions
-	'client/reputation.lua', -- Reputation
-	'client/runnerexchange.lua', -- Runner Exchange
-	'client/menu.lua', -- Menu
-	'client/main.lua', -- Main
+    'client/functions.lua',
+    'client/reputation.lua',
+    'client/main.lua',
 }
 
 server_scripts {
-	'@oxmysql/lib/MySQL.lua', -- oxmysql
+    '@oxmysql/lib/MySQL.lua',
 
-    'bridge/framework/server.lua', -- Framework
-    'bridge/inventory/server.lua', -- Inventory
-    'bridge/jobaccount/server.lua', -- Job Account / Society Account
-    'bridge/notification/server.lua', -- Notification
+    'bridge/framework/server.lua',
+    'bridge/inventory/server.lua',
+    'bridge/jobaccount/server.lua',
+    'bridge/notification/server.lua',
 
-	'server/functions.lua', -- Functions
-	'server/reputation.lua', -- Reputation
-	'server/runnerexchange.lua', -- Runner Exchange
-	'server/main.lua', -- Main
+    'server/reputation.lua',
+    'server/functions.lua',
+    'server/business/store.lua',
+    'server/business/manager.lua',
+    'server/business/purchase.lua',
+    'server/main.lua',
 }
 
 files {
     'locales/*.json',
+    'shared/business_locations.lua',
+    'shared/stocklocations.lua',
+    'shared/banklocations.lua',
+    'shared/accountantoffices.lua',
 }
 
 ox_libs {
     'locale',
-    'math'
+    'math',
 }
 
-escrow_ignore { 
-	-- Shared files
+escrow_ignore {
     'shared/*.lua',
-
-	-- Bridge files
-	'bridge/**/*.lua',
-
-	-- Client files (Source-Available)
-	'client/**/*.lua',
-
-	-- Server files (Source-Available)
-	'server/**/*.lua',
+    'bridge/**/*.lua',
+    'client/**/*.lua',
+    'server/**/*.lua',
 }

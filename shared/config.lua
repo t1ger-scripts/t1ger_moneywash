@@ -1,173 +1,64 @@
 Config = {}
 
-Config.Debug = true
+Config.Debug = true -- set to false in production
 
-Config.Currency = "$" -- Currency used for pricing
+Config.Currency = "$" -- currency symbol used in menus and notifications
 
---- Defines how "dirty" (unlaundered) money is represented on your server.
---- Mirrors the same pattern used in t1ger_atmrobbery's Config.RewardDefaults.cash,
---- so servers using an account-based dirty money (e.g. 'black_money') or an item
---- (stacked or metadata-based, e.g. 'markedbills') both work without touching any logic.
-Config.DirtyMoney = {
-    useItem = true, -- set to false to use an account-based balance instead of an item
-    account = "black_money", -- account type used when useItem = false (e.g. 'black_money', 'crypto')
-
-    item = {
-        name = "markedbills", -- name of your dirty cash item ('markedbills' is default in qbcore)
-        metadata = false, -- set to true if your item requires metadata when given (e.g. qbcore markedbills)
-        metadataTemplate = function(amount) -- customize what metadata looks like when dirty money is added
-            return {worth = amount}
-        end,
-    }
-}
-
--- Define your police jobs in here. Players with these jobs cannot interact with the Accountant NPC at all.
+-- Jobs that cannot interact with the Accountant NPC or any business Handler NPC
 Config.PoliceJobs = {"police", "sheriff"}
 
-Config.Accountant = { -- The main underground Accountant NPC (fixed location, hub for the entire operation)
-    Model = "a_m_m_business_02", -- model of the accountant npc
-    Coords = vec4(1345.87, -1723.55, 52.11, 230.0), -- coords for the npc
-    Scenario = "WORLD_HUMAN_STAND_MOBILE", -- scenario to play
-    Blip = {enable = true, name = "???", sprite = 280, display = 4, color = 1, scale = 0.8}, -- blip settings
-    TargetIcon = "fa-solid fa-money-bill-transfer", -- icon shown when targeting the npc
+-- The underground Accountant NPC - fixed location, hub for all business purchases
+Config.Accountant = {
+    Model = "a_m_m_business_02", -- ped model
+    Coords = vec4(1345.87, -1723.55, 52.11, 230.0), -- location and heading
+    Scenario = "WORLD_HUMAN_STAND_MOBILE", -- idle animation
+    Blip = {
+        enable = true, -- show blip on map
+        name = "???", -- blip label
+        sprite = 280, -- blip icon
+        display = 4, -- blip display type
+        color = 1, -- blip color
+        scale = 0.8, -- blip scale
+    },
+    TargetIcon = "fa-solid fa-money-bill-transfer", -- ox_target icon
+    TargetLabel = "Talk", -- ox_target label
 }
 
---- Reputation system
+-- Reputation system
 Config.Reputation = {
-    Enable = true, -- set to false to disable reputation system entirely
-    MenuIcon = "fa-star", -- icon in the Accountant NPC menu
-    AutosaveInterval = 5, -- auto save all reputation data for players every x minutes
+    Enable = true, -- set to false to disable entirely
 
-    Commands = { -- commands to set, add and remove reputation points
-        set = {enable = true, name = "moneywashrep:set"}, -- enable for admins? False only useable by server-console
-        add = {enable = true, name = "moneywashrep:add"}, -- enable for admins? False only useable by server-console
-        remove = {enable = true, name = "moneywashrep:remove"}, -- enable for admins? False only useable by server-console
+    AutosaveInterval = 5, -- real minutes between automatic DB saves
+
+    Commands = {
+        set    = {enable = true, name = "moneywash:rep:set"}, -- set player reputation to exact value
+        add    = {enable = true, name = "moneywash:rep:add"}, -- add reputation points to player
+        remove = {enable = true, name = "moneywash:rep:remove"}, -- remove reputation points from player
     },
-    CommandSuggestion = "Usage: /%s <playerId> <amount>", -- command suggestion/helper. %s is automatically calling `set`, `add` or `remove`
 
-    Levels = { -- the script ONLY checks for reputation points. All the rank/titles are fictional
-        [0] = "Novice",
-        [250] = "Street Runner",
-        [500] = "Cash Handler",
-        [1000] = "Fixer's Associate",
-        [1750] = "Front Runner",
-        [2750] = "Money Man",
-        [4000] = "Launderer",
-        [5500] = "Silent Partner",
-        [7500] = "Cartel Accountant",
+    -- Reputation titles, keyed by minimum points required
+    -- The script checks points only - titles are purely cosmetic
+    Levels = {
+        [0]     = "Novice",
+        [250]   = "Street Runner",
+        [500]   = "Cash Handler",
+        [1000]  = "Fixer's Associate",
+        [1750]  = "Front Runner",
+        [2750]  = "Money Man",
+        [4000]  = "Launderer",
+        [5500]  = "Silent Partner",
+        [7500]  = "Cartel Accountant",
         [10000] = "Underworld Broker",
         [15000] = "Kingpin",
-        -- add or remove ranks as you like
     },
 
-    ProgressColors = { -- Set up colors for progression in reputation menu option
-        { threshold = 0, color = "#dc2626" },   -- Red
-        { threshold = 20, color = "#f97316" },  -- Orange
-        { threshold = 40, color = "#facc15" },  -- Yellow
-        { threshold = 60, color = "#84cc16" },  -- Lime
-        { threshold = 80, color = "#22c55e" },  -- Bright Green
-        { threshold = 100, color = "#16a34a" }, -- Deep Green
-    }
-}
-
---- Business ownership ladder. Progression is a pure reputation gate - reaching `requiredPoints`
---- unlocks the tier, no sequential-ownership requirement. `weight` feeds into the Portfolio
---- system below (total owned weight can't exceed Config.Business.PortfolioLimit).
---- `type` must match a key in shared/business_locations.lua.
----
---- `npc` - ped model for the Handler NPC that spawns once a location is purchased.
---- `price` - base purchase price (a location's own `price` field in business_locations.lua
----   overrides this). First-pass placeholder values - tune during balancing.
---- `requiresPaperwork` - whether this tier needs the "file sales records" mechanic to
----   suppress suspicion gain (bigger/more complex operations need more active management).
-Config.Business = {
-    PortfolioLimit = 6, -- total weight of businesses a player can own at once
-
-    HandlerScenario = "WORLD_HUMAN_STAND_IMPATIENT", -- idle animation shared by every Handler NPC
-
-    Tiers = {
-        [1] = {
-            type = "coffee_shop", label = "Coffee Shop", weight = 1, requiredPoints = 0,
-            price = 15000, npc = "s_m_y_waiter_01", requiresPaperwork = false,
-        },
-        [2] = {
-            type = "gas_station", label = "Gas Station", weight = 1, requiredPoints = 500,
-            price = 25000, npc = "s_m_y_xmech_02", requiresPaperwork = false,
-        },
-        [3] = {
-            type = "restaurant", label = "Restaurant", weight = 2, requiredPoints = 1500,
-            price = 40000, npc = "s_m_y_chef_01", requiresPaperwork = true,
-        },
-        [4] = {
-            type = "laundromat", label = "Laundromat", weight = 2, requiredPoints = 2750,
-            price = 55000, npc = "s_m_o_busker_01", requiresPaperwork = true,
-        },
-        [5] = {
-            type = "bar", label = "Bar", weight = 3, requiredPoints = 4000,
-            price = 75000, npc = "s_m_y_barman_01", requiresPaperwork = true,
-        },
-        [6] = {
-            type = "nightclub", label = "Nightclub", weight = 3, requiredPoints = 5500,
-            price = 100000, npc = "s_m_y_clubbar_01", requiresPaperwork = true,
-        },
-        [7] = {
-            type = "stripclub", label = "Strip Club", weight = 3, requiredPoints = 7500,
-            price = 150000, npc = "s_m_y_doorman_01", requiresPaperwork = true,
-        },
-        [8] = {
-            type = "carwash", label = "Car Wash", weight = 5, requiredPoints = 10000,
-            price = 250000, npc = "s_m_y_winclean_01", requiresPaperwork = true,
-        },
-        [9] = {
-            type = "casino", label = "Casino", weight = 6, requiredPoints = 15000,
-            price = 750000, npc = "s_m_y_casino_01", requiresPaperwork = true,
-        },
-    }
-}
-
---- Runner Exchange: a fast, on-demand cash-for-clean-money exchange offered by the Accountant.
---- No ownership, no queue - just an instant trade of speed for a worse rate than any owned business.
-Config.RunnerExchange = {
-    Enable = true,
-    MenuIcon = "fa-bolt", -- icon in accountant menu
-
-    AmountLimits = {min = 500, max = 5000}, -- base min/max dirty cash per exchange
-
-    TrustLimits = { -- reputation-gated increases to the max amount allowed per exchange
-        [0] = 5000,
-        [1000] = 7500,
-        [2750] = 10000,
-        [5500] = 15000,
-        [10000] = 25000,
-    },
-
-    Commission = 30, -- flat % cut taken by the runner, regardless of reputation
-
-    RequiredPolice = {enable = true, minimum = 1}, -- minimum on-duty police required to use this option
-
-    Cooldown = {enable = true, duration = 4}, -- minutes, applies after ANY outcome (success/hustle/expire/cancel)
-
-    Timer = {enable = true, duration = 180}, -- seconds to reach the runner before the exchange expires
-
-    CancelPenalty = {enable = true, reputationLoss = 10}, -- reputation points lost if player manually cancels
-
-    ReputationReward = 5, -- points earned per successful exchange
-
-    RunnerLocations = require("shared/runnerlocations"), -- pool of possible runner spawn points
-
-    RunnerModels = { -- pool of ped models, randomized per spawn
-        "g_m_y_ballaeast_01",
-        "g_m_y_lost_01",
-        "a_m_y_hipster_01",
-    },
-
-    Hustle = {
-        chance = 15, -- % chance runner tries to rob instead of paying
-        weapons = { -- random weapon picked from this table when a hustle triggers
-            "WEAPON_BAT",
-            "WEAPON_KNIFE",
-            "WEAPON_PISTOL",
-            "WEAPON_SWITCHBLADE",
-        },
+    -- Colors shown on the reputation progress bar in menus
+    ProgressColors = {
+        {threshold = 0,   color = "#dc2626"}, -- Red
+        {threshold = 20,  color = "#f97316"}, -- Orange
+        {threshold = 40,  color = "#facc15"}, -- Yellow
+        {threshold = 60,  color = "#84cc16"}, -- Lime
+        {threshold = 80,  color = "#22c55e"}, -- Green
+        {threshold = 100, color = "#16a34a"}, -- Deep Green
     },
 }
