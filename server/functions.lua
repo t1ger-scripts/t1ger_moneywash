@@ -1,4 +1,4 @@
---- Returns the number of currently on-duty players whose job matches Config.PoliceJobs.
+--- Returns the number of currently on-duty players whose job matches Config.Police.Jobs.
 --- @return integer count
 function GetOnDutyPoliceCount()
     local count = 0
@@ -7,7 +7,7 @@ function GetOnDutyPoliceCount()
     for _, playerData in ipairs(players) do
         local job = playerData.job
         if job and job.onDuty then
-            for _, policeJob in ipairs(Config.PoliceJobs) do
+            for _, policeJob in ipairs(Config.Police.Jobs) do
                 if job.name == policeJob then
                     count = count + 1
                     break

@@ -20,9 +20,6 @@ Config.DirtyMoney = {
     },
 }
 
---- Jobs that cannot interact with the Accountant NPC or any Handler NPC
-Config.PoliceJobs = {"police", "sheriff"}
-
 --- Police interaction settings
 Config.Police = {
     Jobs                  = {"police", "sheriff"}, -- jobs that can access police interactions
@@ -33,7 +30,7 @@ Config.Police = {
 --- The underground Accountant NPC - fixed location, sole purchase point for all businesses
 Config.Accountant = {
     Model    = "a_m_m_business_01",
-    Coords   = vec4(1345.87, -1723.55, 52.11, 230.0),
+    Coords   = vec4(1360.285767, -1746.276978, 64.074707, 337.322845),
     Scenario = "WORLD_HUMAN_STAND_MOBILE",
     Blip = {
         enable  = true,

@@ -12,7 +12,7 @@
 function IsPoliceJob()
     local job = _API.Player:GetJob()
     if not job or not job.name then return false end
-    for _, policeJob in ipairs(Config.PoliceJobs) do
+    for _, policeJob in ipairs(Config.Police.Jobs) do
         if job.name == policeJob then return true end
     end
     return false
@@ -25,6 +25,15 @@ function IsPoliceJobWithGrade(minGrade)
     if not IsPoliceJob() then return false end
     local job = _API.Player:GetJob()
     return (job.grade or 0) >= minGrade
+end
+
+---Check if entity is valid
+---@param entity number handle for entity
+function IsEntityValid(entity)
+    if not entity or entity == -1 then
+        return false
+    end
+    return DoesEntityExist(entity)
 end
 
 --- Returns whether the player can interact with the Accountant NPC
