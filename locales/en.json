@@ -8,27 +8,6 @@
         "deliver_stock": "Deliver Stock"
     },
     "menu": {
-        "accountant": {
-            "title": "???",
-            "reputation": "Reputation",
-            "rep_title": "Title",
-            "rep_points": "Points",
-            "rep_progress": "Progress",
-            "browse": "Browse Businesses",
-            "browse_desc": "View available locations and purchase a business",
-            "already_owns": "You already own this type of business",
-            "requires_rep": "Requires %d reputation points",
-            "portfolio_full": "Your portfolio is full",
-            "tier_weight": "Portfolio Weight",
-            "tier_req_rep": "Required Points",
-            "tier_price": "Base Price",
-            "no_tiers": "No businesses available",
-            "no_locations": "No locations available for this business type",
-            "location_price": "Price",
-            "confirm_title": "Purchase Business",
-            "confirm_body": "Purchase %s for %s?\n\nThis will be deducted from your bank account.",
-            "purchase_success": "Business purchased successfully"
-        },
         "handler": {
             "title": "Business Management",
             "safe_covered": "Safe (Covered)",
