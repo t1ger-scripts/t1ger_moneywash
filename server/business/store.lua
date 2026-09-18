@@ -1,11 +1,15 @@
---- ============================================================
+--- ============================================================================
 --- Business Store
---- The single source of truth for all owned business state.
---- All other server files read and write through these functions.
---- Never require or depend on other business files directly.
---- ============================================================
+--- The single source of truth for all owned business state in memory.
+--- All other server files read and write exclusively through these functions.
+--- Never access the Businesses table directly from outside this file.
+--- ============================================================================
 
-local Businesses = {} -- keyed by business DB id (integer)
+local Businesses = {} -- keyed by DB id (integer)
+
+--- -------------------------------------------------------------------------
+--- LOOKUP FUNCTIONS
+--- -------------------------------------------------------------------------
 
 --- Returns a business by its database id
 --- @param id number
@@ -27,7 +31,7 @@ function GetBusinessByLocation(businessType, locationId)
     return nil
 end
 
---- Returns all businesses owned by a given identifier
+--- Returns all businesses owned by a given player identifier
 --- @param identifier string
 --- @return table
 function GetPlayerBusinesses(identifier)
@@ -38,6 +42,21 @@ function GetPlayerBusinesses(identifier)
         end
     end
     return result
+end
+
+--- Returns the full in-memory businesses table
+--- Use for iteration only - do not modify directly
+--- @return table
+function GetAllBusinesses()
+    return Businesses
+end
+
+--- Returns whether a given location is currently owned by any player
+--- @param businessType string
+--- @param locationId number
+--- @return boolean
+function IsLocationOwned(businessType, locationId)
+    return GetBusinessByLocation(businessType, locationId) ~= nil
 end
 
 --- Returns the total portfolio weight currently used by a player
@@ -69,15 +88,13 @@ function PlayerOwnsType(identifier, businessType)
     return false
 end
 
---- Returns all businesses currently in memory
---- @return table
-function GetAllBusinesses()
-    return Businesses
-end
+--- -------------------------------------------------------------------------
+--- STORE MUTATIONS
+--- -------------------------------------------------------------------------
 
 --- Adds a business record to the in-memory store
 --- @param id number DB primary key
---- @param data table
+--- @param data table raw DB row or equivalent
 function AddToStore(id, data)
     Businesses[id] = {
         id              = id,
@@ -102,8 +119,8 @@ function RemoveFromStore(id)
     Businesses[id] = nil
 end
 
---- Updates a single field on a business in memory only (no DB write)
---- Use SaveBusiness() to persist to DB
+--- Updates a single field on a business in memory only
+--- Use SaveBusiness() in server/main.lua to persist to DB
 --- @param id number
 --- @param key string
 --- @param value any
@@ -121,6 +138,11 @@ function UpdateBusinessFields(id, data)
         Businesses[id][key] = value
     end
 end
+
+--- -------------------------------------------------------------------------
+--- CONFIG HELPERS
+--- Convenience lookups into shared config - used across all business files
+--- -------------------------------------------------------------------------
 
 --- Returns the tier config table for a given business type
 --- @param businessType string
@@ -144,10 +166,51 @@ function GetLocationConfig(businessType, locationId)
     return locations[businessType][locationId]
 end
 
---- Returns whether a given location is currently owned by any player
+--- Returns the suspicion label table for a given suspicion value
+--- @param value number 0-100
+--- @return table {name, color}
+function GetSuspicionLabel(value)
+    local label = Config.Suspicion.Labels[1]
+    for _, entry in ipairs(Config.Suspicion.Labels) do
+        if value >= entry.threshold then
+            label = entry
+        end
+    end
+    return label
+end
+
+--- Returns the derived unit price for a given business type
+--- unitPrice = expectedRevenue * Stock.CostRatio
 --- @param businessType string
---- @param locationId number
---- @return boolean
-function IsLocationOwned(businessType, locationId)
-    return GetBusinessByLocation(businessType, locationId) ~= nil
+--- @return number|nil
+function GetUnitPrice(businessType)
+    local tier = GetTierByType(businessType)
+    if not tier then return nil end
+    return math.floor(tier.expectedRevenue * Config.Business.Stock.CostRatio)
+end
+
+--- Returns the minimum order units for a given business type
+--- @param businessType string
+--- @return number|nil
+function GetMinOrder(businessType)
+    local tier = GetTierByType(businessType)
+    if not tier then return nil end
+    return math.max(1, math.floor(tier.expectedRevenue * Config.Business.Stock.MinOrderRatio))
+end
+
+--- Returns the maximum order units for a given business type
+--- @param businessType string
+--- @return number|nil
+function GetMaxOrder(businessType)
+    local tier = GetTierByType(businessType)
+    if not tier then return nil end
+    return math.floor(tier.expectedRevenue * Config.Business.Stock.MaxOrderRatio)
+end
+
+--- Returns stock consumed for a given launder amount
+--- stockConsumed = amount * Stock.ConsumptionRatio
+--- @param amount number
+--- @return number
+function GetStockConsumed(amount)
+    return math.ceil(amount * Config.Business.Stock.ConsumptionRatio)
 end
