@@ -32,7 +32,7 @@ Config.Police = {
 
 --- The underground Accountant NPC - fixed location, sole purchase point for all businesses
 Config.Accountant = {
-    Model    = "a_m_m_business_02",
+    Model    = "a_m_m_business_01",
     Coords   = vec4(1345.87, -1723.55, 52.11, 230.0),
     Scenario = "WORLD_HUMAN_STAND_MOBILE",
     Blip = {

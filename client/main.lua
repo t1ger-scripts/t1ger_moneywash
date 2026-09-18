@@ -40,6 +40,15 @@ function CreateAccountantNPC()
 
     local cfg = Config.Accountant
 
+    -- Validate model before requesting to avoid crashing on invalid hashes
+    if not IsModelValid(GetHashKey(cfg.Model)) then
+        if Config.Debug then
+            print(("[MoneyWash] WARNING: Invalid ped model '%s' — falling back to '%s'"):format(
+                model, "a_m_m_business_01"))
+        end
+        cfg.Model = "a_m_m_business_01"
+    end
+
     -- Spawn ped using shared helper
     accountantNPC = SpawnStaticPed(cfg.Model, cfg.Coords, cfg.Scenario)
 
