@@ -1,46 +1,176 @@
 {
     "target": {
         "accountant_npc": "Talk",
-        "runner_handoff": "Hand Off Cash"
+        "handler_npc": "Manage Business",
+        "raid_business": "Raid Business",
+        "bank_teller": "Bank Teller",
+        "pickup_box": "Pick Up Stock",
+        "deliver_stock": "Deliver Stock"
     },
-    "blip": {
-        "runner_exchange": "Runner Exchange"
-    },
-    "menu_title": {
-        "accountant_main": "???",
-        "reputation": "Reputation",
-        "runner_exchange": "Runner Exchange"
-    },
-    "menu_description": {
-        "reputation": "%s (Current Rep Points: %s)",
-        "runner_exchange": "Trade dirty cash for a quick, discounted payout to your bank"
-    },
-    "menu_metadata": {
-        "points": "Points",
-        "level": "Level",
-        "progress": "Progress"
-    },
-    "input": {
-        "runnerexchange_amount": "Amount to Exchange",
-        "runnerexchange_amount_desc": "Between %s%s and %s%s"
-    },
-    "progress": {
-        "runnerexchange_handoff": "Handing off cash..."
-    },
-    "textui": {
-        "runnerexchange_timer": "Reach the runner - %s seconds remaining (/cancelexchange to cancel)"
+    "menu": {
+        "accountant": {
+            "title": "???",
+            "reputation": "Reputation",
+            "rep_title": "Title",
+            "rep_points": "Points",
+            "rep_progress": "Progress",
+            "browse": "Browse Businesses",
+            "browse_desc": "View available locations and purchase a business",
+            "already_owns": "You already own this type of business",
+            "requires_rep": "Requires %d reputation points",
+            "portfolio_full": "Your portfolio is full",
+            "tier_weight": "Portfolio Weight",
+            "tier_req_rep": "Required Points",
+            "tier_price": "Base Price",
+            "no_tiers": "No businesses available",
+            "no_locations": "No locations available for this business type",
+            "location_price": "Price",
+            "confirm_title": "Purchase Business",
+            "confirm_body": "Purchase %s for %s?\n\nThis will be deducted from your bank account.",
+            "purchase_success": "Business purchased successfully"
+        },
+        "handler": {
+            "title": "Business Management",
+            "safe_covered": "Safe (Covered)",
+            "safe_exposed": "Safe (Exposed)",
+            "stock": "Stock",
+            "units": "units",
+            "suspicion": "Suspicion",
+            "cycle_progress": "Cycle Progress",
+            "closed_reason": "Business is temporarily closed",
+            "no_safe_balance": "No funds in Safe",
+            "launder": "Launder Money",
+            "order_stock": "Order Stock",
+            "bank_deposit": "Bank Deposit",
+            "review_books": "Review Books",
+            "review_receipts": "Available Receipts",
+            "manage": "Manage Business",
+            "not_found": "Business not found"
+        },
+        "launder": {
+            "title": "Launder Money",
+            "amount_label": "Amount to launder (carrying %s)",
+            "amount_desc": "Remaining cycle capacity: %s"
+        },
+        "stock": {
+            "title": "Order Stock",
+            "amount_label": "Units to order (min %d, max %d)",
+            "price_desc": "Price per unit: %s",
+            "invalid_units": "Invalid order amount",
+            "confirm_title": "Confirm Stock Order",
+            "confirm_body": "Order %d units for %s?\n\nPayment will be taken from your bank."
+        },
+        "deposit": {
+            "title": "Bank Deposit",
+            "amount_label": "Amount to deposit (available: %s)",
+            "exposed_desc": "Exposed: %s | Covered: %s\n\nExposed funds are drawn first."
+        },
+        "review": {
+            "title": "Review Books",
+            "select_label": "Select receipts to submit",
+            "no_receipts": "No receipts available — complete a stock delivery first",
+            "estimate_failed": "Could not estimate effectiveness",
+            "confirm_title": "Confirm Records Review",
+            "confirm_body": "Effectiveness: %s\nEstimated suspicion reduction: %d points\n\nA fee will be taken from your bank."
+        },
+        "manage": {
+            "title": "Manage Business",
+            "transfer": "Transfer Business",
+            "transfer_desc": "Transfer ownership to another player",
+            "abandon": "Abandon Business",
+            "abandon_desc": "Walk away with zero refund — all Safe funds are forfeited"
+        },
+        "transfer": {
+            "title": "Transfer Business",
+            "identifier_label": "Player Identifier",
+            "identifier_desc": "The target player must be online",
+            "confirm_title": "Confirm Transfer",
+            "confirm_body": "Transfer this business to %s?\n\nAll Safe balances, stock and suspicion will carry over to the new owner.",
+            "success": "Business transferred successfully"
+        },
+        "abandon": {
+            "confirm_title": "Abandon Business",
+            "confirm_body": "Are you sure? This cannot be undone.\n\nAll funds in the Safe will be forfeited. No refund will be given.",
+            "success": "Business abandoned"
+        },
+        "police": {
+            "teller_title": "Flagged Deposits",
+            "deposit_entry": "Pending Deposit — %s",
+            "clears_in": "Clears in",
+            "no_flagged_deposits": "No flagged deposits at this teller",
+            "confiscate_title": "Confiscate Deposit",
+            "confiscate_body": "Confiscate pending deposit of %s?\n\nThe full amount will be seized.",
+            "confiscate_success": "Deposit confiscated successfully"
+        }
     },
     "notification": {
-        "runnerexchange_cooldown": "You need to wait %s more seconds before requesting another exchange.",
-        "runnerexchange_not_enough_police": "Not enough heat on the streets right now.",
-        "runnerexchange_invalid_amount": "Amount must be between %s%s and %s%s.",
-        "runnerexchange_insufficient_cash": "You don't have enough dirty cash on you.",
-        "runnerexchange_already_active": "You already have an exchange in progress.",
-        "runnerexchange_failed": "Something went wrong with the exchange.",
-        "runnerexchange_too_far": "You're too far from the runner.",
-        "runnerexchange_expired": "The runner got tired of waiting and left.",
-        "runnerexchange_hustle": "It's a setup! The runner is armed!",
-        "runnerexchange_success": "Exchanged for %s%s, cleaned and wired to your bank.",
-        "runnerexchange_cancelled": "Exchange cancelled. Your reputation took a hit for backing out."
+        "business_reopened": "Your business has reopened after temporary closure",
+        "business_seized": "Your business has been permanently seized",
+        "business_raided": "Your business was raided — %s seized",
+        "suspicion_changed": "Business suspicion level: %s",
+        "deposit_cleared": "%s has been deposited into your bank",
+        "deposit_confiscated": "Your pending deposit of %s was confiscated by police",
+        "no_permission": "You don't have permission to do this",
+        "raid_executed": "Business raided successfully",
+        "error_invalid_player": "Invalid player",
+        "error_invalid_type": "Invalid business type",
+        "error_invalid_location": "Invalid location",
+        "error_already_owned": "This location is already owned",
+        "error_already_owns_type": "You already own this type of business",
+        "error_insufficient_reputation": "You don't have enough reputation points",
+        "error_portfolio_full": "Your portfolio is full",
+        "error_insufficient_funds": "You don't have enough money",
+        "error_database_error": "A database error occurred",
+        "error_not_found": "Business not found",
+        "error_not_owner": "You don't own this business",
+        "error_target_not_online": "The target player is not online",
+        "error_target_owns_type": "The target already owns this type of business",
+        "error_target_portfolio_full": "The target's portfolio is full",
+        "error_business_closed": "Your business is temporarily closed",
+        "error_insufficient_dirty_cash": "You're not carrying enough dirty cash",
+        "error_invalid_amount": "Invalid amount",
+        "error_order_already_active": "You already have an active stock order",
+        "error_invalid_units": "Invalid number of units",
+        "error_no_pickup_locations": "No pickup locations configured",
+        "error_no_active_mission": "No active mission found",
+        "error_too_far": "You're too far away",
+        "error_deposit_already_pending": "You already have a pending deposit",
+        "error_insufficient_safe_balance": "Not enough funds in the Safe",
+        "error_on_cooldown": "Review Books is on cooldown for this cycle",
+        "error_no_receipts_selected": "No receipts selected",
+        "error_not_police": "You are not a police officer",
+        "error_insufficient_grade": "Your rank is too low for this action",
+        "error_not_flagged": "This deposit is not flagged",
+        "error_no_pending_deposit": "No pending deposit found",
+        "error_unknown": "Something went wrong",
+        "launder_success": "Money laundered",
+        "launder_detail": "Clean: %s | Fee: %s | Suspicion: %s",
+        "mission_already_active": "You already have an active mission",
+        "stock_order_placed": "Stock order placed — drive to the pickup location",
+        "stock_picked_up": "Stock picked up — load it into your vehicle",
+        "stock_loaded": "Stock loaded — drive back to your business",
+        "stock_delivered": "Stock delivered successfully",
+        "stock_cancelled": "Stock order cancelled — payment refunded",
+        "deposit_started": "Drive to the bank and deposit your cash",
+        "deposit_processing": "Deposit submitted",
+        "deposit_processing_desc": "Your funds will clear in %d minutes",
+        "review_drive_to_office": "Drive to the accountant office",
+        "review_success": "Records review complete",
+        "review_detail": "Effectiveness: %s | Suspicion reduced by %d | Fee: %s"
+    },
+    "progress": {
+        "laundering": "Laundering money...",
+        "delivering_stock": "Delivering stock...",
+        "depositing": "Processing deposit...",
+        "reviewing_books": "Reviewing business records..."
+    },
+    "textui": {
+        "pickup_box": "[E] Pick up stock",
+        "load_vehicle": "Enter your vehicle to load the stock",
+        "deliver_stock": "Drive to your business and deliver the stock",
+        "dropoff_stock": "[E] Deliver stock to Handler",
+        "drive_to_bank": "Drive to the bank and deposit your cash",
+        "interact_teller": "[E] Interact with bank teller",
+        "drive_to_office": "Drive to the accountant office"
     }
 }
