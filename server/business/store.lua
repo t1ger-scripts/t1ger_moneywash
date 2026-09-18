@@ -190,6 +190,7 @@ function GetUnitPrice(businessType)
 end
 
 --- Returns the minimum order units for a given business type
+--- minOrder = expectedRevenue * Stock.MinOrderRatio
 --- @param businessType string
 --- @return number|nil
 function GetMinOrder(businessType)
@@ -199,6 +200,7 @@ function GetMinOrder(businessType)
 end
 
 --- Returns the maximum order units for a given business type
+--- maxOrder = expectedRevenue * Stock.MaxOrderRatio
 --- @param businessType string
 --- @return number|nil
 function GetMaxOrder(businessType)
@@ -207,7 +209,7 @@ function GetMaxOrder(businessType)
     return math.floor(tier.expectedRevenue * Config.Business.Stock.MaxOrderRatio)
 end
 
---- Returns stock consumed for a given launder amount
+--- Returns stock consumed for a given launder amount and business type
 --- stockConsumed = amount * Stock.ConsumptionRatio
 --- @param amount number
 --- @return number
