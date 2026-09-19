@@ -13,13 +13,23 @@ defineProps<{
   portfolioLimit: number
 }>()
 
-defineEmits<{ navigate: [view: string] }>()
+const emit = defineEmits<{
+  navigate: [view: string]
+  'update:reputation': [value: number]
+}>()
+
+function updatePreviewScore(event: Event) {
+  const input = event.target as HTMLInputElement
+  emit('update:reputation', Number(input.value))
+}
 </script>
 
 <template>
   <aside class="app-sidebar">
     <div class="brand-lockup">
-      <div class="brand-mark"><ShieldCheck :size="21" /></div>
+      <div class="brand-mark">
+        <ShieldCheck :size="21" />
+      </div>
       <div>
         <strong>LEDGER CAPITAL</strong>
         <span>BUSINESS BROKERAGE</span>
@@ -62,10 +72,26 @@ defineEmits<{ navigate: [view: string] }>()
       <div class="weight-blocks">
         <span v-for="slot in portfolioLimit" :key="slot" :class="{ filled: slot <= portfolioWeight }" />
       </div>
+      <div class="sidebar-preview">
+        <div class="sidebar-preview-heading">
+          <span>TEST INVESTOR SCORE</span>
+          <strong>{{ reputation.toLocaleString() }}</strong>
+        </div>
+
+        <input :value="reputation" type="range" min="0" max="16000" step="500" aria-label="Test Investor Score"
+          @input="updatePreviewScore" />
+
+        <div class="sidebar-preview-scale">
+          <span>0</span>
+          <span>16,000</span>
+        </div>
+      </div>
     </div>
 
     <div class="side-footer">
-      <button><CircleHelp :size="16" /> Help Center</button>
+      <button>
+        <CircleHelp :size="16" /> Help Center
+      </button>
     </div>
   </aside>
 </template>

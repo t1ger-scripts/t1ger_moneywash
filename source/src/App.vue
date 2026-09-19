@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Bell, Radio, WalletCards } from '@lucide/vue'
 import AppSidebar from '@/components/AppSidebar.vue'
 import BrowserChrome from '@/components/BrowserChrome.vue'
 import BusinessMap from '@/components/BusinessMap.vue'
@@ -10,7 +9,7 @@ import PlaceholderView from '@/components/PlaceholderView.vue'
 import TierRail from '@/components/TierRail.vue'
 import { businessLocations, businessTiers } from '@/data/mock-businesses'
 import { mockProfile, mockReputationLevels } from '@/data/mock-profile'
-import { money, zoneFromCoordinates } from '@/lib/format'
+import { zoneFromCoordinates } from '@/lib/format'
 import { nuiFetch } from '@/lib/nui'
 import type { BusinessTier, LocationView } from '@/types/business'
 
@@ -105,18 +104,11 @@ function abandonBusiness(location: LocationView) {
     <div class="browser-window">
       <BrowserChrome :active-tab="activeTitle" @close="closeUi" />
       <div class="app-frame">
-        <AppSidebar
-          :active-view="activeView"
-          :reputation="reputation"
-          :reputation-label="reputationLabel"
-          :reputation-progress="reputationProgress"
-          :next-reputation-label="nextReputationLevel?.label"
-          :character-name="mockProfile.characterName"
-          :portfolio-count="ownedLocations.length"
-          :portfolio-weight="portfolioWeight"
-          :portfolio-limit="mockProfile.portfolioLimit"
-          @navigate="activeView = $event as typeof activeView"
-        />
+        <AppSidebar :active-view="activeView" :reputation="reputation" :reputation-label="reputationLabel"
+          :reputation-progress="reputationProgress" :next-reputation-label="nextReputationLevel?.label"
+          :character-name="mockProfile.characterName" :portfolio-count="ownedLocations.length"
+          :portfolio-weight="portfolioWeight" :portfolio-limit="mockProfile.portfolioLimit"
+          @navigate="activeView = $event as typeof activeView" @update:reputation="reputation = $event" />
 
         <main v-if="activeView === 'market'" class="market-view">
           <header class="market-header">
@@ -125,56 +117,33 @@ function abandonBusiness(location: LocationView) {
               <h1>Marketplace</h1>
               <p>Browse verified business opportunities and expand your portfolio.</p>
             </div>
-            <div class="header-actions">
-              <div class="dev-reputation" title="Local preview control">
-                <Radio :size="14" />
-                <span>Preview Score</span>
-                <input v-model.number="reputation" type="range" min="0" max="16000" step="500" />
-                <strong>{{ reputation.toLocaleString() }}</strong>
-              </div>
-              <button class="icon-button"><Bell :size="17" /><span class="notification-dot" /></button>
-              <div class="balance-chip"><WalletCards :size="16" /><span>AVAILABLE</span><strong>{{ money.format(mockProfile.balance) }}</strong></div>
-            </div>
           </header>
 
-          <TierRail :tiers="businessTiers" :selected-type="selectedType" :reputation="reputation" :counts="counts" @select="selectTier" />
+          <TierRail :tiers="businessTiers" :selected-type="selectedType" :reputation="reputation" :counts="counts"
+            @select="selectTier" />
 
           <section class="workspace">
-            <LocationList
-              :locations="displayedLocations"
-              :selected-id="selectedLocationId"
-              :query="query"
-              :owned-location-ids="ownedLocationIds"
-              @select="selectedLocationId = $event.uid"
-              @update:query="query = $event"
-            />
+            <LocationList :locations="displayedLocations" :selected-id="selectedLocationId" :query="query"
+              :owned-location-ids="ownedLocationIds" @select="selectedLocationId = $event.uid"
+              @update:query="query = $event" />
             <div class="map-stack">
-              <BusinessMap :locations="displayedLocations" :selected="selectedLocation" @select="selectedLocationId = $event.uid" />
-              <LocationDetail
-                :location="selectedLocation"
-                :reputation="reputation"
+              <BusinessMap :locations="displayedLocations" :selected="selectedLocation"
+                @select="selectedLocationId = $event.uid" />
+              <LocationDetail :location="selectedLocation" :reputation="reputation"
                 :owned="!!selectedLocation && ownedLocationIds.includes(selectedLocation.uid)"
-                :portfolio-weight="portfolioWeight"
-                :portfolio-limit="mockProfile.portfolioLimit"
-                @close="selectedLocationId = undefined"
-                @purchase="reviewPurchase"
-              />
+                :portfolio-weight="portfolioWeight" :portfolio-limit="mockProfile.portfolioLimit"
+                @close="selectedLocationId = undefined" @purchase="reviewPurchase" />
             </div>
           </section>
         </main>
 
-        <PlaceholderView
-          v-else
-          :businesses="ownedLocations"
-          :portfolio-weight="portfolioWeight"
-          :portfolio-limit="mockProfile.portfolioLimit"
-          @navigate-market="activeView = 'market'"
-          @waypoint="setBusinessWaypoint"
-          @transfer="transferBusiness"
-          @abandon="abandonBusiness"
-        />
+        <PlaceholderView v-else :businesses="ownedLocations" :portfolio-weight="portfolioWeight"
+          :portfolio-limit="mockProfile.portfolioLimit" @navigate-market="activeView = 'market'"
+          @waypoint="setBusinessWaypoint" @transfer="transferBusiness" @abandon="abandonBusiness" />
       </div>
-      <Transition name="toast"><div v-if="toast" class="app-toast">{{ toast }}</div></Transition>
+      <Transition name="toast">
+        <div v-if="toast" class="app-toast">{{ toast }}</div>
+      </Transition>
     </div>
   </div>
 </template>
