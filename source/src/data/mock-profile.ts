@@ -4,7 +4,19 @@ export const mockProfile = {
   portfolioWeight: 2,
   portfolioLimit: 6,
   balance: 286400,
-  ownedLocationIds: ['coffee_shop:12', 'gas_station:21'],
+
+  ownedLocationIds: [
+    'coffee_shop:12',
+    'gas_station:21',
+  ],
+
+  acquiredLocationIds: [
+    'coffee_shop:2',
+    'coffee_shop:5',
+    'coffee_shop:11',
+    'gas_station:3',
+    'restaurant:4',
+  ],
 }
 
 // Mirrors Config.Reputation.Levels for local UI development.

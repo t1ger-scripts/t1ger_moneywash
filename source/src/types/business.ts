@@ -28,9 +28,12 @@ export interface BusinessLocation {
   price?: number
 }
 
+export type ListingStatus = 'available' | 'active' | 'acquired'
+
 export interface LocationView extends BusinessLocation {
   tier: BusinessTier
   effectivePrice: number
   zone: string
   locked: boolean
+  status: ListingStatus
 }

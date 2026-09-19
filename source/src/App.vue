@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import AppSidebar from '@/components/AppSidebar.vue'
 import BrowserChrome from '@/components/BrowserChrome.vue'
 import BusinessMap from '@/components/BusinessMap.vue'
@@ -19,27 +19,56 @@ const selectedLocationId = ref<string>()
 const query = ref('')
 const reputation = ref(mockProfile.reputation)
 const ownedLocationIds = ref([...mockProfile.ownedLocationIds])
+const acquiredLocationIds = ref([...mockProfile.acquiredLocationIds])
 const toast = ref('')
 const visible = ref(true)
 
-const counts = Object.fromEntries(businessTiers.map((tier) => [tier.type, businessLocations.filter((item) => item.type === tier.type).length]))
 const locationViews = computed<LocationView[]>(() => {
   const tierMap = new Map(businessTiers.map((tier) => [tier.type, tier]))
   return businessLocations.map((location) => {
     const tier = tierMap.get(location.type)!
+
+    const status = ownedLocationIds.value.includes(location.uid)
+      ? 'active'
+      : acquiredLocationIds.value.includes(location.uid)
+        ? 'acquired'
+        : 'available'
+
     return {
       ...location,
       tier,
       effectivePrice: location.price ?? tier.price,
       zone: zoneFromCoordinates(location.coords.x, location.coords.y),
       locked: reputation.value < tier.requiredPoints,
+      status,
     }
   })
+})
+
+const availableCounts = computed<Record<string, number>>(() => {
+  return Object.fromEntries(
+    businessTiers.map((tier) => [
+      tier.type,
+      locationViews.value.filter(
+        (location) =>
+          location.type === tier.type &&
+          location.status === 'available',
+      ).length,
+    ]),
+  )
 })
 
 const displayedLocations = computed(() => {
   const needle = query.value.trim().toLowerCase()
   return locationViews.value.filter((location) => location.type === selectedType.value && (!needle || `${location.brand} ${location.street ?? ''} ${location.zone}`.toLowerCase().includes(needle)))
+})
+
+const mapLocations = computed(() => {
+  return displayedLocations.value.filter(
+    (location) =>
+      !location.locked &&
+      location.status === 'available',
+  )
 })
 
 const selectedLocation = computed(() => locationViews.value.find((location) => location.uid === selectedLocationId.value))
@@ -88,6 +117,9 @@ function setBusinessWaypoint(location: LocationView) {
 
 function transferBusiness(payload: { location: LocationView; playerId: number; playerName: string }) {
   ownedLocationIds.value = ownedLocationIds.value.filter((uid) => uid !== payload.location.uid)
+  if (!acquiredLocationIds.value.includes(payload.location.uid)) {
+    acquiredLocationIds.value.push(payload.location.uid)
+  }
   showToast(`${payload.location.brand} transferred to ${payload.playerName}`)
   void nuiFetch('transferBusiness', { type: payload.location.type, locationId: payload.location.id, targetId: payload.playerId })
 }
@@ -97,6 +129,22 @@ function abandonBusiness(location: LocationView) {
   showToast(`Ownership of ${location.brand} has been relinquished`)
   void nuiFetch('abandonBusiness', { type: location.type, locationId: location.id })
 }
+
+watch(reputation, (score) => {
+  const selectedTier = businessTiers.find(
+    (tier) => tier.type === selectedType.value,
+  )
+
+  if (!selectedTier || score >= selectedTier.requiredPoints) return
+
+  const highestEligibleTier = [...businessTiers]
+    .reverse()
+    .find((tier) => score >= tier.requiredPoints)
+
+  if (highestEligibleTier) {
+    selectTier(highestEligibleTier)
+  }
+})
 </script>
 
 <template>
@@ -119,15 +167,14 @@ function abandonBusiness(location: LocationView) {
             </div>
           </header>
 
-          <TierRail :tiers="businessTiers" :selected-type="selectedType" :reputation="reputation" :counts="counts"
-            @select="selectTier" />
+          <TierRail :tiers="businessTiers" :selected-type="selectedType" :reputation="reputation"
+            :counts="availableCounts" @select="selectTier" />
 
           <section class="workspace">
             <LocationList :locations="displayedLocations" :selected-id="selectedLocationId" :query="query"
-              :owned-location-ids="ownedLocationIds" @select="selectedLocationId = $event.uid"
-              @update:query="query = $event" />
+              @select="selectedLocationId = $event.uid" @update:query="query = $event" />
             <div class="map-stack">
-              <BusinessMap :locations="displayedLocations" :selected="selectedLocation"
+              <BusinessMap :locations="mapLocations" :selected="selectedLocation"
                 @select="selectedLocationId = $event.uid" />
               <LocationDetail :location="selectedLocation" :reputation="reputation"
                 :owned="!!selectedLocation && ownedLocationIds.includes(selectedLocation.uid)"
