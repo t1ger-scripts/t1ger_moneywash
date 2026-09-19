@@ -175,7 +175,7 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="portfolio-row-actions">
-            <button class="portfolio-waypoint" type="button" title="Set waypoint" aria-label="Set waypoint"
+            <button class="portfolio-waypoint" type="button" data-tooltip="Set waypoint" aria-label="Set waypoint"
               @click="emit('waypoint', location)">
               <MapPinned :size="16" />
             </button>

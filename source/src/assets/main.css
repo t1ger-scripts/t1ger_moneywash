@@ -1562,6 +1562,7 @@ button {
 }
 
 .portfolio-waypoint {
+  position: relative;
   width: 42px;
   flex: 0 0 42px;
   padding: 0;
@@ -1572,6 +1573,63 @@ button {
 
 .portfolio-waypoint:hover {
   background: var(--accent-hover);
+}
+
+.portfolio-waypoint::before,
+.portfolio-waypoint::after {
+  position: absolute;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 0.14s ease,
+    transform 0.14s ease;
+}
+
+.portfolio-waypoint::after {
+  content: attr(data-tooltip);
+  left: 50%;
+  bottom: calc(100% + 8px);
+  min-width: max-content;
+  padding: 6px 8px;
+  border: 1px solid #3a433d;
+  border-radius: 4px;
+  background: #0c110e;
+  color: #c8d1cb;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transform: translate(-50%, 3px);
+}
+
+.portfolio-waypoint::before {
+  content: '';
+  left: 50%;
+  bottom: calc(100% + 4px);
+  width: 7px;
+  height: 7px;
+  border-right: 1px solid #3a433d;
+  border-bottom: 1px solid #3a433d;
+  background: #0c110e;
+  transform: translate(-50%, 3px) rotate(45deg);
+}
+
+.portfolio-waypoint:hover::before,
+.portfolio-waypoint:hover::after,
+.portfolio-waypoint:focus-visible::before,
+.portfolio-waypoint:focus-visible::after {
+  opacity: 1;
+}
+
+.portfolio-waypoint:hover::after,
+.portfolio-waypoint:focus-visible::after {
+  transform: translate(-50%, 0);
+}
+
+.portfolio-waypoint:hover::before,
+.portfolio-waypoint:focus-visible::before {
+  transform: translate(-50%, 0) rotate(45deg);
 }
 
 .portfolio-secondary {
