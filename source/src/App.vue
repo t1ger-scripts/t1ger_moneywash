@@ -37,6 +37,8 @@ interface ActionResponse {
   message?: string
 }
 
+type ActionCompletion = (success: boolean) => void
+
 const isPurchasing = ref(false)
 
 type ToastVariant = 'success' | 'warning' | 'error' | 'info'
@@ -315,25 +317,99 @@ function setBusinessWaypoint(location: LocationView) {
   void nuiFetch('setBusinessWaypoint', { type: location.type, locationId: location.id, coords: location.coords })
 }
 
-function transferBusiness(payload: { location: LocationView; playerId: number; playerName: string }) {
-  ownedLocationIds.value = ownedLocationIds.value.filter((uid) => uid !== payload.location.uid)
-  if (!acquiredLocationIds.value.includes(payload.location.uid)) {
-    acquiredLocationIds.value.push(payload.location.uid)
+async function transferBusiness(
+  payload: {
+    location: LocationView
+    playerId: number
+    playerName: string
+  },
+  complete: ActionCompletion,
+) {
+  try {
+    const [response] = await Promise.all([
+      nuiFetch<ActionResponse>('transferBusiness', {
+        type: payload.location.type,
+        locationId: payload.location.id,
+        targetId: payload.playerId,
+      }),
+      waitForLocalAction(),
+    ])
+
+    if (isFiveM && (!response || !response.success)) {
+      throw new Error(
+        response?.message ??
+          'The ownership transfer could not be completed.',
+      )
+    }
+
+    ownedLocationIds.value = ownedLocationIds.value.filter(
+      (uid) => uid !== payload.location.uid,
+    )
+
+    if (!acquiredLocationIds.value.includes(payload.location.uid)) {
+      acquiredLocationIds.value.push(payload.location.uid)
+    }
+
+    showToast(
+      `${payload.location.brand} was transferred to ${payload.playerName}.`,
+      'success',
+    )
+
+    complete(true)
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'The ownership transfer could not be completed.'
+
+    showToast(message, 'error')
+    complete(false)
   }
-  showToast(
-    `${payload.location.brand} was transferred to ${payload.playerName}.`,
-    'success',
-  )
-  void nuiFetch('transferBusiness', { type: payload.location.type, locationId: payload.location.id, targetId: payload.playerId })
 }
 
-function abandonBusiness(location: LocationView) {
-  ownedLocationIds.value = ownedLocationIds.value.filter((uid) => uid !== location.uid)
-  showToast(
-    `${location.brand} has been returned to the Marketplace.`,
-    'warning',
-  )
-  void nuiFetch('abandonBusiness', { type: location.type, locationId: location.id })
+async function abandonBusiness(
+  location: LocationView,
+  complete: ActionCompletion,
+) {
+  try {
+    const [response] = await Promise.all([
+      nuiFetch<ActionResponse>('abandonBusiness', {
+        type: location.type,
+        locationId: location.id,
+      }),
+      waitForLocalAction(),
+    ])
+
+    if (isFiveM && (!response || !response.success)) {
+      throw new Error(
+        response?.message ??
+          'The business could not be returned to the Marketplace.',
+      )
+    }
+
+    ownedLocationIds.value = ownedLocationIds.value.filter(
+      (uid) => uid !== location.uid,
+    )
+
+    acquiredLocationIds.value = acquiredLocationIds.value.filter(
+      (uid) => uid !== location.uid,
+    )
+
+    showToast(
+      `${location.brand} has been returned to the Marketplace.`,
+      'warning',
+    )
+
+    complete(true)
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'The business could not be returned to the Marketplace.'
+
+    showToast(message, 'error')
+    complete(false)
+  }
 }
 
 function handleEscapeKey(event: KeyboardEvent) {

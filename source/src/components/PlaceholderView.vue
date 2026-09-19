@@ -20,6 +20,8 @@ interface NearbyPlayer {
   distance: number
 }
 
+type ActionCompletion = (success: boolean) => void
+
 defineProps<{
   businesses: LocationView[]
   portfolioWeight: number
@@ -29,8 +31,20 @@ defineProps<{
 const emit = defineEmits<{
   navigateMarket: []
   waypoint: [location: LocationView]
-  transfer: [payload: { location: LocationView; playerId: number; playerName: string }]
-  abandon: [location: LocationView]
+
+  transfer: [
+    payload: {
+      location: LocationView
+      playerId: number
+      playerName: string
+    },
+    complete: ActionCompletion,
+  ]
+
+  abandon: [
+    location: LocationView,
+    complete: ActionCompletion,
+  ]
 }>()
 
 const nearbyPlayers = ref<NearbyPlayer[]>([
@@ -46,6 +60,8 @@ let nearbyPlayersTimer: number | undefined
 const selectedBusiness = ref<LocationView>()
 const dialog = ref<'transfer' | 'abandon'>('transfer')
 const selectedPlayerId = ref<number>()
+
+const isSubmittingOwnershipAction = ref(false)
 
 const selectedPlayer = computed(() => {
   return nearbyPlayers.value.find(
@@ -74,6 +90,8 @@ function openAbandon(location: LocationView) {
 }
 
 function closeDialog() {
+  if (isSubmittingOwnershipAction.value) return
+
   window.clearTimeout(nearbyPlayersTimer)
 
   selectedBusiness.value = undefined
@@ -86,23 +104,61 @@ function handleModalEscape(event: KeyboardEvent) {
 
   event.preventDefault()
   event.stopImmediatePropagation()
+
+  if (isSubmittingOwnershipAction.value) return
+
   closeDialog()
 }
 
 function confirmTransfer() {
-  if (!selectedBusiness.value || !selectedPlayer.value) return
-  emit('transfer', {
-    location: selectedBusiness.value,
-    playerId: selectedPlayer.value.id,
-    playerName: selectedPlayer.value.name,
-  })
-  closeDialog()
+  if (
+    !selectedBusiness.value ||
+    !selectedPlayer.value ||
+    isSubmittingOwnershipAction.value
+  ) {
+    return
+  }
+
+  isSubmittingOwnershipAction.value = true
+
+  emit(
+    'transfer',
+    {
+      location: selectedBusiness.value,
+      playerId: selectedPlayer.value.id,
+      playerName: selectedPlayer.value.name,
+    },
+    (success) => {
+      isSubmittingOwnershipAction.value = false
+
+      if (success) {
+        closeDialog()
+      }
+    },
+  )
 }
 
 function confirmAbandon() {
-  if (!selectedBusiness.value) return
-  emit('abandon', selectedBusiness.value)
-  closeDialog()
+  if (
+    !selectedBusiness.value ||
+    isSubmittingOwnershipAction.value
+  ) {
+    return
+  }
+
+  isSubmittingOwnershipAction.value = true
+
+  emit(
+    'abandon',
+    selectedBusiness.value,
+    (success) => {
+      isSubmittingOwnershipAction.value = false
+
+      if (success) {
+        closeDialog()
+      }
+    },
+  )
 }
 
 onMounted(() => {
@@ -201,7 +257,7 @@ onBeforeUnmount(() => {
       <div v-if="selectedBusiness" class="modal-backdrop" @click.self="closeDialog">
         <section class="portfolio-modal" role="dialog" aria-modal="true"
           :aria-label="`${selectedBusiness.brand} ownership action`">
-          <button class="modal-close" aria-label="Close" @click="closeDialog">
+          <button class="modal-close" :disabled="isSubmittingOwnershipAction" aria-label="Close" @click="closeDialog">
             <X :size="16" />
           </button>
 
@@ -254,10 +310,20 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="modal-footer-actions">
-              <button class="portfolio-secondary" @click="closeDialog">Cancel</button>
-              <button class="portfolio-primary" :disabled="isLoadingNearbyPlayers || !selectedPlayer"
-                @click="confirmTransfer">
-                Confirm Transfer
+              <button class="portfolio-secondary" :disabled="isSubmittingOwnershipAction" @click="closeDialog">
+                Cancel
+              </button>
+              <button class="portfolio-primary" :disabled="isLoadingNearbyPlayers ||
+                !selectedPlayer ||
+                isSubmittingOwnershipAction
+                " @click="confirmTransfer">
+                <span v-if="isSubmittingOwnershipAction" class="action-button-spinner" />
+
+                {{
+                  isSubmittingOwnershipAction
+                    ? 'Processing…'
+                    : 'Confirm Transfer'
+                }}
               </button>
             </div>
           </template>
@@ -281,9 +347,19 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="modal-footer-actions">
-              <button class="portfolio-secondary" @click="closeDialog">Keep Business</button>
-              <button class="portfolio-danger" @click="confirmAbandon">
-                <Trash2 :size="14" /> Relinquish Permanently
+              <button class="portfolio-secondary" :disabled="isSubmittingOwnershipAction" @click="closeDialog">
+                Keep Business
+              </button>
+              <button class="portfolio-danger" :disabled="isSubmittingOwnershipAction" @click="confirmAbandon">
+                <span v-if="isSubmittingOwnershipAction" class="action-button-spinner danger-spinner" />
+
+                <Trash2 v-else :size="14" />
+
+                {{
+                  isSubmittingOwnershipAction
+                    ? 'Processing…'
+                : 'Relinquish Permanently'
+                }}
               </button>
             </div>
           </template>

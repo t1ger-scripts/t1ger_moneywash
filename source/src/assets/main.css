@@ -2855,6 +2855,16 @@ button {
   cursor: not-allowed;
 }
 
+.portfolio-danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.danger-spinner {
+  border-color: rgba(239, 180, 175, 0.35);
+  border-top-color: #efb4af;
+}
+
 @keyframes action-button-spin {
   to {
     transform: rotate(360deg);
