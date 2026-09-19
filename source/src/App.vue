@@ -1,5 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch, onBeforeUnmount, onMounted } from 'vue'
+import {
+  CircleCheck,
+  CircleX,
+  Info,
+  TriangleAlert,
+  X,
+} from '@lucide/vue'
 import AppSidebar from '@/components/AppSidebar.vue'
 import BrowserChrome from '@/components/BrowserChrome.vue'
 import BusinessMap from '@/components/BusinessMap.vue'
@@ -24,7 +31,26 @@ const balance = ref(mockProfile.balance)
 const purchaseReview = ref<LocationView>()
 const ownedLocationIds = ref([...mockProfile.ownedLocationIds])
 const acquiredLocationIds = ref([...mockProfile.acquiredLocationIds])
-const toast = ref('')
+
+type ToastVariant = 'success' | 'warning' | 'error' | 'info'
+
+interface ToastMessage {
+  id: number
+  message: string
+  variant: ToastVariant
+}
+
+const toast = ref<ToastMessage>()
+
+const toastTitles: Record<ToastVariant, string> = {
+  success: 'Completed',
+  warning: 'Attention required',
+  error: 'Action unsuccessful',
+  info: 'Information',
+}
+
+let toastTimer: number | undefined
+
 const visible = ref(true)
 const isBootstrapping = ref(true)
 const bootstrapError = ref(false)
@@ -174,7 +200,10 @@ function confirmPurchase(location: LocationView) {
 
   if (unavailable) {
     purchaseReview.value = undefined
-    showToast('This acquisition can no longer be completed')
+    showToast(
+      'This listing was acquired by another investor.',
+      'warning',
+    )
     return
   }
 
@@ -192,7 +221,10 @@ function confirmPurchase(location: LocationView) {
   purchaseReview.value = undefined
   selectedLocationId.value = undefined
 
-  showToast(`${location.brand} added to your portfolio`)
+  showToast(
+    `${location.brand} has been added to your portfolio.`,
+    'success',
+  )
 
   void nuiFetch('purchaseBusiness', {
     type: location.type,
@@ -200,9 +232,27 @@ function confirmPurchase(location: LocationView) {
   })
 }
 
-function showToast(message: string) {
-  toast.value = message
-  window.setTimeout(() => { toast.value = '' }, 2800)
+function showToast(
+  message: string,
+  variant: ToastVariant = 'info',
+  duration = 3200,
+) {
+  window.clearTimeout(toastTimer)
+
+  toast.value = {
+    id: Date.now(),
+    message,
+    variant,
+  }
+
+  toastTimer = window.setTimeout(() => {
+    toast.value = undefined
+  }, duration)
+}
+
+function closeToast() {
+  window.clearTimeout(toastTimer)
+  toast.value = undefined
 }
 
 function ownsBusinessType(type: string) {
@@ -212,7 +262,7 @@ function ownsBusinessType(type: string) {
 }
 
 function setBusinessWaypoint(location: LocationView) {
-  showToast(`Waypoint set for ${location.brand}`)
+  showToast(`Waypoint set for ${location.brand}.`, 'success')
   void nuiFetch('setBusinessWaypoint', { type: location.type, locationId: location.id, coords: location.coords })
 }
 
@@ -221,13 +271,19 @@ function transferBusiness(payload: { location: LocationView; playerId: number; p
   if (!acquiredLocationIds.value.includes(payload.location.uid)) {
     acquiredLocationIds.value.push(payload.location.uid)
   }
-  showToast(`${payload.location.brand} transferred to ${payload.playerName}`)
+  showToast(
+    `${payload.location.brand} was transferred to ${payload.playerName}.`,
+    'success',
+  )
   void nuiFetch('transferBusiness', { type: payload.location.type, locationId: payload.location.id, targetId: payload.playerId })
 }
 
 function abandonBusiness(location: LocationView) {
   ownedLocationIds.value = ownedLocationIds.value.filter((uid) => uid !== location.uid)
-  showToast(`Ownership of ${location.brand} has been relinquished`)
+  showToast(
+    `${location.brand} has been returned to the Marketplace.`,
+    'warning',
+  )
   void nuiFetch('abandonBusiness', { type: location.type, locationId: location.id })
 }
 
@@ -256,6 +312,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.clearTimeout(bootstrapTimer)
+  window.clearTimeout(toastTimer)
 })
 
 watch(reputation, (score) => {
@@ -343,8 +400,28 @@ watch(reputation, (score) => {
           :portfolio-limit="mockProfile.portfolioLimit" @close="purchaseReview = undefined"
           @confirm="confirmPurchase" />
       </Transition>
-      <Transition name="toast">
-        <div v-if="toast" class="app-toast">{{ toast }}</div>
+      <Transition name="toast" mode="out-in">
+        <div v-if="toast" :key="toast.id" class="app-toast" :class="`toast-${toast.variant}`" role="status"
+          aria-live="polite">
+          <span class="app-toast-icon">
+            <CircleCheck v-if="toast.variant === 'success'" :size="17" />
+
+            <TriangleAlert v-else-if="toast.variant === 'warning'" :size="17" />
+
+            <CircleX v-else-if="toast.variant === 'error'" :size="17" />
+
+            <Info v-else :size="17" />
+          </span>
+
+          <span class="app-toast-copy">
+            <strong>{{ toastTitles[toast.variant] }}</strong>
+            <small>{{ toast.message }}</small>
+          </span>
+
+          <button type="button" class="app-toast-close" aria-label="Dismiss notification" @click="closeToast">
+            <X :size="14" />
+          </button>
+        </div>
       </Transition>
     </div>
   </div>
