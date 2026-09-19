@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { AlertTriangle, ArrowRight, BadgeDollarSign, BarChart3, BriefcaseBusiness, LockKeyhole, MapPin, ShieldCheck, X } from '@lucide/vue'
-import { money } from '@/lib/format'
+import { money, toRoman } from '@/lib/format'
 import type { LocationView } from '@/types/business'
 
 defineProps<{
@@ -18,7 +18,7 @@ defineEmits<{ close: []; purchase: [location: LocationView] }>()
   <Transition name="detail-slide">
     <aside v-if="location" class="location-detail">
       <button class="detail-close" @click="$emit('close')"><X :size="16" /></button>
-      <span class="detail-kicker">SITE {{ String(location.id).padStart(2, '0') }} · TIER {{ location.tier.tier }}</span>
+      <span class="detail-kicker">SITE {{ String(location.id).padStart(2, '0') }} · TIER {{ toRoman(location.tier.tier) }}</span>
       <h2>{{ location.brand }}</h2>
       <p class="detail-location"><MapPin :size="14" /> {{ location.district }}</p>
 
@@ -48,7 +48,7 @@ defineEmits<{ close: []; purchase: [location: LocationView] }>()
         :disabled="location.locked || owned || portfolioWeight + location.tier.weight > portfolioLimit"
         @click="$emit('purchase', location)"
       >
-        <template v-if="owned">Already owned</template>
+        <template v-if="owned">Already registered</template>
         <template v-else-if="location.locked"><LockKeyhole :size="15" /> Score requirement not met</template>
         <template v-else>Review purchase <ArrowRight :size="16" /></template>
       </button>

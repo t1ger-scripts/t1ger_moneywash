@@ -50,6 +50,15 @@ const activeTitle = computed(() => activeView.value === 'market' ? 'Marketplace'
 const reputationLabel = computed(() => {
   return [...mockReputationLevels].reverse().find((level) => reputation.value >= level.points)?.label ?? mockReputationLevels[0].label
 })
+const currentReputationLevel = computed(() => {
+  return [...mockReputationLevels].reverse().find((level) => reputation.value >= level.points) ?? mockReputationLevels[0]
+})
+const nextReputationLevel = computed(() => mockReputationLevels.find((level) => level.points > reputation.value))
+const reputationProgress = computed(() => {
+  if (!nextReputationLevel.value) return 100
+  const range = nextReputationLevel.value.points - currentReputationLevel.value.points
+  return Math.min(100, Math.max(0, ((reputation.value - currentReputationLevel.value.points) / range) * 100))
+})
 
 function selectTier(tier: BusinessTier) {
   selectedType.value = tier.type
@@ -100,6 +109,8 @@ function abandonBusiness(location: LocationView) {
           :active-view="activeView"
           :reputation="reputation"
           :reputation-label="reputationLabel"
+          :reputation-progress="reputationProgress"
+          :next-reputation-label="nextReputationLevel?.label"
           :character-name="mockProfile.characterName"
           :portfolio-count="ownedLocations.length"
           :portfolio-weight="portfolioWeight"

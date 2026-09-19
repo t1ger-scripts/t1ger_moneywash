@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Check, LockKeyhole } from '@lucide/vue'
+import { toRoman } from '@/lib/format'
 import type { BusinessTier } from '@/types/business'
 
 defineProps<{
@@ -21,7 +22,7 @@ defineEmits<{ select: [tier: BusinessTier] }>()
       :class="{ selected: selectedType === tier.type, locked: reputation < tier.requiredPoints }"
       @click="$emit('select', tier)"
     >
-      <span class="tier-number">{{ tier.tier }}</span>
+      <span class="tier-number">{{ toRoman(tier.tier) }}</span>
       <span class="tier-copy">
         <strong>{{ tier.label }}</strong>
         <small>{{ counts[tier.type] ?? 0 }} locations</small>

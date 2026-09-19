@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { BriefcaseBusiness, CircleHelp, LayoutGrid, ShieldCheck } from '@lucide/vue'
 
-const props = defineProps<{
+defineProps<{
   activeView: string
   reputation: number
   reputationLabel: string
+  reputationProgress: number
+  nextReputationLabel?: string
   characterName: string
   portfolioCount: number
   portfolioWeight: number
@@ -13,8 +14,6 @@ const props = defineProps<{
 }>()
 
 defineEmits<{ navigate: [view: string] }>()
-
-const repProgress = computed(() => Math.min(100, (props.reputation / 15000) * 100))
 </script>
 
 <template>
@@ -51,7 +50,11 @@ const repProgress = computed(() => Math.min(100, (props.reputation / 15000) * 10
         <span>Investor Score</span>
         <strong>{{ reputation.toLocaleString() }}</strong>
       </div>
-      <div class="progress-track"><span :style="{ width: `${repProgress}%` }" /></div>
+      <div class="progress-track"><span :style="{ width: `${reputationProgress}%` }" /></div>
+      <div class="progress-caption">
+        <span>{{ nextReputationLabel ? `Progress to ${nextReputationLabel}` : 'Maximum status achieved' }}</span>
+        <strong>{{ Math.round(reputationProgress) }}%</strong>
+      </div>
       <div class="metric-row portfolio-metric">
         <span>Portfolio Usage</span>
         <strong>{{ portfolioWeight }} / {{ portfolioLimit }}</strong>

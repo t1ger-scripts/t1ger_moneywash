@@ -41,7 +41,7 @@ defineEmits<{
         <span class="location-main">
           <span class="location-title-row">
             <strong>{{ location.brand }}</strong>
-            <span v-if="ownedLocationIds.includes(location.uid)" class="owned-badge">OWNED</span>
+            <span v-if="ownedLocationIds.includes(location.uid)" class="owned-badge">ACTIVE</span>
           </span>
           <small><MapPin :size="12" /> {{ location.district }} · Site {{ String(location.id).padStart(2, '0') }}</small>
         </span>

@@ -9,6 +9,11 @@ export const compactNumber = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 1,
 })
 
+export function toRoman(value: number): string {
+  const numerals = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX']
+  return numerals[value] ?? String(value)
+}
+
 export function districtFromCoordinates(x: number, y: number): string {
   if (y > 5500) return 'Paleto Bay'
   if (y > 1800) return x > 900 ? 'Sandy Shores' : 'Blaine County'

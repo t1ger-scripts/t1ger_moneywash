@@ -3,7 +3,6 @@ import { computed, ref } from 'vue'
 import {
   BriefcaseBusiness,
   Building2,
-  ChevronDown,
   MapPin,
   Navigation,
   Send,
@@ -12,6 +11,7 @@ import {
   UserRound,
   X,
 } from '@lucide/vue'
+import { toRoman } from '@/lib/format'
 import type { LocationView } from '@/types/business'
 
 interface NearbyPlayer {
@@ -39,15 +39,10 @@ const nearbyPlayers: NearbyPlayer[] = [
   { id: 38, name: 'Nadia Cruz', distance: 9.2 },
 ]
 
-const expandedBusinessId = ref<string>()
 const selectedBusiness = ref<LocationView>()
 const dialog = ref<'transfer' | 'abandon'>('transfer')
 const selectedPlayerId = ref<number>()
 const selectedPlayer = computed(() => nearbyPlayers.find((player) => player.id === selectedPlayerId.value))
-
-function toggleBusiness(location: LocationView) {
-  expandedBusinessId.value = expandedBusinessId.value === location.uid ? undefined : location.uid
-}
 
 function openTransfer(location: LocationView) {
   selectedBusiness.value = location
@@ -72,14 +67,12 @@ function confirmTransfer() {
     playerId: selectedPlayer.value.id,
     playerName: selectedPlayer.value.name,
   })
-  expandedBusinessId.value = undefined
   closeDialog()
 }
 
 function confirmAbandon() {
   if (!selectedBusiness.value) return
   emit('abandon', selectedBusiness.value)
-  expandedBusinessId.value = undefined
   closeDialog()
 }
 </script>
@@ -90,7 +83,7 @@ function confirmAbandon() {
       <div>
         <span class="eyebrow">OWNERSHIP LEDGER</span>
         <h1>My Portfolio</h1>
-        <p>Review your businesses and access ownership options.</p>
+        <p>Manage your registered businesses and ownership actions.</p>
       </div>
       <div class="portfolio-capacity">
         <span>PORTFOLIO USAGE</span>
@@ -108,46 +101,38 @@ function confirmAbandon() {
       </div>
 
       <div class="portfolio-list">
-        <article
-          v-for="location in businesses"
-          :key="location.uid"
-          class="portfolio-entry"
-          :class="{ expanded: expandedBusinessId === location.uid }"
-        >
-          <button
-            class="portfolio-card"
-            :aria-expanded="expandedBusinessId === location.uid"
-            @click="toggleBusiness(location)"
-          >
-            <div class="portfolio-business-icon"><Building2 :size="20" /></div>
-            <div class="portfolio-business-copy">
-              <div class="portfolio-title-row">
-                <strong>{{ location.brand }}</strong>
-                <span>ACTIVE</span>
-              </div>
-              <p>{{ location.tier.label }} · Tier {{ location.tier.tier }}</p>
-              <small><MapPin :size="12" /> {{ location.district }} · Site {{ String(location.id).padStart(2, '0') }}</small>
-            </div>
-            <div class="portfolio-weight">
-              <span>PORTFOLIO WEIGHT</span>
-              <strong>Weight: {{ location.tier.weight }}</strong>
-            </div>
-            <ChevronDown :size="17" class="portfolio-chevron" />
-          </button>
+        <article v-for="location in businesses" :key="location.uid" class="portfolio-entry">
+          <div class="portfolio-business-icon"><Building2 :size="20" /></div>
 
-          <div v-if="expandedBusinessId === location.uid" class="portfolio-expanded">
-            <div class="inline-ownership-summary">
-              <div><span>TYPE</span><strong>{{ location.tier.label }}</strong></div>
-              <div><span>TIER</span><strong>{{ location.tier.tier }}</strong></div>
-              <div><span>DISTRICT</span><strong>{{ location.district }}</strong></div>
-              <div><span>WEIGHT</span><strong>{{ location.tier.weight }}</strong></div>
+          <div class="portfolio-business-copy">
+            <div class="portfolio-title-row">
+              <strong>{{ location.brand }}</strong>
+              <span>ACTIVE</span>
             </div>
+            <small><MapPin :size="12" /> Site {{ String(location.id).padStart(2, '0') }}</small>
+          </div>
 
-            <div class="inline-ownership-actions">
-              <button class="portfolio-primary" @click="emit('waypoint', location)"><Navigation :size="15" /> Set Waypoint</button>
-              <button class="portfolio-secondary" @click="openTransfer(location)"><Send :size="15" /> Transfer Ownership</button>
-              <button class="portfolio-danger-link" @click="openAbandon(location)"><Trash2 :size="14" /> Relinquish Business</button>
-            </div>
+          <div class="portfolio-fact">
+            <span>TYPE</span>
+            <strong>{{ location.tier.label }}</strong>
+          </div>
+          <div class="portfolio-fact">
+            <span>TIER</span>
+            <strong>{{ toRoman(location.tier.tier) }}</strong>
+          </div>
+          <div class="portfolio-fact">
+            <span>DISTRICT</span>
+            <strong>{{ location.district }}</strong>
+          </div>
+          <div class="portfolio-fact portfolio-weight">
+            <span>PORTFOLIO WEIGHT</span>
+            <strong>Weight: {{ location.tier.weight }}</strong>
+          </div>
+
+          <div class="portfolio-row-actions">
+            <button class="portfolio-primary" @click="emit('waypoint', location)"><Navigation :size="15" /> Set Waypoint</button>
+            <button class="portfolio-secondary" @click="openTransfer(location)"><Send :size="15" /> Transfer Ownership</button>
+            <button class="portfolio-danger-action" @click="openAbandon(location)"><Trash2 :size="14" /> Relinquish Holding</button>
           </div>
         </article>
       </div>
@@ -155,7 +140,7 @@ function confirmAbandon() {
 
     <section v-else class="portfolio-empty">
       <BriefcaseBusiness :size="28" />
-      <h2>No businesses owned</h2>
+      <h2>No businesses registered</h2>
       <p>Purchase your first business through the Marketplace.</p>
       <button class="portfolio-primary" @click="emit('navigateMarket')">Browse Marketplace</button>
     </section>
