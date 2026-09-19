@@ -2419,47 +2419,42 @@ button {
   background: var(--accent-soft);
 }
 
-.market-availability-notice {
-  min-height: 58px;
+.market-availability-status {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 7px;
-  padding: 10px 11px;
-  border: 1px solid #343a36;
-  border-radius: 6px;
-  background: #14191d;
+  gap: 9px;
+  margin: 0 3px 8px;
+  padding: 7px 2px 11px;
+  border-bottom: 1px solid var(--line-soft);
 }
 
-.availability-notice-icon {
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
-  display: grid;
-  place-items: center;
-  border: 1px solid #343c37;
-  border-radius: 5px;
-  background: #1a2025;
-  color: #7b867f;
+.market-status-indicator {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  border-radius: 50%;
+  background: #8d7868;
+  box-shadow: 0 0 7px rgba(141, 120, 104, 0.35);
 }
 
-.market-availability-notice > span:last-child {
+.market-status-copy {
   min-width: 0;
 }
 
-.market-availability-notice strong,
-.market-availability-notice small {
+.market-status-copy strong,
+.market-status-copy small {
   display: block;
 }
 
-.market-availability-notice strong {
-  color: #aeb7b1;
-  font-size: 9px;
+.market-status-copy strong {
+  color: #9ea8a1;
+  font-size: 8px;
+  font-weight: 700;
 }
 
-.market-availability-notice small {
-  margin-top: 4px;
-  color: #626c66;
+.market-status-copy small {
+  margin-top: 3px;
+  color: #59635d;
   font-size: 7px;
   line-height: 1.4;
 }

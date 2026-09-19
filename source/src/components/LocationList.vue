@@ -113,15 +113,13 @@ watch(
       <!-- Listings exist -->
       <template v-else>
         <!-- Locations exist, but all have been acquired -->
-        <div v-if="availableCount === 0" class="market-availability-notice">
-          <span class="availability-notice-icon">
-            <Building2 :size="16" />
-          </span>
+        <div v-if="availableCount === 0" class="market-availability-status" role="status">
+          <span class="market-status-indicator" />
 
-          <span>
-            <strong>No listings currently available</strong>
+          <span class="market-status-copy">
+            <strong>Category fully allocated</strong>
             <small>
-              Every registered location in this category has been acquired.
+              All registered locations have currently been acquired.
             </small>
           </span>
         </div>
