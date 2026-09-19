@@ -1,4 +1,4 @@
--- All 95 real GTA V business locations indexed by [type][id]
+-- All 96 real GTA V business locations indexed by [type][id]
 -- id is an explicit table key (not array position) so locations can be
 -- reordered or removed without breaking existing ownership records in the DB
 -- Optional per-location `price` field overrides the tier base price

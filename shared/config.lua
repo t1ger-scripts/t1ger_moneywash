@@ -23,8 +23,8 @@ Config.DirtyMoney = {
 --- Police interaction settings
 Config.Police = {
     Jobs                  = { "police", "sheriff" }, -- jobs that can access police interactions
-    RaidMinGrade          = 0,                     -- minimum grade required to raid a business
-    DepositReviewMinGrade = 2,                     -- minimum grade required to review flagged bank deposits
+    RaidMinGrade          = 0,                       -- minimum grade required to raid a business
+    DepositReviewMinGrade = 2,                       -- minimum grade required to review flagged bank deposits
 }
 
 Config.Browser = {
@@ -65,26 +65,26 @@ Config.Reputation = {
     -- enable = false to stop that action awarding points
     Rewards          = {
         launder          = { enable = true, points = 10 }, -- per successful launder action
-        stockDelivery    = { enable = true, points = 5 }, -- per completed stock delivery mission
-        bankDeposit      = { enable = true, points = 5 }, -- when a deposit clears into personal bank
+        stockDelivery    = { enable = true, points = 5 },  -- per completed stock delivery mission
+        bankDeposit      = { enable = true, points = 5 },  -- when a deposit clears into personal bank
         accountantReview = { enable = true, points = 15 }, -- per completed records review
         businessPurchase = { enable = true, points = 50 }, -- once per business type, first purchase only
     },
 
     -- Titles are purely cosmetic - the script checks points only
-    Levels           = {
-        [0]     = "Novice",
-        [250]   = "Street Runner",
-        [500]   = "Cash Handler",
-        [1000]  = "Fixer's Associate",
-        [1750]  = "Front Runner",
-        [2750]  = "Money Man",
-        [4000]  = "Launderer",
-        [5500]  = "Silent Partner",
-        [7500]  = "Cartel Accountant",
-        [10000] = "Underworld Broker",
-        [15000] = "Kingpin",
-    },
+    Levels = {
+        [0]     = "Unverified",
+        [250]   = "Registered",
+        [500]   = "Active Operator",
+        [1000]  = "Established Operator",
+        [1750]  = "Verified Investor",
+        [2750]  = "Accredited Investor",
+        [4000]  = "Senior Operator",
+        [5500]  = "Portfolio Manager",
+        [7500]  = "Commercial Investor",
+        [10000] = "Institutional Buyer",
+        [15000] = "Premium Member",
+    }
 
     ProgressColors   = {
         { threshold = 0,   color = "#dc2626" },
@@ -94,4 +94,25 @@ Config.Reputation = {
         { threshold = 80,  color = "#22c55e" },
         { threshold = 100, color = "#16a34a" },
     },
+}
+
+Config.BrowserUI = {
+    Theme = {
+        AccentColor      = '#E7C30D',
+        AccentHoverColor = '#F5D329',
+        AccentDarkColor  = '#8F7910',
+
+        BodyColor        = '#080908',
+        PanelColor       = '#0E100F',
+        PanelAltColor    = '#141713',
+        CardColor        = '#111411',
+        BorderColor      = '#282B27',
+
+        TextColor        = '#F0F1ED',
+        MutedTextColor   = '#858A82',
+
+        SuccessColor     = '#76C97A',
+        WarningColor     = '#D39A4C',
+        DangerColor      = '#D65F58',
+    }
 }
