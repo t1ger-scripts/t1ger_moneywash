@@ -66,9 +66,39 @@ const availableCounts = computed<Record<string, number>>(() => {
   )
 })
 
+const selectedTierLocations = computed(() => {
+  return locationViews.value.filter(
+    (location) => location.type === selectedType.value,
+  )
+})
+
 const displayedLocations = computed(() => {
   const needle = query.value.trim().toLowerCase()
-  return locationViews.value.filter((location) => location.type === selectedType.value && (!needle || `${location.brand} ${location.street ?? ''} ${location.zone}`.toLowerCase().includes(needle)))
+
+  if (!needle) {
+    return selectedTierLocations.value
+  }
+
+  return selectedTierLocations.value.filter((location) => {
+    const searchableText = [
+      location.brand,
+      location.street,
+      location.crossingStreet,
+      location.zone,
+      String(location.id),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+
+    return searchableText.includes(needle)
+  })
+})
+
+const availableListingCount = computed(() => {
+  return selectedTierLocations.value.filter(
+    (location) => location.status === 'available',
+  ).length
 })
 
 const mapLocations = computed(() => {
@@ -268,6 +298,7 @@ watch(reputation, (score) => {
 
             <section class="workspace">
               <LocationList :locations="displayedLocations" :selected-id="selectedLocationId" :query="query"
+                :total-locations="selectedTierLocations.length" :available-count="availableListingCount"
                 @select="selectedLocationId = $event.uid" @update:query="query = $event" />
               <div class="map-stack">
                 <BusinessMap :locations="mapLocations" :selected="selectedLocation"
