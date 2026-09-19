@@ -263,6 +263,41 @@ RegisterNUICallback("retryBootstrap", function(_, cb)
     RequestBrowserBootstrap()
 end)
 
+RegisterNUICallback("getNearbyPlayers", function(_, cb)
+    if not BrowserOpen then
+        cb({
+            success = false,
+            message = "The browser is no longer open.",
+            players = {},
+        })
+
+        return
+    end
+
+    local response = lib.callback.await(
+        "t1ger_moneywash:server:getBrowserNearbyPlayers",
+        false
+    )
+
+    if not response or not response.success then
+        cb({
+            success = false,
+            reason =
+                response and response.reason or
+                "nearby_players_unavailable",
+            message = "Nearby players could not be retrieved.",
+            players = {},
+        })
+
+        return
+    end
+
+    cb({
+        success = true,
+        players = response.players or {},
+    })
+end)
+
 RegisterNUICallback("setBusinessWaypoint", function(data, cb)
     if not BrowserOpen then
         cb({

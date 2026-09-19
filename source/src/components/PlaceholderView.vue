@@ -22,6 +22,10 @@ interface NearbyPlayer {
 
 type ActionCompletion = (success: boolean) => void
 
+type NearbyPlayersCompletion = (
+  players: NearbyPlayer[],
+) => void
+
 defineProps<{
   businesses: LocationView[]
   portfolioWeight: number
@@ -31,6 +35,10 @@ defineProps<{
 const emit = defineEmits<{
   navigateMarket: []
   waypoint: [location: LocationView]
+
+  requestNearbyPlayers: [
+    complete: NearbyPlayersCompletion,
+  ]
 
   transfer: [
     payload: {
@@ -47,15 +55,9 @@ const emit = defineEmits<{
   ]
 }>()
 
-const nearbyPlayers = ref<NearbyPlayer[]>([
-  { id: 24, name: 'John Doe', distance: 3.4 },
-  { id: 71, name: 'Michael King', distance: 7.8 },
-  { id: 38, name: 'Nadia Cruz', distance: 9.2 },
-])
+const nearbyPlayers = ref<NearbyPlayer[]>([])
 
 const isLoadingNearbyPlayers = ref(false)
-
-let nearbyPlayersTimer: number | undefined
 
 const selectedBusiness = ref<LocationView>()
 const dialog = ref<'transfer' | 'abandon'>('transfer')
@@ -72,16 +74,21 @@ const selectedPlayer = computed(() => {
 function openTransfer(location: LocationView) {
   selectedBusiness.value = location
   selectedPlayerId.value = undefined
+  nearbyPlayers.value = []
   dialog.value = 'transfer'
   isLoadingNearbyPlayers.value = true
 
-  window.clearTimeout(nearbyPlayersTimer)
+  emit('requestNearbyPlayers', (players) => {
+    if (
+      selectedBusiness.value?.uid !== location.uid ||
+      dialog.value !== 'transfer'
+    ) {
+      return
+    }
 
-  // Local preview only.
-  // Later, Lua will return the actual nearby players.
-  nearbyPlayersTimer = window.setTimeout(() => {
+    nearbyPlayers.value = players
     isLoadingNearbyPlayers.value = false
-  }, 650)
+  })
 }
 
 function openAbandon(location: LocationView) {
@@ -91,8 +98,6 @@ function openAbandon(location: LocationView) {
 
 function closeDialog() {
   if (isSubmittingOwnershipAction.value) return
-
-  window.clearTimeout(nearbyPlayersTimer)
 
   selectedBusiness.value = undefined
   selectedPlayerId.value = undefined
@@ -166,7 +171,6 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  window.clearTimeout(nearbyPlayersTimer)
   window.removeEventListener('keydown', handleModalEscape, true)
 })
 
@@ -358,7 +362,7 @@ onBeforeUnmount(() => {
                 {{
                   isSubmittingOwnershipAction
                     ? 'Processing…'
-                : 'Relinquish Permanently'
+                    : 'Relinquish Permanently'
                 }}
               </button>
             </div>

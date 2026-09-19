@@ -88,9 +88,29 @@ interface ActionResponse {
   data?: BrowserSnapshot
 }
 
+interface NearbyPlayer {
+  id: number
+  name: string
+  distance: number
+}
+
+interface NearbyPlayersResponse extends ActionResponse {
+  players?: NearbyPlayer[]
+}
+
+type NearbyPlayersCompletion = (
+  players: NearbyPlayer[],
+) => void
+
 type ActionCompletion = (success: boolean) => void
 
 const isPurchasing = ref(false)
+
+const mockNearbyPlayers: NearbyPlayer[] = [
+  { id: 24, name: 'John Doe', distance: 3.4 },
+  { id: 71, name: 'Michael King', distance: 7.8 },
+  { id: 38, name: 'Nadia Cruz', distance: 9.2 },
+]
 
 type ToastVariant = 'success' | 'warning' | 'error' | 'info'
 
@@ -314,7 +334,7 @@ async function confirmPurchase(location: LocationView) {
     ownsBusinessType(currentLocation.type) ||
     balance.value < currentLocation.effectivePrice ||
     portfolioWeight.value + currentLocation.tier.weight >
-      portfolioLimit.value
+    portfolioLimit.value
 
   if (cannotPurchase || !currentLocation) {
     purchaseReview.value = undefined
@@ -342,7 +362,7 @@ async function confirmPurchase(location: LocationView) {
       if (!response || !response.success) {
         throw new Error(
           response?.message ??
-            'The acquisition could not be completed.',
+          'The acquisition could not be completed.',
         )
       }
 
@@ -436,7 +456,7 @@ async function setBusinessWaypoint(location: LocationView) {
     if (isFiveM && (!response || !response.success)) {
       throw new Error(
         response?.message ??
-          'The waypoint could not be set.',
+        'The waypoint could not be set.',
       )
     }
 
@@ -450,6 +470,40 @@ async function setBusinessWaypoint(location: LocationView) {
         ? error.message
         : 'The waypoint could not be set.'
 
+    showToast(message, 'error')
+  }
+}
+
+async function requestNearbyPlayers(
+  complete: NearbyPlayersCompletion,
+) {
+  if (!isFiveM) {
+    await waitForLocalAction(650)
+    complete(mockNearbyPlayers)
+    return
+  }
+
+  try {
+    const response =
+      await nuiFetch<NearbyPlayersResponse>(
+        'getNearbyPlayers',
+      )
+
+    if (!response || !response.success) {
+      throw new Error(
+        response?.message ??
+        'Nearby players could not be retrieved.',
+      )
+    }
+
+    complete(response.players ?? [])
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Nearby players could not be retrieved.'
+
+    complete([])
     showToast(message, 'error')
   }
 }
@@ -804,7 +858,7 @@ watch(reputation, (score) => {
 
           <PlaceholderView v-else :businesses="ownedLocations" :portfolio-weight="portfolioWeight"
             :portfolio-limit="portfolioLimit" @navigate-market="activeView = 'market'" @waypoint="setBusinessWaypoint"
-            @transfer="transferBusiness" @abandon="abandonBusiness" />
+            @request-nearby-players="requestNearbyPlayers" @transfer="transferBusiness" @abandon="abandonBusiness" />
         </template>
       </div>
 
