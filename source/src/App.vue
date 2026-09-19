@@ -85,6 +85,7 @@ interface ActionResponse {
   success: boolean
   message?: string
   reason?: string
+  data?: BrowserSnapshot
 }
 
 type ActionCompletion = (success: boolean) => void
@@ -303,7 +304,7 @@ async function confirmPurchase(location: LocationView) {
   if (isPurchasing.value) return
 
   const currentLocation = locationViews.value.find(
-    (item) => item.uid === location.uid,
+    item => item.uid === location.uid,
   )
 
   const cannotPurchase =
@@ -313,7 +314,7 @@ async function confirmPurchase(location: LocationView) {
     ownsBusinessType(currentLocation.type) ||
     balance.value < currentLocation.effectivePrice ||
     portfolioWeight.value + currentLocation.tier.weight >
-    portfolioLimit.value
+      portfolioLimit.value
 
   if (cannotPurchase || !currentLocation) {
     purchaseReview.value = undefined
@@ -337,27 +338,41 @@ async function confirmPurchase(location: LocationView) {
       waitForLocalAction(),
     ])
 
-    if (isFiveM && (!response || !response.success)) {
-      throw new Error(
-        response?.message ?? 'The acquisition could not be completed.',
+    if (isFiveM) {
+      if (!response || !response.success) {
+        throw new Error(
+          response?.message ??
+            'The acquisition could not be completed.',
+        )
+      }
+
+      if (response.data) {
+        applyBrowserSnapshot(response.data)
+      } else {
+        purchaseReview.value = undefined
+        selectedLocationId.value = undefined
+        void nuiFetch('retryBootstrap')
+      }
+
+      showToast(
+        `${currentLocation.brand} has been added to your portfolio.`,
+        'success',
       )
+
+      return
     }
 
-    /*
-     * Local preview update.
-     *
-     * Later, when FiveM integration is added, these values should come
-     * from the authoritative server response instead.
-     */
+    // Local browser preview only.
     balance.value -= currentLocation.effectivePrice
 
     if (!ownedLocationIds.value.includes(currentLocation.uid)) {
       ownedLocationIds.value.push(currentLocation.uid)
     }
 
-    acquiredLocationIds.value = acquiredLocationIds.value.filter(
-      (uid) => uid !== currentLocation.uid,
-    )
+    acquiredLocationIds.value =
+      acquiredLocationIds.value.filter(
+        uid => uid !== currentLocation.uid,
+      )
 
     purchaseReview.value = undefined
     selectedLocationId.value = undefined

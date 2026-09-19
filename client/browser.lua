@@ -11,6 +11,24 @@ local BootstrapRequestId = 0
 local LocationAddressCache = {}
 local BrowserLocales = nil
 
+local BrowserActionMessages = {
+    invalid_request = "The acquisition request was invalid.",
+    invalid_player = "Your player data is not available.",
+    invalid_type = "This business category is invalid.",
+    invalid_location = "This business location does not exist.",
+    already_owned = "This listing has already been acquired.",
+    already_owns_type = "You already own a business in this category.",
+    insufficient_reputation = "Your Investor Score is not high enough.",
+    portfolio_full = "Your portfolio does not have enough available capacity.",
+    insufficient_funds = "You do not have enough money in your bank account.",
+    database_error = "The acquisition could not be saved.",
+    purchase_failed = "The acquisition could not be completed.",
+}
+
+local function GetBrowserActionMessage(reason)
+    return BrowserActionMessages[reason] or "The acquisition could not be completed."
+end
+
 --- Loads the configured ox_lib locale file for use inside the NUI.
 --- Falls back to English when the selected locale does not exist.
 --- @return table
@@ -245,6 +263,66 @@ RegisterNUICallback("retryBootstrap", function(_, cb)
     RequestBrowserBootstrap()
 end)
 
+RegisterNUICallback("purchaseBusiness", function(data, cb)
+    if not BrowserOpen then
+        cb({
+            success = false,
+            reason = "browser_closed",
+            message = "The browser is no longer open.",
+        })
+
+        return
+    end
+
+    if type(data) ~= "table" then
+        cb({
+            success = false,
+            reason = "invalid_request",
+            message = GetBrowserActionMessage("invalid_request"),
+        })
+
+        return
+    end
+
+    local response = lib.callback.await(
+        "t1ger_moneywash:server:browserPurchaseBusiness",
+        false,
+        {
+            type = data.type,
+            locationId = data.locationId,
+        }
+    )
+
+    if not response or not response.success then
+        local reason =
+            response and response.reason or
+            "purchase_failed"
+
+        cb({
+            success = false,
+            reason = reason,
+            message = GetBrowserActionMessage(reason),
+        })
+
+        return
+    end
+
+    if response.data then
+        EnrichBrowserLocations(response.data)
+        response.data.locales = LoadBrowserLocales()
+    else
+        -- The purchase succeeded, but rebuilding the snapshot failed.
+        -- Request another authoritative snapshot without treating the
+        -- completed purchase as a failure.
+        RequestBrowserBootstrap()
+    end
+
+    cb({
+        success = true,
+        data = response.data,
+    })
+end)
+
 RegisterNUICallback("close", function(_, cb)
     CloseBrowser()
 
@@ -253,9 +331,29 @@ RegisterNUICallback("close", function(_, cb)
     })
 end)
 
+RegisterNetEvent(
+    "t1ger_moneywash:client:browserRefresh",
+    function(changedBy)
+        local ownServerId =
+            GetPlayerServerId(PlayerId())
+
+        -- The purchasing player receives their updated snapshot directly
+        -- from the purchase callback.
+        if changedBy == ownServerId then
+            return
+        end
+
+        if not BrowserOpen or not NuiReady then
+            return
+        end
+
+        RequestBrowserBootstrap()
+    end
+)
+
 CreateThread(function()
     while not _Target do Wait(100) end -- wait for target to initialize
-    
+
     _API.Target.AddModel(Config.Browser.Models, {
         {
             name = "t1ger_moneywash:open_browser",

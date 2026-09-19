@@ -161,21 +161,75 @@ local function BuildBrowserSnapshot(src)
     }
 end
 
-lib.callback.register(
-    "t1ger_moneywash:server:getBrowserBootstrap",
-    function(source)
-        local data, reason = BuildBrowserSnapshot(source)
+lib.callback.register( "t1ger_moneywash:server:getBrowserBootstrap", function(source)
+    local data, reason = BuildBrowserSnapshot(source)
+    if not data then
+        return {
+            success = false,
+            reason = reason or "unknown",
+        }
+    end
+    return {
+        success = true,
+        data = data,
+    }
+end)
 
-        if not data then
+--- Purchases a business through the browser.
+--- All price, ownership, reputation and capacity checks remain server-authoritative.
+lib.callback.register(
+    "t1ger_moneywash:server:browserPurchaseBusiness",
+    function(source, payload)
+        if type(payload) ~= "table" then
             return {
                 success = false,
-                reason = reason or "unknown",
+                reason = "invalid_request",
             }
         end
 
+        local businessType = payload.type
+        local locationId = tonumber(payload.locationId)
+
+        if type(businessType) ~= "string" or
+            businessType == "" or
+            not locationId or
+            locationId % 1 ~= 0
+        then
+            return {
+                success = false,
+                reason = "invalid_request",
+            }
+        end
+
+        local success, reason = BuyBusiness(
+            source,
+            businessType,
+            locationId
+        )
+
+        if not success then
+            return {
+                success = false,
+                reason = reason or "purchase_failed",
+            }
+        end
+
+        local snapshot, snapshotReason =
+            BuildBrowserSnapshot(source)
+
+        -- Notify all browser clients that marketplace ownership changed.
+        -- The purchasing player ignores this because their fresh snapshot is
+        -- returned directly below.
+        TriggerClientEvent(
+            "t1ger_moneywash:client:browserRefresh",
+            -1,
+            source
+        )
+
         return {
             success = true,
-            data = data,
+            data = snapshot,
+            refreshReason = snapshotReason,
         }
     end
 )
