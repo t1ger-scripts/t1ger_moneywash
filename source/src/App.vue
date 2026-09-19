@@ -113,9 +113,9 @@ function abandonBusiness(location: LocationView) {
         <main v-if="activeView === 'market'" class="market-view">
           <header class="market-header">
             <div>
-              <span class="eyebrow">VERIFIED BUSINESS MARKETPLACE</span>
+              <span class="eyebrow">VERIFIED LISTINGS</span>
               <h1>Marketplace</h1>
-              <p>Browse verified business opportunities and expand your portfolio.</p>
+              <p>Browse available business acquisitions and expand your portfolio.</p>
             </div>
           </header>
 

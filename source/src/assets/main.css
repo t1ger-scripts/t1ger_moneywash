@@ -618,6 +618,21 @@ button {
   filter: saturate(.62);
 }
 
+.tier-pill.eligibility-boundary {
+  position: relative;
+  margin-left: 8px;
+}
+
+.tier-pill.eligibility-boundary::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: -8px;
+  width: 1px;
+  background: #343c36;
+}
+
 .workspace {
   flex: 1;
   min-height: 0;
@@ -765,6 +780,12 @@ button {
   font-size: 7px;
 }
 
+.listing-location span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .owned-badge {
   flex: 0 0 auto;
   padding: 2px 4px;
@@ -787,8 +808,9 @@ button {
 }
 
 .location-price strong {
-  color: #c8d2cc;
-  font-size: 9px;
+  color: #eef3ef;
+  font-size: 10px;
+  font-weight: 800;
 }
 
 .location-price small {
@@ -798,7 +820,14 @@ button {
 }
 
 .card-chevron {
-  color: #48514c;
+  color: #59635d;
+  transition: color .15s ease, transform .15s ease;
+}
+
+.location-card:hover .card-chevron,
+.location-card.selected .card-chevron {
+  color: var(--accent);
+  transform: translateX(2px);
 }
 
 .empty-list {
@@ -922,43 +951,96 @@ button {
 }
 
 .map-marker-shell {
-  background: transparent !important;
+  overflow: visible !important;
   border: 0 !important;
+  background: transparent !important;
 }
 
-.map-marker {
+.map-pin {
   position: relative;
   width: 100%;
   height: 100%;
-  display: grid;
-  place-items: center;
-  border: 2px solid #b2c1b5;
-  border-radius: 50% 50% 50% 9px;
-  background: #162019;
-  color: #dce7df;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, .55);
-  transform: rotate(-45deg);
-  transition: transform .15s;
+  display: block;
+  color: #e2e9e4;
+  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, .55));
+  transition: filter .15s ease, transform .15s ease;
 }
 
-.map-marker b {
-  position: relative;
-  z-index: 1;
-  transform: rotate(45deg);
-  font: 800 9px ui-monospace, monospace;
+.map-pin svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
-.map-marker.selected {
-  border-color: #fff4a9;
-  background: var(--accent-dark);
-  color: #fff;
-  box-shadow: 0 0 0 5px rgba(231, 195, 13, .18), 0 4px 16px rgba(0, 0, 0, .6);
+.map-pin-shape {
+  fill: #142019;
+  stroke: #c7d2ca;
+  stroke-width: 1.6;
+  transition: fill .15s ease, stroke .15s ease;
 }
 
-.map-marker.locked {
-  border-color: #8a7167;
-  background: #3a2924;
-  color: #b99688;
+.map-pin-id {
+  fill: #e2e9e4;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: -.04em;
+  pointer-events: none;
+  user-select: none;
+}
+
+.map-pin.selected .map-pin-id {
+  fill: #171400;
+}
+
+.map-pin.locked .map-pin-id {
+  fill: #d4afa4;
+}
+
+.map-pin.locked.selected .map-pin-id {
+  fill: #171400;
+}
+
+.map-pin:hover {
+  z-index: 2;
+  transform: translateY(-2px);
+  filter: drop-shadow(0 6px 7px rgba(0, 0, 0, .65));
+}
+
+.map-pin.selected {
+  z-index: 3;
+  color: #171400;
+  filter:
+    drop-shadow(0 5px 7px rgba(0, 0, 0, .65))
+    drop-shadow(0 0 7px rgba(231, 195, 13, .65));
+}
+
+.map-pin.selected .map-pin-shape {
+  fill: var(--accent);
+  stroke: #fff3a5;
+  stroke-width: 1.8;
+}
+
+.map-pin.locked {
+  color: #d4afa4;
+  opacity: .86;
+}
+
+.map-pin.locked .map-pin-shape {
+  fill: #392723;
+  stroke: #9b7469;
+}
+
+.map-pin.locked.selected {
+  color: #171400;
+  opacity: 1;
+}
+
+.map-pin.locked.selected .map-pin-shape {
+  fill: var(--accent);
+  stroke: #fff3a5;
 }
 
 .leaflet-tooltip {

@@ -75,15 +75,44 @@ function renderMarkers() {
 
   props.locations.forEach((location) => {
     const selected = props.selected?.uid === location.uid
+    const markerId = String(location.id).padStart(2, '0')
+
     const icon = L.divIcon({
       className: 'map-marker-shell',
-      html: `<span class="map-marker${selected ? ' selected' : ''}${location.locked ? ' locked' : ''}"><i></i><b>${location.id}</b></span>`,
-      iconSize: selected ? [40, 40] : [31, 31],
-      iconAnchor: selected ? [20, 20] : [15, 15],
+      html: `
+    <span class="map-pin${selected ? ' selected' : ''}${location.locked ? ' locked' : ''}">
+      <svg viewBox="0 0 32 42" aria-hidden="true">
+        <path
+          class="map-pin-shape"
+          d="M16 1C7.7 1 1 7.7 1 16c0 11 15 25 15 25s15-14 15-25C31 7.7 24.3 1 16 1Z"
+        />
+        <text
+          class="map-pin-id"
+          x="16"
+          y="16"
+          text-anchor="middle"
+          dominant-baseline="middle"
+        >${markerId}</text>
+      </svg>
+    </span>
+  `,
+      iconSize: selected ? [31, 41] : [26, 35],
+      iconAnchor: selected ? [16, 40] : [13, 34],
     })
 
-    L.marker([location.coords.y, location.coords.x], { icon, title: location.brand })
-      .bindTooltip(location.brand, { direction: 'top', offset: [0, -14], opacity: 1 })
+    const locationLabel = location.street
+      ? `${location.brand} · ${location.street}`
+      : `${location.brand} · ${location.zone}`
+
+    L.marker([location.coords.y, location.coords.x], {
+      icon,
+      title: locationLabel,
+    })
+      .bindTooltip(locationLabel, {
+        direction: 'top',
+        offset: [0, -32],
+        opacity: 1,
+      })
       .on('click', () => emit('select', location))
       .addTo(markers)
   })
@@ -157,7 +186,7 @@ onBeforeUnmount(() => {
     <div class="map-legend">
       <span><i class="legend-dot available" /> Available</span>
       <span><i class="legend-dot selected" /> Selected</span>
-      <span><i class="legend-dot locked" /> Score required</span>
+      <span><i class="legend-dot locked" /> Score Required</span>
     </div>
   </section>
 </template>
