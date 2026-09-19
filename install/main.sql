@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS `moneywash_businesses` (
     `closed_until`      BIGINT(20)            DEFAULT NULL,   -- unix timestamp closure ends
     `purchased_at`      BIGINT(20)   NOT NULL DEFAULT 0,      -- unix timestamp of purchase
     PRIMARY KEY (`id`),
-    UNIQUE KEY `location` (`business_type`, `location_id`)    -- enforces one owner per location
+    UNIQUE KEY `location` (`business_type`, `location_id`),   -- one owner per location
+    UNIQUE KEY `owner_type` (`identifier`, `business_type`)   -- one business of each type per player
 );
 
 -- Stock purchase receipts (deleted when consumed in accountant review)

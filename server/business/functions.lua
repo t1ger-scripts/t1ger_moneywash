@@ -9,6 +9,35 @@
 --- PURCHASE / OWNERSHIP
 --- ============================================================================
 
+--- Active ownership mutations.
+--- Prevents two simultaneous actions from modifying the same owner or location.
+local OwnershipLocks = {}
+
+--- Attempts to acquire all supplied ownership locks.
+--- @param keys string[]
+--- @return boolean
+local function TryAcquireOwnershipLocks(keys)
+    for _, key in ipairs(keys) do
+        if OwnershipLocks[key] then
+            return false
+        end
+    end
+
+    for _, key in ipairs(keys) do
+        OwnershipLocks[key] = true
+    end
+
+    return true
+end
+
+--- Releases previously acquired ownership locks.
+--- @param keys string[]
+local function ReleaseOwnershipLocks(keys)
+    for _, key in ipairs(keys) do
+        OwnershipLocks[key] = nil
+    end
+end
+
 --- Returns whether a player meets the reputation requirement for a given tier
 --- @param src number
 --- @param tier table
@@ -36,48 +65,99 @@ end
 --- @return boolean success, string reason
 function BuyBusiness(src, businessType, locationId)
     local identifier = _API.Player.GetIdentifier(src)
-    if not identifier then return false, "invalid_player" end
+    if not identifier then
+        return false, "invalid_player"
+    end
+
+    if type(businessType) ~= "string" then
+        return false, "invalid_type"
+    end
+
+    locationId = tonumber(locationId)
+    if not locationId then
+        return false, "invalid_location"
+    end
 
     local tier = GetTierByType(businessType)
-    if not tier then return false, "invalid_type" end
+    if not tier then
+        return false, "invalid_type"
+    end
 
     local location = GetLocationConfig(businessType, locationId)
-    if not location then return false, "invalid_location" end
+    if not location then
+        return false, "invalid_location"
+    end
 
+    local lockKeys = {
+        ("owner:%s"):format(identifier),
+        ("location:%s:%d"):format(businessType, locationId),
+    }
+
+    if not TryAcquireOwnershipLocks(lockKeys) then
+        return false, "operation_in_progress"
+    end
+
+    -- Repeat all mutable checks after acquiring the locks.
     if IsLocationOwned(businessType, locationId) then
+        ReleaseOwnershipLocks(lockKeys)
         return false, "already_owned"
     end
 
     if PlayerOwnsType(identifier, businessType) then
+        ReleaseOwnershipLocks(lockKeys)
         return false, "already_owns_type"
     end
 
     if not MeetsReputationRequirement(src, tier) then
+        ReleaseOwnershipLocks(lockKeys)
         return false, "insufficient_reputation"
     end
 
     if not HasPortfolioCapacity(identifier, tier) then
+        ReleaseOwnershipLocks(lockKeys)
         return false, "portfolio_full"
     end
 
-    local price = location.price or tier.price
+    local price = tonumber(location.price or tier.price)
+    if not price or price <= 0 then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "invalid_price"
+    end
+
     if _API.Player.GetMoney(src, "bank") < price then
+        ReleaseOwnershipLocks(lockKeys)
         return false, "insufficient_funds"
     end
 
     _API.Player.RemoveMoney(src, price, "bank")
 
     local now = os.time()
-    local id = MySQL.insert.await(
+
+    local insertSucceeded, id = pcall(
+        MySQL.insert.await,
         "INSERT INTO moneywash_businesses " ..
         "(identifier, business_type, location_id, stock, safe_covered, safe_exposed, " ..
         "suspicion, total_laundered, last_laundered_at, is_closed, purchased_at) " ..
         "VALUES (?, ?, ?, 0, 0, 0, 0, 0, 0, 0, ?)",
-        {identifier, businessType, locationId, now}
+        {
+            identifier,
+            businessType,
+            locationId,
+            now,
+        }
     )
 
-    if not id then
+    if not insertSucceeded or not id then
+        -- Restore the payment if the insert failed, including duplicate-key races.
         _API.Player.AddMoney(src, price, "bank")
+        ReleaseOwnershipLocks(lockKeys)
+
+        if Config.Debug then
+            print(("[MoneyWash] Purchase database error: %s"):format(
+                tostring(id)
+            ))
+        end
+
         return false, "database_error"
     end
 
@@ -96,95 +176,362 @@ function BuyBusiness(src, businessType, locationId)
         purchased_at      = now,
     })
 
-    -- Award reputation for first purchase of this type
-    if Config.Reputation.Enable and Config.Reputation.Rewards.businessPurchase.enable then
-        local alreadyOwned = MySQL.scalar.await(
-            "SELECT COUNT(*) FROM moneywash_businesses WHERE identifier = ? AND business_type = ? AND id != ?",
-            {identifier, businessType, id}
+    -- The database and in-memory store are now synchronized.
+    ReleaseOwnershipLocks(lockKeys)
+
+    -- Award reputation for the first currently registered business of this type.
+    if Config.Reputation.Enable and
+        Config.Reputation.Rewards.businessPurchase.enable
+    then
+        local previouslyOwned = MySQL.scalar.await(
+            "SELECT COUNT(*) FROM moneywash_businesses " ..
+            "WHERE identifier = ? AND business_type = ? AND id != ?",
+            {
+                identifier,
+                businessType,
+                id,
+            }
         )
-        if (alreadyOwned or 0) == 0 then
-            AddReputationPoints(src, Config.Reputation.Rewards.businessPurchase.points)
+
+        if (previouslyOwned or 0) == 0 then
+            AddReputationPoints(
+                src,
+                Config.Reputation.Rewards.businessPurchase.points
+            )
         end
     end
 
-    TriggerClientEvent("t1ger_moneywash:client:businessPurchased", src, id, businessType, locationId)
+    TriggerClientEvent(
+        "t1ger_moneywash:client:businessPurchased",
+        src,
+        id,
+        businessType,
+        locationId
+    )
 
     if Config.Debug then
-        print(("[MoneyWash] %s purchased %s #%d for $%d"):format(identifier, businessType, locationId, price))
+        print(("[MoneyWash] %s purchased %s #%d for $%d"):format(
+            identifier,
+            businessType,
+            locationId,
+            price
+        ))
     end
 
     return true, "success"
 end
 
---- Transfers a business to another online player
---- New owner inherits everything as-is
---- @param src number current owner
---- @param targetIdentifier string
+--- Returns whether two players are within the configured transfer distance.
+--- @param sourcePlayer number
+--- @param targetPlayer number
+--- @return boolean
+local function ArePlayersWithinTransferDistance(sourcePlayer, targetPlayer)
+    local sourcePed = GetPlayerPed(sourcePlayer)
+    local targetPed = GetPlayerPed(targetPlayer)
+
+    if not sourcePed or sourcePed == 0 then
+        return false
+    end
+
+    if not targetPed or targetPed == 0 then
+        return false
+    end
+
+    local sourceCoords = GetEntityCoords(sourcePed)
+    local targetCoords = GetEntityCoords(targetPed)
+    local distance = #(sourceCoords - targetCoords)
+
+    return distance <= (Config.Browser.TransferDistance or 10.0)
+end
+
+--- Transfers a business to another nearby online player.
+--- The new owner inherits the complete business state.
+--- @param src number Current owner's server ID
+--- @param targetSrc number New owner's server ID
 --- @param businessId number
 --- @return boolean success, string reason
-function TransferBusiness(src, targetIdentifier, businessId)
+function TransferBusiness(src, targetSrc, businessId)
     local identifier = _API.Player.GetIdentifier(src)
-    if not identifier then return false, "invalid_player" end
+    if not identifier then
+        return false, "invalid_player"
+    end
+
+    targetSrc = tonumber(targetSrc)
+    businessId = tonumber(businessId)
+
+    if not targetSrc then
+        return false, "target_not_online"
+    end
+
+    if not businessId then
+        return false, "not_found"
+    end
+
+    if targetSrc == src then
+        return false, "self_transfer"
+    end
+
+    local targetIdentifier = _API.Player.GetIdentifier(targetSrc)
+    if not targetIdentifier then
+        return false, "target_not_online"
+    end
 
     local business = GetBusiness(businessId)
-    if not business then return false, "not_found" end
-    if business.identifier ~= identifier then return false, "not_owner" end
-
-    local targetSrc = nil
-    for _, player in ipairs(_API.GetOnlinePlayers()) do
-        if player.identifier == targetIdentifier then
-            targetSrc = player.source
-            break
-        end
+    if not business then
+        return false, "not_found"
     end
-    if not targetSrc then return false, "target_not_online" end
+
+    if business.identifier ~= identifier then
+        return false, "not_owner"
+    end
+
+    if not ArePlayersWithinTransferDistance(src, targetSrc) then
+        return false, "target_too_far"
+    end
+
+    local lockKeys = {
+        ("business:%d"):format(businessId),
+        ("owner:%s"):format(identifier),
+        ("owner:%s"):format(targetIdentifier),
+    }
+
+    if not TryAcquireOwnershipLocks(lockKeys) then
+        return false, "operation_in_progress"
+    end
+
+    -- Revalidate all mutable state after acquiring the locks.
+    business = GetBusiness(businessId)
+
+    if not business then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "not_found"
+    end
+
+    if business.identifier ~= identifier then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "not_owner"
+    end
+
+    targetIdentifier = _API.Player.GetIdentifier(targetSrc)
+
+    if not targetIdentifier then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "target_not_online"
+    end
+
+    if not ArePlayersWithinTransferDistance(src, targetSrc) then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "target_too_far"
+    end
+
+    local stockMission = GetActiveStockMission(src)
+
+    if stockMission and stockMission.businessId == businessId then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "active_stock_mission"
+    end
+
+    local pendingDeposit = GetActiveDeposit(identifier)
+
+    if pendingDeposit and pendingDeposit.business_id == businessId then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "pending_business_deposit"
+    end
+
+    if GetQueuedRaids()[businessId] then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "raid_pending"
+    end
 
     if PlayerOwnsType(targetIdentifier, business.type) then
+        ReleaseOwnershipLocks(lockKeys)
         return false, "target_owns_type"
     end
 
     local tier = GetTierByType(business.type)
+
+    if not tier then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "invalid_type"
+    end
+
+    if not MeetsReputationRequirement(targetSrc, tier) then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "target_insufficient_reputation"
+    end
+
     if not HasPortfolioCapacity(targetIdentifier, tier) then
+        ReleaseOwnershipLocks(lockKeys)
         return false, "target_portfolio_full"
     end
 
-    MySQL.update("UPDATE moneywash_businesses SET identifier = ? WHERE id = ?",
-        {targetIdentifier, businessId})
+    local updateSucceeded, affectedRows = pcall(
+        MySQL.update.await,
+        "UPDATE moneywash_businesses " ..
+        "SET identifier = ? " ..
+        "WHERE id = ? AND identifier = ?",
+        {
+            targetIdentifier,
+            businessId,
+            identifier,
+        }
+    )
+
+    if not updateSucceeded or affectedRows ~= 1 then
+        ReleaseOwnershipLocks(lockKeys)
+
+        if Config.Debug then
+            print(("[MoneyWash] Transfer database error: %s"):format(
+                tostring(affectedRows)
+            ))
+        end
+
+        return false, "database_error"
+    end
 
     UpdateBusiness(businessId, "identifier", targetIdentifier)
+    ReleaseOwnershipLocks(lockKeys)
 
-    TriggerClientEvent("t1ger_moneywash:client:businessTransferred", src, businessId)
-    TriggerClientEvent("t1ger_moneywash:client:businessReceived", targetSrc, businessId, business.type, business.locationId)
+    TriggerClientEvent(
+        "t1ger_moneywash:client:businessTransferred",
+        src,
+        businessId
+    )
+
+    TriggerClientEvent(
+        "t1ger_moneywash:client:businessReceived",
+        targetSrc,
+        businessId,
+        business.type,
+        business.locationId
+    )
 
     if Config.Debug then
-        print(("[MoneyWash] Business %d transferred: %s → %s"):format(businessId, identifier, targetIdentifier))
+        print(("[MoneyWash] Business %d transferred: %s -> %s"):format(
+            businessId,
+            identifier,
+            targetIdentifier
+        ))
     end
 
     return true, "success"
 end
 
---- Abandons a business with zero refund
---- Safe balance forfeited, location returns to market immediately
+--- Abandons a business with zero refund.
+--- Safe balance, stock and all business progress are forfeited.
 --- @param src number
 --- @param businessId number
 --- @return boolean success, string reason
 function AbandonBusiness(src, businessId)
     local identifier = _API.Player.GetIdentifier(src)
-    if not identifier then return false, "invalid_player" end
+    if not identifier then
+        return false, "invalid_player"
+    end
+
+    businessId = tonumber(businessId)
+    if not businessId then
+        return false, "not_found"
+    end
 
     local business = GetBusiness(businessId)
-    if not business then return false, "not_found" end
-    if business.identifier ~= identifier then return false, "not_owner" end
+    if not business then
+        return false, "not_found"
+    end
 
-    MySQL.query("DELETE FROM moneywash_businesses WHERE id = ?", {businessId})
-    MySQL.query("DELETE FROM moneywash_receipts WHERE business_id = ?", {businessId})
+    if business.identifier ~= identifier then
+        return false, "not_owner"
+    end
+
+    local lockKeys = {
+        ("business:%d"):format(businessId),
+        ("owner:%s"):format(identifier),
+        ("location:%s:%d"):format(
+            business.type,
+            business.locationId
+        ),
+    }
+
+    if not TryAcquireOwnershipLocks(lockKeys) then
+        return false, "operation_in_progress"
+    end
+
+    -- Revalidate ownership after acquiring the locks.
+    business = GetBusiness(businessId)
+
+    if not business then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "not_found"
+    end
+
+    if business.identifier ~= identifier then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "not_owner"
+    end
+
+    local stockMission = GetActiveStockMission(src)
+
+    if stockMission and stockMission.businessId == businessId then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "active_stock_mission"
+    end
+
+    local pendingDeposit = GetActiveDeposit(identifier)
+
+    if pendingDeposit and pendingDeposit.business_id == businessId then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "pending_business_deposit"
+    end
+
+    if GetQueuedRaids()[businessId] then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "raid_pending"
+    end
+
+    local transactionExecuted, transactionSucceeded = pcall(
+        MySQL.transaction.await,
+        {
+            {
+                query = "DELETE FROM moneywash_receipts WHERE business_id = ?",
+                values = { businessId },
+            },
+            {
+                query = "DELETE FROM moneywash_businesses " ..
+                    "WHERE id = ? AND identifier = ?",
+                values = {
+                    businessId,
+                    identifier,
+                },
+            },
+        }
+    )
+
+    if not transactionExecuted or not transactionSucceeded then
+        ReleaseOwnershipLocks(lockKeys)
+
+        if Config.Debug then
+            print(("[MoneyWash] Abandon database error: %s"):format(
+                tostring(transactionSucceeded)
+            ))
+        end
+
+        return false, "database_error"
+    end
 
     RemoveFromStore(businessId)
+    ClearBusinessRuntimeState(businessId)
+    ReleaseOwnershipLocks(lockKeys)
 
-    TriggerClientEvent("t1ger_moneywash:client:businessAbandoned", src, businessId)
+    TriggerClientEvent(
+        "t1ger_moneywash:client:businessAbandoned",
+        src,
+        businessId
+    )
 
     if Config.Debug then
-        print(("[MoneyWash] Business %d abandoned by %s"):format(businessId, identifier))
+        print(("[MoneyWash] Business %d abandoned by %s"):format(
+            businessId,
+            identifier
+        ))
     end
 
     return true, "success"
@@ -209,7 +556,7 @@ local function CalculateCoveredExposed(business, amount, tier)
     -- Stock check on within-revenue portion only
     local stockConsumed = GetStockConsumed(amount)
     local stockValue = business.stock -- units available
-    local stockSupported = math.min(withinRevenue, stockValue * (tier.expectedRevenue * Config.Business.Stock.CostRatio))
+    local stockSupported = math.min(withinRevenue, stockValue * (tier.expectedRevenue * Config.Business.Stock.costRatio))
 
     local covered = math.floor(stockSupported)
     local exposed = math.floor(overRevenue + (withinRevenue - stockSupported))
@@ -224,21 +571,21 @@ end
 --- @param tier table
 --- @return number gain
 local function CalculateSuspicionGain(business, amount, tier)
-    local expectedRevenue = tier.expectedRevenue
+    local expectedRevenue    = tier.expectedRevenue
 
-    local progressBefore = business.totalLaundered / expectedRevenue
-    local progressAfter  = (business.totalLaundered + amount) / expectedRevenue
+    local progressBefore     = business.totalLaundered / expectedRevenue
+    local progressAfter      = (business.totalLaundered + amount) / expectedRevenue
 
     -- Derive BaseMultiplier from CyclesUntilCritical
     -- At full expectedRevenue with full stock, gain per cycle = 75 / CyclesUntilCritical
     local targetGainPerCycle = 75.0 / Config.Suspicion.CyclesUntilCritical
-    local BaseMultiplier = targetGainPerCycle / (1.0 * (1 - Config.Suspicion.FullStockReduction / 100))
+    local BaseMultiplier     = targetGainPerCycle / (1.0 * (1 - Config.Suspicion.FullStockReduction / 100))
 
-    local turnoverGain = (progressAfter^2 - progressBefore^2) * BaseMultiplier
+    local turnoverGain       = (progressAfter ^ 2 - progressBefore ^ 2) * BaseMultiplier
 
     -- Stock modifier
-    local stockConsumed = GetStockConsumed(amount)
-    local stockModifier = 1.0
+    local stockConsumed      = GetStockConsumed(amount)
+    local stockModifier      = 1.0
     if business.stock <= 0 then
         stockModifier = 1.0 + (Config.Suspicion.NoStockPenalty / 100)
     elseif business.stock >= stockConsumed then
@@ -332,11 +679,11 @@ function LaunderMoney(src, businessId, amount)
 
     -- Update business state
     UpdateBusinessFields(businessId, {
-        stock          = newStock,
-        safeCovered    = business.safeCovered + cleanCovered,
-        safeExposed    = business.safeExposed + cleanExposed,
-        suspicion      = math.min(100, business.suspicion + suspicionGain),
-        totalLaundered = business.totalLaundered + amount,
+        stock           = newStock,
+        safeCovered     = business.safeCovered + cleanCovered,
+        safeExposed     = business.safeExposed + cleanExposed,
+        suspicion       = math.min(100, business.suspicion + suspicionGain),
+        totalLaundered  = business.totalLaundered + amount,
         lastLaunderedAt = os.time(),
     })
 
@@ -362,8 +709,9 @@ function LaunderMoney(src, businessId, amount)
     end
 
     if Config.Debug then
-        print(("[MoneyWash] Launder: business %d | amount $%d | covered $%d | exposed $%d | suspicion +%.1f → %.1f"):format(
-            businessId, amount, cleanCovered, cleanExposed, suspicionGain, updatedBusiness.suspicion))
+        print(("[MoneyWash] Launder: business %d | amount $%d | covered $%d | exposed $%d | suspicion +%.1f → %.1f")
+            :format(
+                businessId, amount, cleanCovered, cleanExposed, suspicionGain, updatedBusiness.suspicion))
     end
 
     return true, "success", {
@@ -442,11 +790,11 @@ function OrderStock(src, businessId, units)
 
     -- Store active mission
     ActiveStockMissions[src] = {
-        businessId      = businessId,
-        units           = units,
-        cost            = totalCost,
-        pickupLocation  = pickupLocation,
-        startedAt       = os.time(),
+        businessId     = businessId,
+        units          = units,
+        cost           = totalCost,
+        pickupLocation = pickupLocation,
+        startedAt      = os.time(),
     }
 
     if Config.Debug then
@@ -487,7 +835,7 @@ function CompleteStockDelivery(src)
     -- Generate receipt in DB
     MySQL.insert(
         "INSERT INTO moneywash_receipts (business_id, units, unit_price, total_amount, created_at) VALUES (?, ?, ?, ?, ?)",
-        {mission.businessId, mission.units, GetUnitPrice(business.type), mission.cost, os.time()}
+        { mission.businessId, mission.units, GetUnitPrice(business.type), mission.cost, os.time() }
     )
 
     -- Award reputation
@@ -555,16 +903,16 @@ function LoadPendingDeposit(src)
     if not identifier then return end
 
     local row = MySQL.single.await(
-        "SELECT * FROM moneywash_deposits WHERE identifier = ?", {identifier})
+        "SELECT * FROM moneywash_deposits WHERE identifier = ?", { identifier })
 
     if row then
         ActiveDeposits[identifier] = row
         TriggerClientEvent("t1ger_moneywash:client:pendingDepositSync", src, {
-            totalAmount    = row.total_amount,
-            coveredAmount  = row.covered_amount,
-            exposedAmount  = row.exposed_amount,
-            clearsAt       = row.clears_at,
-            flagged        = row.flagged == 1,
+            totalAmount   = row.total_amount,
+            coveredAmount = row.covered_amount,
+            exposedAmount = row.exposed_amount,
+            clearsAt      = row.clears_at,
+            flagged       = row.flagged == 1,
         })
     end
 end
@@ -599,8 +947,8 @@ function InitiateBankDeposit(src, businessId, amount)
 
     -- Deduct from Safe immediately
     UpdateBusinessFields(businessId, {
-        safeExposed  = business.safeExposed - exposedTaken,
-        safeCovered  = business.safeCovered - coveredTaken,
+        safeExposed = business.safeExposed - exposedTaken,
+        safeCovered = business.safeCovered - coveredTaken,
     })
 
     -- Pick random bank location
@@ -620,7 +968,7 @@ function InitiateBankDeposit(src, businessId, amount)
         "INSERT INTO moneywash_deposits " ..
         "(identifier, business_id, total_amount, covered_amount, exposed_amount, flagged, initiated_at, clears_at) " ..
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        {identifier, businessId, amount, coveredTaken, exposedTaken, flagged and 1 or 0, now, clearsAt}
+        { identifier, businessId, amount, coveredTaken, exposedTaken, flagged and 1 or 0, now, clearsAt }
     )
 
     if not depositId then
@@ -633,15 +981,15 @@ function InitiateBankDeposit(src, businessId, amount)
     end
 
     ActiveDeposits[identifier] = {
-        id            = depositId,
-        identifier    = identifier,
-        business_id   = businessId,
-        total_amount  = amount,
+        id             = depositId,
+        identifier     = identifier,
+        business_id    = businessId,
+        total_amount   = amount,
         covered_amount = coveredTaken,
         exposed_amount = exposedTaken,
-        flagged       = flagged,
-        initiated_at  = now,
-        clears_at     = clearsAt,
+        flagged        = flagged,
+        initiated_at   = now,
+        clears_at      = clearsAt,
     }
 
     -- Notify police if flagged
@@ -695,7 +1043,7 @@ function CompleteBankDeposit(identifier)
     end
 
     -- Clean up
-    MySQL.query("DELETE FROM moneywash_deposits WHERE id = ?", {deposit.id})
+    MySQL.query("DELETE FROM moneywash_deposits WHERE id = ?", { deposit.id })
     ActiveDeposits[identifier] = nil
 
     if Config.Debug then
@@ -729,7 +1077,7 @@ function ConfiscateDeposit(src, targetIdentifier)
     end
 
     -- Clean up
-    MySQL.query("DELETE FROM moneywash_deposits WHERE id = ?", {deposit.id})
+    MySQL.query("DELETE FROM moneywash_deposits WHERE id = ?", { deposit.id })
     ActiveDeposits[targetIdentifier] = nil
 
     if Config.Debug then
@@ -748,9 +1096,9 @@ function GetFlaggedDepositsAtBank(bankCoords)
     for identifier, deposit in pairs(ActiveDeposits) do
         if deposit.flagged then
             result[#result + 1] = {
-                identifier   = identifier,
-                totalAmount  = deposit.total_amount,
-                clearsAt     = deposit.clears_at,
+                identifier  = identifier,
+                totalAmount = deposit.total_amount,
+                clearsAt    = deposit.clears_at,
             }
         end
     end
@@ -806,8 +1154,8 @@ function ExecuteRaid(businessId, policeSrc)
 
     -- Seize exposed funds
     UpdateBusinessFields(businessId, {
-        safeExposed = 0,
-        suspicion   = Config.Suspicion.PostRaidReset,
+        safeExposed     = 0,
+        suspicion       = Config.Suspicion.PostRaidReset,
         lastLaunderedAt = os.time(), -- raid counts as activity, decay starts fresh
     })
 
@@ -821,7 +1169,7 @@ function ExecuteRaid(businessId, policeSrc)
     -- Log raid history
     MySQL.insert(
         "INSERT INTO moneywash_raid_history (business_type, location_id, raided_at) VALUES (?, ?, ?)",
-        {business.type, business.locationId, os.time()}
+        { business.type, business.locationId, os.time() }
     )
 
     -- Check escalation
@@ -855,7 +1203,7 @@ function CheckRaidEscalation(businessId)
 
     local raidCount = MySQL.scalar.await(
         "SELECT COUNT(*) FROM moneywash_raid_history WHERE business_type = ? AND location_id = ? AND raided_at > ?",
-        {business.type, business.locationId, since}
+        { business.type, business.locationId, since }
     )
 
     raidCount = raidCount or 0
@@ -875,7 +1223,7 @@ function CheckRaidEscalation(businessId)
         })
         MySQL.update(
             "UPDATE moneywash_businesses SET is_closed = 1, closed_until = ? WHERE id = ?",
-            {closedUntil, businessId}
+            { closedUntil, businessId }
         )
         if Config.Debug then
             print(("[MoneyWash] Business %d temporarily closed until %d"):format(businessId, closedUntil))
@@ -897,6 +1245,13 @@ end
 --- { businessId = nextAvailableAt (cycle number) }
 local ReviewCooldowns = {}
 
+--- Removes temporary server state belonging to a deleted business.
+--- @param businessId number
+function ClearBusinessRuntimeState(businessId)
+    QueuedRaids[businessId] = nil
+    ReviewCooldowns[businessId] = nil
+end
+
 --- Returns whether a business is on review cooldown
 --- @param businessId number
 --- @param currentCycle number
@@ -912,7 +1267,7 @@ end
 function GetBusinessReceipts(businessId)
     local rows = MySQL.query.await(
         "SELECT id, units, unit_price, total_amount, created_at FROM moneywash_receipts WHERE business_id = ? ORDER BY created_at DESC",
-        {businessId}
+        { businessId }
     )
     return rows or {}
 end
@@ -932,13 +1287,13 @@ function EstimateReviewEffectiveness(businessId, selectedReceiptIds)
     if not selectedReceiptIds or #selectedReceiptIds == 0 then return "Weak", 0 end
 
     -- Fetch selected receipts
-    local placeholders = table.concat({"?"}, ", "):rep(#selectedReceiptIds):sub(1, -3)
+    local placeholders = table.concat({ "?" }, ", "):rep(#selectedReceiptIds):sub(1, -3)
     -- build proper placeholders
     local ph = {}
     for i = 1, #selectedReceiptIds do ph[i] = "?" end
     local rows = MySQL.query.await(
         "SELECT total_amount FROM moneywash_receipts WHERE id IN (" .. table.concat(ph, ",") .. ") AND business_id = ?",
-        vim_concat(selectedReceiptIds, {businessId})
+        vim_concat(selectedReceiptIds, { businessId })
     )
 
     local totalReceiptValue = 0
@@ -949,7 +1304,7 @@ function EstimateReviewEffectiveness(businessId, selectedReceiptIds)
 
     -- Expected receipt count: how many orders a well-run business would have per cycle
     local unitPrice = GetUnitPrice(business.type)
-    local expectedSpend = tier.expectedRevenue * Config.Business.Stock.CostRatio
+    local expectedSpend = tier.expectedRevenue * Config.Business.Stock.costRatio
     local expectedOrders = math.max(1, math.ceil(expectedSpend / (unitPrice * GetMinOrder(business.type))))
 
     -- Receipt score: combination of value and count
@@ -1017,7 +1372,7 @@ function ExecuteAccountantReview(src, businessId, selectedReceiptIds, currentCyc
     -- Delete selected receipts
     for _, receiptId in ipairs(selectedReceiptIds) do
         MySQL.query("DELETE FROM moneywash_receipts WHERE id = ? AND business_id = ?",
-            {receiptId, businessId})
+            { receiptId, businessId })
     end
 
     -- Apply suspicion reduction
@@ -1052,32 +1407,82 @@ end
 --- ADMIN
 --- ============================================================================
 
---- Admin: forcibly adds a business bypassing all player checks
+--- Admin: forcibly adds a business while preserving ownership invariants.
+--- Reputation, price and portfolio capacity requirements are bypassed.
 --- @param identifier string
 --- @param businessType string
 --- @param locationId number
 --- @return boolean success, string reason
 function AdminAddBusiness(identifier, businessType, locationId)
+    if type(identifier) ~= "string" or identifier == "" then
+        return false, "invalid_player"
+    end
+
+    if type(businessType) ~= "string" then
+        return false, "invalid_type"
+    end
+
+    locationId = tonumber(locationId)
+    if not locationId then
+        return false, "invalid_location"
+    end
+
     local tier = GetTierByType(businessType)
-    if not tier then return false, "invalid_type" end
+    if not tier then
+        return false, "invalid_type"
+    end
 
     local location = GetLocationConfig(businessType, locationId)
-    if not location then return false, "invalid_location" end
+    if not location then
+        return false, "invalid_location"
+    end
+
+    local lockKeys = {
+        ("owner:%s"):format(identifier),
+        ("location:%s:%d"):format(businessType, locationId),
+    }
+
+    if not TryAcquireOwnershipLocks(lockKeys) then
+        return false, "operation_in_progress"
+    end
 
     if IsLocationOwned(businessType, locationId) then
+        ReleaseOwnershipLocks(lockKeys)
         return false, "already_owned"
     end
 
+    if PlayerOwnsType(identifier, businessType) then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "already_owns_type"
+    end
+
     local now = os.time()
-    local id = MySQL.insert.await(
+
+    local insertSucceeded, id = pcall(
+        MySQL.insert.await,
         "INSERT INTO moneywash_businesses " ..
         "(identifier, business_type, location_id, stock, safe_covered, safe_exposed, " ..
         "suspicion, total_laundered, last_laundered_at, is_closed, purchased_at) " ..
         "VALUES (?, ?, ?, 0, 0, 0, 0, 0, 0, 0, ?)",
-        {identifier, businessType, locationId, now}
+        {
+            identifier,
+            businessType,
+            locationId,
+            now,
+        }
     )
 
-    if not id then return false, "database_error" end
+    if not insertSucceeded or not id then
+        ReleaseOwnershipLocks(lockKeys)
+
+        if Config.Debug then
+            print(("[MoneyWash] Admin add database error: %s"):format(
+                tostring(id)
+            ))
+        end
+
+        return false, "database_error"
+    end
 
     AddToStore(id, {
         identifier        = identifier,
@@ -1094,44 +1499,134 @@ function AdminAddBusiness(identifier, businessType, locationId)
         purchased_at      = now,
     })
 
-    -- Notify owner if online
+    ReleaseOwnershipLocks(lockKeys)
+
     for _, player in ipairs(_API.GetOnlinePlayers()) do
         if player.identifier == identifier then
-            TriggerClientEvent("t1ger_moneywash:client:businessPurchased", player.source, id, businessType, locationId)
+            TriggerClientEvent(
+                "t1ger_moneywash:client:businessPurchased",
+                player.source,
+                id,
+                businessType,
+                locationId
+            )
+
             break
         end
     end
 
     if Config.Debug then
-        print(("[MoneyWash] Admin added %s #%d to %s"):format(businessType, locationId, identifier))
+        print(("[MoneyWash] Admin added %s #%d to %s"):format(
+            businessType,
+            locationId,
+            identifier
+        ))
     end
 
     return true, "success"
 end
 exports("AddBusiness", AdminAddBusiness)
 
---- Admin: forcibly removes a business returning location to market
+--- Admin: forcibly removes a business and returns its location to the market.
 --- @param businessType string
 --- @param locationId number
 --- @return boolean success, string reason
 function AdminRemoveBusiness(businessType, locationId)
+    if type(businessType) ~= "string" then
+        return false, "invalid_type"
+    end
+
+    locationId = tonumber(locationId)
+    if not locationId then
+        return false, "invalid_location"
+    end
+
     local business = GetBusinessByLocation(businessType, locationId)
-    if not business then return false, "not_owned" end
+    if not business then
+        return false, "not_owned"
+    end
 
-    MySQL.query("DELETE FROM moneywash_businesses WHERE id = ?", {business.id})
-    MySQL.query("DELETE FROM moneywash_receipts WHERE business_id = ?", {business.id})
+    local businessId = business.id
+    local identifier = business.identifier
 
+    local lockKeys = {
+        ("business:%d"):format(businessId),
+        ("owner:%s"):format(identifier),
+        ("location:%s:%d"):format(businessType, locationId),
+    }
+
+    if not TryAcquireOwnershipLocks(lockKeys) then
+        return false, "operation_in_progress"
+    end
+
+    -- Revalidate after acquiring the locks.
+    business = GetBusinessByLocation(businessType, locationId)
+
+    if not business or business.id ~= businessId then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "not_owned"
+    end
+
+    local transactionExecuted, transactionSucceeded = pcall(
+        MySQL.transaction.await,
+        {
+            {
+                query = "DELETE FROM moneywash_receipts WHERE business_id = ?",
+                values = {businessId},
+            },
+            {
+                query = "DELETE FROM moneywash_businesses WHERE id = ?",
+                values = {businessId},
+            },
+        }
+    )
+
+    if not transactionExecuted or not transactionSucceeded then
+        ReleaseOwnershipLocks(lockKeys)
+
+        if Config.Debug then
+            print(("[MoneyWash] Admin remove database error: %s"):format(
+                tostring(transactionSucceeded)
+            ))
+        end
+
+        return false, "database_error"
+    end
+
+    -- Refund an active stock order belonging to this business.
     for _, player in ipairs(_API.GetOnlinePlayers()) do
-        if player.identifier == business.identifier then
-            TriggerClientEvent("t1ger_moneywash:client:businessSeized", player.source, business.id)
+        if player.identifier == identifier then
+            local mission = GetActiveStockMission(player.source)
+
+            if mission and mission.businessId == businessId then
+                CancelStockMission(player.source)
+            end
+
             break
         end
     end
 
-    RemoveFromStore(business.id)
+    RemoveFromStore(businessId)
+    ClearBusinessRuntimeState(businessId)
+    ReleaseOwnershipLocks(lockKeys)
+
+    for _, player in ipairs(_API.GetOnlinePlayers()) do
+        if player.identifier == identifier then
+            TriggerClientEvent(
+                "t1ger_moneywash:client:businessSeized",
+                player.source,
+                businessId
+            )
+
+            break
+        end
+    end
 
     if Config.Debug then
-        print(("[MoneyWash] Admin removed %s #%d"):format(businessType, locationId))
+        print(("[MoneyWash] Admin removed %s #%d"):format(
+            businessType,
+            locationId
+        ))
     end
 
     return true, "success"

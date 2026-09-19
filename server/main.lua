@@ -34,8 +34,9 @@ end)
 AddEventHandler("playerDropped", function()
     local src = source
 
-    -- Save reputation
+    -- Save and unload reputation
     SavePlayerReputation(src)
+    UnloadReputation(src)
 
     -- Refund any active stock mission
     OnPlayerDroppedStockCleanup(src)

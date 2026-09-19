@@ -180,39 +180,39 @@ function GetSuspicionLabel(value)
 end
 
 --- Returns the derived unit price for a given business type
---- unitPrice = expectedRevenue * Stock.CostRatio
+--- unitPrice = expectedRevenue * Stock.costRatio
 --- @param businessType string
 --- @return number|nil
 function GetUnitPrice(businessType)
     local tier = GetTierByType(businessType)
     if not tier then return nil end
-    return math.floor(tier.expectedRevenue * Config.Business.Stock.CostRatio)
+    return math.floor(tier.expectedRevenue * Config.Business.Stock.costRatio)
 end
 
 --- Returns the minimum order units for a given business type
---- minOrder = expectedRevenue * Stock.MinOrderRatio
+--- minOrder = expectedRevenue * Stock.minOrderRatio
 --- @param businessType string
 --- @return number|nil
 function GetMinOrder(businessType)
     local tier = GetTierByType(businessType)
     if not tier then return nil end
-    return math.max(1, math.floor(tier.expectedRevenue * Config.Business.Stock.MinOrderRatio))
+    return math.max(1, math.floor(tier.expectedRevenue * Config.Business.Stock.minOrderRatio))
 end
 
 --- Returns the maximum order units for a given business type
---- maxOrder = expectedRevenue * Stock.MaxOrderRatio
+--- maxOrder = expectedRevenue * Stock.maxOrderRatio
 --- @param businessType string
 --- @return number|nil
 function GetMaxOrder(businessType)
     local tier = GetTierByType(businessType)
     if not tier then return nil end
-    return math.floor(tier.expectedRevenue * Config.Business.Stock.MaxOrderRatio)
+    return math.floor(tier.expectedRevenue * Config.Business.Stock.maxOrderRatio)
 end
 
 --- Returns stock consumed for a given launder amount and business type
---- stockConsumed = amount * Stock.ConsumptionRatio
+--- stockConsumed = amount * Stock.consumptionRatio
 --- @param amount number
 --- @return number
 function GetStockConsumed(amount)
-    return math.ceil(amount * Config.Business.Stock.ConsumptionRatio)
+    return math.ceil(amount * Config.Business.Stock.consumptionRatio)
 end

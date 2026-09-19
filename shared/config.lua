@@ -28,12 +28,24 @@ Config.Police = {
 }
 
 Config.Browser = {
-    -- Ped/prop models that open the dark web browser on target interact
-    -- Add any laptop, computer or phone model you want
-    Models         = { "prop_monitor_01a", "prop_monitor_li", "prop_monitor_01d", "prop_monitor_04a", "prop_monitor_01c", "prop_laptop_lester", "prop_laptop_jimmy", "prop_laptop_lester2", "prop_laptop_01a", "h4_prop_h4_laptop_01a" },
-    TargetDistance = 2.0,
-    TargetIcon     = "fa-solid fa-terminal",
-    TargetLabel    = "Access Network",
+    -- Computer and laptop models that provide access to the business portal
+    Models = {
+        "prop_monitor_01a",
+        "prop_monitor_li",
+        "prop_monitor_01d",
+        "prop_monitor_04a",
+        "prop_monitor_01c",
+        "prop_laptop_lester",
+        "prop_laptop_jimmy",
+        "prop_laptop_lester2",
+        "prop_laptop_01a",
+        "h4_prop_h4_laptop_01a",
+    },
+
+    TargetDistance   = 2.0,
+    TransferDistance = 10.0,
+    TargetIcon       = "fa-solid fa-building",
+    TargetLabel      = "Access Business Portal",
 }
 
 --- Bank deposit settings
@@ -84,7 +96,7 @@ Config.Reputation = {
         [7500]  = "Commercial Investor",
         [10000] = "Institutional Buyer",
         [15000] = "Premium Member",
-    }
+    },
 
     ProgressColors   = {
         { threshold = 0,   color = "#dc2626" },

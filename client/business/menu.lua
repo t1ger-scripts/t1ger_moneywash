@@ -316,40 +316,60 @@ function OpenManageBusinessMenu(businessId, status)
     lib.showContext("moneywash:handler:manage")
 end
 
---- Transfer dialog — target player must be online
+--- Transfer dialog — target player must be online and nearby.
 --- @param businessId number
 function OpenTransferDialog(businessId)
     local input = lib.inputDialog(locale("menu.transfer.title"), {
         {
-            type        = "input",
-            label       = locale("menu.transfer.identifier_label"),
-            description = locale("menu.transfer.identifier_desc"),
+            type        = "number",
+            label       = locale("menu.transfer.player_id_label"),
+            description = locale("menu.transfer.player_id_desc"),
             required    = true,
+            min         = 1,
         },
     })
 
-    if not input or not input[1] or input[1] == "" then return end
+    if not input or not input[1] then
+        return
+    end
 
-    local targetIdentifier = input[1]
+    local targetId = tonumber(input[1])
+    if not targetId then
+        return
+    end
 
     local confirmed = lib.alertDialog({
         header   = locale("menu.transfer.confirm_title"),
-        content  = string.format(locale("menu.transfer.confirm_body"), targetIdentifier),
+        content  = string.format(
+            locale("menu.transfer.confirm_body"),
+            targetId
+        ),
         centered = true,
         cancel   = true,
     })
 
-    if confirmed ~= "confirm" then return end
+    if confirmed ~= "confirm" then
+        return
+    end
 
-    local result = lib.callback.await("t1ger_moneywash:server:transferBusiness", false,
-        targetIdentifier, businessId)
+    local result = lib.callback.await(
+        "t1ger_moneywash:server:transferBusiness",
+        false,
+        targetId,
+        businessId
+    )
 
     if result.success then
-        _API.ShowNotification({ title = locale("menu.transfer.success"), type = "success" })
+        _API.ShowNotification({
+            title = locale("menu.transfer.success"),
+            type = "success",
+        })
     else
         _API.ShowNotification({
-            title = locale("notification.error_" .. (result.reason or "unknown")),
-            type  = "error",
+            title = locale(
+                "notification.error_" .. (result.reason or "unknown")
+            ),
+            type = "error",
         })
     end
 end

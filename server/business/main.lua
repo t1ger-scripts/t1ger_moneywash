@@ -73,9 +73,13 @@ lib.callback.register("t1ger_moneywash:server:buyBusiness", function(source, bus
 end)
 
 --- Transfer a business to another player
-lib.callback.register("t1ger_moneywash:server:transferBusiness", function(source, targetIdentifier, businessId)
-    local success, reason = TransferBusiness(source, targetIdentifier, businessId)
-    return {success = success, reason = reason}
+lib.callback.register("t1ger_moneywash:server:transferBusiness", function(source, targetId, businessId)
+    local success, reason = TransferBusiness(source, targetId, businessId)
+
+    return {
+        success = success,
+        reason = reason,
+    }
 end)
 
 --- Abandon a business
