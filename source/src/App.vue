@@ -19,7 +19,7 @@ import BootstrapLoading from '@/components/BootstrapLoading.vue'
 import { businessLocations, businessTiers } from '@/data/mock-businesses'
 import { mockProfile, mockReputationLevels } from '@/data/mock-profile'
 import { zoneFromCoordinates } from '@/lib/format'
-import { nuiFetch } from '@/lib/nui'
+import { isFiveM, nuiFetch } from '@/lib/nui'
 import type { BusinessTier, LocationView } from '@/types/business'
 
 const activeView = ref<'market' | 'portfolio'>('market')
@@ -31,6 +31,13 @@ const balance = ref(mockProfile.balance)
 const purchaseReview = ref<LocationView>()
 const ownedLocationIds = ref([...mockProfile.ownedLocationIds])
 const acquiredLocationIds = ref([...mockProfile.acquiredLocationIds])
+
+interface ActionResponse {
+  success: boolean
+  message?: string
+}
+
+const isPurchasing = ref(false)
 
 type ToastVariant = 'success' | 'warning' | 'error' | 'info'
 
@@ -172,6 +179,14 @@ const reputationProgress = computed(() => {
   return Math.min(100, Math.max(0, ((reputation.value - currentReputationLevel.value.points) / range) * 100))
 })
 
+async function waitForLocalAction(delay = 750) {
+  if (isFiveM) return
+
+  await new Promise<void>((resolve) => {
+    window.setTimeout(resolve, delay)
+  })
+}
+
 function selectTier(tier: BusinessTier) {
   selectedType.value = tier.type
   selectedLocationId.value = undefined
@@ -187,49 +202,83 @@ function reviewPurchase(location: LocationView) {
   purchaseReview.value = location
 }
 
-function confirmPurchase(location: LocationView) {
-  const ownsType = ownsBusinessType(location.type)
+async function confirmPurchase(location: LocationView) {
+  if (isPurchasing.value) return
 
-  const unavailable =
-    location.status !== 'available' ||
-    reputation.value < location.tier.requiredPoints ||
-    ownsType ||
-    balance.value < location.effectivePrice ||
-    portfolioWeight.value + location.tier.weight >
+  const currentLocation = locationViews.value.find(
+    (item) => item.uid === location.uid,
+  )
+
+  const cannotPurchase =
+    !currentLocation ||
+    currentLocation.status !== 'available' ||
+    currentLocation.locked ||
+    ownsBusinessType(currentLocation.type) ||
+    balance.value < currentLocation.effectivePrice ||
+    portfolioWeight.value + currentLocation.tier.weight >
     mockProfile.portfolioLimit
 
-  if (unavailable) {
+  if (cannotPurchase || !currentLocation) {
     purchaseReview.value = undefined
+
     showToast(
-      'This listing was acquired by another investor.',
-      'warning',
+      'This acquisition can no longer be completed.',
+      'error',
     )
+
     return
   }
 
-  balance.value -= location.effectivePrice
+  isPurchasing.value = true
 
-  if (!ownedLocationIds.value.includes(location.uid)) {
-    ownedLocationIds.value.push(location.uid)
-  }
+  try {
+    const [response] = await Promise.all([
+      nuiFetch<ActionResponse>('purchaseBusiness', {
+        type: currentLocation.type,
+        locationId: currentLocation.id,
+      }),
+      waitForLocalAction(),
+    ])
 
-  acquiredLocationIds.value =
-    acquiredLocationIds.value.filter(
-      (uid) => uid !== location.uid,
+    if (isFiveM && (!response || !response.success)) {
+      throw new Error(
+        response?.message ?? 'The acquisition could not be completed.',
+      )
+    }
+
+    /*
+     * Local preview update.
+     *
+     * Later, when FiveM integration is added, these values should come
+     * from the authoritative server response instead.
+     */
+    balance.value -= currentLocation.effectivePrice
+
+    if (!ownedLocationIds.value.includes(currentLocation.uid)) {
+      ownedLocationIds.value.push(currentLocation.uid)
+    }
+
+    acquiredLocationIds.value = acquiredLocationIds.value.filter(
+      (uid) => uid !== currentLocation.uid,
     )
 
-  purchaseReview.value = undefined
-  selectedLocationId.value = undefined
+    purchaseReview.value = undefined
+    selectedLocationId.value = undefined
 
-  showToast(
-    `${location.brand} has been added to your portfolio.`,
-    'success',
-  )
+    showToast(
+      `${currentLocation.brand} has been added to your portfolio.`,
+      'success',
+    )
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'The acquisition could not be completed.'
 
-  void nuiFetch('purchaseBusiness', {
-    type: location.type,
-    locationId: location.id,
-  })
+    showToast(message, 'error')
+  } finally {
+    isPurchasing.value = false
+  }
 }
 
 function showToast(
@@ -291,7 +340,10 @@ function handleEscapeKey(event: KeyboardEvent) {
   if (event.key !== 'Escape') return
 
   if (purchaseReview.value) {
-    purchaseReview.value = undefined
+    if (!isPurchasing.value) {
+      purchaseReview.value = undefined
+    }
+
     return
   }
 
@@ -414,9 +466,9 @@ watch(reputation, (score) => {
       </div>
       <Transition name="modal-fade">
         <PurchaseModal v-if="purchaseReview" :location="purchaseReview" :reputation="reputation" :balance="balance"
-          :owns-type="ownsBusinessType(purchaseReview.type)" :portfolio-weight="portfolioWeight"
-          :portfolio-limit="mockProfile.portfolioLimit" @close="purchaseReview = undefined"
-          @confirm="confirmPurchase" />
+          :portfolio-weight="portfolioWeight" :portfolio-limit="mockProfile.portfolioLimit"
+          :owns-type="ownsBusinessType(purchaseReview.type)" :processing="isPurchasing"
+          @close="!isPurchasing && (purchaseReview = undefined)" @confirm="confirmPurchase" />
       </Transition>
       <Transition name="toast" mode="out-in">
         <div v-if="toast" :key="toast.id" class="app-toast" :class="`toast-${toast.variant}`" role="status"

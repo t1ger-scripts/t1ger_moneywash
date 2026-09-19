@@ -16,9 +16,10 @@ const props = defineProps<{
     portfolioWeight: number
     portfolioLimit: number
     ownsType: boolean
+    processing: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
     close: []
     confirm: [location: LocationView]
 }>()
@@ -53,9 +54,10 @@ const restriction = computed(() => {
 </script>
 
 <template>
-    <div class="modal-backdrop" @click.self="$emit('close')">
+    <div class="modal-backdrop" @click.self="!processing && emit('close')">
         <section class="purchase-modal" role="dialog" aria-modal="true" aria-label="Confirm business acquisition">
-            <button class="modal-close" type="button" aria-label="Close" @click="$emit('close')">
+            <button class="modal-close" :class="{ processing }" :disabled="processing" aria-label="Close"
+                @click="emit('close')">
                 <X :size="16" />
             </button>
 
@@ -136,13 +138,15 @@ const restriction = computed(() => {
             </p>
 
             <div class="modal-footer-actions">
-                <button class="portfolio-secondary" type="button" @click="$emit('close')">
+                <button type="button" class="portfolio-secondary" :disabled="processing" @click="emit('close')">
                     Cancel
                 </button>
 
-                <button class="portfolio-primary" type="button" :disabled="!!restriction"
-                    @click="$emit('confirm', location)">
-                    Confirm Acquisition
+                <button type="button" class="portfolio-primary" :disabled="Boolean(restriction) || processing"
+                    @click="emit('confirm', location)">
+                    <span v-if="processing" class="action-button-spinner" />
+
+                    {{ processing ? 'Processing…' : 'Confirm Acquisition' }}
                 </button>
             </div>
         </section>

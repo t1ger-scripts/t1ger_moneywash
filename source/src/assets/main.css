@@ -2832,6 +2832,35 @@ button {
   }
 }
 
+/* Action processing */
+
+.action-button-spinner {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  border: 2px solid rgba(23, 20, 0, 0.3);
+  border-top-color: #171400;
+  border-radius: 50%;
+  animation: action-button-spin 0.7s linear infinite;
+}
+
+.modal-close:disabled,
+.modal-close.processing {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.portfolio-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@keyframes action-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 980px) {
   .app-frame {
     grid-template-columns: 176px minmax(0, 1fr);
