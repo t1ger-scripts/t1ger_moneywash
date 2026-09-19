@@ -7,6 +7,7 @@ import LocationDetail from '@/components/LocationDetail.vue'
 import LocationList from '@/components/LocationList.vue'
 import PlaceholderView from '@/components/PlaceholderView.vue'
 import TierRail from '@/components/TierRail.vue'
+import PurchaseModal from '@/components/PurchaseModal.vue'
 import { businessLocations, businessTiers } from '@/data/mock-businesses'
 import { mockProfile, mockReputationLevels } from '@/data/mock-profile'
 import { zoneFromCoordinates } from '@/lib/format'
@@ -18,6 +19,8 @@ const selectedType = ref('coffee_shop')
 const selectedLocationId = ref<string>()
 const query = ref('')
 const reputation = ref(mockProfile.reputation)
+const balance = ref(mockProfile.balance)
+const purchaseReview = ref<LocationView>()
 const ownedLocationIds = ref([...mockProfile.ownedLocationIds])
 const acquiredLocationIds = ref([...mockProfile.acquiredLocationIds])
 const toast = ref('')
@@ -100,14 +103,57 @@ function closeUi() {
 }
 
 function reviewPurchase(location: LocationView) {
-  toast.value = `Purchase review opened for ${location.brand}`
-  window.setTimeout(() => { toast.value = '' }, 2800)
-  void nuiFetch('reviewPurchase', { type: location.type, locationId: location.id })
+  purchaseReview.value = location
+}
+
+function confirmPurchase(location: LocationView) {
+  const ownsType = ownsBusinessType(location.type)
+
+  const unavailable =
+    location.status !== 'available' ||
+    reputation.value < location.tier.requiredPoints ||
+    ownsType ||
+    balance.value < location.effectivePrice ||
+    portfolioWeight.value + location.tier.weight >
+    mockProfile.portfolioLimit
+
+  if (unavailable) {
+    purchaseReview.value = undefined
+    showToast('This acquisition can no longer be completed')
+    return
+  }
+
+  balance.value -= location.effectivePrice
+
+  if (!ownedLocationIds.value.includes(location.uid)) {
+    ownedLocationIds.value.push(location.uid)
+  }
+
+  acquiredLocationIds.value =
+    acquiredLocationIds.value.filter(
+      (uid) => uid !== location.uid,
+    )
+
+  purchaseReview.value = undefined
+  selectedLocationId.value = undefined
+
+  showToast(`${location.brand} added to your portfolio`)
+
+  void nuiFetch('purchaseBusiness', {
+    type: location.type,
+    locationId: location.id,
+  })
 }
 
 function showToast(message: string) {
   toast.value = message
   window.setTimeout(() => { toast.value = '' }, 2800)
+}
+
+function ownsBusinessType(type: string) {
+  return ownedLocations.value.some(
+    (location) => location.type === type,
+  )
 }
 
 function setBusinessWaypoint(location: LocationView) {
@@ -176,9 +222,10 @@ watch(reputation, (score) => {
             <div class="map-stack">
               <BusinessMap :locations="mapLocations" :selected="selectedLocation"
                 @select="selectedLocationId = $event.uid" />
-              <LocationDetail :location="selectedLocation" :reputation="reputation"
-                :owned="!!selectedLocation && ownedLocationIds.includes(selectedLocation.uid)"
-                :portfolio-weight="portfolioWeight" :portfolio-limit="mockProfile.portfolioLimit"
+              <LocationDetail :location="selectedLocation" :reputation="reputation" :balance="balance" :owns-type="selectedLocation
+                ? ownsBusinessType(selectedLocation.type)
+                : false
+                " :portfolio-weight="portfolioWeight" :portfolio-limit="mockProfile.portfolioLimit"
                 @close="selectedLocationId = undefined" @purchase="reviewPurchase" />
             </div>
           </section>
@@ -188,6 +235,12 @@ watch(reputation, (score) => {
           :portfolio-limit="mockProfile.portfolioLimit" @navigate-market="activeView = 'market'"
           @waypoint="setBusinessWaypoint" @transfer="transferBusiness" @abandon="abandonBusiness" />
       </div>
+      <Transition name="modal-fade">
+        <PurchaseModal v-if="purchaseReview" :location="purchaseReview" :reputation="reputation" :balance="balance"
+          :owns-type="ownsBusinessType(purchaseReview.type)" :portfolio-weight="portfolioWeight"
+          :portfolio-limit="mockProfile.portfolioLimit" @close="purchaseReview = undefined"
+          @confirm="confirmPurchase" />
+      </Transition>
       <Transition name="toast">
         <div v-if="toast" class="app-toast">{{ toast }}</div>
       </Transition>
