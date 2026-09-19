@@ -65,7 +65,15 @@ server_scripts {
 }
 
 files {
-    'web/**/*',
+    'web/index.html',
+    'web/assets/**/*',
+
+    'web/mapStyles/styleSatelite/0/**/*',
+    'web/mapStyles/styleSatelite/1/**/*',
+    'web/mapStyles/styleSatelite/2/**/*',
+    'web/mapStyles/styleSatelite/3/**/*',
+    'web/mapStyles/styleSatelite/4/**/*',
+    'web/mapStyles/styleSatelite/5/**/*',
 
     'locales/*.json',
     'shared/business_locations.lua',

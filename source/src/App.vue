@@ -728,10 +728,9 @@ watch(reputation, (score) => {
         <template v-else>
           <AppSidebar :active-view="activeView" :reputation="reputation" :reputation-label="reputationLabel"
             :reputation-progress="reputationProgress" :next-reputation-label="nextReputationLevel?.label"
-            :character-name="characterName" :portfolio-count="ownedLocations.length"
-            :portfolio-weight="portfolioWeight" :portfolio-limit="portfolioLimit"
-            @navigate="activeView = $event as typeof activeView" @open-help="isHelpCenterOpen = true"
-            @update:reputation="reputation = $event" />
+            :character-name="characterName" :portfolio-count="ownedLocations.length" :portfolio-weight="portfolioWeight"
+            :portfolio-limit="portfolioLimit" @navigate="activeView = $event as typeof activeView"
+            @open-help="isHelpCenterOpen = true" @update:reputation="reputation = $event" />
 
           <main v-if="activeView === 'market'" class="market-view">
             <header class="market-header">
@@ -762,13 +761,13 @@ watch(reputation, (score) => {
           </main>
 
           <PlaceholderView v-else :businesses="ownedLocations" :portfolio-weight="portfolioWeight"
-            :portfolio-limit="portfolioLimit" @navigate-market="activeView = 'market'"
-            @waypoint="setBusinessWaypoint" @transfer="transferBusiness" @abandon="abandonBusiness" />
+            :portfolio-limit="portfolioLimit" @navigate-market="activeView = 'market'" @waypoint="setBusinessWaypoint"
+            @transfer="transferBusiness" @abandon="abandonBusiness" />
         </template>
       </div>
-      
+
       <HelpCenter v-if="isHelpCenterOpen" @close="isHelpCenterOpen = false" />
-      
+
       <Transition name="modal-fade">
         <PurchaseModal v-if="purchaseReview" :location="purchaseReview" :reputation="reputation" :balance="balance"
           :portfolio-weight="portfolioWeight" :portfolio-limit="portfolioLimit"
