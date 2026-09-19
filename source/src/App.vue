@@ -287,6 +287,22 @@ function abandonBusiness(location: LocationView) {
   void nuiFetch('abandonBusiness', { type: location.type, locationId: location.id })
 }
 
+function handleEscapeKey(event: KeyboardEvent) {
+  if (event.key !== 'Escape') return
+
+  if (purchaseReview.value) {
+    purchaseReview.value = undefined
+    return
+  }
+
+  if (selectedLocationId.value) {
+    selectedLocationId.value = undefined
+    return
+  }
+
+  closeUi()
+}
+
 function startBootstrap() {
   isBootstrapping.value = true
   bootstrapError.value = false
@@ -308,11 +324,13 @@ function retryBootstrap() {
 
 onMounted(() => {
   startBootstrap()
+  window.addEventListener('keydown', handleEscapeKey)
 })
 
 onBeforeUnmount(() => {
   window.clearTimeout(bootstrapTimer)
   window.clearTimeout(toastTimer)
+  window.removeEventListener('keydown', handleEscapeKey)
 })
 
 watch(reputation, (score) => {

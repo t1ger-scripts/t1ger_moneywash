@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, } from 'vue'
 import {
   ArrowRightLeft,
   BriefcaseBusiness,
@@ -81,6 +81,14 @@ function closeDialog() {
   isLoadingNearbyPlayers.value = false
 }
 
+function handleModalEscape(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || !selectedBusiness.value) return
+
+  event.preventDefault()
+  event.stopImmediatePropagation()
+  closeDialog()
+}
+
 function confirmTransfer() {
   if (!selectedBusiness.value || !selectedPlayer.value) return
   emit('transfer', {
@@ -97,8 +105,13 @@ function confirmAbandon() {
   closeDialog()
 }
 
+onMounted(() => {
+  window.addEventListener('keydown', handleModalEscape, true)
+})
+
 onBeforeUnmount(() => {
   window.clearTimeout(nearbyPlayersTimer)
+  window.removeEventListener('keydown', handleModalEscape, true)
 })
 
 </script>
