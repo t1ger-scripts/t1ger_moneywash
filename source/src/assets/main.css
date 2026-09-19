@@ -2459,6 +2459,121 @@ button {
   line-height: 1.4;
 }
 
+/* Nearby-player transfer states */
+
+.nearby-player-loading {
+  display: grid;
+  gap: 6px;
+}
+
+.nearby-player-skeleton {
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: 15px 21px 1fr;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 11px;
+  border: 1px solid #282f37;
+  border-radius: 5px;
+  background: #12171c;
+}
+
+.nearby-skeleton-radio,
+.nearby-skeleton-avatar,
+.nearby-skeleton-copy i,
+.nearby-skeleton-copy small {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: #222930;
+}
+
+.nearby-skeleton-radio::after,
+.nearby-skeleton-avatar::after,
+.nearby-skeleton-copy i::after,
+.nearby-skeleton-copy small::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.045),
+    transparent
+  );
+  animation: skeleton-shimmer 1.35s infinite;
+}
+
+.nearby-skeleton-radio {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.nearby-skeleton-avatar {
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+}
+
+.nearby-skeleton-copy {
+  display: grid;
+  gap: 7px;
+}
+
+.nearby-skeleton-copy i {
+  width: 92px;
+  height: 7px;
+  border-radius: 3px;
+}
+
+.nearby-skeleton-copy small {
+  width: 138px;
+  max-width: 100%;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.nearby-player-empty {
+  min-height: 165px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  border: 1px dashed #303832;
+  border-radius: 6px;
+  background: #101519;
+  color: #68736c;
+  text-align: center;
+}
+
+.nearby-empty-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 11px;
+  border: 1px solid #303832;
+  border-radius: 50%;
+  background: #181e23;
+  color: #7c8780;
+}
+
+.nearby-player-empty strong {
+  color: #c0c9c3;
+  font-size: 10px;
+}
+
+.nearby-player-empty p {
+  max-width: 265px;
+  margin: 6px 0 0;
+  color: #68736c;
+  font-size: 8px;
+  line-height: 1.5;
+}
+
 @media (max-width: 980px) {
   .app-frame {
     grid-template-columns: 176px minmax(0, 1fr);

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import {
   ArrowRightLeft,
   BriefcaseBusiness,
@@ -33,21 +33,39 @@ const emit = defineEmits<{
   abandon: [location: LocationView]
 }>()
 
-const nearbyPlayers: NearbyPlayer[] = [
+const nearbyPlayers = ref<NearbyPlayer[]>([
   { id: 24, name: 'John Doe', distance: 3.4 },
   { id: 71, name: 'Michael King', distance: 7.8 },
   { id: 38, name: 'Nadia Cruz', distance: 9.2 },
-]
+])
+
+const isLoadingNearbyPlayers = ref(false)
+
+let nearbyPlayersTimer: number | undefined
 
 const selectedBusiness = ref<LocationView>()
 const dialog = ref<'transfer' | 'abandon'>('transfer')
 const selectedPlayerId = ref<number>()
-const selectedPlayer = computed(() => nearbyPlayers.find((player) => player.id === selectedPlayerId.value))
+
+const selectedPlayer = computed(() => {
+  return nearbyPlayers.value.find(
+    (player) => player.id === selectedPlayerId.value,
+  )
+})
 
 function openTransfer(location: LocationView) {
   selectedBusiness.value = location
   selectedPlayerId.value = undefined
   dialog.value = 'transfer'
+  isLoadingNearbyPlayers.value = true
+
+  window.clearTimeout(nearbyPlayersTimer)
+
+  // Local preview only.
+  // Later, Lua will return the actual nearby players.
+  nearbyPlayersTimer = window.setTimeout(() => {
+    isLoadingNearbyPlayers.value = false
+  }, 650)
 }
 
 function openAbandon(location: LocationView) {
@@ -56,8 +74,11 @@ function openAbandon(location: LocationView) {
 }
 
 function closeDialog() {
+  window.clearTimeout(nearbyPlayersTimer)
+
   selectedBusiness.value = undefined
   selectedPlayerId.value = undefined
+  isLoadingNearbyPlayers.value = false
 }
 
 function confirmTransfer() {
@@ -75,6 +96,11 @@ function confirmAbandon() {
   emit('abandon', selectedBusiness.value)
   closeDialog()
 }
+
+onBeforeUnmount(() => {
+  window.clearTimeout(nearbyPlayersTimer)
+})
+
 </script>
 
 <template>
@@ -172,20 +198,54 @@ function confirmAbandon() {
             <p class="modal-description">The business will be transferred immediately after confirmation. No payment is
               included in this transfer.</p>
 
-            <div class="nearby-player-list">
+            <div v-if="isLoadingNearbyPlayers" class="nearby-player-loading" aria-label="Searching for nearby players">
+              <div v-for="index in 3" :key="index" class="nearby-player-skeleton">
+                <span class="nearby-skeleton-radio" />
+                <span class="nearby-skeleton-avatar" />
+
+                <span class="nearby-skeleton-copy">
+                  <i />
+                  <small />
+                </span>
+              </div>
+            </div>
+
+            <div v-else-if="nearbyPlayers.length === 0" class="nearby-player-empty">
+              <span class="nearby-empty-icon">
+                <UserRound :size="20" />
+              </span>
+
+              <strong>No nearby players</strong>
+
+              <p>
+                Another player must be nearby before ownership can be transferred.
+              </p>
+            </div>
+
+            <div v-else class="nearby-player-list">
               <label v-for="player in nearbyPlayers" :key="player.id"
                 :class="{ selected: selectedPlayerId === player.id }">
                 <input v-model="selectedPlayerId" type="radio" name="nearby-player" :value="player.id" />
+
                 <UserRound :size="16" />
-                <span><strong>{{ player.name }}</strong><small>Session ID {{ player.id }} · {{
-                  player.distance.toFixed(1) }}m away</small></span>
+
+                <span>
+                  <strong>{{ player.name }}</strong>
+
+                  <small>
+                    Session ID {{ player.id }} ·
+                    {{ player.distance.toFixed(1) }}m away
+                  </small>
+                </span>
               </label>
             </div>
 
             <div class="modal-footer-actions">
               <button class="portfolio-secondary" @click="closeDialog">Cancel</button>
-              <button class="portfolio-primary" :disabled="!selectedPlayer" @click="confirmTransfer">Confirm
-                Transfer</button>
+              <button class="portfolio-primary" :disabled="isLoadingNearbyPlayers || !selectedPlayer"
+                @click="confirmTransfer">
+                Confirm Transfer
+              </button>
             </div>
           </template>
 
