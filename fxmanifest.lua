@@ -57,6 +57,7 @@ server_scripts {
     'server/business/functions.lua',
     'server/business/main.lua',
 
+    'server/browser.lua',
     'server/main.lua',
 }
 

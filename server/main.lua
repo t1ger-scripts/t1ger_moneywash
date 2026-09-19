@@ -154,15 +154,28 @@ end
 --- MASTER TICK — fires every real minute
 --- -------------------------------------------------------------------------
 CreateThread(function()
-    -- Load all businesses on startup
-    local results = MySQL.query.await("SELECT * FROM moneywash_businesses")
+    -- Load all businesses on startup.
+    local results = MySQL.query.await(
+        "SELECT * FROM moneywash_businesses"
+    )
+
     if results then
         for _, row in ipairs(results) do
             AddToStore(row.id, row)
         end
+
+        SetBusinessStoreReady(true)
+
         if Config.Debug then
-            print(("[MoneyWash] Loaded %d businesses on startup"):format(#results))
+            print(("[MoneyWash] Loaded %d businesses on startup"):format(
+                #results
+            ))
         end
+    else
+        print(
+            "[MoneyWash] Failed to load businesses. " ..
+            "The browser marketplace will remain unavailable."
+        )
     end
 
     while true do

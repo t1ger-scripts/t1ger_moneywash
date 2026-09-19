@@ -7,6 +7,20 @@
 
 local Businesses = {} -- keyed by DB id (integer)
 
+local BusinessStoreReady = false
+
+--- Sets whether the initial business database load has completed.
+--- @param ready boolean
+function SetBusinessStoreReady(ready)
+    BusinessStoreReady = ready == true
+end
+
+--- Returns whether the in-memory business store is ready.
+--- @return boolean
+function IsBusinessStoreReady()
+    return BusinessStoreReady
+end
+
 --- -------------------------------------------------------------------------
 --- LOOKUP FUNCTIONS
 --- -------------------------------------------------------------------------
