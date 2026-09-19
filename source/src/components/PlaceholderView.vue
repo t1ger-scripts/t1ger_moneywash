@@ -88,12 +88,12 @@ function confirmAbandon() {
   <main class="portfolio-view">
     <header class="portfolio-header">
       <div>
-        <span class="eyebrow">OWNERSHIP LEDGER</span>
+        <span class="eyebrow">BUSINESS OWNERSHIP</span>
         <h1>My Portfolio</h1>
-        <p>Review registered fronts and access ownership actions.</p>
+        <p>Review your businesses and access ownership options.</p>
       </div>
       <div class="portfolio-capacity">
-        <span>PORTFOLIO LOAD</span>
+        <span>PORTFOLIO USAGE</span>
         <strong>{{ portfolioWeight }} <small>/ {{ portfolioLimit }}</small></strong>
       </div>
     </header>
@@ -101,10 +101,10 @@ function confirmAbandon() {
     <section v-if="businesses.length" class="portfolio-content">
       <div class="portfolio-section-heading">
         <div>
-          <span>REGISTERED FRONTS</span>
+          <span>OWNED BUSINESSES</span>
           <strong>{{ businesses.length }} {{ businesses.length === 1 ? 'business' : 'businesses' }}</strong>
         </div>
-        <p>Select a front to reveal ownership options.</p>
+        <p>Select a business to reveal ownership options.</p>
       </div>
 
       <div class="portfolio-list">
@@ -129,7 +129,7 @@ function confirmAbandon() {
               <small><MapPin :size="12" /> {{ location.district }} · Site {{ String(location.id).padStart(2, '0') }}</small>
             </div>
             <div class="portfolio-weight">
-              <span>PORTFOLIO WEIGHT</span>
+              <span>PORTFOLIO ALLOCATION</span>
               <strong>{{ location.tier.weight }} {{ location.tier.weight === 1 ? 'slot' : 'slots' }}</strong>
             </div>
             <ChevronDown :size="17" class="portfolio-chevron" />
@@ -140,13 +140,13 @@ function confirmAbandon() {
               <div><span>Business type</span><strong>{{ location.tier.label }}</strong></div>
               <div><span>Access tier</span><strong>Tier {{ location.tier.tier }}</strong></div>
               <div><span>Location</span><strong>{{ location.district }}</strong></div>
-              <div><span>Portfolio weight</span><strong>{{ location.tier.weight }} {{ location.tier.weight === 1 ? 'slot' : 'slots' }}</strong></div>
+              <div><span>Portfolio allocation</span><strong>{{ location.tier.weight }} {{ location.tier.weight === 1 ? 'slot' : 'slots' }}</strong></div>
             </div>
 
             <div class="inline-ownership-actions">
               <button class="portfolio-primary" @click="emit('waypoint', location)"><Navigation :size="15" /> Set Waypoint</button>
               <button class="portfolio-secondary" @click="openTransfer(location)"><Send :size="15" /> Transfer Ownership</button>
-              <button class="portfolio-danger-link" @click="openAbandon(location)"><Trash2 :size="14" /> Abandon Front</button>
+              <button class="portfolio-danger-link" @click="openAbandon(location)"><Trash2 :size="14" /> Relinquish Business</button>
             </div>
           </div>
         </article>
@@ -155,9 +155,9 @@ function confirmAbandon() {
 
     <section v-else class="portfolio-empty">
       <BriefcaseBusiness :size="28" />
-      <h2>No fronts registered</h2>
-      <p>Acquire your first business through the Front Exchange.</p>
-      <button class="portfolio-primary" @click="emit('navigateMarket')">Browse Front Exchange</button>
+      <h2>No businesses owned</h2>
+      <p>Purchase your first business through the Marketplace.</p>
+      <button class="portfolio-primary" @click="emit('navigateMarket')">Browse Marketplace</button>
     </section>
 
     <Transition name="modal-fade">
@@ -168,7 +168,7 @@ function confirmAbandon() {
           <template v-if="dialog === 'transfer'">
             <span class="modal-kicker">TRANSFER OWNERSHIP</span>
             <h2>Select a nearby player</h2>
-            <p class="modal-description">The front will be transferred immediately after confirmation. No payment is handled by the network.</p>
+            <p class="modal-description">The business will be transferred immediately after confirmation. No payment is included in this transfer.</p>
 
             <div class="nearby-player-list">
               <label v-for="player in nearbyPlayers" :key="player.id" :class="{ selected: selectedPlayerId === player.id }">
@@ -187,21 +187,21 @@ function confirmAbandon() {
           <template v-else>
             <div class="danger-icon"><TriangleAlert :size="24" /></div>
             <span class="modal-kicker danger">PERMANENT ACTION</span>
-            <h2>Abandon {{ selectedBusiness.brand }}?</h2>
-            <p class="modal-description">This front will immediately become available on the Front Exchange. You will receive no refund.</p>
+            <h2>Relinquish {{ selectedBusiness.brand }}?</h2>
+            <p class="modal-description">This business will immediately return to the Marketplace. You will receive no refund.</p>
 
             <div class="abandon-warning">
               <strong>Everything associated with this business will be lost:</strong>
               <ul>
-                <li>All money remaining in the business safe</li>
-                <li>All remaining stock and active stock orders</li>
-                <li>Current laundering progress and pending activity</li>
+                <li>All funds remaining in the business account</li>
+                <li>All remaining inventory and active orders</li>
+                <li>All pending transactions and business activity</li>
               </ul>
             </div>
 
             <div class="modal-footer-actions">
-              <button class="portfolio-secondary" @click="closeDialog">Keep Front</button>
-              <button class="portfolio-danger" @click="confirmAbandon"><Trash2 :size="14" /> Abandon Permanently</button>
+              <button class="portfolio-secondary" @click="closeDialog">Keep Business</button>
+              <button class="portfolio-danger" @click="confirmAbandon"><Trash2 :size="14" /> Relinquish Permanently</button>
             </div>
           </template>
         </section>

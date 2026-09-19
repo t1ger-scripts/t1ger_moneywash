@@ -46,7 +46,7 @@ const displayedLocations = computed(() => {
 const selectedLocation = computed(() => locationViews.value.find((location) => location.uid === selectedLocationId.value))
 const ownedLocations = computed(() => locationViews.value.filter((location) => ownedLocationIds.value.includes(location.uid)))
 const portfolioWeight = computed(() => ownedLocations.value.reduce((total, location) => total + location.tier.weight, 0))
-const activeTitle = computed(() => activeView.value === 'market' ? 'Front Exchange' : 'Portfolio')
+const activeTitle = computed(() => activeView.value === 'market' ? 'Marketplace' : 'My Portfolio')
 const reputationLabel = computed(() => {
   return [...mockReputationLevels].reverse().find((level) => reputation.value >= level.points)?.label ?? mockReputationLevels[0].label
 })
@@ -63,7 +63,7 @@ function closeUi() {
 }
 
 function reviewPurchase(location: LocationView) {
-  toast.value = `Acquisition review opened for ${location.brand}`
+  toast.value = `Purchase review opened for ${location.brand}`
   window.setTimeout(() => { toast.value = '' }, 2800)
   void nuiFetch('reviewPurchase', { type: location.type, locationId: location.id })
 }
@@ -86,7 +86,7 @@ function transferBusiness(payload: { location: LocationView; playerId: number; p
 
 function abandonBusiness(location: LocationView) {
   ownedLocationIds.value = ownedLocationIds.value.filter((uid) => uid !== location.uid)
-  showToast(`${location.brand} has been abandoned`)
+  showToast(`Ownership of ${location.brand} has been relinquished`)
   void nuiFetch('abandonBusiness', { type: location.type, locationId: location.id })
 }
 </script>
@@ -100,7 +100,7 @@ function abandonBusiness(location: LocationView) {
           :active-view="activeView"
           :reputation="reputation"
           :reputation-label="reputationLabel"
-          :alias="mockProfile.alias"
+          :character-name="mockProfile.characterName"
           :portfolio-count="ownedLocations.length"
           :portfolio-weight="portfolioWeight"
           :portfolio-limit="mockProfile.portfolioLimit"
@@ -110,14 +110,14 @@ function abandonBusiness(location: LocationView) {
         <main v-if="activeView === 'market'" class="market-view">
           <header class="market-header">
             <div>
-              <span class="eyebrow">FRONT ACQUISITION NETWORK</span>
-              <h1>Front Exchange</h1>
-              <p>Acquire legitimate operations. Build reputation. Keep the network quiet.</p>
+              <span class="eyebrow">VERIFIED BUSINESS MARKETPLACE</span>
+              <h1>Marketplace</h1>
+              <p>Browse verified business opportunities and expand your portfolio.</p>
             </div>
             <div class="header-actions">
               <div class="dev-reputation" title="Local preview control">
                 <Radio :size="14" />
-                <span>Preview RP</span>
+                <span>Preview Score</span>
                 <input v-model.number="reputation" type="range" min="0" max="16000" step="500" />
                 <strong>{{ reputation.toLocaleString() }}</strong>
               </div>

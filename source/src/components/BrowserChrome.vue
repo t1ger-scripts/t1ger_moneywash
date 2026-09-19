@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { LockKeyhole, ShieldCheck, X } from '@lucide/vue'
 
-defineProps<{ activeTab: string }>()
+const props = defineProps<{ activeTab: string }>()
 defineEmits<{ close: [] }>()
+
+const pagePath = computed(() => props.activeTab === 'Marketplace' ? 'marketplace' : 'portfolio')
 </script>
 
 <template>
@@ -15,7 +18,7 @@ defineEmits<{ close: [] }>()
       </div>
       <div class="browser-tab active-browser-tab">
         <ShieldCheck :size="14" />
-        <span>{{ activeTab }} · Black Ledger</span>
+        <span>{{ activeTab }} · Ledger Capital</span>
         <X :size="13" />
       </div>
       <button class="window-close" title="Close" @click="$emit('close')"><X :size="17" /></button>
@@ -24,9 +27,9 @@ defineEmits<{ close: [] }>()
     <div class="address-row">
       <div class="address-bar">
         <LockKeyhole :size="14" />
-        <span class="protocol">ledger://</span><span>front-exchange/network</span>
+        <span class="protocol">https://</span><span>ledgercapital.com/{{ pagePath }}</span>
       </div>
-      <div class="secure-status"><span class="status-dot" /> RELAY SECURE</div>
+      <div class="secure-status"><span class="status-dot" /> SECURE SESSION</div>
     </div>
   </header>
 </template>

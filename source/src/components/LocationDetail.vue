@@ -29,19 +29,19 @@ defineEmits<{ close: []; purchase: [location: LocationView] }>()
 
       <div class="detail-stats">
         <div><BarChart3 :size="16" /><span>Expected revenue</span><strong>{{ money.format(location.tier.expectedRevenue) }} / cycle</strong></div>
-        <div><BadgeDollarSign :size="16" /><span>Laundering fee</span><strong>{{ location.tier.launderFee }}%</strong></div>
-        <div><BriefcaseBusiness :size="16" /><span>Portfolio weight</span><strong>{{ location.tier.weight }} / {{ portfolioLimit }}</strong></div>
+        <div><BadgeDollarSign :size="16" /><span>Service fee</span><strong>{{ location.tier.launderFee }}%</strong></div>
+        <div><BriefcaseBusiness :size="16" /><span>Portfolio usage</span><strong>{{ location.tier.weight }} / {{ portfolioLimit }}</strong></div>
       </div>
 
       <div v-if="location.locked" class="restriction-box">
         <LockKeyhole :size="16" />
-        <div><strong>REPUTATION REQUIRED</strong><span>{{ (location.tier.requiredPoints - reputation).toLocaleString() }} RP still needed</span></div>
+        <div><strong>INVESTOR SCORE REQUIRED</strong><span>{{ (location.tier.requiredPoints - reputation).toLocaleString() }} more points needed</span></div>
       </div>
       <div v-else-if="portfolioWeight + location.tier.weight > portfolioLimit" class="restriction-box">
         <AlertTriangle :size="16" />
         <div><strong>PORTFOLIO LIMIT</strong><span>Free up capacity before acquiring this site.</span></div>
       </div>
-      <div v-else class="verified-box"><ShieldCheck :size="16" /> Eligible for acquisition</div>
+      <div v-else class="verified-box"><ShieldCheck :size="16" /> Eligible to purchase</div>
 
       <button
         class="purchase-button"
@@ -49,8 +49,8 @@ defineEmits<{ close: []; purchase: [location: LocationView] }>()
         @click="$emit('purchase', location)"
       >
         <template v-if="owned">Already owned</template>
-        <template v-else-if="location.locked"><LockKeyhole :size="15" /> Access restricted</template>
-        <template v-else>Review acquisition <ArrowRight :size="16" /></template>
+        <template v-else-if="location.locked"><LockKeyhole :size="15" /> Score requirement not met</template>
+        <template v-else>Review purchase <ArrowRight :size="16" /></template>
       </button>
       <small class="escrow-note">Funds are held in escrow until the transfer is confirmed.</small>
     </aside>

@@ -20,7 +20,7 @@ defineEmits<{
   <section class="location-panel">
     <div class="location-toolbar">
       <div>
-        <span class="eyebrow">AVAILABLE FRONTS</span>
+        <span class="eyebrow">AVAILABLE BUSINESSES</span>
         <strong>{{ locations.length }} listings found</strong>
       </div>
       <label class="search-box">

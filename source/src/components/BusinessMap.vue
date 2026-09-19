@@ -111,7 +111,7 @@ onBeforeUnmount(() => map?.remove())
 <template>
   <section class="map-panel">
     <div ref="mapEl" class="leaflet-map" />
-    <div class="map-label"><span class="live-pulse" /> LIVE SITE MAP</div>
+    <div class="map-label"><span class="live-pulse" /> LOCATION MAP</div>
     <div class="map-actions">
       <button title="Zoom in" @click="map?.zoomIn()"><Plus :size="17" /></button>
       <button title="Zoom out" @click="map?.zoomOut()"><Minus :size="17" /></button>
@@ -120,7 +120,7 @@ onBeforeUnmount(() => map?.remove())
     <div class="map-legend">
       <span><i class="legend-dot available" /> Available</span>
       <span><i class="legend-dot selected" /> Selected</span>
-      <span><i class="legend-dot locked" /> Restricted</span>
+      <span><i class="legend-dot locked" /> Score required</span>
     </div>
   </section>
 </template>

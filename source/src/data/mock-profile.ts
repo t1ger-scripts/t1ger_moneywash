@@ -1,5 +1,5 @@
 export const mockProfile = {
-  alias: 'GHOST_7400',
+  characterName: 'Michael Anderson',
   reputation: 6000,
   portfolioWeight: 2,
   portfolioLimit: 6,
@@ -9,15 +9,15 @@ export const mockProfile = {
 
 // Mirrors Config.Reputation.Levels for local UI development.
 export const mockReputationLevels = [
-  { points: 0, label: 'Novice' },
-  { points: 250, label: 'Street Runner' },
-  { points: 500, label: 'Cash Handler' },
-  { points: 1000, label: "Fixer's Associate" },
-  { points: 1750, label: 'Front Runner' },
-  { points: 2750, label: 'Money Man' },
-  { points: 4000, label: 'Launderer' },
-  { points: 5500, label: 'Silent Partner' },
-  { points: 7500, label: 'Cartel Accountant' },
-  { points: 10000, label: 'Underworld Broker' },
-  { points: 15000, label: 'Kingpin' },
+  { points: 0, label: 'Unverified' },
+  { points: 250, label: 'Registered' },
+  { points: 500, label: 'Active Operator' },
+  { points: 1000, label: 'Established Operator' },
+  { points: 1750, label: 'Verified Investor' },
+  { points: 2750, label: 'Accredited Investor' },
+  { points: 4000, label: 'Senior Operator' },
+  { points: 5500, label: 'Portfolio Manager' },
+  { points: 7500, label: 'Commercial Investor' },
+  { points: 10000, label: 'Institutional Buyer' },
+  { points: 15000, label: 'Premium Member' },
 ]

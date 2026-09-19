@@ -6,7 +6,7 @@ const props = defineProps<{
   activeView: string
   reputation: number
   reputationLabel: string
-  alias: string
+  characterName: string
   portfolioCount: number
   portfolioWeight: number
   portfolioLimit: number
@@ -22,14 +22,14 @@ const repProgress = computed(() => Math.min(100, (props.reputation / 15000) * 10
     <div class="brand-lockup">
       <div class="brand-mark"><ShieldCheck :size="21" /></div>
       <div>
-        <strong>BLACK LEDGER</strong>
-        <span>PRIVATE EXCHANGE</span>
+        <strong>LEDGER CAPITAL</strong>
+        <span>BUSINESS BROKERAGE</span>
       </div>
     </div>
 
     <nav class="side-nav" aria-label="Primary">
       <button :class="{ active: activeView === 'market' }" @click="$emit('navigate', 'market')">
-        <LayoutGrid :size="17" /> Front Exchange
+        <LayoutGrid :size="17" /> Marketplace
       </button>
       <button :class="{ active: activeView === 'portfolio' }" @click="$emit('navigate', 'portfolio')">
         <BriefcaseBusiness :size="17" /> My portfolio
@@ -41,18 +41,19 @@ const repProgress = computed(() => Math.min(100, (props.reputation / 15000) * 10
       <span class="side-label">YOUR PROFILE</span>
       <div class="profile-card">
         <div class="profile-copy">
-          <strong>{{ alias }}</strong>
+          <strong>{{ characterName }}</strong>
+          <small>MEMBERSHIP STATUS</small>
           <span>{{ reputationLabel }}</span>
         </div>
         <span class="online-dot" />
       </div>
       <div class="metric-row">
-        <span>Reputation</span>
-        <strong>{{ reputation.toLocaleString() }} RP</strong>
+        <span>Investor Score</span>
+        <strong>{{ reputation.toLocaleString() }}</strong>
       </div>
       <div class="progress-track"><span :style="{ width: `${repProgress}%` }" /></div>
       <div class="metric-row portfolio-metric">
-        <span>Portfolio load</span>
+        <span>Portfolio Usage</span>
         <strong>{{ portfolioWeight }} / {{ portfolioLimit }}</strong>
       </div>
       <div class="weight-blocks">
@@ -61,7 +62,7 @@ const repProgress = computed(() => Math.min(100, (props.reputation / 15000) * 10
     </div>
 
     <div class="side-footer">
-      <button><CircleHelp :size="16" /> Operations guide</button>
+      <button><CircleHelp :size="16" /> Help Center</button>
     </div>
   </aside>
 </template>

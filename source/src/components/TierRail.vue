@@ -27,7 +27,7 @@ defineEmits<{ select: [tier: BusinessTier] }>()
         <small>{{ counts[tier.type] ?? 0 }} locations</small>
       </span>
       <span v-if="reputation < tier.requiredPoints" class="tier-state"><LockKeyhole :size="13" /> {{ tier.requiredPoints.toLocaleString() }}</span>
-      <span v-else class="tier-state unlocked"><Check :size="13" /> UNLOCKED</span>
+      <span v-else class="tier-state unlocked"><Check :size="13" /> ELIGIBLE</span>
     </button>
   </div>
 </template>
