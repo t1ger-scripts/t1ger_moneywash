@@ -1,0 +1,169 @@
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { Bell, Radio, WalletCards } from '@lucide/vue'
+import AppSidebar from '@/components/AppSidebar.vue'
+import BrowserChrome from '@/components/BrowserChrome.vue'
+import BusinessMap from '@/components/BusinessMap.vue'
+import LocationDetail from '@/components/LocationDetail.vue'
+import LocationList from '@/components/LocationList.vue'
+import PlaceholderView from '@/components/PlaceholderView.vue'
+import TierRail from '@/components/TierRail.vue'
+import { businessLocations, businessTiers } from '@/data/mock-businesses'
+import { mockProfile, mockReputationLevels } from '@/data/mock-profile'
+import { districtFromCoordinates, money } from '@/lib/format'
+import { nuiFetch } from '@/lib/nui'
+import type { BusinessTier, LocationView } from '@/types/business'
+
+const activeView = ref<'market' | 'portfolio'>('market')
+const selectedType = ref('coffee_shop')
+const selectedLocationId = ref<string>()
+const query = ref('')
+const reputation = ref(mockProfile.reputation)
+const ownedLocationIds = ref([...mockProfile.ownedLocationIds])
+const toast = ref('')
+const visible = ref(true)
+
+const counts = Object.fromEntries(businessTiers.map((tier) => [tier.type, businessLocations.filter((item) => item.type === tier.type).length]))
+const locationViews = computed<LocationView[]>(() => {
+  const tierMap = new Map(businessTiers.map((tier) => [tier.type, tier]))
+  return businessLocations.map((location) => {
+    const tier = tierMap.get(location.type)!
+    return {
+      ...location,
+      tier,
+      effectivePrice: location.price ?? tier.price,
+      district: districtFromCoordinates(location.coords.x, location.coords.y),
+      locked: reputation.value < tier.requiredPoints,
+    }
+  })
+})
+
+const displayedLocations = computed(() => {
+  const needle = query.value.trim().toLowerCase()
+  return locationViews.value.filter((location) => location.type === selectedType.value && (!needle || `${location.brand} ${location.district}`.toLowerCase().includes(needle)))
+})
+
+const selectedLocation = computed(() => locationViews.value.find((location) => location.uid === selectedLocationId.value))
+const ownedLocations = computed(() => locationViews.value.filter((location) => ownedLocationIds.value.includes(location.uid)))
+const portfolioWeight = computed(() => ownedLocations.value.reduce((total, location) => total + location.tier.weight, 0))
+const activeTitle = computed(() => activeView.value === 'market' ? 'Front Exchange' : 'Portfolio')
+const reputationLabel = computed(() => {
+  return [...mockReputationLevels].reverse().find((level) => reputation.value >= level.points)?.label ?? mockReputationLevels[0].label
+})
+
+function selectTier(tier: BusinessTier) {
+  selectedType.value = tier.type
+  selectedLocationId.value = undefined
+  query.value = ''
+}
+
+function closeUi() {
+  visible.value = false
+  void nuiFetch('close')
+}
+
+function reviewPurchase(location: LocationView) {
+  toast.value = `Acquisition review opened for ${location.brand}`
+  window.setTimeout(() => { toast.value = '' }, 2800)
+  void nuiFetch('reviewPurchase', { type: location.type, locationId: location.id })
+}
+
+function showToast(message: string) {
+  toast.value = message
+  window.setTimeout(() => { toast.value = '' }, 2800)
+}
+
+function setBusinessWaypoint(location: LocationView) {
+  showToast(`Waypoint set for ${location.brand}`)
+  void nuiFetch('setBusinessWaypoint', { type: location.type, locationId: location.id, coords: location.coords })
+}
+
+function transferBusiness(payload: { location: LocationView; playerId: number; playerName: string }) {
+  ownedLocationIds.value = ownedLocationIds.value.filter((uid) => uid !== payload.location.uid)
+  showToast(`${payload.location.brand} transferred to ${payload.playerName}`)
+  void nuiFetch('transferBusiness', { type: payload.location.type, locationId: payload.location.id, targetId: payload.playerId })
+}
+
+function abandonBusiness(location: LocationView) {
+  ownedLocationIds.value = ownedLocationIds.value.filter((uid) => uid !== location.uid)
+  showToast(`${location.brand} has been abandoned`)
+  void nuiFetch('abandonBusiness', { type: location.type, locationId: location.id })
+}
+</script>
+
+<template>
+  <div v-if="visible" class="nui-stage">
+    <div class="browser-window">
+      <BrowserChrome :active-tab="activeTitle" @close="closeUi" />
+      <div class="app-frame">
+        <AppSidebar
+          :active-view="activeView"
+          :reputation="reputation"
+          :reputation-label="reputationLabel"
+          :alias="mockProfile.alias"
+          :portfolio-count="ownedLocations.length"
+          :portfolio-weight="portfolioWeight"
+          :portfolio-limit="mockProfile.portfolioLimit"
+          @navigate="activeView = $event as typeof activeView"
+        />
+
+        <main v-if="activeView === 'market'" class="market-view">
+          <header class="market-header">
+            <div>
+              <span class="eyebrow">FRONT ACQUISITION NETWORK</span>
+              <h1>Front Exchange</h1>
+              <p>Acquire legitimate operations. Build reputation. Keep the network quiet.</p>
+            </div>
+            <div class="header-actions">
+              <div class="dev-reputation" title="Local preview control">
+                <Radio :size="14" />
+                <span>Preview RP</span>
+                <input v-model.number="reputation" type="range" min="0" max="16000" step="500" />
+                <strong>{{ reputation.toLocaleString() }}</strong>
+              </div>
+              <button class="icon-button"><Bell :size="17" /><span class="notification-dot" /></button>
+              <div class="balance-chip"><WalletCards :size="16" /><span>AVAILABLE</span><strong>{{ money.format(mockProfile.balance) }}</strong></div>
+            </div>
+          </header>
+
+          <TierRail :tiers="businessTiers" :selected-type="selectedType" :reputation="reputation" :counts="counts" @select="selectTier" />
+
+          <section class="workspace">
+            <LocationList
+              :locations="displayedLocations"
+              :selected-id="selectedLocationId"
+              :query="query"
+              :owned-location-ids="ownedLocationIds"
+              @select="selectedLocationId = $event.uid"
+              @update:query="query = $event"
+            />
+            <div class="map-stack">
+              <BusinessMap :locations="displayedLocations" :selected="selectedLocation" @select="selectedLocationId = $event.uid" />
+              <LocationDetail
+                :location="selectedLocation"
+                :reputation="reputation"
+                :owned="!!selectedLocation && ownedLocationIds.includes(selectedLocation.uid)"
+                :portfolio-weight="portfolioWeight"
+                :portfolio-limit="mockProfile.portfolioLimit"
+                @close="selectedLocationId = undefined"
+                @purchase="reviewPurchase"
+              />
+            </div>
+          </section>
+        </main>
+
+        <PlaceholderView
+          v-else
+          :businesses="ownedLocations"
+          :portfolio-weight="portfolioWeight"
+          :portfolio-limit="mockProfile.portfolioLimit"
+          @navigate-market="activeView = 'market'"
+          @waypoint="setBusinessWaypoint"
+          @transfer="transferBusiness"
+          @abandon="abandonBusiness"
+        />
+      </div>
+      <Transition name="toast"><div v-if="toast" class="app-toast">{{ toast }}</div></Transition>
+    </div>
+  </div>
+</template>
