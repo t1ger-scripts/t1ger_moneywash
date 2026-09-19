@@ -10,14 +10,11 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{ select: [location: LocationView] }>()
-type MapStyle = 'atlas' | 'satellite'
 type TileExtension = 'jpg' | 'png'
 
 const mapEl = ref<HTMLElement | null>(null)
-const mapStyle = ref<MapStyle>('atlas')
 let map: L.Map | undefined
 let markers = L.layerGroup()
-let activeTileLayer: L.TileLayer | undefined
 
 const gtaCrs = Object.assign({}, L.CRS.Simple, {
   projection: L.Projection.LonLat,
@@ -50,23 +47,6 @@ function createMixedTileLayer(
   })
 
   return layer
-}
-
-function setMapStyle(style: MapStyle) {
-  if (!map || (mapStyle.value === style && activeTileLayer)) return
-
-  mapStyle.value = style
-  if (activeTileLayer) map.removeLayer(activeTileLayer)
-
-  const maxZoom = style === 'satellite' ? 8 : 5
-  map.setMaxZoom(maxZoom)
-  if (map.getZoom() > maxZoom) map.setZoom(maxZoom)
-
-  activeTileLayer = style === 'atlas'
-    ? createMixedTileLayer('styleAtlas', 5)
-    : createMixedTileLayer('styleSatelite', 8)
-
-  activeTileLayer.addTo(map)
 }
 
 function renderMarkers() {
@@ -116,7 +96,7 @@ onMounted(async () => {
     maxBoundsViscosity: 1,
   })
 
-  setMapStyle('atlas')
+  createMixedTileLayer('styleSatelite', 8).addTo(map)
   markers.addTo(map)
   renderMarkers()
   showAll()
@@ -132,10 +112,6 @@ onBeforeUnmount(() => map?.remove())
   <section class="map-panel">
     <div ref="mapEl" class="leaflet-map" />
     <div class="map-label"><span class="live-pulse" /> LIVE SITE MAP</div>
-    <div class="map-style-switch">
-      <button type="button" :class="{ active: mapStyle === 'atlas' }" @click="setMapStyle('atlas')">Atlas</button>
-      <button type="button" :class="{ active: mapStyle === 'satellite' }" @click="setMapStyle('satellite')">Satellite</button>
-    </div>
     <div class="map-actions">
       <button title="Zoom in" @click="map?.zoomIn()"><Plus :size="17" /></button>
       <button title="Zoom out" @click="map?.zoomOut()"><Minus :size="17" /></button>
