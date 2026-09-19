@@ -15,6 +15,12 @@ type TileExtension = 'jpg' | 'png'
 const mapEl = ref<HTMLElement | null>(null)
 let map: L.Map | undefined
 let markers = L.layerGroup()
+let resizeObserver: ResizeObserver | undefined
+
+const mapBounds = L.latLngBounds([
+  [-4000, -5500],
+  [8000, 6000],
+])
 
 const gtaCrs = Object.assign({}, L.CRS.Simple, {
   projection: L.Projection.LonLat,
@@ -47,6 +53,20 @@ function createMixedTileLayer(
   })
 
   return layer
+}
+
+function updateMinimumZoom() {
+  if (!map) return
+
+  map.invalidateSize({ pan: false })
+
+  const minimumZoom = map.getBoundsZoom(mapBounds, true)
+
+  map.setMinZoom(minimumZoom)
+
+  if (map.getZoom() < minimumZoom) {
+    map.setZoom(minimumZoom)
+  }
 }
 
 function renderMarkers() {
@@ -92,9 +112,17 @@ onMounted(async () => {
     maxZoom: 8,
     zoomControl: false,
     attributionControl: false,
-    maxBounds: [[-4000, -5500], [8000, 6000]],
+    maxBounds: mapBounds,
     maxBoundsViscosity: 1,
   })
+
+  updateMinimumZoom()
+
+  resizeObserver = new ResizeObserver(() => {
+    updateMinimumZoom()
+  })
+
+  resizeObserver.observe(mapEl.value)
 
   createMixedTileLayer('styleSatelite', 8).addTo(map)
   markers.addTo(map)
@@ -105,7 +133,10 @@ onMounted(async () => {
 watch(() => props.locations, () => { renderMarkers(); if (!props.selected) showAll() }, { deep: true })
 watch(() => props.selected?.uid, () => { renderMarkers(); focusSelected() })
 
-onBeforeUnmount(() => map?.remove())
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  map?.remove()
+})
 </script>
 
 <template>
@@ -113,9 +144,15 @@ onBeforeUnmount(() => map?.remove())
     <div ref="mapEl" class="leaflet-map" />
     <div class="map-label"><span class="live-pulse" /> LOCATION MAP</div>
     <div class="map-actions">
-      <button title="Zoom in" @click="map?.zoomIn()"><Plus :size="17" /></button>
-      <button title="Zoom out" @click="map?.zoomOut()"><Minus :size="17" /></button>
-      <button title="Show all" @click="showAll"><LocateFixed :size="17" /></button>
+      <button title="Zoom in" @click="map?.zoomIn()">
+        <Plus :size="17" />
+      </button>
+      <button title="Zoom out" @click="map?.zoomOut()">
+        <Minus :size="17" />
+      </button>
+      <button title="Show all" @click="showAll">
+        <LocateFixed :size="17" />
+      </button>
     </div>
     <div class="map-legend">
       <span><i class="legend-dot available" /> Available</span>

@@ -88,7 +88,7 @@ function confirmAbandon() {
   <main class="portfolio-view">
     <header class="portfolio-header">
       <div>
-        <span class="eyebrow">BUSINESS OWNERSHIP</span>
+        <span class="eyebrow">OWNERSHIP LEDGER</span>
         <h1>My Portfolio</h1>
         <p>Review your businesses and access ownership options.</p>
       </div>
@@ -101,10 +101,10 @@ function confirmAbandon() {
     <section v-if="businesses.length" class="portfolio-content">
       <div class="portfolio-section-heading">
         <div>
-          <span>OWNED BUSINESSES</span>
+          <span>REGISTERED BUSINESSES</span>
           <strong>{{ businesses.length }} {{ businesses.length === 1 ? 'business' : 'businesses' }}</strong>
         </div>
-        <p>Select a business to reveal ownership options.</p>
+        <p>Select a business to view available actions.</p>
       </div>
 
       <div class="portfolio-list">
@@ -123,24 +123,24 @@ function confirmAbandon() {
             <div class="portfolio-business-copy">
               <div class="portfolio-title-row">
                 <strong>{{ location.brand }}</strong>
-                <span>OWNED</span>
+                <span>ACTIVE</span>
               </div>
               <p>{{ location.tier.label }} · Tier {{ location.tier.tier }}</p>
               <small><MapPin :size="12" /> {{ location.district }} · Site {{ String(location.id).padStart(2, '0') }}</small>
             </div>
             <div class="portfolio-weight">
-              <span>PORTFOLIO ALLOCATION</span>
-              <strong>{{ location.tier.weight }} {{ location.tier.weight === 1 ? 'slot' : 'slots' }}</strong>
+              <span>PORTFOLIO WEIGHT</span>
+              <strong>Weight: {{ location.tier.weight }}</strong>
             </div>
             <ChevronDown :size="17" class="portfolio-chevron" />
           </button>
 
           <div v-if="expandedBusinessId === location.uid" class="portfolio-expanded">
             <div class="inline-ownership-summary">
-              <div><span>Business type</span><strong>{{ location.tier.label }}</strong></div>
-              <div><span>Access tier</span><strong>Tier {{ location.tier.tier }}</strong></div>
-              <div><span>Location</span><strong>{{ location.district }}</strong></div>
-              <div><span>Portfolio allocation</span><strong>{{ location.tier.weight }} {{ location.tier.weight === 1 ? 'slot' : 'slots' }}</strong></div>
+              <div><span>TYPE</span><strong>{{ location.tier.label }}</strong></div>
+              <div><span>TIER</span><strong>{{ location.tier.tier }}</strong></div>
+              <div><span>DISTRICT</span><strong>{{ location.district }}</strong></div>
+              <div><span>WEIGHT</span><strong>{{ location.tier.weight }}</strong></div>
             </div>
 
             <div class="inline-ownership-actions">

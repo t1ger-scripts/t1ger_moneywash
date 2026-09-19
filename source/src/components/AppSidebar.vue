@@ -38,7 +38,7 @@ const repProgress = computed(() => Math.min(100, (props.reputation / 15000) * 10
     </nav>
 
     <div class="side-section">
-      <span class="side-label">YOUR PROFILE</span>
+      <span class="side-label">YOUR ACCOUNT</span>
       <div class="profile-card">
         <div class="profile-copy">
           <strong>{{ characterName }}</strong>
