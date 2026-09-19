@@ -23,6 +23,22 @@ local BrowserActionMessages = {
     insufficient_funds = "You do not have enough money in your bank account.",
     database_error = "The acquisition could not be saved.",
     purchase_failed = "The acquisition could not be completed.",
+    not_found = "This business could not be found.",
+    not_owner = "You are no longer the owner of this business.",
+    invalid_target = "The selected player is invalid.",
+    cannot_transfer_self = "You cannot transfer a business to yourself.",
+    self_transfer = "You cannot transfer a business to yourself.",
+    target_not_online = "The selected player is no longer online.",
+    target_too_far = "The selected player is no longer nearby.",
+    too_far = "The selected player is no longer nearby.",
+    target_owns_type = "The selected player already owns this business type.",
+    target_insufficient_reputation = "The selected player does not meet the Investor Score requirement.",
+    target_portfolio_full = "The selected player does not have enough portfolio capacity.",
+    active_stock_order = "This business has an active stock order.",
+    pending_deposit = "This business has a pending bank deposit.",
+    raid_pending = "This business currently has a pending compliance action.",
+    ownership_locked = "This business is currently being updated. Please try again.",
+    transfer_failed = "The ownership transfer could not be completed.",
 }
 
 local function GetBrowserActionMessage(reason)
@@ -295,6 +311,80 @@ RegisterNUICallback("getNearbyPlayers", function(_, cb)
     cb({
         success = true,
         players = response.players or {},
+    })
+end)
+
+RegisterNUICallback("transferBusiness", function(data, cb)
+    if not BrowserOpen then
+        cb({
+            success = false,
+            reason = "browser_closed",
+            message = "The browser is no longer open.",
+        })
+
+        return
+    end
+
+    if type(data) ~= "table" then
+        cb({
+            success = false,
+            reason = "invalid_request",
+            message = GetBrowserActionMessage(
+                "invalid_request"
+            ),
+        })
+
+        return
+    end
+
+    local businessId = tonumber(data.businessId)
+    local targetId = tonumber(data.targetId)
+
+    if not businessId or not targetId then
+        cb({
+            success = false,
+            reason = "invalid_request",
+            message = GetBrowserActionMessage(
+                "invalid_request"
+            ),
+        })
+
+        return
+    end
+
+    local response = lib.callback.await(
+        "t1ger_moneywash:server:browserTransferBusiness",
+        false,
+        {
+            businessId = businessId,
+            targetId = targetId,
+        }
+    )
+
+    if not response or not response.success then
+        local reason =
+            response and response.reason or
+            "transfer_failed"
+
+        cb({
+            success = false,
+            reason = reason,
+            message = GetBrowserActionMessage(reason),
+        })
+
+        return
+    end
+
+    if response.data then
+        EnrichBrowserLocations(response.data)
+        response.data.locales = LoadBrowserLocales()
+    else
+        RequestBrowserBootstrap()
+    end
+
+    cb({
+        success = true,
+        data = response.data,
     })
 end)
 

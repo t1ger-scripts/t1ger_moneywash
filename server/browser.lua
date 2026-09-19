@@ -161,7 +161,7 @@ local function BuildBrowserSnapshot(src)
     }
 end
 
-lib.callback.register( "t1ger_moneywash:server:getBrowserBootstrap", function(source)
+lib.callback.register("t1ger_moneywash:server:getBrowserBootstrap", function(source)
     local data, reason = BuildBrowserSnapshot(source)
     if not data then
         return {
@@ -236,9 +236,7 @@ lib.callback.register(
 
 --- Returns nearby players eligible for selection in the transfer dialog.
 --- TransferBusiness performs the final authoritative eligibility checks.
-lib.callback.register(
-    "t1ger_moneywash:server:getBrowserNearbyPlayers",
-    function(source)
+lib.callback.register("t1ger_moneywash:server:getBrowserNearbyPlayers", function(source)
         local sourcePed = GetPlayerPed(source)
 
         if not sourcePed or sourcePed == 0 then
@@ -306,3 +304,57 @@ lib.callback.register(
         }
     end
 )
+
+--- Transfers business ownership through the browser.
+lib.callback.register("t1ger_moneywash:server:browserTransferBusiness", function(source, payload)
+    if type(payload) ~= "table" then
+        return {
+            success = false,
+            reason = "invalid_request",
+        }
+    end
+
+    local businessId = tonumber(payload.businessId)
+    local targetId = tonumber(payload.targetId)
+
+    if not businessId or
+        businessId % 1 ~= 0 or
+        not targetId or
+        targetId % 1 ~= 0
+    then
+        return {
+            success = false,
+            reason = "invalid_request",
+        }
+    end
+
+    local success, reason = TransferBusiness(
+        source,
+        targetId,
+        businessId
+    )
+
+    if not success then
+        return {
+            success = false,
+            reason = reason or "transfer_failed",
+        }
+    end
+
+    local snapshot, snapshotReason =
+        BuildBrowserSnapshot(source)
+
+    -- Refresh every other open browser.
+    -- The sender receives their snapshot directly in this response.
+    TriggerClientEvent(
+        "t1ger_moneywash:client:browserRefresh",
+        -1,
+        source
+    )
+
+    return {
+        success = true,
+        data = snapshot,
+        refreshReason = snapshotReason,
+    }
+end)

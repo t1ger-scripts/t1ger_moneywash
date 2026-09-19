@@ -516,29 +516,64 @@ async function transferBusiness(
   },
   complete: ActionCompletion,
 ) {
+  const businessId = payload.location.businessId
+
+  if (isFiveM && !businessId) {
+    showToast(
+      'This business ownership record is unavailable.',
+      'error',
+    )
+
+    complete(false)
+    return
+  }
+
   try {
     const [response] = await Promise.all([
       nuiFetch<ActionResponse>('transferBusiness', {
-        type: payload.location.type,
-        locationId: payload.location.id,
+        businessId,
         targetId: payload.playerId,
       }),
       waitForLocalAction(),
     ])
 
-    if (isFiveM && (!response || !response.success)) {
-      throw new Error(
-        response?.message ??
-        'The ownership transfer could not be completed.',
+    if (isFiveM) {
+      if (!response || !response.success) {
+        throw new Error(
+          response?.message ??
+          'The ownership transfer could not be completed.',
+        )
+      }
+
+      if (response.data) {
+        applyBrowserSnapshot(response.data)
+      } else {
+        void nuiFetch('retryBootstrap')
+      }
+
+      showToast(
+        `${payload.location.brand} was transferred to ${payload.playerName}.`,
+        'success',
       )
+
+      complete(true)
+      return
     }
 
-    ownedLocationIds.value = ownedLocationIds.value.filter(
-      (uid) => uid !== payload.location.uid,
-    )
+    // Local browser preview only.
+    ownedLocationIds.value =
+      ownedLocationIds.value.filter(
+        uid => uid !== payload.location.uid,
+      )
 
-    if (!acquiredLocationIds.value.includes(payload.location.uid)) {
-      acquiredLocationIds.value.push(payload.location.uid)
+    if (
+      !acquiredLocationIds.value.includes(
+        payload.location.uid,
+      )
+    ) {
+      acquiredLocationIds.value.push(
+        payload.location.uid,
+      )
     }
 
     showToast(
