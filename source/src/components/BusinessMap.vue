@@ -11,6 +11,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{ select: [location: LocationView] }>()
 type TileExtension = 'jpg' | 'png'
+const MAXIMUM_MAP_ZOOM = 5
 
 const mapEl = ref<HTMLElement | null>(null)
 let map: L.Map | undefined
@@ -138,7 +139,7 @@ onMounted(async () => {
     center: [0, 0],
     zoom: 3,
     minZoom: 1,
-    maxZoom: 8,
+    maxZoom: MAXIMUM_MAP_ZOOM,
     zoomControl: false,
     attributionControl: false,
     maxBounds: mapBounds,
@@ -153,7 +154,7 @@ onMounted(async () => {
 
   resizeObserver.observe(mapEl.value)
 
-  createMixedTileLayer('styleSatelite', 8).addTo(map)
+  createMixedTileLayer('styleSatelite', MAXIMUM_MAP_ZOOM).addTo(map)
   markers.addTo(map)
   renderMarkers()
   showAll()
