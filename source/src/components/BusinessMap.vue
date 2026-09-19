@@ -55,10 +55,7 @@ function createMixedTileLayer(
       minZoom: 0,
       maxZoom,
       noWrap: true,
-      tileSize: 256,
-      keepBuffer: 1,
-      updateWhenIdle: true,
-      updateWhenZooming: false,
+      keepBuffer: 2,
     },
   )
 
@@ -197,23 +194,15 @@ function renderMarkers() {
   })
 }
 
-function focusSelected() {
+function focusSelected(animated = true) {
   if (!map || !props.selected) return
-  map.setView(
-    [props.selected.coords.y, props.selected.coords.x],
-    5,
-    { animate: false },
-  )
+  map.flyTo([props.selected.coords.y, props.selected.coords.x], 5, { animate: animated, duration: 0.75 })
 }
 
 function showAll() {
   if (!map || !props.locations.length) return
   const bounds = L.latLngBounds(props.locations.map((item) => [item.coords.y, item.coords.x]))
-  map.fitBounds(bounds, {
-    padding: [48, 48],
-    maxZoom: 4,
-    animate: false,
-  })
+  map.fitBounds(bounds, { padding: [48, 48], maxZoom: 4, animate: true })
 }
 
 onMounted(async () => {
@@ -230,9 +219,6 @@ onMounted(async () => {
     attributionControl: false,
     maxBounds: mapBounds,
     maxBoundsViscosity: 1,
-    zoomAnimation: false,
-    fadeAnimation: false,
-    markerZoomAnimation: false,
   })
 
   updateMinimumZoom()
