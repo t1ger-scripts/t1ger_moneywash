@@ -16,6 +16,7 @@ defineProps<{
 const emit = defineEmits<{
   navigate: [view: string]
   'update:reputation': [value: number]
+  openHelp: []
 }>()
 
 function updatePreviewScore(event: Event) {
@@ -89,8 +90,9 @@ function updatePreviewScore(event: Event) {
     </div>
 
     <div class="side-footer">
-      <button>
-        <CircleHelp :size="16" /> Help Center
+      <button type="button" @click="$emit('openHelp')">
+        <CircleHelp :size="16" />
+        Help Center
       </button>
     </div>
   </aside>

@@ -16,6 +16,7 @@ import PlaceholderView from '@/components/PlaceholderView.vue'
 import TierRail from '@/components/TierRail.vue'
 import PurchaseModal from '@/components/PurchaseModal.vue'
 import BootstrapLoading from '@/components/BootstrapLoading.vue'
+import HelpCenter from '@/components/HelpCenter.vue'
 import { businessLocations, businessTiers } from '@/data/mock-businesses'
 import { mockProfile, mockReputationLevels } from '@/data/mock-profile'
 import { zoneFromCoordinates } from '@/lib/format'
@@ -31,6 +32,7 @@ const balance = ref(mockProfile.balance)
 const purchaseReview = ref<LocationView>()
 const ownedLocationIds = ref([...mockProfile.ownedLocationIds])
 const acquiredLocationIds = ref([...mockProfile.acquiredLocationIds])
+const isHelpCenterOpen = ref(false)
 
 interface ActionResponse {
   success: boolean
@@ -338,7 +340,7 @@ async function transferBusiness(
     if (isFiveM && (!response || !response.success)) {
       throw new Error(
         response?.message ??
-          'The ownership transfer could not be completed.',
+        'The ownership transfer could not be completed.',
       )
     }
 
@@ -383,7 +385,7 @@ async function abandonBusiness(
     if (isFiveM && (!response || !response.success)) {
       throw new Error(
         response?.message ??
-          'The business could not be returned to the Marketplace.',
+        'The business could not be returned to the Marketplace.',
       )
     }
 
@@ -505,7 +507,8 @@ watch(reputation, (score) => {
             :reputation-progress="reputationProgress" :next-reputation-label="nextReputationLevel?.label"
             :character-name="mockProfile.characterName" :portfolio-count="ownedLocations.length"
             :portfolio-weight="portfolioWeight" :portfolio-limit="mockProfile.portfolioLimit"
-            @navigate="activeView = $event as typeof activeView" @update:reputation="reputation = $event" />
+            @navigate="activeView = $event as typeof activeView" @open-help="isHelpCenterOpen = true"
+            @update:reputation="reputation = $event" />
 
           <main v-if="activeView === 'market'" class="market-view">
             <header class="market-header">
@@ -540,6 +543,9 @@ watch(reputation, (score) => {
             @waypoint="setBusinessWaypoint" @transfer="transferBusiness" @abandon="abandonBusiness" />
         </template>
       </div>
+      
+      <HelpCenter v-if="isHelpCenterOpen" @close="isHelpCenterOpen = false" />
+      
       <Transition name="modal-fade">
         <PurchaseModal v-if="purchaseReview" :location="purchaseReview" :reputation="reputation" :balance="balance"
           :portfolio-weight="portfolioWeight" :portfolio-limit="mockProfile.portfolioLimit"
