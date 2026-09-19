@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import L from 'leaflet'
-import { LocateFixed, Minus, Plus } from '@lucide/vue'
+import { LocateFixed, Minus, Plus, RotateCcw, TriangleAlert, } from '@lucide/vue'
 import type { LocationView } from '@/types/business'
 
 const props = defineProps<{
@@ -14,6 +14,15 @@ type TileExtension = 'jpg' | 'png'
 const MAXIMUM_MAP_ZOOM = 5
 
 const mapEl = ref<HTMLElement | null>(null)
+
+const isMapLoading = ref(true)
+const hasMapError = ref(false)
+
+let successfulTileLoads = 0
+let failedTileLoads = 0
+let mapLoadTimer: number | undefined
+let activeTileLayer: L.TileLayer | undefined
+
 let map: L.Map | undefined
 let markers = L.layerGroup()
 let resizeObserver: ResizeObserver | undefined
@@ -37,23 +46,89 @@ function createMixedTileLayer(
   maxZoom: number,
   preferredExtension: TileExtension = 'jpg',
 ) {
-  const fallbackExtension: TileExtension = preferredExtension === 'jpg' ? 'png' : 'jpg'
-  const layer = L.tileLayer(`./mapStyles/${folder}/{z}/{x}/{y}.${preferredExtension}`, {
-    minZoom: 0,
-    maxZoom,
-    noWrap: true,
-    keepBuffer: 2,
+  const fallbackExtension: TileExtension =
+    preferredExtension === 'jpg' ? 'png' : 'jpg'
+
+  const layer = L.tileLayer(
+    `./mapStyles/${folder}/{z}/{x}/{y}.${preferredExtension}`,
+    {
+      minZoom: 0,
+      maxZoom,
+      noWrap: true,
+      keepBuffer: 2,
+    },
+  )
+
+  layer.on('tileload', () => {
+    successfulTileLoads += 1
   })
 
   layer.on('tileerror', (event: L.TileErrorEvent) => {
     const tile = event.tile as HTMLImageElement
-    if (tile.dataset.fallbackAttempted === 'true') return
+
+    if (tile.dataset.fallbackAttempted === 'true') {
+      failedTileLoads += 1
+      return
+    }
 
     tile.dataset.fallbackAttempted = 'true'
-    tile.src = tile.src.replace(`.${preferredExtension}`, `.${fallbackExtension}`)
+    tile.src = tile.src.replace(
+      `.${preferredExtension}`,
+      `.${fallbackExtension}`,
+    )
+  })
+
+  layer.on('load', () => {
+    if (successfulTileLoads > 0) {
+      window.clearTimeout(mapLoadTimer)
+
+      isMapLoading.value = false
+      hasMapError.value = false
+      return
+    }
+
+    if (failedTileLoads > 0) {
+      window.clearTimeout(mapLoadTimer)
+
+      isMapLoading.value = false
+      hasMapError.value = true
+    }
   })
 
   return layer
+}
+
+function loadSatelliteTiles() {
+  if (!map) return
+
+  window.clearTimeout(mapLoadTimer)
+
+  isMapLoading.value = true
+  hasMapError.value = false
+  successfulTileLoads = 0
+  failedTileLoads = 0
+
+  if (activeTileLayer) {
+    map.removeLayer(activeTileLayer)
+  }
+
+  activeTileLayer = createMixedTileLayer(
+    'styleSatelite',
+    MAXIMUM_MAP_ZOOM,
+  )
+
+  activeTileLayer.addTo(map)
+
+  mapLoadTimer = window.setTimeout(() => {
+    if (successfulTileLoads > 0) {
+      isMapLoading.value = false
+      hasMapError.value = false
+      return
+    }
+
+    isMapLoading.value = false
+    hasMapError.value = true
+  }, 6000)
 }
 
 function updateMinimumZoom() {
@@ -154,7 +229,7 @@ onMounted(async () => {
 
   resizeObserver.observe(mapEl.value)
 
-  createMixedTileLayer('styleSatelite', MAXIMUM_MAP_ZOOM).addTo(map)
+  loadSatelliteTiles()
   markers.addTo(map)
   renderMarkers()
   showAll()
@@ -164,6 +239,7 @@ watch(() => props.locations, () => { renderMarkers(); if (!props.selected) showA
 watch(() => props.selected?.uid, () => { renderMarkers(); focusSelected() })
 
 onBeforeUnmount(() => {
+  window.clearTimeout(mapLoadTimer)
   resizeObserver?.disconnect()
   map?.remove()
 })
@@ -172,6 +248,34 @@ onBeforeUnmount(() => {
 <template>
   <section class="map-panel">
     <div ref="mapEl" class="leaflet-map" />
+    <Transition name="map-state" mode="out-in">
+      <div v-if="isMapLoading" key="loading" class="map-loading-state" role="status">
+        <span class="map-loading-spinner" />
+
+        <span>
+          <strong>Loading location map</strong>
+          <small>Retrieving satellite imagery</small>
+        </span>
+      </div>
+
+      <div v-else-if="hasMapError" key="error" class="map-error-state" role="alert">
+        <span class="map-error-icon">
+          <TriangleAlert :size="18" />
+        </span>
+
+        <span>
+          <strong>Map imagery unavailable</strong>
+          <small>
+            Listings are still available in the location panel.
+          </small>
+        </span>
+
+        <button type="button" @click="loadSatelliteTiles">
+          <RotateCcw :size="13" />
+          Retry
+        </button>
+      </div>
+    </Transition>
     <div class="map-label"><span class="live-pulse" /> LOCATION MAP</div>
     <div class="map-actions">
       <button title="Zoom in" @click="map?.zoomIn()">
