@@ -1,0 +1,8 @@
+# Source UI dependencies and build artifacts
+source/node_modules/
+source/dist/
+source/*.local
+
+# OS
+.DS_Store
+Thumbs.db
