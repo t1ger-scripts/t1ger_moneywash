@@ -422,9 +422,36 @@ function ownsBusinessType(type: string) {
   )
 }
 
-function setBusinessWaypoint(location: LocationView) {
-  showToast(`Waypoint set for ${location.brand}.`, 'success')
-  void nuiFetch('setBusinessWaypoint', { type: location.type, locationId: location.id, coords: location.coords })
+async function setBusinessWaypoint(location: LocationView) {
+  try {
+    const response = await nuiFetch<ActionResponse>(
+      'setBusinessWaypoint',
+      {
+        type: location.type,
+        locationId: location.id,
+        coords: location.coords,
+      },
+    )
+
+    if (isFiveM && (!response || !response.success)) {
+      throw new Error(
+        response?.message ??
+          'The waypoint could not be set.',
+      )
+    }
+
+    showToast(
+      `Waypoint set for ${location.brand}.`,
+      'success',
+    )
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'The waypoint could not be set.'
+
+    showToast(message, 'error')
+  }
 }
 
 async function transferBusiness(

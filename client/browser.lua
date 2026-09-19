@@ -263,6 +263,50 @@ RegisterNUICallback("retryBootstrap", function(_, cb)
     RequestBrowserBootstrap()
 end)
 
+RegisterNUICallback("setBusinessWaypoint", function(data, cb)
+    if not BrowserOpen then
+        cb({
+            success = false,
+            message = "The browser is no longer open.",
+        })
+
+        return
+    end
+
+    if type(data) ~= "table" or
+        type(data.coords) ~= "table"
+    then
+        cb({
+            success = false,
+            message = "The business location is invalid.",
+        })
+
+        return
+    end
+
+    local x = tonumber(data.coords.x)
+    local y = tonumber(data.coords.y)
+
+    if not x or not y or
+        x ~= x or y ~= y or
+        math.abs(x) > 100000 or
+        math.abs(y) > 100000
+    then
+        cb({
+            success = false,
+            message = "The business location is invalid.",
+        })
+
+        return
+    end
+
+    SetNewWaypoint(x + 0.0, y + 0.0)
+
+    cb({
+        success = true,
+    })
+end)
+
 RegisterNUICallback("purchaseBusiness", function(data, cb)
     if not BrowserOpen then
         cb({
