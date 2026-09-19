@@ -110,6 +110,26 @@ const mapLocations = computed(() => {
 })
 
 const selectedLocation = computed(() => locationViews.value.find((location) => location.uid === selectedLocationId.value))
+
+watch(
+  [
+    selectedLocationId,
+    displayedLocations,
+    () => selectedLocation.value?.status,
+  ],
+  ([selectedId, visibleLocations, status]) => {
+    if (!selectedId) return
+
+    const remainsVisible = visibleLocations.some(
+      (location) => location.uid === selectedId,
+    )
+
+    if (!remainsVisible || status !== 'available') {
+      selectedLocationId.value = undefined
+    }
+  },
+)
+
 const ownedLocations = computed(() => locationViews.value.filter((location) => ownedLocationIds.value.includes(location.uid)))
 const portfolioWeight = computed(() => ownedLocations.value.reduce((total, location) => total + location.tier.weight, 0))
 const activeTitle = computed(() => activeView.value === 'market' ? 'Marketplace' : 'My Portfolio')
