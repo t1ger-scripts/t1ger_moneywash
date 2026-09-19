@@ -102,40 +102,50 @@ function confirmAbandon() {
 
       <div class="portfolio-list">
         <article v-for="location in businesses" :key="location.uid" class="portfolio-entry">
-          <div class="portfolio-business-icon"><Building2 :size="20" /></div>
+          <div class="portfolio-business-icon">
+            <Building2 :size="20" />
+          </div>
 
           <div class="portfolio-business-copy">
             <div class="portfolio-title-row">
               <strong>{{ location.brand }}</strong>
               <span>ACTIVE</span>
             </div>
-            <small>
-              <MapPin :size="12" />
-              <span>{{ location.street ?? `Site ${String(location.id).padStart(2, '0')}` }}</span>
-              <template v-if="location.crossingStreet"> / {{ location.crossingStreet }}</template>
-            </small>
-            <small class="portfolio-zone">{{ location.zone }}</small>
-          </div>
 
-          <div class="portfolio-fact">
-            <span>TYPE</span>
-            <strong>{{ location.tier.label }}</strong>
-          </div>
-          <div class="portfolio-fact">
-            <span>TIER</span>
-            <strong>{{ toRoman(location.tier.tier) }}</strong>
-          </div>
-          <div class="portfolio-fact portfolio-weight">
-            <span>PORTFOLIO WEIGHT</span>
-            <strong>{{ location.tier.weight }}</strong>
+            <div class="portfolio-meta">
+              <span>{{ location.tier.label }}</span>
+              <i aria-hidden="true" />
+              <span>Tier {{ toRoman(location.tier.tier) }}</span>
+              <i aria-hidden="true" />
+              <span>Weight {{ location.tier.weight }}</span>
+            </div>
+
+            <small class="portfolio-location">
+              <MapPin :size="12" />
+
+              <span>
+                {{ location.street ?? `Site ${String(location.id).padStart(2, '0')}` }}
+                <template v-if="location.crossingStreet">
+                  / {{ location.crossingStreet }}
+                </template>
+                <template v-if="location.zone">
+                  · {{ location.zone }}
+                </template>
+              </span>
+            </small>
           </div>
 
           <div class="portfolio-row-actions">
-            <button class="portfolio-waypoint" type="button" title="Set waypoint" aria-label="Set waypoint" @click="emit('waypoint', location)">
+            <button class="portfolio-waypoint" type="button" title="Set waypoint" aria-label="Set waypoint"
+              @click="emit('waypoint', location)">
               <MapPinned :size="16" />
             </button>
-            <button class="portfolio-secondary" @click="openTransfer(location)"><ArrowRightLeft :size="15" /> Transfer Ownership</button>
-            <button class="portfolio-danger-action" @click="openAbandon(location)"><Trash2 :size="14" /> Relinquish Holding</button>
+            <button class="portfolio-secondary" @click="openTransfer(location)">
+              <ArrowRightLeft :size="15" /> Transfer Ownership
+            </button>
+            <button class="portfolio-danger-action" @click="openAbandon(location)">
+              <Trash2 :size="14" /> Relinquish Holding
+            </button>
           </div>
         </article>
       </div>
@@ -150,33 +160,43 @@ function confirmAbandon() {
 
     <Transition name="modal-fade">
       <div v-if="selectedBusiness" class="modal-backdrop" @click.self="closeDialog">
-        <section class="portfolio-modal" role="dialog" aria-modal="true" :aria-label="`${selectedBusiness.brand} ownership action`">
-          <button class="modal-close" aria-label="Close" @click="closeDialog"><X :size="16" /></button>
+        <section class="portfolio-modal" role="dialog" aria-modal="true"
+          :aria-label="`${selectedBusiness.brand} ownership action`">
+          <button class="modal-close" aria-label="Close" @click="closeDialog">
+            <X :size="16" />
+          </button>
 
           <template v-if="dialog === 'transfer'">
             <span class="modal-kicker">TRANSFER OWNERSHIP</span>
             <h2>Select a nearby player</h2>
-            <p class="modal-description">The business will be transferred immediately after confirmation. No payment is included in this transfer.</p>
+            <p class="modal-description">The business will be transferred immediately after confirmation. No payment is
+              included in this transfer.</p>
 
             <div class="nearby-player-list">
-              <label v-for="player in nearbyPlayers" :key="player.id" :class="{ selected: selectedPlayerId === player.id }">
+              <label v-for="player in nearbyPlayers" :key="player.id"
+                :class="{ selected: selectedPlayerId === player.id }">
                 <input v-model="selectedPlayerId" type="radio" name="nearby-player" :value="player.id" />
                 <UserRound :size="16" />
-                <span><strong>{{ player.name }}</strong><small>Session ID {{ player.id }} · {{ player.distance.toFixed(1) }}m away</small></span>
+                <span><strong>{{ player.name }}</strong><small>Session ID {{ player.id }} · {{
+                  player.distance.toFixed(1) }}m away</small></span>
               </label>
             </div>
 
             <div class="modal-footer-actions">
               <button class="portfolio-secondary" @click="closeDialog">Cancel</button>
-              <button class="portfolio-primary" :disabled="!selectedPlayer" @click="confirmTransfer">Confirm Transfer</button>
+              <button class="portfolio-primary" :disabled="!selectedPlayer" @click="confirmTransfer">Confirm
+                Transfer</button>
             </div>
           </template>
 
           <template v-else>
-            <div class="danger-icon"><TriangleAlert :size="24" /></div>
+            <div class="danger-icon">
+              <TriangleAlert :size="24" />
+            </div>
             <span class="modal-kicker danger">PERMANENT ACTION</span>
             <h2>Relinquish {{ selectedBusiness.brand }}?</h2>
-            <p class="modal-description">This business will immediately return to the Marketplace. You will receive no refund.</p>
+            <p class="modal-description">This business will immediately return to the Marketplace. You will receive no
+              refund.</p>
 
             <div class="abandon-warning">
               <strong>Everything associated with this business will be lost:</strong>
@@ -189,7 +209,9 @@ function confirmAbandon() {
 
             <div class="modal-footer-actions">
               <button class="portfolio-secondary" @click="closeDialog">Keep Business</button>
-              <button class="portfolio-danger" @click="confirmAbandon"><Trash2 :size="14" /> Relinquish Permanently</button>
+              <button class="portfolio-danger" @click="confirmAbandon">
+                <Trash2 :size="14" /> Relinquish Permanently
+              </button>
             </div>
           </template>
         </section>
