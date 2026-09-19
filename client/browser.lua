@@ -254,6 +254,8 @@ RegisterNUICallback("close", function(_, cb)
 end)
 
 CreateThread(function()
+    while not _Target do Wait(100) end -- wait for target to initialize
+    
     _API.Target.AddModel(Config.Browser.Models, {
         {
             name = "t1ger_moneywash:open_browser",

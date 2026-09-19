@@ -1,5 +1,4 @@
 :root {
-  color-scheme: dark;
   font-family: 'Inter Variable', Inter, system-ui, sans-serif;
   font-synthesis: none;
   --bg: #0a0d11;
@@ -30,10 +29,10 @@ body,
   height: 100%;
   margin: 0;
   overflow: hidden;
+  background: transparent !important;
 }
 
 body {
-  background: transparent;
   color: var(--text);
 }
 
@@ -909,6 +908,14 @@ button {
   z-index: 1;
   background: #111612;
   filter: none;
+}
+
+/* Slightly overlap adjacent tiles to prevent CEF subpixel seams. */
+.leaflet-map .leaflet-tile {
+  width: 257px !important;
+  height: 257px !important;
+  outline: 1px solid transparent;
+  backface-visibility: hidden;
 }
 
 .map-label {

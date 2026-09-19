@@ -9,6 +9,8 @@ discord 'https://discord.gg/RdwXAK3Vnw'
 description 'T1GER Money Wash'
 version '1.0.0'
 
+ui_page 'web/index.html'
+
 dependencies {
     '/server:7290',
     '/gameBuild:3258',
@@ -35,6 +37,7 @@ client_scripts {
     'client/functions.lua',
     'client/reputation.lua',
     'client/customize.lua',
+    'client/browser.lua',
     'client/business/main.lua',
     'client/business/menu.lua',
     'client/business/missions.lua',
@@ -62,6 +65,8 @@ server_scripts {
 }
 
 files {
+    'web/**/*',
+
     'locales/*.json',
     'shared/business_locations.lua',
     'shared/stocklocations.lua',

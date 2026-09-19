@@ -1,16 +1,38 @@
-export const isFiveM = typeof window !== 'undefined' && 'invokeNative' in window
+interface FiveMWindow extends Window {
+  GetParentResourceName?: () => string
+  invokeNative?: (...args: unknown[]) => unknown
+}
 
-export async function nuiFetch<T = unknown>(event: string, data: unknown = {}): Promise<T | null> {
-  if (!isFiveM) return null
+const nuiWindow =
+  typeof window !== 'undefined'
+    ? window as FiveMWindow
+    : undefined
 
-  const resourceName = (window as typeof window & { GetParentResourceName?: () => string })
-    .GetParentResourceName?.() ?? 't1ger_moneywash'
+export const isFiveM =
+  typeof nuiWindow?.GetParentResourceName === 'function'
 
-  const response = await fetch(`https://${resourceName}/${event}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-    body: JSON.stringify(data),
-  })
+export async function nuiFetch<T = unknown>(
+  event: string,
+  data: unknown = {},
+): Promise<T | null> {
+  if (!isFiveM || !nuiWindow) {
+    return null
+  }
+
+  const resourceName =
+    nuiWindow.GetParentResourceName?.() ??
+    't1ger_moneywash'
+
+  const response = await fetch(
+    `https://${resourceName}/${event}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: JSON.stringify(data),
+    },
+  )
 
   return response.json() as Promise<T>
 }

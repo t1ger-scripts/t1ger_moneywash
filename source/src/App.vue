@@ -17,26 +17,74 @@ import TierRail from '@/components/TierRail.vue'
 import PurchaseModal from '@/components/PurchaseModal.vue'
 import BootstrapLoading from '@/components/BootstrapLoading.vue'
 import HelpCenter from '@/components/HelpCenter.vue'
-import { businessLocations, businessTiers } from '@/data/mock-businesses'
-import { mockProfile, mockReputationLevels } from '@/data/mock-profile'
+import {
+  businessLocations as mockBusinessLocations,
+  businessTiers as mockBusinessTiers,
+} from '@/data/mock-businesses'
+import {
+  mockProfile,
+  mockReputationLevels,
+} from '@/data/mock-profile'
 import { zoneFromCoordinates } from '@/lib/format'
 import { isFiveM, nuiFetch } from '@/lib/nui'
-import type { BusinessTier, LocationView } from '@/types/business'
+import type {
+  BrowserSnapshot,
+  BrowserTheme,
+  BusinessLocation,
+  BusinessTier,
+  LocationView,
+  ReputationLevel,
+} from '@/types/business'
 
 const activeView = ref<'market' | 'portfolio'>('market')
 const selectedType = ref('coffee_shop')
 const selectedLocationId = ref<string>()
 const query = ref('')
-const reputation = ref(mockProfile.reputation)
-const balance = ref(mockProfile.balance)
+
+const businessTiers = ref<BusinessTier[]>(
+  isFiveM ? [] : [...mockBusinessTiers],
+)
+
+const businessLocations = ref<BusinessLocation[]>(
+  isFiveM ? [] : [...mockBusinessLocations],
+)
+
+const reputationLevels = ref<ReputationLevel[]>(
+  isFiveM ? [] : [...mockReputationLevels],
+)
+
+const characterName = ref(
+  isFiveM ? '' : mockProfile.characterName,
+)
+
+const reputation = ref(
+  isFiveM ? 0 : mockProfile.reputation,
+)
+
+const balance = ref(
+  isFiveM ? 0 : mockProfile.balance,
+)
+
+const portfolioLimit = ref<number>(
+  isFiveM ? 0 : mockProfile.portfolioLimit,
+)
+
 const purchaseReview = ref<LocationView>()
-const ownedLocationIds = ref([...mockProfile.ownedLocationIds])
-const acquiredLocationIds = ref([...mockProfile.acquiredLocationIds])
+
+const ownedLocationIds = ref(
+  isFiveM ? [] : [...mockProfile.ownedLocationIds],
+)
+
+const acquiredLocationIds = ref(
+  isFiveM ? [] : [...mockProfile.acquiredLocationIds],
+)
+
 const isHelpCenterOpen = ref(false)
 
 interface ActionResponse {
   success: boolean
   message?: string
+  reason?: string
 }
 
 type ActionCompletion = (success: boolean) => void
@@ -62,37 +110,53 @@ const toastTitles: Record<ToastVariant, string> = {
 
 let toastTimer: number | undefined
 
-const visible = ref(true)
-const isBootstrapping = ref(true)
+const visible = ref(!isFiveM)
+const isBootstrapping = ref(!isFiveM)
 const bootstrapError = ref(false)
 
 let bootstrapTimer: number | undefined
 
 const locationViews = computed<LocationView[]>(() => {
-  const tierMap = new Map(businessTiers.map((tier) => [tier.type, tier]))
-  return businessLocations.map((location) => {
-    const tier = tierMap.get(location.type)!
+  const tierMap = new Map(
+    businessTiers.value.map((tier) => [tier.type, tier]),
+  )
 
-    const status = ownedLocationIds.value.includes(location.uid)
-      ? 'active'
-      : acquiredLocationIds.value.includes(location.uid)
-        ? 'acquired'
-        : 'available'
+  return businessLocations.value.flatMap((location) => {
+    const tier = tierMap.get(location.type)
 
-    return {
+    if (!tier) {
+      return []
+    }
+
+    const status =
+      location.status ??
+      (
+        ownedLocationIds.value.includes(location.uid)
+          ? 'active'
+          : acquiredLocationIds.value.includes(location.uid)
+            ? 'acquired'
+            : 'available'
+      )
+
+    return [{
       ...location,
       tier,
       effectivePrice: location.price ?? tier.price,
-      zone: zoneFromCoordinates(location.coords.x, location.coords.y),
+      zone:
+        location.zone ??
+        zoneFromCoordinates(
+          location.coords.x,
+          location.coords.y,
+        ),
       locked: reputation.value < tier.requiredPoints,
       status,
-    }
+    }]
   })
 })
 
 const availableCounts = computed<Record<string, number>>(() => {
   return Object.fromEntries(
-    businessTiers.map((tier) => [
+    businessTiers.value.map((tier) => [
       tier.type,
       locationViews.value.filter(
         (location) =>
@@ -171,16 +235,45 @@ const ownedLocations = computed(() => locationViews.value.filter((location) => o
 const portfolioWeight = computed(() => ownedLocations.value.reduce((total, location) => total + location.tier.weight, 0))
 const activeTitle = computed(() => activeView.value === 'market' ? 'Marketplace' : 'My Portfolio')
 const reputationLabel = computed(() => {
-  return [...mockReputationLevels].reverse().find((level) => reputation.value >= level.points)?.label ?? mockReputationLevels[0].label
+  return [...reputationLevels.value]
+    .reverse()
+    .find((level) => reputation.value >= level.points)
+    ?.label ?? reputationLevels.value[0]?.label ?? ''
 })
+
 const currentReputationLevel = computed(() => {
-  return [...mockReputationLevels].reverse().find((level) => reputation.value >= level.points) ?? mockReputationLevels[0]
+  return [...reputationLevels.value]
+    .reverse()
+    .find((level) => reputation.value >= level.points) ??
+    reputationLevels.value[0]
 })
-const nextReputationLevel = computed(() => mockReputationLevels.find((level) => level.points > reputation.value))
+
+const nextReputationLevel = computed(() => {
+  return reputationLevels.value.find(
+    (level) => level.points > reputation.value,
+  )
+})
+
 const reputationProgress = computed(() => {
-  if (!nextReputationLevel.value) return 100
-  const range = nextReputationLevel.value.points - currentReputationLevel.value.points
-  return Math.min(100, Math.max(0, ((reputation.value - currentReputationLevel.value.points) / range) * 100))
+  const current = currentReputationLevel.value
+  const next = nextReputationLevel.value
+
+  if (!current || !next) {
+    return 100
+  }
+
+  const range = next.points - current.points
+
+  return Math.min(
+    100,
+    Math.max(
+      0,
+      (
+        (reputation.value - current.points) /
+        range
+      ) * 100,
+    ),
+  )
 })
 
 async function waitForLocalAction(delay = 750) {
@@ -220,7 +313,7 @@ async function confirmPurchase(location: LocationView) {
     ownsBusinessType(currentLocation.type) ||
     balance.value < currentLocation.effectivePrice ||
     portfolioWeight.value + currentLocation.tier.weight >
-    mockProfile.portfolioLimit
+    portfolioLimit.value
 
   if (cannotPurchase || !currentLocation) {
     purchaseReview.value = undefined
@@ -433,15 +526,129 @@ function handleEscapeKey(event: KeyboardEvent) {
   closeUi()
 }
 
+function applyBrowserTheme(theme?: BrowserTheme) {
+  if (!theme) return
+
+  const root = document.documentElement
+
+  const variables: Array<[string, string | undefined]> = [
+    ['--accent', theme.AccentColor],
+    ['--accent-hover', theme.AccentHoverColor],
+    ['--accent-dark', theme.AccentDarkColor],
+    ['--bg', theme.BodyColor],
+    ['--panel', theme.PanelColor],
+    ['--panel-2', theme.PanelAltColor],
+    ['--panel-3', theme.CardColor],
+    ['--line', theme.BorderColor],
+    ['--text', theme.TextColor],
+    ['--muted', theme.MutedTextColor],
+    ['--success', theme.SuccessColor],
+    ['--warning', theme.WarningColor],
+    ['--danger', theme.DangerColor],
+  ]
+
+  for (const [variable, value] of variables) {
+    if (value) {
+      root.style.setProperty(variable, value)
+    }
+  }
+}
+
+function applyBrowserSnapshot(snapshot: BrowserSnapshot) {
+  businessTiers.value = snapshot.tiers
+  businessLocations.value = snapshot.locations
+  reputationLevels.value = snapshot.reputationLevels
+
+  characterName.value = snapshot.profile.characterName
+  reputation.value = snapshot.profile.reputation
+  balance.value = snapshot.profile.balance
+  portfolioLimit.value = snapshot.profile.portfolioLimit
+
+  ownedLocationIds.value = snapshot.locations
+    .filter((location) => location.status === 'active')
+    .map((location) => location.uid)
+
+  acquiredLocationIds.value = snapshot.locations
+    .filter((location) => location.status === 'acquired')
+    .map((location) => location.uid)
+
+  const selectedTier = snapshot.tiers.find(
+    (tier) =>
+      tier.type === selectedType.value &&
+      tier.unlocked !== false,
+  )
+
+  if (!selectedTier) {
+    selectedType.value =
+      snapshot.tiers.find((tier) => tier.unlocked !== false)
+        ?.type ?? ''
+  }
+
+  selectedLocationId.value = undefined
+  purchaseReview.value = undefined
+  query.value = ''
+
+  applyBrowserTheme(snapshot.settings.theme)
+
+  bootstrapError.value = false
+  isBootstrapping.value = false
+}
+
+function handleNuiMessage(event: MessageEvent) {
+  const message = event.data
+
+  if (!message || typeof message.action !== 'string') {
+    return
+  }
+
+  switch (message.action) {
+    case 't1ger_moneywash:browser:open':
+      visible.value = true
+      activeView.value = 'market'
+      selectedLocationId.value = undefined
+      purchaseReview.value = undefined
+      isHelpCenterOpen.value = false
+      bootstrapError.value = false
+      isBootstrapping.value = true
+      break
+
+    case 't1ger_moneywash:browser:loading':
+      bootstrapError.value = false
+      isBootstrapping.value = true
+      break
+
+    case 't1ger_moneywash:browser:bootstrap':
+      if (message.data) {
+        applyBrowserSnapshot(
+          message.data as BrowserSnapshot,
+        )
+      }
+      break
+
+    case 't1ger_moneywash:browser:error':
+      isBootstrapping.value = false
+      bootstrapError.value = true
+      break
+
+    case 't1ger_moneywash:browser:close':
+      visible.value = false
+      selectedLocationId.value = undefined
+      purchaseReview.value = undefined
+      isHelpCenterOpen.value = false
+      break
+  }
+}
+
 function startBootstrap() {
   isBootstrapping.value = true
   bootstrapError.value = false
 
   window.clearTimeout(bootstrapTimer)
 
-  // Local preview only.
-  // Later, remove this timer and set isBootstrapping to false
-  // when Lua sends the initial browser snapshot.
+  if (isFiveM) {
+    return
+  }
+
   bootstrapTimer = window.setTimeout(() => {
     bootstrapError.value = false
     isBootstrapping.value = false
@@ -449,28 +656,44 @@ function startBootstrap() {
 }
 
 function retryBootstrap() {
+  isBootstrapping.value = true
+  bootstrapError.value = false
+
+  if (isFiveM) {
+    void nuiFetch('retryBootstrap')
+    return
+  }
+
   startBootstrap()
 }
 
 onMounted(() => {
-  startBootstrap()
   window.addEventListener('keydown', handleEscapeKey)
+  window.addEventListener('message', handleNuiMessage)
+
+  if (isFiveM) {
+    void nuiFetch('ready')
+  } else {
+    startBootstrap()
+  }
 })
 
 onBeforeUnmount(() => {
   window.clearTimeout(bootstrapTimer)
   window.clearTimeout(toastTimer)
+
   window.removeEventListener('keydown', handleEscapeKey)
+  window.removeEventListener('message', handleNuiMessage)
 })
 
 watch(reputation, (score) => {
-  const selectedTier = businessTiers.find(
+  const selectedTier = businessTiers.value.find(
     (tier) => tier.type === selectedType.value,
   )
 
   if (!selectedTier || score >= selectedTier.requiredPoints) return
 
-  const highestEligibleTier = [...businessTiers]
+  const highestEligibleTier = [...businessTiers.value]
     .reverse()
     .find((tier) => score >= tier.requiredPoints)
 
@@ -505,8 +728,8 @@ watch(reputation, (score) => {
         <template v-else>
           <AppSidebar :active-view="activeView" :reputation="reputation" :reputation-label="reputationLabel"
             :reputation-progress="reputationProgress" :next-reputation-label="nextReputationLevel?.label"
-            :character-name="mockProfile.characterName" :portfolio-count="ownedLocations.length"
-            :portfolio-weight="portfolioWeight" :portfolio-limit="mockProfile.portfolioLimit"
+            :character-name="characterName" :portfolio-count="ownedLocations.length"
+            :portfolio-weight="portfolioWeight" :portfolio-limit="portfolioLimit"
             @navigate="activeView = $event as typeof activeView" @open-help="isHelpCenterOpen = true"
             @update:reputation="reputation = $event" />
 
@@ -532,14 +755,14 @@ watch(reputation, (score) => {
                 <LocationDetail :location="selectedLocation" :reputation="reputation" :balance="balance" :owns-type="selectedLocation
                   ? ownsBusinessType(selectedLocation.type)
                   : false
-                  " :portfolio-weight="portfolioWeight" :portfolio-limit="mockProfile.portfolioLimit"
+                  " :portfolio-weight="portfolioWeight" :portfolio-limit="portfolioLimit"
                   @close="selectedLocationId = undefined" @purchase="reviewPurchase" />
               </div>
             </section>
           </main>
 
           <PlaceholderView v-else :businesses="ownedLocations" :portfolio-weight="portfolioWeight"
-            :portfolio-limit="mockProfile.portfolioLimit" @navigate-market="activeView = 'market'"
+            :portfolio-limit="portfolioLimit" @navigate-market="activeView = 'market'"
             @waypoint="setBusinessWaypoint" @transfer="transferBusiness" @abandon="abandonBusiness" />
         </template>
       </div>
@@ -548,7 +771,7 @@ watch(reputation, (score) => {
       
       <Transition name="modal-fade">
         <PurchaseModal v-if="purchaseReview" :location="purchaseReview" :reputation="reputation" :balance="balance"
-          :portfolio-weight="portfolioWeight" :portfolio-limit="mockProfile.portfolioLimit"
+          :portfolio-weight="portfolioWeight" :portfolio-limit="portfolioLimit"
           :owns-type="ownsBusinessType(purchaseReview.type)" :processing="isPurchasing"
           @close="!isPurchasing && (purchaseReview = undefined)" @confirm="confirmPurchase" />
       </Transition>
