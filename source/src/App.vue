@@ -10,7 +10,7 @@ import PlaceholderView from '@/components/PlaceholderView.vue'
 import TierRail from '@/components/TierRail.vue'
 import { businessLocations, businessTiers } from '@/data/mock-businesses'
 import { mockProfile, mockReputationLevels } from '@/data/mock-profile'
-import { districtFromCoordinates, money } from '@/lib/format'
+import { areaFromCoordinates, money } from '@/lib/format'
 import { nuiFetch } from '@/lib/nui'
 import type { BusinessTier, LocationView } from '@/types/business'
 
@@ -32,7 +32,7 @@ const locationViews = computed<LocationView[]>(() => {
       ...location,
       tier,
       effectivePrice: location.price ?? tier.price,
-      district: districtFromCoordinates(location.coords.x, location.coords.y),
+      area: areaFromCoordinates(location.coords.x, location.coords.y),
       locked: reputation.value < tier.requiredPoints,
     }
   })
@@ -40,7 +40,7 @@ const locationViews = computed<LocationView[]>(() => {
 
 const displayedLocations = computed(() => {
   const needle = query.value.trim().toLowerCase()
-  return locationViews.value.filter((location) => location.type === selectedType.value && (!needle || `${location.brand} ${location.district}`.toLowerCase().includes(needle)))
+  return locationViews.value.filter((location) => location.type === selectedType.value && (!needle || `${location.brand} ${location.street ?? ''} ${location.area}`.toLowerCase().includes(needle)))
 })
 
 const selectedLocation = computed(() => locationViews.value.find((location) => location.uid === selectedLocationId.value))

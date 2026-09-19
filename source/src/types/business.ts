@@ -23,12 +23,14 @@ export interface BusinessLocation {
   type: string
   brand: string
   coords: Coordinates
+  street?: string
+  crossingStreet?: string
   price?: number
 }
 
 export interface LocationView extends BusinessLocation {
   tier: BusinessTier
   effectivePrice: number
-  district: string
+  area: string
   locked: boolean
 }

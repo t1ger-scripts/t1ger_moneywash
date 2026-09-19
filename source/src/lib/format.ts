@@ -14,7 +14,7 @@ export function toRoman(value: number): string {
   return numerals[value] ?? String(value)
 }
 
-export function districtFromCoordinates(x: number, y: number): string {
+export function areaFromCoordinates(x: number, y: number): string {
   if (y > 5500) return 'Paleto Bay'
   if (y > 1800) return x > 900 ? 'Sandy Shores' : 'Blaine County'
   if (y < -1600) return x > 700 ? 'Cypress Flats' : 'South Los Santos'

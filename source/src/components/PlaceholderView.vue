@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import {
+  ArrowRightLeft,
   BriefcaseBusiness,
   Building2,
   MapPin,
-  Navigation,
-  Send,
+  MapPinned,
   Trash2,
   TriangleAlert,
   UserRound,
@@ -97,7 +97,7 @@ function confirmAbandon() {
           <span>REGISTERED BUSINESSES</span>
           <strong>{{ businesses.length }} {{ businesses.length === 1 ? 'business' : 'businesses' }}</strong>
         </div>
-        <p>Select a business to view available actions.</p>
+        <p>Manage available ownership actions.</p>
       </div>
 
       <div class="portfolio-list">
@@ -109,7 +109,12 @@ function confirmAbandon() {
               <strong>{{ location.brand }}</strong>
               <span>ACTIVE</span>
             </div>
-            <small><MapPin :size="12" /> Site {{ String(location.id).padStart(2, '0') }}</small>
+            <small>
+              <MapPin :size="12" />
+              <span>{{ location.street ?? `Site ${String(location.id).padStart(2, '0')}` }}</span>
+              <template v-if="location.crossingStreet"> / {{ location.crossingStreet }}</template>
+            </small>
+            <small class="portfolio-area">{{ location.area }}</small>
           </div>
 
           <div class="portfolio-fact">
@@ -120,18 +125,16 @@ function confirmAbandon() {
             <span>TIER</span>
             <strong>{{ toRoman(location.tier.tier) }}</strong>
           </div>
-          <div class="portfolio-fact">
-            <span>DISTRICT</span>
-            <strong>{{ location.district }}</strong>
-          </div>
           <div class="portfolio-fact portfolio-weight">
             <span>PORTFOLIO WEIGHT</span>
-            <strong>Weight: {{ location.tier.weight }}</strong>
+            <strong>{{ location.tier.weight }}</strong>
           </div>
 
           <div class="portfolio-row-actions">
-            <button class="portfolio-primary" @click="emit('waypoint', location)"><Navigation :size="15" /> Set Waypoint</button>
-            <button class="portfolio-secondary" @click="openTransfer(location)"><Send :size="15" /> Transfer Ownership</button>
+            <button class="portfolio-waypoint" type="button" title="Set waypoint" aria-label="Set waypoint" @click="emit('waypoint', location)">
+              <MapPinned :size="16" />
+            </button>
+            <button class="portfolio-secondary" @click="openTransfer(location)"><ArrowRightLeft :size="15" /> Transfer Ownership</button>
             <button class="portfolio-danger-action" @click="openAbandon(location)"><Trash2 :size="14" /> Relinquish Holding</button>
           </div>
         </article>

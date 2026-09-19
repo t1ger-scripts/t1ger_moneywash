@@ -242,6 +242,7 @@ export const businessLocations: BusinessLocation[] = [
     "id": 12,
     "type": "coffee_shop",
     "brand": "Bean Machine",
+    "street": "Strawberry Avenue",
     "coords": {
       "x": 126.342857,
       "y": -1028.162598,
@@ -611,6 +612,7 @@ export const businessLocations: BusinessLocation[] = [
     "id": 21,
     "type": "gas_station",
     "brand": "LTD Gasoline",
+    "street": "Mirror Park Boulevard",
     "coords": {
       "x": 1167.296753,
       "y": -323.802185,

@@ -25,7 +25,7 @@ defineEmits<{
       </div>
       <label class="search-box">
         <Search :size="15" />
-        <input :value="query" placeholder="Search brand or district" @input="$emit('update:query', ($event.target as HTMLInputElement).value)" />
+        <input :value="query" placeholder="Search brand, street or area" @input="$emit('update:query', ($event.target as HTMLInputElement).value)" />
       </label>
     </div>
 
@@ -43,7 +43,7 @@ defineEmits<{
             <strong>{{ location.brand }}</strong>
             <span v-if="ownedLocationIds.includes(location.uid)" class="owned-badge">ACTIVE</span>
           </span>
-          <small><MapPin :size="12" /> {{ location.district }} · Site {{ String(location.id).padStart(2, '0') }}</small>
+          <small><MapPin :size="12" /> {{ location.street ?? location.area }} · Site {{ String(location.id).padStart(2, '0') }}</small>
         </span>
         <span class="location-price">
           <LockKeyhole v-if="location.locked" :size="13" />
