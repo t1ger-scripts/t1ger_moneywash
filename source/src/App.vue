@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onBeforeUnmount, onMounted } from 'vue'
 import AppSidebar from '@/components/AppSidebar.vue'
 import BrowserChrome from '@/components/BrowserChrome.vue'
 import BusinessMap from '@/components/BusinessMap.vue'
@@ -8,6 +8,7 @@ import LocationList from '@/components/LocationList.vue'
 import PlaceholderView from '@/components/PlaceholderView.vue'
 import TierRail from '@/components/TierRail.vue'
 import PurchaseModal from '@/components/PurchaseModal.vue'
+import BootstrapLoading from '@/components/BootstrapLoading.vue'
 import { businessLocations, businessTiers } from '@/data/mock-businesses'
 import { mockProfile, mockReputationLevels } from '@/data/mock-profile'
 import { zoneFromCoordinates } from '@/lib/format'
@@ -25,6 +26,10 @@ const ownedLocationIds = ref([...mockProfile.ownedLocationIds])
 const acquiredLocationIds = ref([...mockProfile.acquiredLocationIds])
 const toast = ref('')
 const visible = ref(true)
+const isBootstrapping = ref(true)
+const bootstrapError = ref(false)
+
+let bootstrapTimer: number | undefined
 
 const locationViews = computed<LocationView[]>(() => {
   const tierMap = new Map(businessTiers.map((tier) => [tier.type, tier]))
@@ -176,6 +181,33 @@ function abandonBusiness(location: LocationView) {
   void nuiFetch('abandonBusiness', { type: location.type, locationId: location.id })
 }
 
+function startBootstrap() {
+  isBootstrapping.value = true
+  bootstrapError.value = false
+
+  window.clearTimeout(bootstrapTimer)
+
+  // Local preview only.
+  // Later, remove this timer and set isBootstrapping to false
+  // when Lua sends the initial browser snapshot.
+  bootstrapTimer = window.setTimeout(() => {
+    bootstrapError.value = false
+    isBootstrapping.value = false
+  }, 900)
+}
+
+function retryBootstrap() {
+  startBootstrap()
+}
+
+onMounted(() => {
+  startBootstrap()
+})
+
+onBeforeUnmount(() => {
+  window.clearTimeout(bootstrapTimer)
+})
+
 watch(reputation, (score) => {
   const selectedTier = businessTiers.find(
     (tier) => tier.type === selectedType.value,
@@ -198,42 +230,61 @@ watch(reputation, (score) => {
     <div class="browser-window">
       <BrowserChrome :active-tab="activeTitle" @close="closeUi" />
       <div class="app-frame">
-        <AppSidebar :active-view="activeView" :reputation="reputation" :reputation-label="reputationLabel"
-          :reputation-progress="reputationProgress" :next-reputation-label="nextReputationLevel?.label"
-          :character-name="mockProfile.characterName" :portfolio-count="ownedLocations.length"
-          :portfolio-weight="portfolioWeight" :portfolio-limit="mockProfile.portfolioLimit"
-          @navigate="activeView = $event as typeof activeView" @update:reputation="reputation = $event" />
+        <BootstrapLoading v-if="isBootstrapping" />
 
-        <main v-if="activeView === 'market'" class="market-view">
-          <header class="market-header">
-            <div>
-              <span class="eyebrow">VERIFIED LISTINGS</span>
-              <h1>Marketplace</h1>
-              <p>Browse available business acquisitions and expand your portfolio.</p>
-            </div>
-          </header>
-
-          <TierRail :tiers="businessTiers" :selected-type="selectedType" :reputation="reputation"
-            :counts="availableCounts" @select="selectTier" />
-
-          <section class="workspace">
-            <LocationList :locations="displayedLocations" :selected-id="selectedLocationId" :query="query"
-              @select="selectedLocationId = $event.uid" @update:query="query = $event" />
-            <div class="map-stack">
-              <BusinessMap :locations="mapLocations" :selected="selectedLocation"
-                @select="selectedLocationId = $event.uid" />
-              <LocationDetail :location="selectedLocation" :reputation="reputation" :balance="balance" :owns-type="selectedLocation
-                ? ownsBusinessType(selectedLocation.type)
-                : false
-                " :portfolio-weight="portfolioWeight" :portfolio-limit="mockProfile.portfolioLimit"
-                @close="selectedLocationId = undefined" @purchase="reviewPurchase" />
-            </div>
+        <template v-else-if="bootstrapError">
+          <section class="bootstrap-error">
+            <div class="bootstrap-error-icon">!</div>
+            <span class="eyebrow">CONNECTION ERROR</span>
+            <h2>Unable to load brokerage data</h2>
+            <p>
+              Ledger Capital could not retrieve the current listings and account
+              information.
+            </p>
+            <button class="portfolio-primary" type="button" @click="retryBootstrap">
+              Retry
+            </button>
           </section>
-        </main>
+        </template>
 
-        <PlaceholderView v-else :businesses="ownedLocations" :portfolio-weight="portfolioWeight"
-          :portfolio-limit="mockProfile.portfolioLimit" @navigate-market="activeView = 'market'"
-          @waypoint="setBusinessWaypoint" @transfer="transferBusiness" @abandon="abandonBusiness" />
+        <template v-else>
+          <AppSidebar :active-view="activeView" :reputation="reputation" :reputation-label="reputationLabel"
+            :reputation-progress="reputationProgress" :next-reputation-label="nextReputationLevel?.label"
+            :character-name="mockProfile.characterName" :portfolio-count="ownedLocations.length"
+            :portfolio-weight="portfolioWeight" :portfolio-limit="mockProfile.portfolioLimit"
+            @navigate="activeView = $event as typeof activeView" @update:reputation="reputation = $event" />
+
+          <main v-if="activeView === 'market'" class="market-view">
+            <header class="market-header">
+              <div>
+                <span class="eyebrow">VERIFIED LISTINGS</span>
+                <h1>Marketplace</h1>
+                <p>Browse available business acquisitions and expand your portfolio.</p>
+              </div>
+            </header>
+
+            <TierRail :tiers="businessTiers" :selected-type="selectedType" :reputation="reputation"
+              :counts="availableCounts" @select="selectTier" />
+
+            <section class="workspace">
+              <LocationList :locations="displayedLocations" :selected-id="selectedLocationId" :query="query"
+                @select="selectedLocationId = $event.uid" @update:query="query = $event" />
+              <div class="map-stack">
+                <BusinessMap :locations="mapLocations" :selected="selectedLocation"
+                  @select="selectedLocationId = $event.uid" />
+                <LocationDetail :location="selectedLocation" :reputation="reputation" :balance="balance" :owns-type="selectedLocation
+                  ? ownsBusinessType(selectedLocation.type)
+                  : false
+                  " :portfolio-weight="portfolioWeight" :portfolio-limit="mockProfile.portfolioLimit"
+                  @close="selectedLocationId = undefined" @purchase="reviewPurchase" />
+              </div>
+            </section>
+          </main>
+
+          <PlaceholderView v-else :businesses="ownedLocations" :portfolio-weight="portfolioWeight"
+            :portfolio-limit="mockProfile.portfolioLimit" @navigate-market="activeView = 'market'"
+            @waypoint="setBusinessWaypoint" @transfer="transferBusiness" @abandon="abandonBusiness" />
+        </template>
       </div>
       <Transition name="modal-fade">
         <PurchaseModal v-if="purchaseReview" :location="purchaseReview" :reputation="reputation" :balance="balance"
