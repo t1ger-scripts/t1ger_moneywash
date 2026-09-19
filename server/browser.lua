@@ -358,3 +358,52 @@ lib.callback.register("t1ger_moneywash:server:browserTransferBusiness", function
         refreshReason = snapshotReason,
     }
 end)
+
+--- Relinquishes an owned business through the browser.
+lib.callback.register(
+    "t1ger_moneywash:server:browserAbandonBusiness",
+    function(source, payload)
+        if type(payload) ~= "table" then
+            return {
+                success = false,
+                reason = "invalid_request",
+            }
+        end
+
+        local businessId = tonumber(payload.businessId)
+
+        if not businessId or businessId % 1 ~= 0 then
+            return {
+                success = false,
+                reason = "invalid_request",
+            }
+        end
+
+        local success, reason = AbandonBusiness(
+            source,
+            businessId
+        )
+
+        if not success then
+            return {
+                success = false,
+                reason = reason or "abandon_failed",
+            }
+        end
+
+        local snapshot, snapshotReason =
+            BuildBrowserSnapshot(source)
+
+        TriggerClientEvent(
+            "t1ger_moneywash:client:browserRefresh",
+            -1,
+            source
+        )
+
+        return {
+            success = true,
+            data = snapshot,
+            refreshReason = snapshotReason,
+        }
+    end
+)

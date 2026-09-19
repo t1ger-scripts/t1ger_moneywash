@@ -597,29 +597,59 @@ async function abandonBusiness(
   location: LocationView,
   complete: ActionCompletion,
 ) {
+  const businessId = location.businessId
+
+  if (isFiveM && !businessId) {
+    showToast(
+      'This business ownership record is unavailable.',
+      'error',
+    )
+
+    complete(false)
+    return
+  }
+
   try {
     const [response] = await Promise.all([
       nuiFetch<ActionResponse>('abandonBusiness', {
-        type: location.type,
-        locationId: location.id,
+        businessId,
       }),
       waitForLocalAction(),
     ])
 
-    if (isFiveM && (!response || !response.success)) {
-      throw new Error(
-        response?.message ??
-        'The business could not be returned to the Marketplace.',
+    if (isFiveM) {
+      if (!response || !response.success) {
+        throw new Error(
+          response?.message ??
+            'The business could not be returned to the Marketplace.',
+        )
+      }
+
+      if (response.data) {
+        applyBrowserSnapshot(response.data)
+      } else {
+        void nuiFetch('retryBootstrap')
+      }
+
+      showToast(
+        `${location.brand} has been returned to the Marketplace.`,
+        'warning',
       )
+
+      complete(true)
+      return
     }
 
-    ownedLocationIds.value = ownedLocationIds.value.filter(
-      (uid) => uid !== location.uid,
-    )
+    // Local preview only.
+    ownedLocationIds.value =
+      ownedLocationIds.value.filter(
+        uid => uid !== location.uid,
+      )
 
-    acquiredLocationIds.value = acquiredLocationIds.value.filter(
-      (uid) => uid !== location.uid,
-    )
+    acquiredLocationIds.value =
+      acquiredLocationIds.value.filter(
+        uid => uid !== location.uid,
+      )
 
     showToast(
       `${location.brand} has been returned to the Marketplace.`,
