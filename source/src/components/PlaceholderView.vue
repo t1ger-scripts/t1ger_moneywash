@@ -114,7 +114,7 @@ function confirmAbandon() {
               <span>{{ location.street ?? `Site ${String(location.id).padStart(2, '0')}` }}</span>
               <template v-if="location.crossingStreet"> / {{ location.crossingStreet }}</template>
             </small>
-            <small class="portfolio-area">{{ location.area }}</small>
+            <small class="portfolio-zone">{{ location.zone }}</small>
           </div>
 
           <div class="portfolio-fact">

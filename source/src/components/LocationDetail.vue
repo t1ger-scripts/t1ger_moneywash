@@ -20,7 +20,7 @@ defineEmits<{ close: []; purchase: [location: LocationView] }>()
       <button class="detail-close" @click="$emit('close')"><X :size="16" /></button>
       <span class="detail-kicker">SITE {{ String(location.id).padStart(2, '0') }} · TIER {{ toRoman(location.tier.tier) }}</span>
       <h2>{{ location.brand }}</h2>
-      <p class="detail-location"><MapPin :size="14" /> {{ location.street ? `${location.street} · ${location.area}` : location.area }}</p>
+      <p class="detail-location"><MapPin :size="14" /> {{ location.street ? `${location.street} · ${location.zone}` : location.zone }}</p>
 
       <div class="detail-price">
         <span>Acquisition price</span>

@@ -31,6 +31,6 @@ export interface BusinessLocation {
 export interface LocationView extends BusinessLocation {
   tier: BusinessTier
   effectivePrice: number
-  area: string
+  zone: string
   locked: boolean
 }
