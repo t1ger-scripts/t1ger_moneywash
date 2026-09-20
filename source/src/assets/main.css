@@ -540,7 +540,7 @@ button {
   display: block;
   overflow: hidden;
   color: #c1cac4;
-  font-size: 12px;
+  font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1529,7 +1529,7 @@ button {
   background: #0c110e;
   color: #c8d1cb;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.02em;
   transform: translate(-50%, 3px);
@@ -1648,13 +1648,13 @@ button {
 
 .purchase-target > strong {
   color: #dce3de;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .purchase-target > span {
   margin-top: 5px;
   color: #8c9790;
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .purchase-target > small {
@@ -1664,7 +1664,7 @@ button {
   overflow: hidden;
   margin-top: 8px;
   color: #6f7a73;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .purchase-target > small > span {
@@ -1702,7 +1702,7 @@ button {
 
 .purchase-summary span {
   color: #68736c;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: .12em;
 }
@@ -1710,12 +1710,12 @@ button {
 .purchase-summary strong {
   margin-top: 6px;
   color: #c6d0c9;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .purchase-summary-price strong {
   color: var(--accent);
-  font-size: 19px;
+  font-size: 20px;
 }
 
 .purchase-summary strong.exceeded {
@@ -1732,7 +1732,7 @@ button {
   border-radius: 6px;
   background: #1d1412;
   color: #cf8d86;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.4;
 }
 
@@ -1743,7 +1743,7 @@ button {
 .purchase-confirmation-note {
   margin: 12px 0 0;
   color: #626d66;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -2388,14 +2388,14 @@ button {
 .bootstrap-error h2 {
   margin: 9px 0 6px;
   color: #dce1e6;
-  font-size: 18px;
+  font-size: 24px;
 }
 
 .bootstrap-error p {
   max-width: 360px;
   margin: 0 0 18px;
   color: #717c75;
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.6;
 }
 
