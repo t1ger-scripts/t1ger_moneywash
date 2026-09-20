@@ -944,9 +944,13 @@ watch(reputation, (score) => {
           <main v-if="activeView === 'market'" class="market-view">
             <header class="market-header">
               <div>
-                <span class="eyebrow">VERIFIED LISTINGS</span>
-                <h1>Marketplace</h1>
-                <p>Browse available business acquisitions and expand your portfolio.</p>
+                <span class="eyebrow">
+                  {{ t('browser.marketplace.eyebrow') }}
+                </span>
+
+                <h1>{{ t('browser.marketplace.title') }}</h1>
+
+                <p>{{ t('browser.marketplace.description') }}</p>
               </div>
             </header>
 

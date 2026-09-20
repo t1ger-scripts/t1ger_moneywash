@@ -7,6 +7,7 @@ import {
   Search,
 } from '@lucide/vue'
 import { money } from '@/lib/format'
+import { t } from '@/lib/locale'
 import type { LocationView } from '@/types/business'
 
 const props = defineProps<{
@@ -66,16 +67,34 @@ watch(
   <section class="location-panel">
     <div class="location-toolbar">
       <div>
-        <span class="eyebrow">AVAILABLE LISTINGS</span>
+        <span class="eyebrow">
+          {{ t('browser.listings.heading') }}
+        </span>
+
         <strong>
-          {{ availableCount }} of {{ totalLocations }}
-          {{ totalLocations === 1 ? 'listing' : 'listings' }} available
+          {{
+            t(
+              totalLocations === 1
+                ? 'browser.listings.count_one'
+                : 'browser.listings.count_many',
+              {
+                available: availableCount,
+                total: totalLocations,
+              },
+            )
+          }}
         </strong>
       </div>
+
       <label class="search-box">
         <Search :size="15" />
-        <input :value="query" placeholder="Search brand, street or zone"
-          @input="$emit('update:query', ($event.target as HTMLInputElement).value)" />
+
+        <input
+          :value="query"
+          :aria-label="t('browser.listings.search_label')"
+          :placeholder="t('browser.listings.search_placeholder')"
+          @input="$emit('update:query', ($event.target as HTMLInputElement).value)"
+        />
       </label>
     </div>
 
@@ -86,10 +105,12 @@ watch(
           <Building2 :size="21" />
         </span>
 
-        <strong>No listings configured</strong>
+        <strong>
+          {{ t('browser.listings.none_configured_title') }}
+        </strong>
 
         <p>
-          There are currently no registered locations for this business category.
+          {{ t('browser.listings.none_configured_description') }}
         </p>
       </div>
 
@@ -99,14 +120,20 @@ watch(
           <Search :size="21" />
         </span>
 
-        <strong>No matching listings</strong>
+        <strong>
+          {{ t('browser.listings.no_matches_title') }}
+        </strong>
 
         <p>
-          No businesses match “{{ query.trim() }}”.
+          {{
+            t('browser.listings.no_matches_description', {
+              query: query.trim(),
+            })
+          }}
         </p>
 
         <button type="button" class="clear-search-button" @click="$emit('update:query', '')">
-          Clear search
+          {{ t('browser.listings.clear_search') }}
         </button>
       </div>
 
@@ -117,9 +144,12 @@ watch(
           <span class="market-status-indicator" />
 
           <span class="market-status-copy">
-            <strong>Category fully allocated</strong>
+            <strong>
+              {{ t('browser.listings.fully_allocated_title') }}
+            </strong>
+
             <small>
-              All registered locations have currently been acquired.
+              {{ t('browser.listings.fully_allocated_description') }}
             </small>
           </span>
         </div>
@@ -140,11 +170,11 @@ watch(
               <strong>{{ location.brand }}</strong>
 
               <span v-if="location.status === 'active'" class="owned-badge">
-                ACTIVE
+                {{ t('browser.listings.status_active') }}
               </span>
 
               <span v-else-if="location.status === 'acquired'" class="acquired-badge">
-                ACQUIRED
+                {{ t('browser.listings.status_acquired') }}
               </span>
             </span>
 
@@ -168,18 +198,25 @@ watch(
           <span class="location-price">
             <template v-if="location.status === 'available'">
               <strong>{{ money.format(location.effectivePrice) }}</strong>
-              <small>Weight: {{ location.tier.weight }}</small>
+
+              <small>
+                {{
+                  t('browser.listings.weight', {
+                    weight: location.tier.weight,
+                  })
+                }}
+              </small>
             </template>
 
             <template v-else-if="location.status === 'active'">
               <strong class="listing-status active">
-                IN PORTFOLIO
+                {{ t('browser.listings.status_in_portfolio') }}
               </strong>
             </template>
 
             <template v-else>
               <strong class="listing-status acquired">
-                ACQUIRED
+                {{ t('browser.listings.status_acquired') }}
               </strong>
             </template>
           </span>
