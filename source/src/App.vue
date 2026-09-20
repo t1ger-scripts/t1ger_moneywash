@@ -621,7 +621,7 @@ async function abandonBusiness(
       if (!response || !response.success) {
         throw new Error(
           response?.message ??
-            'The business could not be returned to the Marketplace.',
+          'The business could not be returned to the Marketplace.',
         )
       }
 
@@ -715,7 +715,16 @@ function applyBrowserTheme(theme?: BrowserTheme) {
   }
 }
 
-function applyBrowserSnapshot(snapshot: BrowserSnapshot) {
+function applyBrowserSnapshot(
+  snapshot: BrowserSnapshot,
+  preserveState = false,
+) {
+  const previousSelectedLocationId =
+    selectedLocationId.value
+
+  const previousPurchaseLocationId =
+    purchaseReview.value?.uid
+
   businessTiers.value = snapshot.tiers
   businessLocations.value = snapshot.locations
   reputationLevels.value = snapshot.reputationLevels
@@ -723,31 +732,63 @@ function applyBrowserSnapshot(snapshot: BrowserSnapshot) {
   characterName.value = snapshot.profile.characterName
   reputation.value = snapshot.profile.reputation
   balance.value = snapshot.profile.balance
-  portfolioLimit.value = snapshot.profile.portfolioLimit
+  portfolioLimit.value =
+    snapshot.profile.portfolioLimit
 
   ownedLocationIds.value = snapshot.locations
-    .filter((location) => location.status === 'active')
-    .map((location) => location.uid)
+    .filter(location => location.status === 'active')
+    .map(location => location.uid)
 
   acquiredLocationIds.value = snapshot.locations
-    .filter((location) => location.status === 'acquired')
-    .map((location) => location.uid)
+    .filter(location => location.status === 'acquired')
+    .map(location => location.uid)
 
   const selectedTier = snapshot.tiers.find(
-    (tier) =>
+    tier =>
       tier.type === selectedType.value &&
       tier.unlocked !== false,
   )
 
   if (!selectedTier) {
     selectedType.value =
-      snapshot.tiers.find((tier) => tier.unlocked !== false)
-        ?.type ?? ''
+      snapshot.tiers.find(
+        tier => tier.unlocked !== false,
+      )?.type ?? ''
   }
 
-  selectedLocationId.value = undefined
-  purchaseReview.value = undefined
-  query.value = ''
+  if (preserveState) {
+    if (previousSelectedLocationId) {
+      const selectedListingStillAvailable =
+        snapshot.locations.some(
+          location =>
+            location.uid ===
+            previousSelectedLocationId &&
+            location.status === 'available',
+        )
+
+      if (!selectedListingStillAvailable) {
+        selectedLocationId.value = undefined
+      }
+    }
+
+    if (previousPurchaseLocationId) {
+      const purchaseStillAvailable =
+        snapshot.locations.some(
+          location =>
+            location.uid ===
+            previousPurchaseLocationId &&
+            location.status === 'available',
+        )
+
+      if (!purchaseStillAvailable) {
+        purchaseReview.value = undefined
+      }
+    }
+  } else {
+    selectedLocationId.value = undefined
+    purchaseReview.value = undefined
+    query.value = ''
+  }
 
   applyBrowserTheme(snapshot.settings.theme)
 
@@ -782,6 +823,7 @@ function handleNuiMessage(event: MessageEvent) {
       if (message.data) {
         applyBrowserSnapshot(
           message.data as BrowserSnapshot,
+          message.silent === true,
         )
       }
       break

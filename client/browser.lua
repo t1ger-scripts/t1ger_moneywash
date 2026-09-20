@@ -6,6 +6,7 @@
 local BrowserOpen = false
 local NuiReady = false
 local BootstrapLoading = false
+local BootstrapRefreshPending = false
 local BootstrapRequestId = 0
 
 local LocationAddressCache = {}
@@ -167,8 +168,17 @@ local function EnrichBrowserLocations(snapshot)
 end
 
 --- Requests a fresh authoritative browser snapshot.
-local function RequestBrowserBootstrap()
-    if not BrowserOpen or not NuiReady or BootstrapLoading then
+--- @param silent boolean|nil Do not show the loading/error screen.
+local function RequestBrowserBootstrap(silent)
+    if not BrowserOpen or not NuiReady then
+        return
+    end
+
+    if BootstrapLoading then
+        if silent then
+            BootstrapRefreshPending = true
+        end
+
         return
     end
 
@@ -176,10 +186,13 @@ local function RequestBrowserBootstrap()
     BootstrapRequestId = BootstrapRequestId + 1
 
     local requestId = BootstrapRequestId
+    local isSilent = silent == true
 
-    SendNUIMessage({
-        action = "t1ger_moneywash:browser:loading",
-    })
+    if not isSilent then
+        SendNUIMessage({
+            action = "t1ger_moneywash:browser:loading",
+        })
+    end
 
     CreateThread(function()
         local response = lib.callback.await(
@@ -187,33 +200,51 @@ local function RequestBrowserBootstrap()
             false
         )
 
-        if requestId ~= BootstrapRequestId or not BrowserOpen then
+        if requestId ~= BootstrapRequestId or
+            not BrowserOpen
+        then
             BootstrapLoading = false
+            BootstrapRefreshPending = false
             return
         end
 
         BootstrapLoading = false
 
-        if not response or not response.success or not response.data then
-            SendNUIMessage({
-                action = "t1ger_moneywash:browser:error",
-                data = {
-                    reason = response and response.reason or
-                        "browser_data_unavailable",
-                },
-            })
+        if not response or
+            not response.success or
+            not response.data
+        then
+            if not isSilent then
+                SendNUIMessage({
+                    action = "t1ger_moneywash:browser:error",
+                    data = {
+                        reason =
+                            response and response.reason or
+                            "browser_data_unavailable",
+                    },
+                })
+            end
+        else
+            EnrichBrowserLocations(response.data)
+            response.data.locales =
+                LoadBrowserLocales()
 
-            return
+            SendNUIMessage({
+                action =
+                "t1ger_moneywash:browser:bootstrap",
+                data = response.data,
+                silent = isSilent,
+            })
         end
 
-        EnrichBrowserLocations(response.data)
+        local refreshAgain =
+            BootstrapRefreshPending
 
-        response.data.locales = LoadBrowserLocales()
+        BootstrapRefreshPending = false
 
-        SendNUIMessage({
-            action = "t1ger_moneywash:browser:bootstrap",
-            data = response.data,
-        })
+        if refreshAgain and BrowserOpen and NuiReady then
+            RequestBrowserBootstrap(true)
+        end
     end)
 end
 
@@ -250,6 +281,7 @@ local function CloseBrowser()
 
     BrowserOpen = false
     BootstrapLoading = false
+    BootstrapRefreshPending = false
     BootstrapRequestId = BootstrapRequestId + 1
 
     SetNuiFocus(false, false)
@@ -578,25 +610,22 @@ RegisterNUICallback("close", function(_, cb)
     })
 end)
 
-RegisterNetEvent(
-    "t1ger_moneywash:client:browserRefresh",
-    function(changedBy)
-        local ownServerId =
-            GetPlayerServerId(PlayerId())
+RegisterNetEvent("t1ger_moneywash:client:browserRefresh", function(changedBy)
+    local ownServerId =
+        GetPlayerServerId(PlayerId())
 
-        -- The purchasing player receives their updated snapshot directly
-        -- from the purchase callback.
-        if changedBy == ownServerId then
-            return
-        end
-
-        if not BrowserOpen or not NuiReady then
-            return
-        end
-
-        RequestBrowserBootstrap()
+    -- The purchasing player receives their updated snapshot directly
+    -- from the purchase callback.
+    if changedBy == ownServerId then
+        return
     end
-)
+
+    if not BrowserOpen or not NuiReady then
+        return
+    end
+
+    RequestBrowserBootstrap(true)
+end)
 
 CreateThread(function()
     while not _Target do Wait(100) end -- wait for target to initialize
