@@ -643,13 +643,19 @@ function applyBrowserTheme(theme?: BrowserTheme) {
     ['--accent', theme.AccentColor],
     ['--accent-hover', theme.AccentHoverColor],
     ['--accent-dark', theme.AccentDarkColor],
+    ['--accent-soft', theme.AccentSoftColor],
+
     ['--bg', theme.BodyColor],
     ['--panel', theme.PanelColor],
     ['--panel-2', theme.PanelAltColor],
     ['--panel-3', theme.CardColor],
+
     ['--line', theme.BorderColor],
+    ['--line-soft', theme.BorderSoftColor],
+
     ['--text', theme.TextColor],
     ['--muted', theme.MutedTextColor],
+
     ['--success', theme.SuccessColor],
     ['--warning', theme.WarningColor],
     ['--danger', theme.DangerColor],
@@ -930,8 +936,8 @@ watch(reputation, (score) => {
             <small>{{ toast.message }}</small>
           </span>
 
-          <button type="button" class="app-toast-close"
-            :aria-label="t('browser.notifications.dismiss')" @click="closeToast">
+          <button type="button" class="app-toast-close" :aria-label="t('browser.notifications.dismiss')"
+            @click="closeToast">
             <X :size="14" />
           </button>
         </div>

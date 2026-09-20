@@ -155,7 +155,7 @@ local function BuildBrowserSnapshot(src)
 
         settings = {
             currency = Config.Currency,
-            theme = Config.BrowserUI.Theme,
+            theme = Config.Browser.Theme or {},
             transferDistance = Config.Browser.TransferDistance,
         },
     }
@@ -237,72 +237,72 @@ lib.callback.register(
 --- Returns nearby players eligible for selection in the transfer dialog.
 --- TransferBusiness performs the final authoritative eligibility checks.
 lib.callback.register("t1ger_moneywash:server:getBrowserNearbyPlayers", function(source)
-        local sourcePed = GetPlayerPed(source)
+    local sourcePed = GetPlayerPed(source)
 
-        if not sourcePed or sourcePed == 0 then
-            return {
-                success = false,
-                reason = "invalid_player",
-            }
-        end
+    if not sourcePed or sourcePed == 0 then
+        return {
+            success = false,
+            reason = "invalid_player",
+        }
+    end
 
-        local sourceCoords = GetEntityCoords(sourcePed)
-        local sourceBucket = GetPlayerRoutingBucket(source)
-        local maximumDistance =
-            tonumber(Config.Browser.TransferDistance) or 10.0
+    local sourceCoords = GetEntityCoords(sourcePed)
+    local sourceBucket = GetPlayerRoutingBucket(source)
+    local maximumDistance =
+        tonumber(Config.Browser.TransferDistance) or 10.0
 
-        local nearbyPlayers = {}
+    local nearbyPlayers = {}
 
-        for _, playerId in ipairs(GetPlayers()) do
-            local targetSource = tonumber(playerId)
+    for _, playerId in ipairs(GetPlayers()) do
+        local targetSource = tonumber(playerId)
 
-            if targetSource and
-                targetSource ~= source and
-                GetPlayerRoutingBucket(targetSource) == sourceBucket
-            then
-                local targetPed = GetPlayerPed(targetSource)
+        if targetSource and
+            targetSource ~= source and
+            GetPlayerRoutingBucket(targetSource) == sourceBucket
+        then
+            local targetPed = GetPlayerPed(targetSource)
 
-                if targetPed and targetPed ~= 0 then
-                    local targetCoords =
-                        GetEntityCoords(targetPed)
+            if targetPed and targetPed ~= 0 then
+                local targetCoords =
+                    GetEntityCoords(targetPed)
 
-                    local distance =
-                        #(sourceCoords - targetCoords)
+                local distance =
+                    #(sourceCoords - targetCoords)
 
-                    if distance <= maximumDistance then
-                        local characterName =
-                            _API.Player.GetCharacterName(
-                                targetSource
-                            )
+                if distance <= maximumDistance then
+                    local characterName =
+                        _API.Player.GetCharacterName(
+                            targetSource
+                        )
 
-                        nearbyPlayers[#nearbyPlayers + 1] = {
-                            id = targetSource,
-                            name =
-                                characterName or
-                                GetPlayerName(targetSource) or
-                                ("Player %d"):format(targetSource),
-                            distance = math.floor(
-                                distance * 10 + 0.5
-                            ) / 10,
-                        }
-                    end
+                    nearbyPlayers[#nearbyPlayers + 1] = {
+                        id = targetSource,
+                        name =
+                            characterName or
+                            GetPlayerName(targetSource) or
+                            ("Player %d"):format(targetSource),
+                        distance = math.floor(
+                            distance * 10 + 0.5
+                        ) / 10,
+                    }
                 end
             end
         end
-
-        table.sort(nearbyPlayers, function(a, b)
-            if a.distance == b.distance then
-                return a.id < b.id
-            end
-
-            return a.distance < b.distance
-        end)
-
-        return {
-            success = true,
-            players = nearbyPlayers,
-        }
     end
+
+    table.sort(nearbyPlayers, function(a, b)
+        if a.distance == b.distance then
+            return a.id < b.id
+        end
+
+        return a.distance < b.distance
+    end)
+
+    return {
+        success = true,
+        players = nearbyPlayers,
+    }
+end
 )
 
 --- Transfers business ownership through the browser.

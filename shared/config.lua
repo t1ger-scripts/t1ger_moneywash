@@ -46,6 +46,35 @@ Config.Browser = {
     TransferDistance = 10.0,
     TargetIcon       = "fa-solid fa-building",
     TargetLabel      = "Access Business Portal",
+
+    -- Browser interface colors
+    -- Supports hex, rgb and rgba CSS color values
+    Theme = {
+        -- Primary brand colors
+        AccentColor      = "#E7C30D",
+        AccentHoverColor = "#F5D329",
+        AccentDarkColor  = "#8F7910",
+        AccentSoftColor  = "#29240B",
+
+        -- Main interface surfaces
+        BodyColor        = "#0A0D11",
+        PanelColor       = "#11151A",
+        PanelAltColor    = "#171C22",
+        CardColor        = "#1C2229",
+
+        -- Borders
+        BorderColor      = "#2B323A",
+        BorderSoftColor  = "#1D242B",
+
+        -- Typography
+        TextColor        = "#F1F3F5",
+        MutedTextColor   = "#89929C",
+
+        -- Status colors
+        SuccessColor     = "#62BD7B",
+        WarningColor     = "#D39A4C",
+        DangerColor      = "#D65F58",
+    },
 }
 
 --- Bank deposit settings
@@ -106,25 +135,4 @@ Config.Reputation = {
         { threshold = 80,  color = "#22c55e" },
         { threshold = 100, color = "#16a34a" },
     },
-}
-
-Config.BrowserUI = {
-    Theme = {
-        AccentColor      = '#E7C30D',
-        AccentHoverColor = '#F5D329',
-        AccentDarkColor  = '#8F7910',
-
-        BodyColor        = '#080908',
-        PanelColor       = '#0E100F',
-        PanelAltColor    = '#141713',
-        CardColor        = '#111411',
-        BorderColor      = '#282B27',
-
-        TextColor        = '#F0F1ED',
-        MutedTextColor   = '#858A82',
-
-        SuccessColor     = '#76C97A',
-        WarningColor     = '#D39A4C',
-        DangerColor      = '#D65F58',
-    }
 }
