@@ -71,8 +71,6 @@ const englishFallback: LocaleDictionary = {
         },
 
         tiers: {
-            available: '{count} available',
-            access_restricted: 'Access restricted',
             eligible: 'ELIGIBLE',
         },
 

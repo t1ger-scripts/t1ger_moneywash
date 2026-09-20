@@ -497,11 +497,11 @@ button {
 
 .tier-pill {
   min-width: 118px;
-  display: grid;
-  grid-template-columns: 28px 1fr;
-  grid-template-rows: 1fr auto;
-  column-gap: 8px;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
   padding: 8px 9px;
   border: 1px solid #232a32;
   border-radius: 6px;
@@ -509,80 +509,53 @@ button {
   color: #78827c;
   cursor: pointer;
   text-align: left;
-  transition: border-color .16s, background .16s, transform .16s;
+  transition:
+    border-color .16s,
+    transform .16s;
 }
 
-.tier-pill:hover {
+.tier-pill:hover:not(:disabled) {
   transform: translateY(-1px);
-  border-color: #38433c;
-}
-
-.tier-pill.selected {
   border-color: var(--accent-dark);
-  background: var(--accent-soft);
-  box-shadow: 0 0 0 1px rgba(231, 195, 13, .08) inset;
 }
 
 .tier-pill:disabled {
   cursor: not-allowed;
 }
 
-.tier-pill.locked:hover {
-  transform: none;
-  border-color: #232a32;
-  background: #12171c;
+.tier-pill.selected {
+  border-color: var(--accent);
 }
 
-.tier-number {
-  grid-row: 1 / 3;
-  width: 27px;
-  height: 27px;
-  display: grid;
-  place-items: center;
-  border: 1px solid #333c36;
-  border-radius: 5px;
-  color: #909b94;
-  font: 700 11px ui-monospace, monospace;
-}
-
-.tier-pill.selected .tier-number {
-  color: #141200;
-  background: var(--accent);
+.tier-pill.selected:hover {
   border-color: var(--accent);
 }
 
 .tier-copy {
+  width: 100%;
   min-width: 0;
 }
 
-.tier-copy strong,
-.tier-copy small {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .tier-copy strong {
+  display: block;
+  overflow: hidden;
   color: #c1cac4;
-  font-size: 11px;
-}
-
-.tier-copy small {
-  margin-top: 2px;
-  color: #59625d;
-  font-size: 9px;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tier-state {
-  grid-column: 2;
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
+  margin-top: 1px;
   color: #685b4e;
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: .08em;
+  white-space: nowrap;
 }
 
 .tier-state.unlocked {
@@ -883,7 +856,7 @@ button {
   border-radius: 4px;
   background: rgba(8, 13, 9, .84);
   color: #9ea9a2;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: .14em;
   backdrop-filter: blur(8px);

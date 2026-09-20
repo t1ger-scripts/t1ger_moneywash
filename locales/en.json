@@ -218,8 +218,6 @@
             "description": "Browse available business acquisitions and expand your portfolio."
         },
         "tiers": {
-            "available": "{count} available",
-            "access_restricted": "Access restricted",
             "eligible": "ELIGIBLE"
         },
         "listings": {

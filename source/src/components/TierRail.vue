@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { Check, LockKeyhole } from '@lucide/vue'
 import { t } from '@/lib/locale'
-import { toRoman } from '@/lib/format'
 import type { BusinessTier } from '@/types/business'
 
 defineProps<{
   tiers: BusinessTier[]
   selectedType: string
   reputation: number
-  counts: Record<string, number>
 }>()
 
 defineEmits<{ select: [tier: BusinessTier] }>()
@@ -23,20 +21,8 @@ defineEmits<{ select: [tier: BusinessTier] }>()
         reputation < tier.requiredPoints &&
         reputation >= (tiers[index - 1]?.requiredPoints ?? 0),
     }" :disabled="reputation < tier.requiredPoints" @click="$emit('select', tier)">
-      <span class="tier-number">{{ toRoman(tier.tier) }}</span>
       <span class="tier-copy">
         <strong>{{ tier.label }}</strong>
-        <small v-if="reputation >= tier.requiredPoints">
-          {{
-            t('browser.tiers.available', {
-              count: counts[tier.type] ?? 0,
-          })
-          }}
-        </small>
-
-        <small v-else>
-          {{ t('browser.tiers.access_restricted') }}
-        </small>
       </span>
       <span v-if="reputation < tier.requiredPoints" class="tier-state">
         <LockKeyhole :size="13" /> {{ tier.requiredPoints.toLocaleString() }}
