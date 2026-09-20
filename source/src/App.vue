@@ -18,16 +18,8 @@ import TierRail from '@/components/TierRail.vue'
 import PurchaseModal from '@/components/PurchaseModal.vue'
 import BootstrapLoading from '@/components/BootstrapLoading.vue'
 import HelpCenter from '@/components/HelpCenter.vue'
-import {
-  businessLocations as mockBusinessLocations,
-  businessTiers as mockBusinessTiers,
-} from '@/data/mock-businesses'
-import {
-  mockProfile,
-  mockReputationLevels,
-} from '@/data/mock-profile'
 import { setCurrency, zoneFromCoordinates } from '@/lib/format'
-import { isFiveM, nuiFetch } from '@/lib/nui'
+import { nuiFetch } from '@/lib/nui'
 import type {
   BrowserSnapshot,
   BrowserTheme,
@@ -64,47 +56,25 @@ function localizeReputationLevel(
   }
 }
 
-const businessTiers = ref<BusinessTier[]>(
-  isFiveM
-    ? []
-    : mockBusinessTiers.map(localizeBusinessTier),
-)
+const businessTiers = ref<BusinessTier[]>([])
 
-const businessLocations = ref<BusinessLocation[]>(
-  isFiveM ? [] : [...mockBusinessLocations],
-)
+const businessLocations = ref<BusinessLocation[]>([])
 
-const reputationLevels = ref<ReputationLevel[]>(
-  isFiveM
-    ? []
-    : mockReputationLevels.map(localizeReputationLevel),
-)
+const reputationLevels = ref<ReputationLevel[]>([])
 
-const characterName = ref(
-  isFiveM ? '' : mockProfile.characterName,
-)
+const characterName = ref('')
 
-const reputation = ref(
-  isFiveM ? 0 : mockProfile.reputation,
-)
+const reputation = ref(0)
 
-const balance = ref(
-  isFiveM ? 0 : mockProfile.balance,
-)
+const balance = ref(0)
 
-const portfolioLimit = ref<number>(
-  isFiveM ? 0 : mockProfile.portfolioLimit,
-)
+const portfolioLimit = ref<number>(0)
 
 const purchaseReview = ref<LocationView>()
 
-const ownedLocationIds = ref(
-  isFiveM ? [] : [...mockProfile.ownedLocationIds],
-)
+const ownedLocationIds = ref<string[]>([])
 
-const acquiredLocationIds = ref(
-  isFiveM ? [] : [...mockProfile.acquiredLocationIds],
-)
+const acquiredLocationIds = ref<string[]>([])
 
 const isHelpCenterOpen = ref(false)
 
@@ -133,12 +103,6 @@ type ActionCompletion = (success: boolean) => void
 
 const isPurchasing = ref(false)
 
-const mockNearbyPlayers: NearbyPlayer[] = [
-  { id: 24, name: 'John Doe', distance: 3.4 },
-  { id: 71, name: 'Michael King', distance: 7.8 },
-  { id: 38, name: 'Nadia Cruz', distance: 9.2 },
-]
-
 type ToastVariant = 'success' | 'warning' | 'error' | 'info'
 
 interface ToastMessage {
@@ -158,11 +122,9 @@ const toastTitleKeys: Record<ToastVariant, string> = {
 
 let toastTimer: number | undefined
 
-const visible = ref(!isFiveM)
-const isBootstrapping = ref(!isFiveM)
+const visible = ref(false)
+const isBootstrapping = ref(true)
 const bootstrapError = ref(false)
-
-let bootstrapTimer: number | undefined
 
 function getToastTitle(variant: ToastVariant) {
   return t(toastTitleKeys[variant])
@@ -350,14 +312,6 @@ const reputationProgress = computed(() => {
   )
 })
 
-async function waitForLocalAction(delay = 750) {
-  if (isFiveM) return
-
-  await new Promise<void>((resolve) => {
-    window.setTimeout(resolve, delay)
-  })
-}
-
 function selectTier(tier: BusinessTier) {
   selectedType.value = tier.type
   selectedLocationId.value = undefined
@@ -403,56 +357,30 @@ async function confirmPurchase(location: LocationView) {
   isPurchasing.value = true
 
   try {
-    const [response] = await Promise.all([
-      nuiFetch<ActionResponse>('purchaseBusiness', {
+    const response = await nuiFetch<ActionResponse>(
+      'purchaseBusiness',
+      {
         type: currentLocation.type,
         locationId: currentLocation.id,
-      }),
-      waitForLocalAction(),
-    ])
+      },
+    )
 
-    if (isFiveM) {
-      if (!response || !response.success) {
-        throw new Error(
-          getActionErrorMessage(
-            response,
-            'browser.actions.purchase_failed',
-          ),
-        )
-      }
-
-      if (response.data) {
-        applyBrowserSnapshot(response.data)
-      } else {
-        purchaseReview.value = undefined
-        selectedLocationId.value = undefined
-        void nuiFetch('retryBootstrap')
-      }
-
-      showToast(
-        t('browser.actions.purchase_success', {
-          business: currentLocation.brand,
-        }),
-        'success',
+    if (!response || !response.success) {
+      throw new Error(
+        getActionErrorMessage(
+          response,
+          'browser.actions.purchase_failed',
+        ),
       )
-
-      return
     }
 
-    // Local browser preview only.
-    balance.value -= currentLocation.effectivePrice
-
-    if (!ownedLocationIds.value.includes(currentLocation.uid)) {
-      ownedLocationIds.value.push(currentLocation.uid)
+    if (response.data) {
+      applyBrowserSnapshot(response.data)
+    } else {
+      purchaseReview.value = undefined
+      selectedLocationId.value = undefined
+      void nuiFetch('retryBootstrap')
     }
-
-    acquiredLocationIds.value =
-      acquiredLocationIds.value.filter(
-        uid => uid !== currentLocation.uid,
-      )
-
-    purchaseReview.value = undefined
-    selectedLocationId.value = undefined
 
     showToast(
       t('browser.actions.purchase_success', {
@@ -512,7 +440,7 @@ async function setBusinessWaypoint(location: LocationView) {
       },
     )
 
-    if (isFiveM && (!response || !response.success)) {
+    if (!response || !response.success) {
       throw new Error(
         getActionErrorMessage(
           response,
@@ -540,12 +468,6 @@ async function setBusinessWaypoint(location: LocationView) {
 async function requestNearbyPlayers(
   complete: NearbyPlayersCompletion,
 ) {
-  if (!isFiveM) {
-    await waitForLocalAction(650)
-    complete(mockNearbyPlayers)
-    return
-  }
-
   try {
     const response =
       await nuiFetch<NearbyPlayersResponse>(
@@ -583,7 +505,7 @@ async function transferBusiness(
 ) {
   const businessId = payload.location.businessId
 
-  if (isFiveM && !businessId) {
+  if (!businessId) {
     showToast(
       t('browser.actions.ownership_record_unavailable'),
       'error',
@@ -594,56 +516,27 @@ async function transferBusiness(
   }
 
   try {
-    const [response] = await Promise.all([
-      nuiFetch<ActionResponse>('transferBusiness', {
+    const response = await nuiFetch<ActionResponse>(
+      'transferBusiness',
+      {
         businessId,
         targetId: payload.playerId,
-      }),
-      waitForLocalAction(),
-    ])
+      },
+    )
 
-    if (isFiveM) {
-      if (!response || !response.success) {
-        throw new Error(
-          getActionErrorMessage(
-            response,
-            'browser.actions.transfer_failed',
-          ),
-        )
-      }
-
-      if (response.data) {
-        applyBrowserSnapshot(response.data)
-      } else {
-        void nuiFetch('retryBootstrap')
-      }
-
-      showToast(
-        t('browser.actions.transfer_success', {
-          business: payload.location.brand,
-          player: payload.playerName,
-        }),
-        'success',
+    if (!response || !response.success) {
+      throw new Error(
+        getActionErrorMessage(
+          response,
+          'browser.actions.transfer_failed',
+        ),
       )
-
-      complete(true)
-      return
     }
 
-    // Local browser preview only.
-    ownedLocationIds.value =
-      ownedLocationIds.value.filter(
-        uid => uid !== payload.location.uid,
-      )
-
-    if (
-      !acquiredLocationIds.value.includes(
-        payload.location.uid,
-      )
-    ) {
-      acquiredLocationIds.value.push(
-        payload.location.uid,
-      )
+    if (response.data) {
+      applyBrowserSnapshot(response.data)
+    } else {
+      void nuiFetch('retryBootstrap')
     }
 
     showToast(
@@ -672,7 +565,7 @@ async function abandonBusiness(
 ) {
   const businessId = location.businessId
 
-  if (isFiveM && !businessId) {
+  if (!businessId) {
     showToast(
       t('browser.actions.ownership_record_unavailable'),
       'error',
@@ -683,50 +576,25 @@ async function abandonBusiness(
   }
 
   try {
-    const [response] = await Promise.all([
-      nuiFetch<ActionResponse>('abandonBusiness', {
-        businessId,
-      }),
-      waitForLocalAction(),
-    ])
+    const response = await nuiFetch<ActionResponse>(
+      'abandonBusiness',
+      { businessId },
+    )
 
-    if (isFiveM) {
-      if (!response || !response.success) {
-        throw new Error(
-          getActionErrorMessage(
-            response,
-            'browser.actions.relinquish_failed',
-          ),
-        )
-      }
-
-      if (response.data) {
-        applyBrowserSnapshot(response.data)
-      } else {
-        void nuiFetch('retryBootstrap')
-      }
-
-      showToast(
-        t('browser.actions.relinquish_success', {
-          business: location.brand,
-        }),
-        'warning',
+    if (!response || !response.success) {
+      throw new Error(
+        getActionErrorMessage(
+          response,
+          'browser.actions.relinquish_failed',
+        ),
       )
-
-      complete(true)
-      return
     }
 
-    // Local preview only.
-    ownedLocationIds.value =
-      ownedLocationIds.value.filter(
-        uid => uid !== location.uid,
-      )
-
-    acquiredLocationIds.value =
-      acquiredLocationIds.value.filter(
-        uid => uid !== location.uid,
-      )
+    if (response.data) {
+      applyBrowserSnapshot(response.data)
+    } else {
+      void nuiFetch('retryBootstrap')
+    }
 
     showToast(
       t('browser.actions.relinquish_success', {
@@ -927,47 +795,20 @@ function handleNuiMessage(event: MessageEvent) {
   }
 }
 
-function startBootstrap() {
-  isBootstrapping.value = true
-  bootstrapError.value = false
-
-  window.clearTimeout(bootstrapTimer)
-
-  if (isFiveM) {
-    return
-  }
-
-  bootstrapTimer = window.setTimeout(() => {
-    bootstrapError.value = false
-    isBootstrapping.value = false
-  }, 900)
-}
-
 function retryBootstrap() {
   isBootstrapping.value = true
   bootstrapError.value = false
-
-  if (isFiveM) {
-    void nuiFetch('retryBootstrap')
-    return
-  }
-
-  startBootstrap()
+  void nuiFetch('retryBootstrap')
 }
 
 onMounted(() => {
   window.addEventListener('keydown', handleEscapeKey)
   window.addEventListener('message', handleNuiMessage)
 
-  if (isFiveM) {
-    void nuiFetch('ready')
-  } else {
-    startBootstrap()
-  }
+  void nuiFetch('ready')
 })
 
 onBeforeUnmount(() => {
-  window.clearTimeout(bootstrapTimer)
   window.clearTimeout(toastTimer)
 
   window.removeEventListener('keydown', handleEscapeKey)

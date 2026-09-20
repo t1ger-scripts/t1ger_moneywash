@@ -11,15 +11,6 @@ A standalone local-development frontend for the `t1ger_moneywash` FiveM resource
 
 No web framework is required at runtime. `npm run build` produces static files in `../web`.
 
-## Run locally
-
-```bash
-npm install
-npm run dev
-```
-
-Open the local URL printed by Vite. Select a tier, then click a listing or map marker to zoom to the site.
-
 ## Build for FiveM
 
 ```bash

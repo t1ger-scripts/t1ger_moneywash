@@ -196,7 +196,7 @@ button {
   gap: 6px;
   padding: 0 10px;
   color: #7f8994;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: .12em;
 }
@@ -255,7 +255,7 @@ button {
   display: block;
   margin-top: 3px;
   color: #68727d;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: .16em;
 }
@@ -310,7 +310,7 @@ button {
   border-radius: 5px;
   background: #232a32;
   color: #97a29b;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .side-section {
@@ -322,7 +322,7 @@ button {
 .side-label,
 .eyebrow {
   color: #707a85;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .17em;
 }
@@ -357,7 +357,7 @@ button {
 .profile-copy small {
   margin-top: 7px;
   color: #69737e;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: .12em;
 }
@@ -365,19 +365,19 @@ button {
 .profile-copy span {
   margin-top: 3px;
   color: #a4adb6;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .metric-row {
   display: flex;
   justify-content: space-between;
   color: #6e7872;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .metric-row strong {
   color: #a8b3ac;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .progress-track {
@@ -401,13 +401,13 @@ button {
   gap: 8px;
   margin-top: 6px;
   color: #616b75;
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .progress-caption strong {
   flex: 0 0 auto;
   color: #858f99;
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .portfolio-metric {
@@ -442,7 +442,7 @@ button {
 .side-footer button {
   height: 32px;
   padding: 0 9px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .side-footer button:hover {
@@ -566,13 +566,13 @@ button {
 
 .tier-copy strong {
   color: #c1cac4;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .tier-copy small {
   margin-top: 2px;
   color: #59625d;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .tier-state {
@@ -581,7 +581,7 @@ button {
   align-items: center;
   gap: 3px;
   color: #685b4e;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: .08em;
 }
@@ -665,7 +665,7 @@ button {
   outline: 0;
   background: transparent;
   color: #bdc7c0;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .search-box input::placeholder {
@@ -744,7 +744,7 @@ button {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #cdd3d9;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .location-main small {
@@ -753,7 +753,7 @@ button {
   gap: 3px;
   margin-top: 6px;
   color: #6c7782;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .listing-location span {
@@ -769,7 +769,7 @@ button {
   border-radius: 3px;
   color: var(--success);
   background: #172119;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: .08em;
 }
@@ -781,7 +781,7 @@ button {
   border-radius: 3px;
   background: #181d1a;
   color: #8c9690;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: .08em;
 }
@@ -805,7 +805,7 @@ button {
 }
 
 .location-price .listing-status {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .09em;
 }
@@ -836,7 +836,7 @@ button {
 .location-price small {
   margin-top: 4px;
   color: #5d6761;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .card-chevron {
@@ -853,7 +853,7 @@ button {
 .empty-list {
   padding: 36px 12px;
   color: #626c66;
-  font-size: 11px;
+  font-size: 12px;
   text-align: center;
 }
 
@@ -890,7 +890,7 @@ button {
   border-radius: 4px;
   background: rgba(8, 13, 9, .84);
   color: #9ea9a2;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .14em;
   backdrop-filter: blur(8px);
@@ -941,7 +941,7 @@ button {
   border-radius: 4px;
   background: rgba(8, 13, 9, .82);
   color: #7d8981;
-  font-size: 9px;
+  font-size: 11px;
   backdrop-filter: blur(8px);
 }
 
@@ -1004,7 +1004,7 @@ button {
 .map-pin-id {
   fill: #e2e9e4;
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: -.04em;
   pointer-events: none;
@@ -1108,7 +1108,7 @@ button {
 
 .detail-kicker {
   color: var(--accent);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .15em;
 }
@@ -1126,7 +1126,7 @@ button {
   gap: 5px;
   margin: 0;
   color: #768179;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .detail-price {
@@ -1142,7 +1142,7 @@ button {
 
 .detail-price span {
   color: #69746d;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .detail-price strong {
@@ -1173,12 +1173,12 @@ button {
 
 .detail-stats span {
   color: #707a85;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .detail-stats strong {
   color: #b9c3bc;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .restriction-box,
@@ -1200,21 +1200,21 @@ button {
 }
 
 .restriction-box strong {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: .09em;
 }
 
 .restriction-box span {
   margin-top: 2px;
   color: #87695d;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .verified-box {
   border-color: #314b34;
   background: #111a13;
   color: #7fb482;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .purchase-button {
@@ -1229,7 +1229,7 @@ button {
   border-radius: 5px;
   background: var(--accent);
   color: #171400;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -1248,7 +1248,7 @@ button {
   display: block;
   margin-top: 7px;
   color: #505a54;
-  font-size: 8px;
+  font-size: 10px;
   text-align: center;
 }
 
@@ -1292,7 +1292,7 @@ button {
 .portfolio-capacity span {
   display: block;
   color: #68736c;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .14em;
 }
@@ -1324,7 +1324,7 @@ button {
 .portfolio-section-heading span {
   display: block;
   color: #66716a;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .14em;
 }
@@ -1339,7 +1339,7 @@ button {
 .portfolio-section-heading p {
   margin: 0;
   color: #66717c;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .portfolio-list {
@@ -1402,7 +1402,7 @@ button {
   border-radius: 3px;
   background: #111a13;
   color: var(--success);
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: .1em;
 }
@@ -1414,7 +1414,7 @@ button {
   overflow: hidden;
   margin-top: 6px;
   color: #66717c;
-  font-size: 9px;
+  font-size: 11px;
   white-space: nowrap;
 }
 
@@ -1429,7 +1429,7 @@ button {
   gap: 8px;
   margin-top: 6px;
   color: #929d96;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -1491,7 +1491,7 @@ button {
 
 .portfolio-empty p {
   margin: 0 0 18px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .portfolio-primary,
@@ -1506,7 +1506,7 @@ button {
   gap: 7px;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -1563,7 +1563,7 @@ button {
   background: #0c110e;
   color: #c8d1cb;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.02em;
   transform: translate(-50%, 3px);
@@ -1688,7 +1688,7 @@ button {
 .purchase-target > span {
   margin-top: 5px;
   color: #8c9790;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .purchase-target > small {
@@ -1698,7 +1698,7 @@ button {
   overflow: hidden;
   margin-top: 8px;
   color: #6f7a73;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .purchase-target > small > span {
@@ -1736,7 +1736,7 @@ button {
 
 .purchase-summary span {
   color: #68736c;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .12em;
 }
@@ -1766,7 +1766,7 @@ button {
   border-radius: 6px;
   background: #1d1412;
   color: #cf8d86;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.4;
 }
 
@@ -1777,7 +1777,7 @@ button {
 .purchase-confirmation-note {
   margin: 12px 0 0;
   color: #626d66;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.5;
 }
 
@@ -1825,7 +1825,7 @@ button {
 .modal-kicker {
   display: block;
   color: var(--accent);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .16em;
 }
@@ -1843,7 +1843,7 @@ button {
 .modal-description {
   margin: 8px 0 17px;
   color: #7b857f;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.55;
 }
 
@@ -1883,13 +1883,13 @@ button {
 
 .nearby-player-list strong {
   color: #c5cec8;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .nearby-player-list small {
   margin-top: 4px;
   color: #707a85;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .modal-footer-actions {
@@ -1921,7 +1921,7 @@ button {
 
 .abandon-warning strong {
   color: #d5aaa5;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .abandon-warning ul {
@@ -1931,7 +1931,7 @@ button {
 
 .abandon-warning li {
   margin-top: 5px;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .modal-fade-enter-active,
@@ -2025,13 +2025,13 @@ button {
 
 .app-toast-copy strong {
   color: #d3dbd6;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .app-toast-copy small {
   margin-top: 4px;
   color: #7d8881;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.4;
 }
 
@@ -2188,7 +2188,7 @@ button {
   border-radius: 4px;
   background: rgba(8, 13, 9, 0.84);
   color: #8d9891;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.14em;
 }
@@ -2210,7 +2210,7 @@ button {
 .bootstrap-map-center small {
   margin-top: 5px;
   color: #626c66;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .bootstrap-spinner {
@@ -2429,7 +2429,7 @@ button {
   max-width: 360px;
   margin: 0 0 18px;
   color: #717c75;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
 }
 
@@ -2485,7 +2485,7 @@ button {
   max-width: 270px;
   margin: 6px 0 0;
   color: #68736c;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.55;
 }
 
@@ -2498,7 +2498,7 @@ button {
   background: #171d22;
   color: #b5beb8;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -2537,14 +2537,14 @@ button {
 
 .market-status-copy strong {
   color: #9ea8a1;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
 }
 
 .market-status-copy small {
   margin-top: 3px;
   color: #59635d;
-  font-size: 9px;
+  font-size: 11px;
   line-height: 1.4;
 }
 
@@ -2659,7 +2659,7 @@ button {
   max-width: 265px;
   margin: 6px 0 0;
   color: #68736c;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.5;
 }
 
@@ -2697,14 +2697,14 @@ button {
 .map-loading-state strong,
 .map-error-state strong {
   color: #bdc7c0;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .map-loading-state small,
 .map-error-state small {
   margin-top: 3px;
   color: #68736c;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .map-loading-spinner {
@@ -2748,7 +2748,7 @@ button {
   background: #241715;
   color: #d29b96;
   cursor: pointer;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -2867,7 +2867,7 @@ button {
 .help-center-header p {
   margin: 0;
   color: #77827b;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .help-center-header .modal-close {
@@ -2932,13 +2932,13 @@ button {
 
 .help-topic summary strong {
   color: #cbd3ce;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .help-topic summary small {
   margin-top: 4px;
   color: #66716a;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .help-topic-chevron {
@@ -2969,7 +2969,7 @@ button {
 .help-topic-content p {
   margin: 10px 0 0;
   color: #7c8780;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.55;
 }
 
@@ -2982,7 +2982,7 @@ button {
   border-top: 1px solid var(--line-soft);
   background: #0c1114;
   color: #68736c;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .help-center-footer svg {
