@@ -1,8 +1,20 @@
-export const money = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
+const wholeNumber = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 })
+
+let currencySymbol = '$'
+
+export const money = {
+  format(value: number): string {
+    return `${currencySymbol}${wholeNumber.format(value)}`
+  },
+}
+
+export function setCurrency(symbol?: string) {
+  if (typeof symbol === 'string' && symbol.length > 0) {
+    currencySymbol = symbol
+  }
+}
 
 export const compactNumber = new Intl.NumberFormat('en-US', {
   notation: 'compact',

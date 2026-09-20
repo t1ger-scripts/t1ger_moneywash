@@ -38,6 +38,32 @@ const englishFallback: LocaleDictionary = {
             portfolio_usage: 'Portfolio Usage',
         },
 
+        business_types: {
+            coffee_shop: 'Coffee Shop',
+            gas_station: 'Gas Station',
+            restaurant: 'Restaurant',
+            laundromat: 'Laundromat',
+            bar: 'Bar',
+            nightclub: 'Nightclub',
+            stripclub: 'Strip Club',
+            carwash: 'Car Wash',
+            casino: 'Casino',
+        },
+
+        reputation_levels: {
+            0: 'Unverified',
+            250: 'Registered',
+            500: 'Active Operator',
+            1000: 'Established Operator',
+            1750: 'Verified Investor',
+            2750: 'Accredited Investor',
+            4000: 'Senior Operator',
+            5500: 'Portfolio Manager',
+            7500: 'Commercial Investor',
+            10000: 'Institutional Buyer',
+            15000: 'Premium Member',
+        },
+
         marketplace: {
             eyebrow: 'Verified Listings',
             title: 'Marketplace',
@@ -333,12 +359,17 @@ const englishFallback: LocaleDictionary = {
             target_portfolio_full:
                 'The selected player does not have enough portfolio capacity.',
 
-            active_stock_order:
-                'This business has an active stock order.',
+            active_stock_mission:
+                'This business has an active stock delivery.',
             pending_deposit:
                 'This business has a pending bank deposit.',
             raid_pending:
                 'This business currently has a pending compliance action.',
+
+            browser_closed:
+                'The browser is no longer open.',
+            nearby_players_unavailable:
+                'Nearby players could not be retrieved.',
 
             ownership_locked:
                 'This business is currently being updated. Please try again.',
@@ -480,6 +511,31 @@ export function t(
             : typeof fallbackValue === 'string'
                 ? fallbackValue
                 : key
+
+    return replaceVariables(value, variables)
+}
+
+export function tOr(
+    key: string,
+    fallback: string,
+    variables: LocaleVariables = {},
+): string {
+    const runtimeValue = resolveLocaleValue(
+        activeLocales.value,
+        key,
+    )
+
+    const fallbackValue = resolveLocaleValue(
+        englishFallback,
+        key,
+    )
+
+    const value =
+        typeof runtimeValue === 'string'
+            ? runtimeValue
+            : typeof fallbackValue === 'string'
+                ? fallbackValue
+                : fallback
 
     return replaceVariables(value, variables)
 }

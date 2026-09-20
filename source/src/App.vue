@@ -7,7 +7,7 @@ import {
   TriangleAlert,
   X,
 } from '@lucide/vue'
-import { setLocales, t } from '@/lib/locale'
+import { setLocales, t, tOr } from '@/lib/locale'
 import AppSidebar from '@/components/AppSidebar.vue'
 import BrowserChrome from '@/components/BrowserChrome.vue'
 import BusinessMap from '@/components/BusinessMap.vue'
@@ -26,7 +26,7 @@ import {
   mockProfile,
   mockReputationLevels,
 } from '@/data/mock-profile'
-import { zoneFromCoordinates } from '@/lib/format'
+import { setCurrency, zoneFromCoordinates } from '@/lib/format'
 import { isFiveM, nuiFetch } from '@/lib/nui'
 import type {
   BrowserSnapshot,
@@ -42,8 +42,32 @@ const selectedType = ref('coffee_shop')
 const selectedLocationId = ref<string>()
 const query = ref('')
 
+function localizeBusinessTier(tier: BusinessTier): BusinessTier {
+  return {
+    ...tier,
+    label: tOr(
+      `browser.business_types.${tier.type}`,
+      tier.label,
+    ),
+  }
+}
+
+function localizeReputationLevel(
+  level: ReputationLevel,
+): ReputationLevel {
+  return {
+    ...level,
+    label: tOr(
+      `browser.reputation_levels.${level.points}`,
+      level.label,
+    ),
+  }
+}
+
 const businessTiers = ref<BusinessTier[]>(
-  isFiveM ? [] : [...mockBusinessTiers],
+  isFiveM
+    ? []
+    : mockBusinessTiers.map(localizeBusinessTier),
 )
 
 const businessLocations = ref<BusinessLocation[]>(
@@ -51,7 +75,9 @@ const businessLocations = ref<BusinessLocation[]>(
 )
 
 const reputationLevels = ref<ReputationLevel[]>(
-  isFiveM ? [] : [...mockReputationLevels],
+  isFiveM
+    ? []
+    : mockReputationLevels.map(localizeReputationLevel),
 )
 
 const characterName = ref(
@@ -773,15 +799,20 @@ function applyBrowserSnapshot(
   preserveState = false,
 ) {
   setLocales(snapshot.locales)
+  setCurrency(snapshot.settings.currency)
   const previousSelectedLocationId =
     selectedLocationId.value
 
   const previousPurchaseLocationId =
     purchaseReview.value?.uid
 
-  businessTiers.value = snapshot.tiers
+  businessTiers.value = snapshot.tiers.map(
+    localizeBusinessTier,
+  )
   businessLocations.value = snapshot.locations
-  reputationLevels.value = snapshot.reputationLevels
+  reputationLevels.value = snapshot.reputationLevels.map(
+    localizeReputationLevel,
+  )
 
   characterName.value = snapshot.profile.characterName
   reputation.value = snapshot.profile.reputation

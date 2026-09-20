@@ -357,6 +357,7 @@ RegisterNUICallback("getNearbyPlayers", function(_, cb)
     if not BrowserOpen then
         cb({
             success = false,
+            reason = "browser_closed",
             message = "The browser is no longer open.",
             players = {},
         })
@@ -538,6 +539,7 @@ RegisterNUICallback("setBusinessWaypoint", function(data, cb)
     if not BrowserOpen then
         cb({
             success = false,
+            reason = "browser_closed",
             message = "The browser is no longer open.",
         })
 
@@ -549,6 +551,7 @@ RegisterNUICallback("setBusinessWaypoint", function(data, cb)
     then
         cb({
             success = false,
+            reason = "invalid_location",
             message = "The business location is invalid.",
         })
 
@@ -565,6 +568,7 @@ RegisterNUICallback("setBusinessWaypoint", function(data, cb)
     then
         cb({
             success = false,
+            reason = "invalid_location",
             message = "The business location is invalid.",
         })
 
