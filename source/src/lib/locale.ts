@@ -349,6 +349,64 @@ const englishFallback: LocaleDictionary = {
             unknown:
                 'The requested action could not be completed.',
         },
+
+        loading: {
+            aria_label: 'Loading brokerage data',
+            status: 'LOADING BROKERAGE DATA',
+            title: 'Retrieving current listings',
+            description: 'Verifying availability and account access',
+        },
+
+        help: {
+            eyebrow: 'PLATFORM GUIDANCE',
+            title: 'Help Center',
+            description: 'Learn how listings, eligibility and portfolio ownership work.',
+            close_label: 'Close Help Center',
+
+            investor_score: {
+                title: 'Investor Score',
+                subtitle: 'Your standing within Ledger Capital',
+                body_one: 'Investor Score represents your account standing with the brokerage. Increasing your score grants access to additional business categories and higher-tier opportunities.',
+                body_two: 'Your current membership status and progress toward the next level are displayed under Your Account.',
+            },
+
+            eligibility: {
+                title: 'Listing eligibility',
+                subtitle: 'How business categories become available',
+                body_one: 'Each business category has an Investor Score requirement. Eligible categories can be opened and browsed through the Marketplace.',
+                body_two: 'Restricted categories show the score required for access. Their locations remain unavailable until the requirement has been reached.',
+            },
+
+            portfolio_weight: {
+                title: 'Portfolio weight',
+                subtitle: 'Understanding your ownership capacity',
+                body_one: 'Every registered business uses part of your portfolio capacity. Higher-tier businesses may carry a greater portfolio weight.',
+                body_two: 'A new acquisition cannot be completed if its weight would exceed your available portfolio capacity.',
+            },
+
+            acquisition: {
+                title: 'Acquiring a business',
+                subtitle: 'Reviewing and confirming a listing',
+                body_one: 'Select an available listing from the Marketplace or its map marker to review the location, acquisition price, tier and portfolio weight.',
+                body_two: 'Each location can have only one registered owner. Your account may hold only one business from each category.',
+            },
+
+            transfer: {
+                title: 'Transferring ownership',
+                subtitle: 'Assigning a business to another player',
+                body_one: 'Ownership can be transferred to an eligible nearby player from My Portfolio. The transfer takes effect immediately after confirmation.',
+                body_two: 'The recipient must have sufficient portfolio capacity and cannot already own the same business type.',
+            },
+
+            relinquish: {
+                title: 'Relinquishing a business',
+                subtitle: 'Permanently releasing a registered holding',
+                body_one: 'Relinquishing ownership permanently removes the business from your portfolio and returns its location to the Marketplace.',
+                body_two: 'No acquisition refund is provided, and everything associated with the business is lost. This action cannot be reversed.',
+            },
+
+            footer: 'Operational business management is handled through the assigned representative at the business location.',
+        },
     },
 }
 

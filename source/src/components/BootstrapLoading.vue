@@ -1,5 +1,9 @@
+<script setup lang="ts">
+import { t } from '@/lib/locale'
+</script>
+
 <template>
-    <div class="bootstrap-layout" aria-label="Loading brokerage data">
+    <div class="bootstrap-layout" :aria-label="t('browser.loading.aria_label')">
         <aside class="bootstrap-sidebar">
             <div class="bootstrap-brand">
                 <span class="skeleton skeleton-logo" />
@@ -73,13 +77,13 @@
                 <section class="bootstrap-map">
                     <div class="bootstrap-map-status">
                         <span class="loading-pulse" />
-                        <span>LOADING BROKERAGE DATA</span>
+                        <span>{{ t('browser.loading.status') }}</span>
                     </div>
 
                     <div class="bootstrap-map-center">
                         <span class="bootstrap-spinner" />
-                        <strong>Retrieving current listings</strong>
-                        <small>Verifying availability and account access</small>
+                        <strong>{{ t('browser.loading.title') }}</strong>
+                        <small>{{ t('browser.loading.description') }}</small>
                     </div>
                 </section>
             </div>

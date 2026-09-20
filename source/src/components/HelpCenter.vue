@@ -10,6 +10,7 @@ import {
     TriangleAlert,
     X,
 } from '@lucide/vue'
+import { t } from '@/lib/locale'
 
 const emit = defineEmits<{
     close: []
@@ -37,14 +38,15 @@ onBeforeUnmount(() => {
         <section class="help-center-modal" role="dialog" aria-modal="true" aria-labelledby="help-center-title">
             <header class="help-center-header">
                 <div>
-                    <span class="eyebrow">PLATFORM GUIDANCE</span>
-                    <h2 id="help-center-title">Help Center</h2>
+                    <span class="eyebrow">{{ t('browser.help.eyebrow') }}</span>
+                    <h2 id="help-center-title">{{ t('browser.help.title') }}</h2>
                     <p>
-                        Learn how listings, eligibility and portfolio ownership work.
+                        {{ t('browser.help.description') }}
                     </p>
                 </div>
 
-                <button type="button" class="modal-close" aria-label="Close Help Center" @click="emit('close')">
+                <button type="button" class="modal-close" :aria-label="t('browser.help.close_label')"
+                    @click="emit('close')">
                     <X :size="16" />
                 </button>
             </header>
@@ -57,8 +59,8 @@ onBeforeUnmount(() => {
                         </span>
 
                         <span>
-                            <strong>Investor Score</strong>
-                            <small>Your standing within Ledger Capital</small>
+                            <strong>{{ t('browser.help.investor_score.title') }}</strong>
+                            <small>{{ t('browser.help.investor_score.subtitle') }}</small>
                         </span>
 
                         <ChevronDown :size="15" class="help-topic-chevron" />
@@ -66,14 +68,11 @@ onBeforeUnmount(() => {
 
                     <div class="help-topic-content">
                         <p>
-                            Investor Score represents your account standing with the
-                            brokerage. Increasing your score grants access to additional
-                            business categories and higher-tier opportunities.
+                            {{ t('browser.help.investor_score.body_one') }}
                         </p>
 
                         <p>
-                            Your current membership status and progress toward the next
-                            level are displayed under Your Account.
+                            {{ t('browser.help.investor_score.body_two') }}
                         </p>
                     </div>
                 </details>
@@ -85,8 +84,8 @@ onBeforeUnmount(() => {
                         </span>
 
                         <span>
-                            <strong>Listing eligibility</strong>
-                            <small>How business categories become available</small>
+                            <strong>{{ t('browser.help.eligibility.title') }}</strong>
+                            <small>{{ t('browser.help.eligibility.subtitle') }}</small>
                         </span>
 
                         <ChevronDown :size="15" class="help-topic-chevron" />
@@ -94,15 +93,11 @@ onBeforeUnmount(() => {
 
                     <div class="help-topic-content">
                         <p>
-                            Each business category has an Investor Score requirement.
-                            Eligible categories can be opened and browsed through the
-                            Marketplace.
+                            {{ t('browser.help.eligibility.body_one') }}
                         </p>
 
                         <p>
-                            Restricted categories show the score required for access.
-                            Their locations remain unavailable until the requirement has
-                            been reached.
+                            {{ t('browser.help.eligibility.body_two') }}
                         </p>
                     </div>
                 </details>
@@ -114,8 +109,8 @@ onBeforeUnmount(() => {
                         </span>
 
                         <span>
-                            <strong>Portfolio weight</strong>
-                            <small>Understanding your ownership capacity</small>
+                            <strong>{{ t('browser.help.portfolio_weight.title') }}</strong>
+                            <small>{{ t('browser.help.portfolio_weight.subtitle') }}</small>
                         </span>
 
                         <ChevronDown :size="15" class="help-topic-chevron" />
@@ -123,13 +118,11 @@ onBeforeUnmount(() => {
 
                     <div class="help-topic-content">
                         <p>
-                            Every registered business uses part of your portfolio capacity.
-                            Higher-tier businesses may carry a greater portfolio weight.
+                            {{ t('browser.help.portfolio_weight.body_one') }}
                         </p>
 
                         <p>
-                            A new acquisition cannot be completed if its weight would
-                            exceed your available portfolio capacity.
+                            {{ t('browser.help.portfolio_weight.body_two') }}
                         </p>
                     </div>
                 </details>
@@ -141,8 +134,8 @@ onBeforeUnmount(() => {
                         </span>
 
                         <span>
-                            <strong>Acquiring a business</strong>
-                            <small>Reviewing and confirming a listing</small>
+                            <strong>{{ t('browser.help.acquisition.title') }}</strong>
+                            <small>{{ t('browser.help.acquisition.subtitle') }}</small>
                         </span>
 
                         <ChevronDown :size="15" class="help-topic-chevron" />
@@ -150,14 +143,11 @@ onBeforeUnmount(() => {
 
                     <div class="help-topic-content">
                         <p>
-                            Select an available listing from the Marketplace or its map
-                            marker to review the location, acquisition price, tier and
-                            portfolio weight.
+                            {{ t('browser.help.acquisition.body_one') }}
                         </p>
 
                         <p>
-                            Each location can have only one registered owner. Your account
-                            may hold only one business from each category.
+                            {{ t('browser.help.acquisition.body_two') }}
                         </p>
                     </div>
                 </details>
@@ -169,8 +159,8 @@ onBeforeUnmount(() => {
                         </span>
 
                         <span>
-                            <strong>Transferring ownership</strong>
-                            <small>Assigning a business to another player</small>
+                            <strong>{{ t('browser.help.transfer.title') }}</strong>
+                            <small>{{ t('browser.help.transfer.subtitle') }}</small>
                         </span>
 
                         <ChevronDown :size="15" class="help-topic-chevron" />
@@ -178,14 +168,11 @@ onBeforeUnmount(() => {
 
                     <div class="help-topic-content">
                         <p>
-                            Ownership can be transferred to an eligible nearby player from
-                            My Portfolio. The transfer takes effect immediately after
-                            confirmation.
+                            {{ t('browser.help.transfer.body_one') }}
                         </p>
 
                         <p>
-                            The recipient must have sufficient portfolio capacity and
-                            cannot already own the same business type.
+                            {{ t('browser.help.transfer.body_two') }}
                         </p>
                     </div>
                 </details>
@@ -197,8 +184,8 @@ onBeforeUnmount(() => {
                         </span>
 
                         <span>
-                            <strong>Relinquishing a business</strong>
-                            <small>Permanently releasing a registered holding</small>
+                            <strong>{{ t('browser.help.relinquish.title') }}</strong>
+                            <small>{{ t('browser.help.relinquish.subtitle') }}</small>
                         </span>
 
                         <ChevronDown :size="15" class="help-topic-chevron" />
@@ -206,13 +193,11 @@ onBeforeUnmount(() => {
 
                     <div class="help-topic-content">
                         <p>
-                            Relinquishing ownership permanently removes the business from
-                            your portfolio and returns its location to the Marketplace.
+                            {{ t('browser.help.relinquish.body_one') }}
                         </p>
 
                         <p>
-                            No acquisition refund is provided, and everything associated
-                            with the business is lost. This action cannot be reversed.
+                            {{ t('browser.help.relinquish.body_two') }}
                         </p>
                     </div>
                 </details>
@@ -222,8 +207,7 @@ onBeforeUnmount(() => {
                 <CircleHelp :size="15" />
 
                 <span>
-                    Operational business management is handled through the assigned
-                    representative at the business location.
+                    {{ t('browser.help.footer') }}
                 </span>
             </footer>
         </section>
