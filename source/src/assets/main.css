@@ -431,47 +431,6 @@ button {
   background: var(--warning);
 }
 
-.sidebar-preview {
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid var(--line-soft);
-}
-
-.sidebar-preview-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.sidebar-preview-heading span {
-  color: #616b75;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: .13em;
-}
-
-.sidebar-preview-heading strong {
-  color: var(--accent);
-  font-size: 10px;
-}
-
-.sidebar-preview input {
-  width: 100%;
-  height: 12px;
-  margin: 9px 0 0;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-
-.sidebar-preview-scale {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 2px;
-  color: #535d67;
-  font-size: 8px;
-}
-
 .side-footer {
   display: grid;
   gap: 3px;

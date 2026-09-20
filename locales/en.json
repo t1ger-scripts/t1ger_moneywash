@@ -159,5 +159,34 @@
         "drive_to_bank": "Drive to the bank and deposit your cash",
         "interact_teller": "[E] Interact with bank teller",
         "drive_to_office": "Drive to the accountant office"
+    },
+    "browser": {
+        "brand": {
+            "name": "Ledger Capital",
+            "subtitle": "Business Brokerage"
+        },
+        "chrome": {
+            "close": "Close browser",
+            "tab_suffix": "Ledger Capital",
+            "protocol": "https://",
+            "domain": "ledgercapital.com",
+            "secure_session": "Secure Session",
+            "path_marketplace": "marketplace",
+            "path_portfolio": "portfolio"
+        },
+        "navigation": {
+            "primary_label": "Primary navigation",
+            "marketplace": "Marketplace",
+            "portfolio": "My Portfolio",
+            "help_center": "Help Center"
+        },
+        "account": {
+            "heading": "Your Account",
+            "membership_status": "Membership Status",
+            "investor_score": "Investor Score",
+            "progress_to": "Progress to {level}",
+            "maximum_status": "Maximum status achieved",
+            "portfolio_usage": "Portfolio Usage"
+        }
     }
 }

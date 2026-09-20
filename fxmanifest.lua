@@ -65,6 +65,7 @@ server_scripts {
 }
 
 files {
+    'locales/*.json',
     'web/index.html',
     'web/assets/**/*',
 
@@ -75,7 +76,6 @@ files {
     'web/mapStyles/styleSatelite/4/**/*',
     'web/mapStyles/styleSatelite/5/**/*',
 
-    'locales/*.json',
     'shared/business_locations.lua',
     'shared/stocklocations.lua',
     'shared/banklocations.lua',

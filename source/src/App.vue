@@ -7,6 +7,7 @@ import {
   TriangleAlert,
   X,
 } from '@lucide/vue'
+import { setLocales, t } from '@/lib/locale'
 import AppSidebar from '@/components/AppSidebar.vue'
 import BrowserChrome from '@/components/BrowserChrome.vue'
 import BusinessMap from '@/components/BusinessMap.vue'
@@ -254,7 +255,11 @@ watch(
 
 const ownedLocations = computed(() => locationViews.value.filter((location) => ownedLocationIds.value.includes(location.uid)))
 const portfolioWeight = computed(() => ownedLocations.value.reduce((total, location) => total + location.tier.weight, 0))
-const activeTitle = computed(() => activeView.value === 'market' ? 'Marketplace' : 'My Portfolio')
+const activeTitle = computed(() =>
+  activeView.value === 'market'
+    ? t('browser.navigation.marketplace')
+    : t('browser.navigation.portfolio'),
+)
 const reputationLabel = computed(() => {
   return [...reputationLevels.value]
     .reverse()
@@ -719,6 +724,7 @@ function applyBrowserSnapshot(
   snapshot: BrowserSnapshot,
   preserveState = false,
 ) {
+  setLocales(snapshot.locales)
   const previousSelectedLocationId =
     selectedLocationId.value
 
@@ -909,7 +915,7 @@ watch(reputation, (score) => {
 <template>
   <div v-if="visible" class="nui-stage">
     <div class="browser-window">
-      <BrowserChrome :active-tab="activeTitle" @close="closeUi" />
+      <BrowserChrome :active-tab="activeTitle" :active-view="activeView" @close="closeUi" />
       <div class="app-frame">
         <BootstrapLoading v-if="isBootstrapping" />
 
@@ -933,7 +939,7 @@ watch(reputation, (score) => {
             :reputation-progress="reputationProgress" :next-reputation-label="nextReputationLevel?.label"
             :character-name="characterName" :portfolio-count="ownedLocations.length" :portfolio-weight="portfolioWeight"
             :portfolio-limit="portfolioLimit" @navigate="activeView = $event as typeof activeView"
-            @open-help="isHelpCenterOpen = true" @update:reputation="reputation = $event" />
+            @open-help="isHelpCenterOpen = true" />
 
           <main v-if="activeView === 'market'" class="market-view">
             <header class="market-header">

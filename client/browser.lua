@@ -52,37 +52,73 @@ local function GetBrowserActionMessage(reason)
     return BrowserActionMessages[reason] or "The requested action could not be completed."
 end
 
---- Loads the configured ox_lib locale file for use inside the NUI.
---- Falls back to English when the selected locale does not exist.
+--- Loads and decodes one locale file.
+--- @param localeName string
+--- @return table
+local function LoadLocaleFile(localeName)
+    local resourceName = GetCurrentResourceName()
+    local localePath =
+        ("locales/%s.json"):format(localeName)
+
+    local rawLocale =
+        LoadResourceFile(resourceName, localePath)
+
+    if not rawLocale then
+        return {}
+    end
+
+    local decoded, localeData =
+        pcall(json.decode, rawLocale)
+
+    if not decoded or type(localeData) ~= "table" then
+        return {}
+    end
+
+    return localeData
+end
+
+--- Recursively merges locale overrides into the English fallback.
+--- @param target table
+--- @param overrides table
+local function MergeLocaleTables(target, overrides)
+    for key, value in pairs(overrides) do
+        if type(value) == "table" then
+            if type(target[key]) ~= "table" then
+                target[key] = {}
+            end
+
+            MergeLocaleTables(target[key], value)
+        else
+            target[key] = value
+        end
+    end
+end
+
+--- Loads English and applies the configured locale on top.
+--- Servers only need to copy en.json when creating a translation.
 --- @return table
 local function LoadBrowserLocales()
     if BrowserLocales then
         return BrowserLocales
     end
 
-    local resourceName = GetCurrentResourceName()
-    local localeName = GetConvar("ox:locale", "en")
+    local localeName =
+        GetConvar("ox:locale", "en")
 
-    local localePath = ("locales/%s.json"):format(localeName)
-    local rawLocale = LoadResourceFile(resourceName, localePath)
+    local englishLocales =
+        LoadLocaleFile("en")
 
-    if not rawLocale then
-        rawLocale = LoadResourceFile(resourceName, "locales/en.json")
+    if localeName ~= "en" then
+        local selectedLocales =
+            LoadLocaleFile(localeName)
+
+        MergeLocaleTables(
+            englishLocales,
+            selectedLocales
+        )
     end
 
-    if not rawLocale then
-        BrowserLocales = {}
-        return BrowserLocales
-    end
-
-    local decoded, localeData = pcall(json.decode, rawLocale)
-
-    if not decoded or type(localeData) ~= "table" then
-        BrowserLocales = {}
-        return BrowserLocales
-    end
-
-    BrowserLocales = localeData
+    BrowserLocales = englishLocales
 
     return BrowserLocales
 end
