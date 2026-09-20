@@ -637,7 +637,7 @@ button {
   display: block;
   margin-top: 5px;
   color: #c8d1cb;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .search-box {
@@ -664,7 +664,7 @@ button {
   outline: 0;
   background: transparent;
   color: #bdc7c0;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .search-box input::placeholder {
@@ -743,7 +743,7 @@ button {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #cdd3d9;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .location-main small {
@@ -752,7 +752,7 @@ button {
   gap: 3px;
   margin-top: 6px;
   color: #6c7782;
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .listing-location span {
@@ -768,7 +768,7 @@ button {
   border-radius: 3px;
   color: var(--success);
   background: #172119;
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .08em;
 }
@@ -780,7 +780,7 @@ button {
   border-radius: 3px;
   background: #181d1a;
   color: #8c9690;
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .08em;
 }
@@ -804,7 +804,7 @@ button {
 }
 
 .location-price .listing-status {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: .09em;
 }
@@ -828,14 +828,8 @@ button {
 
 .location-price strong {
   color: #eef3ef;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
-}
-
-.location-price small {
-  margin-top: 4px;
-  color: #5d6761;
-  font-size: 9px;
 }
 
 .card-chevron {
@@ -940,7 +934,7 @@ button {
   border-radius: 4px;
   background: rgba(8, 13, 9, .82);
   color: #7d8981;
-  font-size: 9px;
+  font-size: 11px;
   backdrop-filter: blur(8px);
 }
 
@@ -1107,7 +1101,7 @@ button {
 
 .detail-kicker {
   color: var(--accent);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .15em;
 }
@@ -1125,7 +1119,7 @@ button {
   gap: 5px;
   margin: 0;
   color: #768179;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .detail-price {
@@ -1141,12 +1135,12 @@ button {
 
 .detail-price span {
   color: #69746d;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .detail-price strong {
   color: #e4ece7;
-  font-size: 17px;
+  font-size: 16px;
 }
 
 .detail-stats {
@@ -1172,12 +1166,12 @@ button {
 
 .detail-stats span {
   color: #707a85;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .detail-stats strong {
   color: #b9c3bc;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .restriction-box,
@@ -1199,21 +1193,21 @@ button {
 }
 
 .restriction-box strong {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: .09em;
 }
 
 .restriction-box span {
   margin-top: 2px;
   color: #87695d;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .verified-box {
   border-color: #314b34;
   background: #111a13;
   color: #7fb482;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .purchase-button {
@@ -1228,7 +1222,7 @@ button {
   border-radius: 5px;
   background: var(--accent);
   color: #171400;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -1247,7 +1241,7 @@ button {
   display: block;
   margin-top: 7px;
   color: #505a54;
-  font-size: 8px;
+  font-size: 12px;
   text-align: center;
 }
 
@@ -1485,12 +1479,12 @@ button {
 .portfolio-empty h2 {
   margin: 13px 0 5px;
   color: #dce1e6;
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .portfolio-empty p {
   margin: 0 0 18px;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .portfolio-primary,
@@ -2477,14 +2471,14 @@ button {
 
 .market-empty-state strong {
   color: #c7d0ca;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .market-empty-state p {
   max-width: 270px;
   margin: 6px 0 0;
   color: #68736c;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.55;
 }
 
@@ -2497,7 +2491,7 @@ button {
   background: #171d22;
   color: #b5beb8;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -2536,14 +2530,14 @@ button {
 
 .market-status-copy strong {
   color: #9ea8a1;
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .market-status-copy small {
   margin-top: 3px;
   color: #59635d;
-  font-size: 9px;
+  font-size: 12px;
   line-height: 1.4;
 }
 

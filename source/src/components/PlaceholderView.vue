@@ -286,7 +286,7 @@ onBeforeUnmount(() => {
               :aria-label="t('browser.portfolio.set_waypoint')"
               @click="emit('waypoint', location)"
             >
-              <MapPinned :size="16" />
+              <MapPinned :size="20" />
             </button>
 
             <button
@@ -312,7 +312,7 @@ onBeforeUnmount(() => {
     </section>
 
     <section v-else class="portfolio-empty">
-      <BriefcaseBusiness :size="28" />
+      <BriefcaseBusiness :size="32" />
       <h2>{{ t('browser.portfolio.empty_title') }}</h2>
       <p>{{ t('browser.portfolio.empty_description') }}</p>
 

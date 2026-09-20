@@ -38,7 +38,7 @@ defineEmits<{
         :aria-label="t('browser.listing_detail.close_label')"
         @click="$emit('close')"
       >
-        <X :size="16" />
+        <X :size="18" />
       </button>
 
       <span class="detail-kicker">

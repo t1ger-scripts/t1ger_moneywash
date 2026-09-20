@@ -198,14 +198,6 @@ watch(
           <span class="location-price">
             <template v-if="location.status === 'available'">
               <strong>{{ money.format(location.effectivePrice) }}</strong>
-
-              <small>
-                {{
-                  t('browser.listings.weight', {
-                    weight: location.tier.weight,
-                  })
-                }}
-              </small>
             </template>
 
             <template v-else-if="location.status === 'active'">
