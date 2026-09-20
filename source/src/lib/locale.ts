@@ -65,7 +65,7 @@ const englishFallback: LocaleDictionary = {
         },
 
         marketplace: {
-            eyebrow: 'Verified Listings',
+            eyebrow: 'VERIFIED LISTINGS',
             title: 'Marketplace',
             description: 'Browse available business acquisitions and expand your portfolio.',
         },

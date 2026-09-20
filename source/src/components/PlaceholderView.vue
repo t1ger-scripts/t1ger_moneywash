@@ -257,7 +257,7 @@ onBeforeUnmount(() => {
             </div>
 
             <small class="portfolio-location">
-              <MapPin :size="12" />
+              <MapPin :size="14" />
 
               <span>
                 {{
