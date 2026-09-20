@@ -31,7 +31,7 @@ const englishFallback: LocaleDictionary = {
 
         account: {
             heading: 'Your Account',
-            membership_status: 'Membership Status',
+            membership_status: 'Membership Status:',
             investor_score: 'Investor Score',
             progress_to: 'Progress to {level}',
             maximum_status: 'Maximum status achieved',

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import {
     ArrowRightLeft,
     BriefcaseBusiness,
@@ -15,6 +15,23 @@ import { t } from '@/lib/locale'
 const emit = defineEmits<{
     close: []
 }>()
+
+type HelpTopic =
+    | 'investor_score'
+    | 'eligibility'
+    | 'portfolio_weight'
+    | 'acquisition'
+    | 'transfer'
+    | 'relinquish'
+
+const openTopic = ref<HelpTopic | null>('investor_score')
+
+function toggleTopic(topic: HelpTopic) {
+    openTopic.value =
+        openTopic.value === topic
+            ? null
+            : topic
+}
 
 function handleEscape(event: KeyboardEvent) {
     if (event.key !== 'Escape') return
@@ -38,8 +55,14 @@ onBeforeUnmount(() => {
         <section class="help-center-modal" role="dialog" aria-modal="true" aria-labelledby="help-center-title">
             <header class="help-center-header">
                 <div>
-                    <span class="eyebrow">{{ t('browser.help.eyebrow') }}</span>
-                    <h2 id="help-center-title">{{ t('browser.help.title') }}</h2>
+                    <span class="eyebrow">
+                        {{ t('browser.help.eyebrow') }}
+                    </span>
+
+                    <h2 id="help-center-title">
+                        {{ t('browser.help.title') }}
+                    </h2>
+
                     <p>
                         {{ t('browser.help.description') }}
                     </p>
@@ -52,15 +75,21 @@ onBeforeUnmount(() => {
             </header>
 
             <div class="help-topic-list">
-                <details class="help-topic" open>
-                    <summary>
+                <details class="help-topic" :open="openTopic === 'investor_score'">
+                    <summary :aria-expanded="openTopic === 'investor_score'"
+                        @click.prevent="toggleTopic('investor_score')">
                         <span class="help-topic-icon">
                             <ShieldCheck :size="17" />
                         </span>
 
                         <span>
-                            <strong>{{ t('browser.help.investor_score.title') }}</strong>
-                            <small>{{ t('browser.help.investor_score.subtitle') }}</small>
+                            <strong>
+                                {{ t('browser.help.investor_score.title') }}
+                            </strong>
+
+                            <small>
+                                {{ t('browser.help.investor_score.subtitle') }}
+                            </small>
                         </span>
 
                         <ChevronDown :size="15" class="help-topic-chevron" />
@@ -77,15 +106,20 @@ onBeforeUnmount(() => {
                     </div>
                 </details>
 
-                <details class="help-topic">
-                    <summary>
+                <details class="help-topic" :open="openTopic === 'eligibility'">
+                    <summary :aria-expanded="openTopic === 'eligibility'" @click.prevent="toggleTopic('eligibility')">
                         <span class="help-topic-icon">
                             <CircleHelp :size="17" />
                         </span>
 
                         <span>
-                            <strong>{{ t('browser.help.eligibility.title') }}</strong>
-                            <small>{{ t('browser.help.eligibility.subtitle') }}</small>
+                            <strong>
+                                {{ t('browser.help.eligibility.title') }}
+                            </strong>
+
+                            <small>
+                                {{ t('browser.help.eligibility.subtitle') }}
+                            </small>
                         </span>
 
                         <ChevronDown :size="15" class="help-topic-chevron" />
@@ -102,15 +136,21 @@ onBeforeUnmount(() => {
                     </div>
                 </details>
 
-                <details class="help-topic">
-                    <summary>
+                <details class="help-topic" :open="openTopic === 'portfolio_weight'">
+                    <summary :aria-expanded="openTopic === 'portfolio_weight'"
+                        @click.prevent="toggleTopic('portfolio_weight')">
                         <span class="help-topic-icon">
                             <BriefcaseBusiness :size="17" />
                         </span>
 
                         <span>
-                            <strong>{{ t('browser.help.portfolio_weight.title') }}</strong>
-                            <small>{{ t('browser.help.portfolio_weight.subtitle') }}</small>
+                            <strong>
+                                {{ t('browser.help.portfolio_weight.title') }}
+                            </strong>
+
+                            <small>
+                                {{ t('browser.help.portfolio_weight.subtitle') }}
+                            </small>
                         </span>
 
                         <ChevronDown :size="15" class="help-topic-chevron" />
@@ -127,15 +167,20 @@ onBeforeUnmount(() => {
                     </div>
                 </details>
 
-                <details class="help-topic">
-                    <summary>
+                <details class="help-topic" :open="openTopic === 'acquisition'">
+                    <summary :aria-expanded="openTopic === 'acquisition'" @click.prevent="toggleTopic('acquisition')">
                         <span class="help-topic-icon">
                             <Building2 :size="17" />
                         </span>
 
                         <span>
-                            <strong>{{ t('browser.help.acquisition.title') }}</strong>
-                            <small>{{ t('browser.help.acquisition.subtitle') }}</small>
+                            <strong>
+                                {{ t('browser.help.acquisition.title') }}
+                            </strong>
+
+                            <small>
+                                {{ t('browser.help.acquisition.subtitle') }}
+                            </small>
                         </span>
 
                         <ChevronDown :size="15" class="help-topic-chevron" />
@@ -152,15 +197,20 @@ onBeforeUnmount(() => {
                     </div>
                 </details>
 
-                <details class="help-topic">
-                    <summary>
+                <details class="help-topic" :open="openTopic === 'transfer'">
+                    <summary :aria-expanded="openTopic === 'transfer'" @click.prevent="toggleTopic('transfer')">
                         <span class="help-topic-icon">
                             <ArrowRightLeft :size="17" />
                         </span>
 
                         <span>
-                            <strong>{{ t('browser.help.transfer.title') }}</strong>
-                            <small>{{ t('browser.help.transfer.subtitle') }}</small>
+                            <strong>
+                                {{ t('browser.help.transfer.title') }}
+                            </strong>
+
+                            <small>
+                                {{ t('browser.help.transfer.subtitle') }}
+                            </small>
                         </span>
 
                         <ChevronDown :size="15" class="help-topic-chevron" />
@@ -177,15 +227,20 @@ onBeforeUnmount(() => {
                     </div>
                 </details>
 
-                <details class="help-topic danger">
-                    <summary>
+                <details class="help-topic danger" :open="openTopic === 'relinquish'">
+                    <summary :aria-expanded="openTopic === 'relinquish'" @click.prevent="toggleTopic('relinquish')">
                         <span class="help-topic-icon">
                             <TriangleAlert :size="17" />
                         </span>
 
                         <span>
-                            <strong>{{ t('browser.help.relinquish.title') }}</strong>
-                            <small>{{ t('browser.help.relinquish.subtitle') }}</small>
+                            <strong>
+                                {{ t('browser.help.relinquish.title') }}
+                            </strong>
+
+                            <small>
+                                {{ t('browser.help.relinquish.subtitle') }}
+                            </small>
                         </span>
 
                         <ChevronDown :size="15" class="help-topic-chevron" />

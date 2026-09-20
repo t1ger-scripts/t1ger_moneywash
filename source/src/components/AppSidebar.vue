@@ -62,7 +62,6 @@ const emit = defineEmits<{
           </small>
           <span>{{ reputationLabel }}</span>
         </div>
-        <span class="online-dot" />
       </div>
       <div class="metric-row">
         <span>
