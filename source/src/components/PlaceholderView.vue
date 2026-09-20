@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import {
   ArrowRightLeft,
   BriefcaseBusiness,
@@ -12,6 +12,7 @@ import {
   X,
 } from '@lucide/vue'
 import { toRoman } from '@/lib/format'
+import { t } from '@/lib/locale'
 import type { LocationView } from '@/types/business'
 
 interface NearbyPlayer {
@@ -56,7 +57,6 @@ const emit = defineEmits<{
 }>()
 
 const nearbyPlayers = ref<NearbyPlayer[]>([])
-
 const isLoadingNearbyPlayers = ref(false)
 
 const selectedBusiness = ref<LocationView>()
@@ -173,34 +173,56 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleModalEscape, true)
 })
-
 </script>
 
 <template>
   <main class="portfolio-view">
     <header class="portfolio-header">
       <div>
-        <span class="eyebrow">OWNERSHIP LEDGER</span>
-        <h1>My Portfolio</h1>
-        <p>Manage your registered businesses and ownership actions.</p>
+        <span class="eyebrow">
+          {{ t('browser.portfolio.eyebrow') }}
+        </span>
+
+        <h1>{{ t('browser.portfolio.title') }}</h1>
+
+        <p>{{ t('browser.portfolio.description') }}</p>
       </div>
+
       <div class="portfolio-capacity">
-        <span>PORTFOLIO USAGE</span>
-        <strong>{{ portfolioWeight }} <small>/ {{ portfolioLimit }}</small></strong>
+        <span>{{ t('browser.portfolio.usage') }}</span>
+        <strong>
+          {{ portfolioWeight }}
+          <small>/ {{ portfolioLimit }}</small>
+        </strong>
       </div>
     </header>
 
     <section v-if="businesses.length" class="portfolio-content">
       <div class="portfolio-section-heading">
         <div>
-          <span>REGISTERED BUSINESSES</span>
-          <strong>{{ businesses.length }} {{ businesses.length === 1 ? 'business' : 'businesses' }}</strong>
+          <span>{{ t('browser.portfolio.registered_businesses') }}</span>
+
+          <strong>
+            {{
+              t(
+                businesses.length === 1
+                  ? 'browser.portfolio.business_count_one'
+                  : 'browser.portfolio.business_count_many',
+                { count: businesses.length },
+              )
+            }}
+          </strong>
         </div>
-        <p>Manage available ownership actions.</p>
+
+        <p>{{ t('browser.portfolio.actions_description') }}</p>
       </div>
 
       <div class="portfolio-list">
-        <article v-for="location in businesses" :key="location.uid" class="portfolio-entry">
+        <article
+          v-for="location in businesses"
+          :key="location.uid"
+          class="portfolio-entry"
+        >
           <div class="portfolio-business-icon">
             <Building2 :size="20" />
           </div>
@@ -208,25 +230,47 @@ onBeforeUnmount(() => {
           <div class="portfolio-business-copy">
             <div class="portfolio-title-row">
               <strong>{{ location.brand }}</strong>
-              <span>ACTIVE</span>
+              <span>{{ t('browser.portfolio.status_active') }}</span>
             </div>
 
             <div class="portfolio-meta">
               <span>{{ location.tier.label }}</span>
               <i aria-hidden="true" />
-              <span>Tier {{ toRoman(location.tier.tier) }}</span>
+
+              <span>
+                {{
+                  t('browser.portfolio.tier', {
+                    tier: toRoman(location.tier.tier),
+                  })
+                }}
+              </span>
+
               <i aria-hidden="true" />
-              <span>Weight {{ location.tier.weight }}</span>
+
+              <span>
+                {{
+                  t('browser.portfolio.weight', {
+                    weight: location.tier.weight,
+                  })
+                }}
+              </span>
             </div>
 
             <small class="portfolio-location">
               <MapPin :size="12" />
 
               <span>
-                {{ location.street ?? `Site ${String(location.id).padStart(2, '0')}` }}
+                {{
+                  location.street ??
+                  t('browser.portfolio.site', {
+                    id: String(location.id).padStart(2, '0'),
+                  })
+                }}
+
                 <template v-if="location.crossingStreet">
                   / {{ location.crossingStreet }}
                 </template>
+
                 <template v-if="location.zone">
                   · {{ location.zone }}
                 </template>
@@ -235,15 +279,32 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="portfolio-row-actions">
-            <button class="portfolio-waypoint" type="button" data-tooltip="Set waypoint" aria-label="Set waypoint"
-              @click="emit('waypoint', location)">
+            <button
+              class="portfolio-waypoint"
+              type="button"
+              :data-tooltip="t('browser.portfolio.set_waypoint')"
+              :aria-label="t('browser.portfolio.set_waypoint')"
+              @click="emit('waypoint', location)"
+            >
               <MapPinned :size="16" />
             </button>
-            <button class="portfolio-secondary" @click="openTransfer(location)">
-              <ArrowRightLeft :size="15" /> Transfer Ownership
+
+            <button
+              class="portfolio-secondary"
+              type="button"
+              @click="openTransfer(location)"
+            >
+              <ArrowRightLeft :size="15" />
+              {{ t('browser.portfolio.transfer_action') }}
             </button>
-            <button class="portfolio-danger-action" @click="openAbandon(location)">
-              <Trash2 :size="14" /> Relinquish Holding
+
+            <button
+              class="portfolio-danger-action"
+              type="button"
+              @click="openAbandon(location)"
+            >
+              <Trash2 :size="14" />
+              {{ t('browser.portfolio.relinquish_action') }}
             </button>
           </div>
         </article>
@@ -252,27 +313,65 @@ onBeforeUnmount(() => {
 
     <section v-else class="portfolio-empty">
       <BriefcaseBusiness :size="28" />
-      <h2>No businesses registered</h2>
-      <p>Purchase your first business through the Marketplace.</p>
-      <button class="portfolio-primary" @click="emit('navigateMarket')">Browse Marketplace</button>
+      <h2>{{ t('browser.portfolio.empty_title') }}</h2>
+      <p>{{ t('browser.portfolio.empty_description') }}</p>
+
+      <button
+        class="portfolio-primary"
+        type="button"
+        @click="emit('navigateMarket')"
+      >
+        {{ t('browser.portfolio.browse_marketplace') }}
+      </button>
     </section>
 
     <Transition name="modal-fade">
-      <div v-if="selectedBusiness" class="modal-backdrop" @click.self="closeDialog">
-        <section class="portfolio-modal" role="dialog" aria-modal="true"
-          :aria-label="`${selectedBusiness.brand} ownership action`">
-          <button class="modal-close" :disabled="isSubmittingOwnershipAction" aria-label="Close" @click="closeDialog">
+      <div
+        v-if="selectedBusiness"
+        class="modal-backdrop"
+        @click.self="closeDialog"
+      >
+        <section
+          class="portfolio-modal"
+          role="dialog"
+          aria-modal="true"
+          :aria-label="
+            t('browser.portfolio.ownership_action_label', {
+              business: selectedBusiness.brand,
+            })
+          "
+        >
+          <button
+            class="modal-close"
+            type="button"
+            :disabled="isSubmittingOwnershipAction"
+            :aria-label="t('browser.portfolio.close_label')"
+            @click="closeDialog"
+          >
             <X :size="16" />
           </button>
 
           <template v-if="dialog === 'transfer'">
-            <span class="modal-kicker">TRANSFER OWNERSHIP</span>
-            <h2>Select a nearby player</h2>
-            <p class="modal-description">The business will be transferred immediately after confirmation. No payment is
-              included in this transfer.</p>
+            <span class="modal-kicker">
+              {{ t('browser.portfolio.transfer.kicker') }}
+            </span>
 
-            <div v-if="isLoadingNearbyPlayers" class="nearby-player-loading" aria-label="Searching for nearby players">
-              <div v-for="index in 3" :key="index" class="nearby-player-skeleton">
+            <h2>{{ t('browser.portfolio.transfer.title') }}</h2>
+
+            <p class="modal-description">
+              {{ t('browser.portfolio.transfer.description') }}
+            </p>
+
+            <div
+              v-if="isLoadingNearbyPlayers"
+              class="nearby-player-loading"
+              :aria-label="t('browser.portfolio.transfer.searching_label')"
+            >
+              <div
+                v-for="index in 3"
+                :key="index"
+                class="nearby-player-skeleton"
+              >
                 <span class="nearby-skeleton-radio" />
                 <span class="nearby-skeleton-avatar" />
 
@@ -283,22 +382,31 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <div v-else-if="nearbyPlayers.length === 0" class="nearby-player-empty">
+            <div
+              v-else-if="nearbyPlayers.length === 0"
+              class="nearby-player-empty"
+            >
               <span class="nearby-empty-icon">
                 <UserRound :size="20" />
               </span>
 
-              <strong>No nearby players</strong>
+              <strong>{{ t('browser.portfolio.transfer.empty_title') }}</strong>
 
-              <p>
-                Another player must be nearby before ownership can be transferred.
-              </p>
+              <p>{{ t('browser.portfolio.transfer.empty_description') }}</p>
             </div>
 
             <div v-else class="nearby-player-list">
-              <label v-for="player in nearbyPlayers" :key="player.id"
-                :class="{ selected: selectedPlayerId === player.id }">
-                <input v-model="selectedPlayerId" type="radio" name="nearby-player" :value="player.id" />
+              <label
+                v-for="player in nearbyPlayers"
+                :key="player.id"
+                :class="{ selected: selectedPlayerId === player.id }"
+              >
+                <input
+                  v-model="selectedPlayerId"
+                  type="radio"
+                  name="nearby-player"
+                  :value="player.id"
+                />
 
                 <UserRound :size="16" />
 
@@ -306,27 +414,46 @@ onBeforeUnmount(() => {
                   <strong>{{ player.name }}</strong>
 
                   <small>
-                    Session ID {{ player.id }} ·
-                    {{ player.distance.toFixed(1) }}m away
+                    {{
+                      t('browser.portfolio.transfer.player_details', {
+                        id: player.id,
+                        distance: player.distance.toFixed(1),
+                      })
+                    }}
                   </small>
                 </span>
               </label>
             </div>
 
             <div class="modal-footer-actions">
-              <button class="portfolio-secondary" :disabled="isSubmittingOwnershipAction" @click="closeDialog">
-                Cancel
+              <button
+                class="portfolio-secondary"
+                type="button"
+                :disabled="isSubmittingOwnershipAction"
+                @click="closeDialog"
+              >
+                {{ t('browser.portfolio.transfer.cancel') }}
               </button>
-              <button class="portfolio-primary" :disabled="isLoadingNearbyPlayers ||
-                !selectedPlayer ||
-                isSubmittingOwnershipAction
-                " @click="confirmTransfer">
-                <span v-if="isSubmittingOwnershipAction" class="action-button-spinner" />
+
+              <button
+                class="portfolio-primary"
+                type="button"
+                :disabled="
+                  isLoadingNearbyPlayers ||
+                  !selectedPlayer ||
+                  isSubmittingOwnershipAction
+                "
+                @click="confirmTransfer"
+              >
+                <span
+                  v-if="isSubmittingOwnershipAction"
+                  class="action-button-spinner"
+                />
 
                 {{
                   isSubmittingOwnershipAction
-                    ? 'Processing…'
-                    : 'Confirm Transfer'
+                    ? t('browser.portfolio.transfer.processing')
+                    : t('browser.portfolio.transfer.confirm')
                 }}
               </button>
             </div>
@@ -336,33 +463,62 @@ onBeforeUnmount(() => {
             <div class="danger-icon">
               <TriangleAlert :size="24" />
             </div>
-            <span class="modal-kicker danger">PERMANENT ACTION</span>
-            <h2>Relinquish {{ selectedBusiness.brand }}?</h2>
-            <p class="modal-description">This business will immediately return to the Marketplace. You will receive no
-              refund.</p>
+
+            <span class="modal-kicker danger">
+              {{ t('browser.portfolio.relinquish.kicker') }}
+            </span>
+
+            <h2>
+              {{
+                t('browser.portfolio.relinquish.title', {
+                  business: selectedBusiness.brand,
+                })
+              }}
+            </h2>
+
+            <p class="modal-description">
+              {{ t('browser.portfolio.relinquish.description') }}
+            </p>
 
             <div class="abandon-warning">
-              <strong>Everything associated with this business will be lost:</strong>
+              <strong>
+                {{ t('browser.portfolio.relinquish.warning_title') }}
+              </strong>
+
               <ul>
-                <li>All funds remaining in the business account</li>
-                <li>All remaining inventory and active orders</li>
-                <li>All pending transactions and business activity</li>
+                <li>{{ t('browser.portfolio.relinquish.loss_funds') }}</li>
+                <li>{{ t('browser.portfolio.relinquish.loss_inventory') }}</li>
+                <li>{{ t('browser.portfolio.relinquish.loss_activity') }}</li>
               </ul>
             </div>
 
             <div class="modal-footer-actions">
-              <button class="portfolio-secondary" :disabled="isSubmittingOwnershipAction" @click="closeDialog">
-                Keep Business
+              <button
+                class="portfolio-secondary"
+                type="button"
+                :disabled="isSubmittingOwnershipAction"
+                @click="closeDialog"
+              >
+                {{ t('browser.portfolio.relinquish.cancel') }}
               </button>
-              <button class="portfolio-danger" :disabled="isSubmittingOwnershipAction" @click="confirmAbandon">
-                <span v-if="isSubmittingOwnershipAction" class="action-button-spinner danger-spinner" />
+
+              <button
+                class="portfolio-danger"
+                type="button"
+                :disabled="isSubmittingOwnershipAction"
+                @click="confirmAbandon"
+              >
+                <span
+                  v-if="isSubmittingOwnershipAction"
+                  class="action-button-spinner danger-spinner"
+                />
 
                 <Trash2 v-else :size="14" />
 
                 {{
                   isSubmittingOwnershipAction
-                    ? 'Processing…'
-                    : 'Relinquish Permanently'
+                    ? t('browser.portfolio.relinquish.processing')
+                    : t('browser.portfolio.relinquish.confirm')
                 }}
               </button>
             </div>

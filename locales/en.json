@@ -277,6 +277,52 @@
             "cancel": "Cancel",
             "processing": "Processing…",
             "confirm": "Confirm Acquisition"
+        },
+        "portfolio": {
+            "eyebrow": "OWNERSHIP LEDGER",
+            "title": "My Portfolio",
+            "description": "Manage your registered businesses and ownership actions.",
+            "usage": "PORTFOLIO USAGE",
+            "registered_businesses": "REGISTERED BUSINESSES",
+            "business_count_one": "{count} business",
+            "business_count_many": "{count} businesses",
+            "actions_description": "Manage available ownership actions.",
+            "status_active": "ACTIVE",
+            "tier": "Tier {tier}",
+            "weight": "Weight {weight}",
+            "site": "Site {id}",
+            "set_waypoint": "Set waypoint",
+            "transfer_action": "Transfer Ownership",
+            "relinquish_action": "Relinquish Holding",
+            "empty_title": "No businesses registered",
+            "empty_description": "Purchase your first business through the Marketplace.",
+            "browse_marketplace": "Browse Marketplace",
+            "ownership_action_label": "{business} ownership action",
+            "close_label": "Close",
+            "transfer": {
+                "kicker": "TRANSFER OWNERSHIP",
+                "title": "Select a nearby player",
+                "description": "The business will be transferred immediately after confirmation. No payment is included in this transfer.",
+                "searching_label": "Searching for nearby players",
+                "empty_title": "No nearby players",
+                "empty_description": "Another player must be nearby before ownership can be transferred.",
+                "player_details": "Session ID {id} · {distance}m away",
+                "cancel": "Cancel",
+                "processing": "Processing…",
+                "confirm": "Confirm Transfer"
+            },
+            "relinquish": {
+                "kicker": "PERMANENT ACTION",
+                "title": "Relinquish {business}?",
+                "description": "This business will immediately return to the Marketplace. You will receive no refund.",
+                "warning_title": "Everything associated with this business will be lost:",
+                "loss_funds": "All funds remaining in the business account",
+                "loss_inventory": "All remaining inventory and active orders",
+                "loss_activity": "All pending transactions and business activity",
+                "cancel": "Keep Business",
+                "processing": "Processing…",
+                "confirm": "Relinquish Permanently"
+            }
         }
     }
 }
