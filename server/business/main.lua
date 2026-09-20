@@ -221,7 +221,7 @@ lib.callback.register("t1ger_moneywash:server:raidBusiness", function(source, bu
     -- Validate police officer is near the business
     local location = GetLocationConfig(business.type, business.locationId)
     if not location or not IsPlayerNearCoords(source, location.coords, 10.0) then
-        return {success = false, reason = "too_far"}
+        return {success = false, reason = "target_too_far"}
     end
 
     ExecuteRaid(businessId, source)

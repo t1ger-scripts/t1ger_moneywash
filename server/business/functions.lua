@@ -826,7 +826,7 @@ function CompleteStockDelivery(src)
     -- Validate player is near the business Handler NPC
     local location = GetLocationConfig(business.type, business.locationId)
     if not location or not IsPlayerNearCoords(src, location.coords, 5.0) then
-        return false, "too_far"
+        return false, "target_too_far"
     end
 
     -- Add stock to business

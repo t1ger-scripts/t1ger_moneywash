@@ -29,25 +29,18 @@ local BrowserActionMessages = {
     not_owner = "You are no longer the owner of this business.",
 
     invalid_target = "The selected player is invalid.",
-    cannot_transfer_self = "You cannot transfer a business to yourself.",
     self_transfer = "You cannot transfer a business to yourself.",
     target_not_online = "The selected player is no longer online.",
     target_too_far = "The selected player is no longer nearby.",
-    too_far = "The selected player is no longer nearby.",
     target_owns_type = "The selected player already owns this business type.",
     target_insufficient_reputation = "The selected player does not meet the Investor Score requirement.",
     target_portfolio_full = "The selected player does not have enough portfolio capacity.",
 
-    active_stock_order = "This business has an active stock order.",
     active_stock_mission = "This business has an active stock delivery.",
-    stock_mission_active = "This business has an active stock delivery.",
 
     pending_deposit = "This business has a pending bank deposit.",
-    deposit_pending = "This business has a pending bank deposit.",
 
     raid_pending = "This business currently has a pending compliance action.",
-    raid_queued = "This business currently has a pending compliance action.",
-    queued_raid = "This business currently has a pending compliance action.",
 
     ownership_locked = "This business is currently being updated. Please try again.",
     transfer_failed = "The ownership transfer could not be completed.",
