@@ -323,6 +323,63 @@
                 "processing": "Processing…",
                 "confirm": "Relinquish Permanently"
             }
+        },
+        "bootstrap": {
+            "error_eyebrow": "CONNECTION ERROR",
+            "error_title": "Unable to load brokerage data",
+            "error_description": "Ledger Capital could not retrieve the current listings and account information.",
+            "retry": "Retry"
+        },
+        "notifications": {
+            "title_success": "Completed",
+            "title_warning": "Attention required",
+            "title_error": "Action unsuccessful",
+            "title_info": "Information",
+            "dismiss": "Dismiss notification"
+        },
+        "actions": {
+            "purchase_stale": "This acquisition can no longer be completed.",
+            "purchase_failed": "The acquisition could not be completed.",
+            "purchase_success": "{business} has been added to your portfolio.",
+            "waypoint_failed": "The waypoint could not be set.",
+            "waypoint_success": "Waypoint set for {business}.",
+            "nearby_players_failed": "Nearby players could not be retrieved.",
+            "ownership_record_unavailable": "This business ownership record is unavailable.",
+            "transfer_failed": "The ownership transfer could not be completed.",
+            "transfer_success": "{business} was transferred to {player}.",
+            "relinquish_failed": "The business could not be returned to the Marketplace.",
+            "relinquish_success": "{business} has been returned to the Marketplace."
+        },
+        "action_reasons": {
+            "invalid_request": "The request was invalid.",
+            "invalid_player": "Your player data is not available.",
+            "invalid_type": "This business category is invalid.",
+            "invalid_location": "This business location does not exist.",
+            "already_owned": "This listing has already been acquired.",
+            "already_owns_type": "You already own a business in this category.",
+            "insufficient_reputation": "Your Investor Score is not high enough.",
+            "portfolio_full": "Your portfolio does not have enough available capacity.",
+            "insufficient_funds": "You do not have enough money in your bank account.",
+            "database_error": "The request could not be saved.",
+            "purchase_failed": "The acquisition could not be completed.",
+            "not_found": "This business could not be found.",
+            "not_owner": "You are no longer the owner of this business.",
+            "invalid_target": "The selected player is invalid.",
+            "cannot_transfer_self": "You cannot transfer a business to yourself.",
+            "self_transfer": "You cannot transfer a business to yourself.",
+            "target_not_online": "The selected player is no longer online.",
+            "target_too_far": "The selected player is no longer nearby.",
+            "too_far": "The selected player is no longer nearby.",
+            "target_owns_type": "The selected player already owns this business type.",
+            "target_insufficient_reputation": "The selected player does not meet the Investor Score requirement.",
+            "target_portfolio_full": "The selected player does not have enough portfolio capacity.",
+            "active_stock_order": "This business has an active stock order.",
+            "pending_deposit": "This business has a pending bank deposit.",
+            "raid_pending": "This business currently has a pending compliance action.",
+            "ownership_locked": "This business is currently being updated. Please try again.",
+            "transfer_failed": "The ownership transfer could not be completed.",
+            "abandon_failed": "The business could not be returned to the Marketplace.",
+            "unknown": "The requested action could not be completed."
         }
     }
 }

@@ -123,11 +123,11 @@ interface ToastMessage {
 
 const toast = ref<ToastMessage>()
 
-const toastTitles: Record<ToastVariant, string> = {
-  success: 'Completed',
-  warning: 'Attention required',
-  error: 'Action unsuccessful',
-  info: 'Information',
+const toastTitleKeys: Record<ToastVariant, string> = {
+  success: 'browser.notifications.title_success',
+  warning: 'browser.notifications.title_warning',
+  error: 'browser.notifications.title_error',
+  info: 'browser.notifications.title_info',
 }
 
 let toastTimer: number | undefined
@@ -137,6 +137,28 @@ const isBootstrapping = ref(!isFiveM)
 const bootstrapError = ref(false)
 
 let bootstrapTimer: number | undefined
+
+function getToastTitle(variant: ToastVariant) {
+  return t(toastTitleKeys[variant])
+}
+
+function getActionErrorMessage(
+  response: ActionResponse | null | undefined,
+  fallbackKey: string,
+) {
+  const reason = response?.reason?.trim()
+
+  if (reason) {
+    const reasonKey = `browser.action_reasons.${reason}`
+    const translatedReason = t(reasonKey)
+
+    if (translatedReason !== reasonKey) {
+      return translatedReason
+    }
+  }
+
+  return response?.message ?? t(fallbackKey)
+}
 
 const locationViews = computed<LocationView[]>(() => {
   const tierMap = new Map(
@@ -345,7 +367,7 @@ async function confirmPurchase(location: LocationView) {
     purchaseReview.value = undefined
 
     showToast(
-      'This acquisition can no longer be completed.',
+      t('browser.actions.purchase_stale'),
       'error',
     )
 
@@ -366,8 +388,10 @@ async function confirmPurchase(location: LocationView) {
     if (isFiveM) {
       if (!response || !response.success) {
         throw new Error(
-          response?.message ??
-          'The acquisition could not be completed.',
+          getActionErrorMessage(
+            response,
+            'browser.actions.purchase_failed',
+          ),
         )
       }
 
@@ -380,7 +404,9 @@ async function confirmPurchase(location: LocationView) {
       }
 
       showToast(
-        `${currentLocation.brand} has been added to your portfolio.`,
+        t('browser.actions.purchase_success', {
+          business: currentLocation.brand,
+        }),
         'success',
       )
 
@@ -403,14 +429,16 @@ async function confirmPurchase(location: LocationView) {
     selectedLocationId.value = undefined
 
     showToast(
-      `${currentLocation.brand} has been added to your portfolio.`,
+      t('browser.actions.purchase_success', {
+        business: currentLocation.brand,
+      }),
       'success',
     )
   } catch (error) {
     const message =
       error instanceof Error
         ? error.message
-        : 'The acquisition could not be completed.'
+        : t('browser.actions.purchase_failed')
 
     showToast(message, 'error')
   } finally {
@@ -460,20 +488,24 @@ async function setBusinessWaypoint(location: LocationView) {
 
     if (isFiveM && (!response || !response.success)) {
       throw new Error(
-        response?.message ??
-        'The waypoint could not be set.',
+        getActionErrorMessage(
+          response,
+          'browser.actions.waypoint_failed',
+        ),
       )
     }
 
     showToast(
-      `Waypoint set for ${location.brand}.`,
+      t('browser.actions.waypoint_success', {
+        business: location.brand,
+      }),
       'success',
     )
   } catch (error) {
     const message =
       error instanceof Error
         ? error.message
-        : 'The waypoint could not be set.'
+        : t('browser.actions.waypoint_failed')
 
     showToast(message, 'error')
   }
@@ -496,8 +528,10 @@ async function requestNearbyPlayers(
 
     if (!response || !response.success) {
       throw new Error(
-        response?.message ??
-        'Nearby players could not be retrieved.',
+        getActionErrorMessage(
+          response,
+          'browser.actions.nearby_players_failed',
+        ),
       )
     }
 
@@ -506,7 +540,7 @@ async function requestNearbyPlayers(
     const message =
       error instanceof Error
         ? error.message
-        : 'Nearby players could not be retrieved.'
+        : t('browser.actions.nearby_players_failed')
 
     complete([])
     showToast(message, 'error')
@@ -525,7 +559,7 @@ async function transferBusiness(
 
   if (isFiveM && !businessId) {
     showToast(
-      'This business ownership record is unavailable.',
+      t('browser.actions.ownership_record_unavailable'),
       'error',
     )
 
@@ -545,8 +579,10 @@ async function transferBusiness(
     if (isFiveM) {
       if (!response || !response.success) {
         throw new Error(
-          response?.message ??
-          'The ownership transfer could not be completed.',
+          getActionErrorMessage(
+            response,
+            'browser.actions.transfer_failed',
+          ),
         )
       }
 
@@ -557,7 +593,10 @@ async function transferBusiness(
       }
 
       showToast(
-        `${payload.location.brand} was transferred to ${payload.playerName}.`,
+        t('browser.actions.transfer_success', {
+          business: payload.location.brand,
+          player: payload.playerName,
+        }),
         'success',
       )
 
@@ -582,7 +621,10 @@ async function transferBusiness(
     }
 
     showToast(
-      `${payload.location.brand} was transferred to ${payload.playerName}.`,
+      t('browser.actions.transfer_success', {
+        business: payload.location.brand,
+        player: payload.playerName,
+      }),
       'success',
     )
 
@@ -591,7 +633,7 @@ async function transferBusiness(
     const message =
       error instanceof Error
         ? error.message
-        : 'The ownership transfer could not be completed.'
+        : t('browser.actions.transfer_failed')
 
     showToast(message, 'error')
     complete(false)
@@ -606,7 +648,7 @@ async function abandonBusiness(
 
   if (isFiveM && !businessId) {
     showToast(
-      'This business ownership record is unavailable.',
+      t('browser.actions.ownership_record_unavailable'),
       'error',
     )
 
@@ -625,8 +667,10 @@ async function abandonBusiness(
     if (isFiveM) {
       if (!response || !response.success) {
         throw new Error(
-          response?.message ??
-          'The business could not be returned to the Marketplace.',
+          getActionErrorMessage(
+            response,
+            'browser.actions.relinquish_failed',
+          ),
         )
       }
 
@@ -637,7 +681,9 @@ async function abandonBusiness(
       }
 
       showToast(
-        `${location.brand} has been returned to the Marketplace.`,
+        t('browser.actions.relinquish_success', {
+          business: location.brand,
+        }),
         'warning',
       )
 
@@ -657,7 +703,9 @@ async function abandonBusiness(
       )
 
     showToast(
-      `${location.brand} has been returned to the Marketplace.`,
+      t('browser.actions.relinquish_success', {
+        business: location.brand,
+      }),
       'warning',
     )
 
@@ -666,7 +714,7 @@ async function abandonBusiness(
     const message =
       error instanceof Error
         ? error.message
-        : 'The business could not be returned to the Marketplace.'
+        : t('browser.actions.relinquish_failed')
 
     showToast(message, 'error')
     complete(false)
@@ -922,14 +970,19 @@ watch(reputation, (score) => {
         <template v-else-if="bootstrapError">
           <section class="bootstrap-error">
             <div class="bootstrap-error-icon">!</div>
-            <span class="eyebrow">CONNECTION ERROR</span>
-            <h2>Unable to load brokerage data</h2>
+
+            <span class="eyebrow">
+              {{ t('browser.bootstrap.error_eyebrow') }}
+            </span>
+
+            <h2>{{ t('browser.bootstrap.error_title') }}</h2>
+
             <p>
-              Ledger Capital could not retrieve the current listings and account
-              information.
+              {{ t('browser.bootstrap.error_description') }}
             </p>
+
             <button class="portfolio-primary" type="button" @click="retryBootstrap">
-              Retry
+              {{ t('browser.bootstrap.retry') }}
             </button>
           </section>
         </template>
@@ -1001,11 +1054,12 @@ watch(reputation, (score) => {
           </span>
 
           <span class="app-toast-copy">
-            <strong>{{ toastTitles[toast.variant] }}</strong>
+            <strong>{{ getToastTitle(toast.variant) }}</strong>
             <small>{{ toast.message }}</small>
           </span>
 
-          <button type="button" class="app-toast-close" aria-label="Dismiss notification" @click="closeToast">
+          <button type="button" class="app-toast-close"
+            :aria-label="t('browser.notifications.dismiss')" @click="closeToast">
             <X :size="14" />
           </button>
         </div>
