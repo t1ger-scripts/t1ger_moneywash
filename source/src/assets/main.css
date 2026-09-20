@@ -322,7 +322,7 @@ button {
 .side-label,
 .eyebrow {
   color: #707a85;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: .17em;
 }
@@ -2860,14 +2860,14 @@ button {
 .help-center-header h2 {
   margin: 7px 0 5px;
   color: #e1e6e3;
-  font-size: 22px;
+  font-size: 24px;
   letter-spacing: -0.03em;
 }
 
 .help-center-header p {
   margin: 0;
   color: #77827b;
-  font-size: 11px;
+  font-size: 16px;
 }
 
 .help-center-header .modal-close {
@@ -2932,13 +2932,13 @@ button {
 
 .help-topic summary strong {
   color: #cbd3ce;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .help-topic summary small {
   margin-top: 4px;
   color: #66716a;
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .help-topic-chevron {
@@ -2969,7 +2969,7 @@ button {
 .help-topic-content p {
   margin: 10px 0 0;
   color: #7c8780;
-  font-size: 10px;
+  font-size: 14px;
   line-height: 1.55;
 }
 
@@ -2982,7 +2982,7 @@ button {
   border-top: 1px solid var(--line-soft);
   background: #0c1114;
   color: #68736c;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .help-center-footer svg {
