@@ -2,6 +2,7 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import L from 'leaflet'
 import { LocateFixed, Minus, Plus, RotateCcw, TriangleAlert, } from '@lucide/vue'
+import { t } from '@/lib/locale'
 import type { LocationView } from '@/types/business'
 
 const props = defineProps<{
@@ -253,8 +254,8 @@ onBeforeUnmount(() => {
         <span class="map-loading-spinner" />
 
         <span>
-          <strong>Loading location map</strong>
-          <small>Retrieving satellite imagery</small>
+          <strong>{{ t('browser.map.loading_title') }}</strong>
+          <small>{{ t('browser.map.loading_description') }}</small>
         </span>
       </div>
 
@@ -264,34 +265,53 @@ onBeforeUnmount(() => {
         </span>
 
         <span>
-          <strong>Map imagery unavailable</strong>
+          <strong>{{ t('browser.map.unavailable_title') }}</strong>
           <small>
-            Listings are still available in the location panel.
+            {{ t('browser.map.unavailable_description') }}
           </small>
         </span>
 
         <button type="button" @click="loadSatelliteTiles">
           <RotateCcw :size="13" />
-          Retry
+          {{ t('browser.map.retry') }}
         </button>
       </div>
     </Transition>
-    <div class="map-label"><span class="live-pulse" /> LOCATION MAP</div>
+
+    <div class="map-label">
+      <span class="live-pulse" />
+      {{ t('browser.map.label') }}
+    </div>
+
     <div class="map-actions">
-      <button title="Zoom in" @click="map?.zoomIn()">
+      <button :title="t('browser.map.zoom_in')" @click="map?.zoomIn()">
         <Plus :size="17" />
       </button>
-      <button title="Zoom out" @click="map?.zoomOut()">
+
+      <button :title="t('browser.map.zoom_out')" @click="map?.zoomOut()">
         <Minus :size="17" />
       </button>
-      <button title="Show all" @click="showAll">
+
+      <button :title="t('browser.map.show_all')" @click="showAll">
         <LocateFixed :size="17" />
       </button>
     </div>
+
     <div class="map-legend">
-      <span><i class="legend-dot available" /> Available</span>
-      <span><i class="legend-dot selected" /> Selected</span>
-      <span><i class="legend-dot locked" /> Score Required</span>
+      <span>
+        <i class="legend-dot available" />
+        {{ t('browser.map.legend_available') }}
+      </span>
+
+      <span>
+        <i class="legend-dot selected" />
+        {{ t('browser.map.legend_selected') }}
+      </span>
+
+      <span>
+        <i class="legend-dot locked" />
+        {{ t('browser.map.legend_score_required') }}
+      </span>
     </div>
   </section>
 </template>

@@ -1,154 +1,190 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import {
-    AlertTriangle,
-    Building2,
-    MapPin,
-    X,
+  AlertTriangle,
+  Building2,
+  MapPin,
+  X,
 } from '@lucide/vue'
 import { money, toRoman } from '@/lib/format'
+import { t } from '@/lib/locale'
 import type { LocationView } from '@/types/business'
 
 const props = defineProps<{
-    location: LocationView
-    reputation: number
-    balance: number
-    portfolioWeight: number
-    portfolioLimit: number
-    ownsType: boolean
-    processing: boolean
+  location: LocationView
+  reputation: number
+  balance: number
+  portfolioWeight: number
+  portfolioLimit: number
+  ownsType: boolean
+  processing: boolean
 }>()
 
 const emit = defineEmits<{
-    close: []
-    confirm: [location: LocationView]
+  close: []
+  confirm: [location: LocationView]
 }>()
 
 const resultingWeight = computed(() => {
-    return props.portfolioWeight + props.location.tier.weight
+  return props.portfolioWeight + props.location.tier.weight
 })
 
 const restriction = computed(() => {
-    if (props.location.status !== 'available') {
-        return 'This listing is no longer available.'
-    }
+  if (props.location.status !== 'available') {
+    return t('browser.purchase.restriction_unavailable')
+  }
 
-    if (props.reputation < props.location.tier.requiredPoints) {
-        return 'Your Investor Score does not meet this tier requirement.'
-    }
+  if (props.reputation < props.location.tier.requiredPoints) {
+    return t('browser.purchase.restriction_score')
+  }
 
-    if (props.ownsType) {
-        return `You already have an active ${props.location.tier.label}.`
-    }
+  if (props.ownsType) {
+    return t('browser.purchase.restriction_type', {
+      type: props.location.tier.label,
+    })
+  }
 
-    if (props.balance < props.location.effectivePrice) {
-        return 'You do not have enough funds to complete this acquisition.'
-    }
+  if (props.balance < props.location.effectivePrice) {
+    return t('browser.purchase.restriction_funds')
+  }
 
-    if (resultingWeight.value > props.portfolioLimit) {
-        return 'This acquisition would exceed your portfolio limit.'
-    }
+  if (resultingWeight.value > props.portfolioLimit) {
+    return t('browser.purchase.restriction_portfolio')
+  }
 
-    return undefined
+  return undefined
 })
 </script>
 
 <template>
-    <div class="modal-backdrop" @click.self="!processing && emit('close')">
-        <section class="purchase-modal" role="dialog" aria-modal="true" aria-label="Confirm business acquisition">
-            <button class="modal-close" :class="{ processing }" :disabled="processing" aria-label="Close"
-                @click="emit('close')">
-                <X :size="16" />
-            </button>
+  <div class="modal-backdrop" @click.self="!processing && emit('close')">
+    <section
+      class="purchase-modal"
+      role="dialog"
+      aria-modal="true"
+      :aria-label="t('browser.purchase.dialog_label')"
+    >
+      <button
+        class="modal-close"
+        :class="{ processing }"
+        :disabled="processing"
+        :aria-label="t('browser.purchase.close_label')"
+        @click="emit('close')"
+      >
+        <X :size="16" />
+      </button>
 
-            <div class="purchase-modal-heading">
-                <div class="purchase-modal-icon">
-                    <Building2 :size="21" />
-                </div>
+      <div class="purchase-modal-heading">
+        <div class="purchase-modal-icon">
+          <Building2 :size="21" />
+        </div>
 
-                <div>
-                    <span class="modal-kicker">FINAL REVIEW</span>
-                    <h2>Confirm acquisition</h2>
-                </div>
-            </div>
+        <div>
+          <span class="modal-kicker">
+            {{ t('browser.purchase.final_review') }}
+          </span>
 
-            <div class="purchase-target">
-                <strong>{{ location.brand }}</strong>
+          <h2>{{ t('browser.purchase.confirm_title') }}</h2>
+        </div>
+      </div>
 
-                <span>
-                    {{ location.tier.label }}
-                    · Tier {{ toRoman(location.tier.tier) }}
-                </span>
+      <div class="purchase-target">
+        <strong>{{ location.brand }}</strong>
 
-                <small>
-                    <MapPin :size="12" />
+        <span>
+          {{ location.tier.label }}
+          ·
+          {{
+            t('browser.purchase.tier', {
+              tier: toRoman(location.tier.tier),
+            })
+          }}
+        </span>
 
-                    <span>
-                        {{ location.street ?? location.zone }}
+        <small>
+          <MapPin :size="12" />
 
-                        <template v-if="location.crossingStreet">
-                            / {{ location.crossingStreet }}
-                        </template>
+          <span>
+            {{ location.street ?? location.zone }}
 
-                        <template v-if="location.street && location.zone">
-                            · {{ location.zone }}
-                        </template>
-                    </span>
-                </small>
-            </div>
+            <template v-if="location.crossingStreet">
+              / {{ location.crossingStreet }}
+            </template>
 
-            <div class="purchase-summary">
-                <div class="purchase-summary-price">
-                    <span>ACQUISITION PRICE</span>
-                    <strong>{{ money.format(location.effectivePrice) }}</strong>
-                </div>
+            <template v-if="location.street && location.zone">
+              · {{ location.zone }}
+            </template>
+          </span>
+        </small>
+      </div>
 
-                <div>
-                    <span>BUSINESS TYPE</span>
-                    <strong>{{ location.tier.label }}</strong>
-                </div>
+      <div class="purchase-summary">
+        <div class="purchase-summary-price">
+          <span>{{ t('browser.purchase.acquisition_price') }}</span>
+          <strong>{{ money.format(location.effectivePrice) }}</strong>
+        </div>
 
-                <div>
-                    <span>PORTFOLIO WEIGHT</span>
-                    <strong>{{ location.tier.weight }}</strong>
-                </div>
+        <div>
+          <span>{{ t('browser.purchase.business_type') }}</span>
+          <strong>{{ location.tier.label }}</strong>
+        </div>
 
-                <div>
-                    <span>CURRENT USAGE</span>
-                    <strong>{{ portfolioWeight }} / {{ portfolioLimit }}</strong>
-                </div>
+        <div>
+          <span>{{ t('browser.purchase.portfolio_weight') }}</span>
+          <strong>{{ location.tier.weight }}</strong>
+        </div>
 
-                <div>
-                    <span>RESULTING USAGE</span>
-                    <strong :class="{
-                        exceeded: resultingWeight > portfolioLimit,
-                    }">
-                        {{ resultingWeight }} / {{ portfolioLimit }}
-                    </strong>
-                </div>
-            </div>
+        <div>
+          <span>{{ t('browser.purchase.current_usage') }}</span>
+          <strong>{{ portfolioWeight }} / {{ portfolioLimit }}</strong>
+        </div>
 
-            <div v-if="restriction" class="purchase-restriction">
-                <AlertTriangle :size="16" />
-                <span>{{ restriction }}</span>
-            </div>
+        <div>
+          <span>{{ t('browser.purchase.resulting_usage') }}</span>
+          <strong
+            :class="{
+              exceeded: resultingWeight > portfolioLimit,
+            }"
+          >
+            {{ resultingWeight }} / {{ portfolioLimit }}
+          </strong>
+        </div>
+      </div>
 
-            <p class="purchase-confirmation-note">
-                The acquisition price will be charged immediately after confirmation.
-            </p>
+      <div v-if="restriction" class="purchase-restriction">
+        <AlertTriangle :size="16" />
+        <span>{{ restriction }}</span>
+      </div>
 
-            <div class="modal-footer-actions">
-                <button type="button" class="portfolio-secondary" :disabled="processing" @click="emit('close')">
-                    Cancel
-                </button>
+      <p class="purchase-confirmation-note">
+        {{ t('browser.purchase.confirmation_note') }}
+      </p>
 
-                <button type="button" class="portfolio-primary" :disabled="Boolean(restriction) || processing"
-                    @click="emit('confirm', location)">
-                    <span v-if="processing" class="action-button-spinner" />
+      <div class="modal-footer-actions">
+        <button
+          type="button"
+          class="portfolio-secondary"
+          :disabled="processing"
+          @click="emit('close')"
+        >
+          {{ t('browser.purchase.cancel') }}
+        </button>
 
-                    {{ processing ? 'Processing…' : 'Confirm Acquisition' }}
-                </button>
-            </div>
-        </section>
-    </div>
+        <button
+          type="button"
+          class="portfolio-primary"
+          :disabled="Boolean(restriction) || processing"
+          @click="emit('confirm', location)"
+        >
+          <span v-if="processing" class="action-button-spinner" />
+
+          {{
+            processing
+              ? t('browser.purchase.processing')
+              : t('browser.purchase.confirm')
+          }}
+        </button>
+      </div>
+    </section>
+  </div>
 </template>

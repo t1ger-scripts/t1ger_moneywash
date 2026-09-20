@@ -11,6 +11,7 @@ import {
   X,
 } from '@lucide/vue'
 import { money, toRoman } from '@/lib/format'
+import { t } from '@/lib/locale'
 import type { LocationView } from '@/types/business'
 
 defineProps<{
@@ -31,13 +32,22 @@ defineEmits<{
 <template>
   <Transition name="detail-slide">
     <aside v-if="location" class="location-detail">
-      <button class="detail-close" type="button" aria-label="Close listing details" @click="$emit('close')">
+      <button
+        class="detail-close"
+        type="button"
+        :aria-label="t('browser.listing_detail.close_label')"
+        @click="$emit('close')"
+      >
         <X :size="16" />
       </button>
 
       <span class="detail-kicker">
-        LISTING {{ String(location.id).padStart(2, '0') }}
-        · TIER {{ toRoman(location.tier.tier) }}
+        {{
+          t('browser.listing_detail.kicker', {
+            id: String(location.id).padStart(2, '0'),
+            tier: toRoman(location.tier.tier),
+          })
+        }}
       </span>
 
       <h2>{{ location.brand }}</h2>
@@ -59,28 +69,32 @@ defineEmits<{
       </p>
 
       <div class="detail-price">
-        <span>Acquisition price</span>
+        <span>{{ t('browser.listing_detail.acquisition_price') }}</span>
         <strong>{{ money.format(location.effectivePrice) }}</strong>
       </div>
 
       <div class="detail-stats">
         <div>
           <BarChart3 :size="16" />
-          <span>Expected revenue</span>
+          <span>{{ t('browser.listing_detail.expected_revenue') }}</span>
           <strong>
-            {{ money.format(location.tier.expectedRevenue) }} / cycle
+            {{
+              t('browser.listing_detail.per_cycle', {
+                amount: money.format(location.tier.expectedRevenue),
+              })
+            }}
           </strong>
         </div>
 
         <div>
           <BadgeDollarSign :size="16" />
-          <span>Service fee</span>
+          <span>{{ t('browser.listing_detail.service_fee') }}</span>
           <strong>{{ location.tier.launderFee }}%</strong>
         </div>
 
         <div>
           <BriefcaseBusiness :size="16" />
-          <span>Portfolio weight</span>
+          <span>{{ t('browser.listing_detail.portfolio_weight') }}</span>
           <strong>{{ location.tier.weight }}</strong>
         </div>
       </div>
@@ -89,8 +103,8 @@ defineEmits<{
         <AlertTriangle :size="16" />
 
         <div>
-          <strong>LISTING UNAVAILABLE</strong>
-          <span>This location has already been acquired.</span>
+          <strong>{{ t('browser.listing_detail.unavailable_title') }}</strong>
+          <span>{{ t('browser.listing_detail.unavailable_description') }}</span>
         </div>
       </div>
 
@@ -98,14 +112,15 @@ defineEmits<{
         <LockKeyhole :size="16" />
 
         <div>
-          <strong>INVESTOR SCORE REQUIRED</strong>
+          <strong>{{ t('browser.listing_detail.score_required_title') }}</strong>
           <span>
             {{
-              (
-                location.tier.requiredPoints - reputation
-              ).toLocaleString()
+              t('browser.listing_detail.points_needed', {
+                points: (
+                  location.tier.requiredPoints - reputation
+                ).toLocaleString(),
+              })
             }}
-            more points needed
           </span>
         </div>
       </div>
@@ -114,9 +129,13 @@ defineEmits<{
         <AlertTriangle :size="16" />
 
         <div>
-          <strong>TYPE ALREADY ACTIVE</strong>
+          <strong>{{ t('browser.listing_detail.type_active_title') }}</strong>
           <span>
-            You may only register one {{ location.tier.label }}.
+            {{
+              t('browser.listing_detail.type_active_description', {
+                type: location.tier.label,
+              })
+            }}
           </span>
         </div>
       </div>
@@ -125,71 +144,73 @@ defineEmits<{
         <AlertTriangle :size="16" />
 
         <div>
-          <strong>INSUFFICIENT FUNDS</strong>
+          <strong>{{ t('browser.listing_detail.insufficient_funds_title') }}</strong>
           <span>
-            Additional funds are required for this acquisition.
+            {{ t('browser.listing_detail.insufficient_funds_description') }}
           </span>
         </div>
       </div>
 
-      <div v-else-if="
-        portfolioWeight + location.tier.weight >
-        portfolioLimit
-      " class="restriction-box">
+      <div
+        v-else-if="portfolioWeight + location.tier.weight > portfolioLimit"
+        class="restriction-box"
+      >
         <AlertTriangle :size="16" />
 
         <div>
-          <strong>PORTFOLIO LIMIT</strong>
+          <strong>{{ t('browser.listing_detail.portfolio_limit_title') }}</strong>
           <span>
-            Free up capacity before acquiring this listing.
+            {{ t('browser.listing_detail.portfolio_limit_description') }}
           </span>
         </div>
       </div>
 
       <div v-else class="verified-box">
         <ShieldCheck :size="16" />
-        Eligible to acquire
+        {{ t('browser.listing_detail.eligible') }}
       </div>
 
-      <button class="purchase-button" type="button" :disabled="location.status !== 'available' ||
-        location.locked ||
-        ownsType ||
-        balance < location.effectivePrice ||
-        portfolioWeight + location.tier.weight >
-        portfolioLimit
-        " @click="$emit('purchase', location)">
+      <button
+        class="purchase-button"
+        type="button"
+        :disabled="
+          location.status !== 'available' ||
+          location.locked ||
+          ownsType ||
+          balance < location.effectivePrice ||
+          portfolioWeight + location.tier.weight > portfolioLimit
+        "
+        @click="$emit('purchase', location)"
+      >
         <template v-if="location.status !== 'available'">
-          Listing unavailable
+          {{ t('browser.listing_detail.button_unavailable') }}
         </template>
 
         <template v-else-if="location.locked">
           <LockKeyhole :size="15" />
-          Score requirement not met
+          {{ t('browser.listing_detail.button_score_required') }}
         </template>
 
         <template v-else-if="ownsType">
-          Type already registered
+          {{ t('browser.listing_detail.button_type_active') }}
         </template>
 
         <template v-else-if="balance < location.effectivePrice">
-          Insufficient funds
+          {{ t('browser.listing_detail.button_insufficient_funds') }}
         </template>
 
-        <template v-else-if="
-          portfolioWeight + location.tier.weight >
-          portfolioLimit
-        ">
-          Portfolio limit exceeded
+        <template v-else-if="portfolioWeight + location.tier.weight > portfolioLimit">
+          {{ t('browser.listing_detail.button_portfolio_limit') }}
         </template>
 
         <template v-else>
-          Review acquisition
+          {{ t('browser.listing_detail.button_review') }}
           <ArrowRight :size="16" />
         </template>
       </button>
 
       <small class="escrow-note">
-        Review all acquisition details before confirming.
+        {{ t('browser.listing_detail.review_note') }}
       </small>
     </aside>
   </Transition>
