@@ -1,5 +1,18 @@
 <script setup lang="ts">
+import type { Component } from 'vue'
 import { computed } from 'vue'
+import {
+    Building2,
+    CarFront,
+    Coffee,
+    Dices,
+    Fuel,
+    Martini,
+    Music2,
+    Sparkles,
+    UtensilsCrossed,
+    WashingMachine,
+} from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import type { BusinessTier } from '@/domain/marketplace'
@@ -10,6 +23,22 @@ const marketplaceStore = useMarketplaceStore()
 const { locale, t } = useI18n()
 
 const tiers = computed(() => marketplaceStore.tiers)
+
+const tierIcons: Readonly<Record<string, Component>> = {
+    coffee_shop: Coffee,
+    gas_station: Fuel,
+    restaurant: UtensilsCrossed,
+    laundromat: WashingMachine,
+    bar: Martini,
+    nightclub: Music2,
+    stripclub: Sparkles,
+    carwash: CarFront,
+    casino: Dices,
+}
+
+function getTierIcon(businessType: string): Component {
+    return tierIcons[businessType] ?? Building2
+}
 
 function isTierAccessible(tier: BusinessTier): boolean {
     if (tier.isUnlocked) return true
@@ -38,9 +67,6 @@ function createTierLabel(tier: BusinessTier): string {
 
     return [
         tier.displayName,
-        t('portal.tierSelector.tier', {
-            number: tier.tierNumber,
-        }),
         t('portal.tierSelector.requiredScore', {
             score: formatNumber(
                 tier.requiredInvestorScore,
@@ -56,31 +82,30 @@ function createTierLabel(tier: BusinessTier): string {
     <nav class="tier-selector" :aria-label="t('portal.tierSelector.ariaLabel')">
         <div class="tier-selector__track">
             <button v-for="tier in tiers" :key="tier.businessType" class="tier-selector__item" :class="{
+                'tier-selector__item--accessible': isTierAccessible(tier),
                 'tier-selector__item--selected': isTierSelected(tier),
                 'tier-selector__item--locked': !isTierAccessible(tier),
             }" type="button" :disabled="!isTierAccessible(tier)" :aria-pressed="isTierSelected(tier)"
                 :aria-label="createTierLabel(tier)" @click="selectTier(tier)">
-                <span class="tier-selector__number">
-                    {{
-                        t('portal.tierSelector.tier', {
-                            number: tier.tierNumber,
-                        })
-                    }}
+                <span class="tier-selector__icon">
+                    <component :is="getTierIcon(tier.businessType)" :size="26" :stroke-width="2" aria-hidden="true" />
                 </span>
 
-                <strong class="tier-selector__name">
-                    {{ tier.displayName }}
-                </strong>
+                <span class="tier-selector__content">
+                    <strong class="tier-selector__name">
+                        {{ tier.displayName }}
+                    </strong>
 
-                <span class="tier-selector__requirement">
-                    {{
-                        t('portal.tierSelector.scoreRequirement', {
-                            score: formatNumber(
-                                tier.requiredInvestorScore,
-                                locale,
-                            ),
-                    })
-                    }}
+                    <span class="tier-selector__requirement">
+                        {{
+                            t('portal.tierSelector.scoreRequirement', {
+                                score: formatNumber(
+                                    tier.requiredInvestorScore,
+                                    locale,
+                                ),
+                        })
+                        }}
+                    </span>
                 </span>
             </button>
         </div>
@@ -97,7 +122,7 @@ function createTierLabel(tier: BusinessTier): string {
     &__track {
         display: grid;
         overflow-x: auto;
-        grid-template-columns: repeat(9, minmax(8.5rem, 1fr));
+        grid-template-columns: repeat(9, minmax(9.5rem, 1fr));
         gap: var(--space-2);
         padding-bottom: var(--space-1);
         scrollbar-width: thin;
@@ -106,10 +131,10 @@ function createTierLabel(tier: BusinessTier): string {
     }
 
     &__item {
-        display: grid;
-        min-height: 5.25rem;
-        align-content: center;
-        gap: var(--space-1);
+        display: flex;
+        min-height: 4.75rem;
+        align-items: center;
+        gap: var(--space-3);
         padding: var(--space-3) var(--space-4);
         border: var(--border-width) solid var(--color-border);
         border-radius: var(--radius-md);
@@ -129,35 +154,54 @@ function createTierLabel(tier: BusinessTier): string {
             color: var(--color-text-primary);
         }
 
+        &--accessible {
+
+            .tier-selector__icon,
+            .tier-selector__requirement {
+                color: var(--color-success);
+            }
+        }
+
         &--selected {
             border-color: var(--color-primary);
             background: var(--color-primary-subtle);
             color: var(--color-text-primary);
             box-shadow: inset 0 0 0 var(--border-width) var(--color-primary);
+
+            .tier-selector__icon,
+            .tier-selector__requirement {
+                color: var(--color-primary);
+            }
         }
 
         &--locked {
-            border-color: color-mix(in srgb,
-                    var(--color-border) 65%,
-                    transparent);
             background: color-mix(in srgb,
                     var(--color-surface) 65%,
                     transparent);
             color: var(--color-text-muted);
             cursor: not-allowed;
             opacity: 0.52;
+
+            .tier-selector__icon,
+            .tier-selector__requirement {
+                color: var(--color-text-muted);
+            }
         }
     }
 
-    &__number,
-    &__requirement {
-        font-size: var(--font-size-xs);
-        line-height: var(--line-height-tight);
+    &__icon {
+        display: grid;
+        width: 2.25rem;
+        height: 2.25rem;
+        flex: 0 0 auto;
+        place-items: center;
+        color: var(--color-text-muted);
     }
 
-    &__number {
-        color: currentcolor;
-        font-weight: var(--font-weight-semibold);
+    &__content {
+        display: grid;
+        min-width: 0;
+        gap: var(--space-1);
     }
 
     &__name {
@@ -171,6 +215,8 @@ function createTierLabel(tier: BusinessTier): string {
 
     &__requirement {
         color: var(--color-text-muted);
+        font-size: var(--font-size-xs);
+        line-height: var(--line-height-tight);
     }
 }
 </style>

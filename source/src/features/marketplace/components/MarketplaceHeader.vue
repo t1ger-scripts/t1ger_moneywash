@@ -26,16 +26,24 @@ const formattedInvestorScore = computed(() => {
     const progress = profile.value?.investorProgress
     if (!progress) return ''
 
-    const currentPoints = formatNumber(progress.points, locale.value)
+    const currentPoints = formatNumber(
+        progress.points,
+        locale.value,
+    )
 
     if (progress.nextRankPoints === null) {
-        return currentPoints
+        return t('portal.header.scorePoints', {
+            points: currentPoints,
+        })
     }
 
-    return `${currentPoints} / ${formatNumber(
-        progress.nextRankPoints,
-        locale.value,
-    )}`
+    return t('portal.header.scoreProgressValue', {
+        current: currentPoints,
+        next: formatNumber(
+            progress.nextRankPoints,
+            locale.value,
+        ),
+    })
 })
 </script>
 
