@@ -344,6 +344,7 @@ function TransferBusiness(src, targetSrc, businessId)
     if not MeetsReputationRequirement(targetSrc, tier) then
         ReleaseOwnershipLocks(lockKeys)
         return false, "target_insufficient_reputation"
+    end
 
     local updateSucceeded, affectedRows = pcall(
         MySQL.update.await,
