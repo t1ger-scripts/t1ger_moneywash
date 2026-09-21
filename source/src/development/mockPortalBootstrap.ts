@@ -249,6 +249,14 @@ export const mockPortalBootstrap: PortalBootstrapPayload = {
                     investorScoreProgress: 'Progress toward the next investor rank',
                 },
             },
+            tierSelector: {
+                ariaLabel: 'Business tiers',
+                tier: 'Tier {number}',
+                requiredScore: '{score} Investor Score required',
+                scoreRequirement: '{score}+ score',
+                available: 'Available',
+                locked: 'Locked',
+            },
         },
     },
 }
