@@ -9,7 +9,7 @@
 --- -------------------------------------------------------------------------
 
 --- Returns available unowned locations for a given business type
---- Filtered by player reputation and portfolio capacity
+--- Filtered by player reputation
 lib.callback.register("t1ger_moneywash:server:getAvailableLocations", function(source, businessType)
     local identifier = _API.Player.GetIdentifier(source)
     local locations = require("shared/business_locations")
@@ -44,21 +44,17 @@ lib.callback.register("t1ger_moneywash:server:getUnlockedTiers", function(source
     end
 
     local unlocked = {}
-    local currentWeight = GetPlayerPortfolioWeight(identifier)
 
     for _, tier in pairs(Config.Business.Tiers) do
-        local canAfford = (currentWeight + tier.weight) <= Config.Business.PortfolioLimit
         local hasRep = points >= tier.requiredPoints
         local alreadyOwns = PlayerOwnsType(identifier, tier.type)
 
         unlocked[#unlocked + 1] = {
             type           = tier.type,
             label          = tier.label,
-            weight         = tier.weight,
             requiredPoints = tier.requiredPoints,
             price          = tier.price,
             unlocked       = hasRep,
-            canAfford      = canAfford,
             alreadyOwns    = alreadyOwns,
         }
     end

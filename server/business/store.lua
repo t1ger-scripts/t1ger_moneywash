@@ -73,22 +73,6 @@ function IsLocationOwned(businessType, locationId)
     return GetBusinessByLocation(businessType, locationId) ~= nil
 end
 
---- Returns the total portfolio weight currently used by a player
---- @param identifier string
---- @return number
-function GetPlayerPortfolioWeight(identifier)
-    local weight = 0
-    for _, business in pairs(Businesses) do
-        if business.identifier == identifier then
-            local tier = GetTierByType(business.type)
-            if tier then
-                weight = weight + tier.weight
-            end
-        end
-    end
-    return weight
-end
-
 --- Returns whether a player already owns a business of the given type
 --- @param identifier string
 --- @param businessType string

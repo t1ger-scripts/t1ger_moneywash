@@ -49,15 +49,6 @@ local function MeetsReputationRequirement(src, tier)
     return rep:GetPoints() >= tier.requiredPoints
 end
 
---- Returns whether a player has enough portfolio capacity to add a given tier
---- @param identifier string
---- @param tier table
---- @return boolean
-local function HasPortfolioCapacity(identifier, tier)
-    local current = GetPlayerPortfolioWeight(identifier)
-    return (current + tier.weight) <= Config.Business.PortfolioLimit
-end
-
 --- Purchases a business for a player
 --- @param src number
 --- @param businessType string
@@ -111,11 +102,6 @@ function BuyBusiness(src, businessType, locationId)
     if not MeetsReputationRequirement(src, tier) then
         ReleaseOwnershipLocks(lockKeys)
         return false, "insufficient_reputation"
-    end
-
-    if not HasPortfolioCapacity(identifier, tier) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "portfolio_full"
     end
 
     local price = tonumber(location.price or tier.price)
@@ -358,12 +344,6 @@ function TransferBusiness(src, targetSrc, businessId)
     if not MeetsReputationRequirement(targetSrc, tier) then
         ReleaseOwnershipLocks(lockKeys)
         return false, "target_insufficient_reputation"
-    end
-
-    if not HasPortfolioCapacity(targetIdentifier, tier) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "target_portfolio_full"
-    end
 
     local updateSucceeded, affectedRows = pcall(
         MySQL.update.await,
@@ -1408,7 +1388,7 @@ end
 --- ============================================================================
 
 --- Admin: forcibly adds a business while preserving ownership invariants.
---- Reputation, price and portfolio capacity requirements are bypassed.
+--- Reputation andprice requirements are bypassed.
 --- @param identifier string
 --- @param businessType string
 --- @param locationId number

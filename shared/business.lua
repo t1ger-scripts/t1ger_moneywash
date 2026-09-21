@@ -8,10 +8,6 @@ Config.Business = {
     -- Default: 48 (one GTA in-game day)
     CycleDuration = 48,
 
-    -- Maximum total portfolio weight a single player can own across all businesses
-    -- Casino alone (weight 6) maxes this out entirely
-    PortfolioLimit = 6,
-
     -- Idle animation used by every Handler NPC regardless of tier
     HandlerScenario = "WORLD_HUMAN_STAND_IMPATIENT",
 
@@ -31,7 +27,6 @@ Config.Business = {
     -- The business ladder
     -- type         : internal key, must match a key in shared/business_locations.lua
     -- label        : display name shown in menus
-    -- weight       : portfolio cost (total owned weight cannot exceed PortfolioLimit)
     -- requiredPoints: reputation points needed to unlock purchasing this tier
     -- price        : base purchase price in clean money from personal bank
     --                individual locations in business_locations.lua can override this
@@ -44,7 +39,6 @@ Config.Business = {
         [1] = {
             type             = "coffee_shop",
             label            = "Coffee Shop",
-            weight           = 1,
             requiredPoints   = 0,
             price            = 15000,
             npc              = "s_m_y_waiter_01",
@@ -54,7 +48,6 @@ Config.Business = {
         [2] = {
             type             = "gas_station",
             label            = "Gas Station",
-            weight           = 1,
             requiredPoints   = 500,
             price            = 25000,
             npc              = "s_m_y_xmech_02",
@@ -64,7 +57,6 @@ Config.Business = {
         [3] = {
             type             = "restaurant",
             label            = "Restaurant",
-            weight           = 2,
             requiredPoints   = 1500,
             price            = 40000,
             npc              = "s_m_y_chef_01",
@@ -74,7 +66,6 @@ Config.Business = {
         [4] = {
             type             = "laundromat",
             label            = "Laundromat",
-            weight           = 2,
             requiredPoints   = 2750,
             price            = 55000,
             npc              = "s_m_o_busker_01",
@@ -84,7 +75,6 @@ Config.Business = {
         [5] = {
             type             = "bar",
             label            = "Bar",
-            weight           = 3,
             requiredPoints   = 4000,
             price            = 75000,
             npc              = "s_m_y_barman_01",
@@ -94,7 +84,6 @@ Config.Business = {
         [6] = {
             type             = "nightclub",
             label            = "Nightclub",
-            weight           = 3,
             requiredPoints   = 5500,
             price            = 100000,
             npc              = "s_m_y_clubbar_01",
@@ -104,7 +93,6 @@ Config.Business = {
         [7] = {
             type             = "stripclub",
             label            = "Strip Club",
-            weight           = 3,
             requiredPoints   = 7500,
             price            = 150000,
             npc              = "s_m_y_doorman_01",
@@ -114,7 +102,6 @@ Config.Business = {
         [8] = {
             type             = "carwash",
             label            = "Car Wash",
-            weight           = 5,
             requiredPoints   = 10000,
             price            = 250000,
             npc              = "s_m_y_winclean_01",
@@ -124,7 +111,6 @@ Config.Business = {
         [9] = {
             type             = "casino",
             label            = "Casino",
-            weight           = 6,
             requiredPoints   = 15000,
             price            = 750000,
             npc              = "s_m_y_casino_01",
