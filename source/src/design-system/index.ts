@@ -1,4 +1,7 @@
 export { default as AppBadge } from './components/AppBadge.vue'
 export { default as AppButton } from './components/AppButton.vue'
 export { default as AppIconButton } from './components/AppIconButton.vue'
+export { default as AppModal } from './components/AppModal.vue'
+export { default as AppProgressBar } from './components/AppProgressBar.vue'
+export { default as AppSearchInput } from './components/AppSearchInput.vue'
 export { default as AppSurface } from './components/AppSurface.vue'
