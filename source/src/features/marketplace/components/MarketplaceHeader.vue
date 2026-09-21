@@ -1,13 +1,22 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Building2, Landmark, Star, UserRound } from '@lucide/vue'
+import {
+    Building2,
+    Landmark,
+    Star,
+    UserRound,
+    X,
+} from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
+import AppIconButton from '@/design-system/components/AppIconButton.vue'
 import AppProgressBar from '@/design-system/components/AppProgressBar.vue'
+import { usePortalActions } from '@/composables/usePortalActions'
 import { useMarketplaceStore } from '@/stores/marketplace.store'
 import { formatCurrency, formatNumber } from '@/utils/formatters'
 
 const marketplaceStore = useMarketplaceStore()
+const { requestPortalClose } = usePortalActions()
 const { locale, t } = useI18n()
 
 const profile = computed(() => marketplaceStore.profile)
@@ -49,10 +58,8 @@ const formattedInvestorScore = computed(() => {
 
 <template>
     <header v-if="profile" class="marketplace-header">
-        <div class="marketplace-header__identity">
-            <div class="marketplace-header__brand-icon">
-                <Building2 :size="30" aria-hidden="true" />
-            </div>
+        <section class="marketplace-header__identity">
+            <Building2 class="marketplace-header__logo" :size="42" :stroke-width="1.8" aria-hidden="true" />
 
             <div class="marketplace-header__brand">
                 <strong class="marketplace-header__city">
@@ -64,65 +71,68 @@ const formattedInvestorScore = computed(() => {
                 </span>
             </div>
 
-            <div class="marketplace-header__divider" />
+            <div class="marketplace-header__separator" />
 
-            <p class="marketplace-header__tagline">
-                {{ t('portal.header.tagline') }}
-            </p>
-        </div>
+            <div class="marketplace-header__exchange">
+                <strong>
+                    {{ t('portal.header.exchangeName') }}
+                </strong>
 
-        <div class="marketplace-header__information">
-            <section class="marketplace-header__information-item">
-                <div class="marketplace-header__information-icon">
-                    <UserRound :size="21" aria-hidden="true" />
-                </div>
+                <span>
+                    {{ t('portal.header.tagline') }}
+                </span>
+            </div>
+        </section>
 
-                <div>
-                    <span class="marketplace-header__label">
-                        {{ t('portal.header.investor') }}
-                    </span>
+        <section class="marketplace-header__account">
+            <div class="marketplace-header__account-item">
+                <UserRound class="marketplace-header__account-icon" :size="25" aria-hidden="true" />
 
-                    <strong class="marketplace-header__value">
+                <div class="marketplace-header__account-content">
+                    <strong class="marketplace-header__account-value">
                         {{ profile.characterName }}
                     </strong>
 
-                    <span class="marketplace-header__supporting-value">
+                    <span class="marketplace-header__account-label">
                         {{ profile.investorProgress.rank }}
                     </span>
                 </div>
-            </section>
+            </div>
 
-            <section class="marketplace-header__information-item">
-                <div class="marketplace-header__information-icon">
-                    <Landmark :size="21" aria-hidden="true" />
-                </div>
+            <div class="marketplace-header__separator" />
 
-                <div>
-                    <span class="marketplace-header__label">
+            <div class="marketplace-header__account-item">
+                <Landmark class="marketplace-header__account-icon" :size="25" aria-hidden="true" />
+
+                <div class="marketplace-header__account-content">
+                    <span class="marketplace-header__account-label">
                         {{ t('portal.header.bankBalance') }}
                     </span>
 
-                    <strong class="marketplace-header__value">
+                    <strong class="marketplace-header__account-value">
                         {{ formattedBankBalance }}
                     </strong>
                 </div>
-            </section>
+            </div>
 
-            <section class="
-          marketplace-header__information-item
-          marketplace-header__information-item--progress
+            <div class="marketplace-header__separator" />
+
+            <div class="
+          marketplace-header__account-item
+          marketplace-header__account-item--score
         ">
-                <div class="marketplace-header__information-icon">
-                    <Star :size="21" aria-hidden="true" />
-                </div>
+                <Star class="
+            marketplace-header__account-icon
+            marketplace-header__account-icon--score
+          " :size="25" fill="currentColor" aria-hidden="true" />
 
-                <div class="marketplace-header__progress-content">
-                    <div class="marketplace-header__progress-heading">
-                        <span class="marketplace-header__label">
+                <div class="marketplace-header__score-content">
+                    <div class="marketplace-header__score-heading">
+                        <span class="marketplace-header__account-label">
                             {{ t('portal.header.investorScore') }}
                         </span>
 
-                        <strong class="marketplace-header__score">
+                        <strong class="marketplace-header__account-value">
                             {{ formattedInvestorScore }}
                         </strong>
                     </div>
@@ -130,27 +140,33 @@ const formattedInvestorScore = computed(() => {
                     <AppProgressBar :value="profile.investorProgress.percentage" :max="100"
                         :label="t('portal.header.investorScoreProgress')" />
                 </div>
-            </section>
-        </div>
+            </div>
+
+            <div class="marketplace-header__separator" />
+
+            <AppIconButton variant="ghost" :label="t('common.close')" @click="requestPortalClose">
+                <X :size="25" aria-hidden="true" />
+            </AppIconButton>
+        </section>
     </header>
 </template>
 
 <style scoped lang="scss">
 .marketplace-header {
     display: flex;
-    min-height: 5rem;
+    min-height: 4.75rem;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-8);
-    padding: var(--space-4) var(--space-6);
+    padding: var(--space-3) var(--space-6);
     border-bottom: var(--border-width) solid var(--color-border);
     background: var(--color-surface);
     box-shadow: var(--shadow-surface);
 
     &__identity,
-    &__information,
-    &__information-item,
-    &__progress-heading {
+    &__account,
+    &__account-item,
+    &__score-heading {
         display: flex;
         align-items: center;
     }
@@ -160,16 +176,9 @@ const formattedInvestorScore = computed(() => {
         gap: var(--space-4);
     }
 
-    &__brand-icon {
-        display: grid;
-        width: 3rem;
-        height: 3rem;
+    &__logo {
         flex: 0 0 auto;
-        place-items: center;
-        border: var(--border-width) solid var(--color-border-strong);
-        border-radius: var(--radius-md);
-        background: var(--color-primary-subtle);
-        color: var(--color-primary);
+        color: var(--color-text-primary);
     }
 
     &__brand {
@@ -180,113 +189,117 @@ const formattedInvestorScore = computed(() => {
 
     &__city {
         color: var(--color-text-primary);
-        font-size: var(--font-size-lg);
-        letter-spacing: var(--letter-spacing-heading);
+        font-size: var(--font-size-xl);
+        font-weight: var(--font-weight-bold);
+        letter-spacing: 0.08em;
         line-height: var(--line-height-tight);
+        text-transform: uppercase;
     }
 
     &__portal-name {
         color: var(--color-text-secondary);
         font-size: var(--font-size-xs);
         font-weight: var(--font-weight-semibold);
-        letter-spacing: 0.18em;
+        letter-spacing: 0.22em;
         line-height: var(--line-height-tight);
         text-transform: uppercase;
     }
 
-    &__divider {
+    &__separator {
         width: var(--border-width);
-        height: 2.5rem;
+        height: 2.75rem;
         flex: 0 0 auto;
-        background: var(--color-border);
+        background: var(--color-border-strong);
     }
 
-    &__tagline {
-        max-width: 12rem;
+    &__exchange {
+        display: grid;
+        gap: var(--space-1);
         color: var(--color-text-secondary);
         font-size: var(--font-size-xs);
-        line-height: var(--line-height-normal);
+        line-height: var(--line-height-tight);
+
+        strong {
+            color: var(--color-text-primary);
+            font-weight: var(--font-weight-medium);
+        }
     }
 
-    &__information {
+    &__account {
+        min-width: 0;
         justify-content: flex-end;
+        gap: var(--space-5);
     }
 
-    &__information-item {
-        min-height: 3rem;
+    &__account-item {
+        min-width: 0;
         gap: var(--space-3);
-        padding-inline: var(--space-6);
-        border-left: var(--border-width) solid var(--color-border);
 
-        &:last-child {
-            padding-right: 0;
-        }
-
-        &--progress {
-            width: 18rem;
+        &--score {
+            width: 17rem;
         }
     }
 
-    &__information-icon {
-        display: grid;
+    &__account-icon {
         flex: 0 0 auto;
-        place-items: center;
-        color: var(--color-primary);
+        color: var(--color-text-secondary);
+
+        &--score {
+            color: var(--color-warning);
+        }
     }
 
-    &__label,
-    &__supporting-value {
+    &__account-content {
+        display: grid;
+        min-width: 0;
+        gap: var(--space-1);
+    }
+
+    &__account-label {
         display: block;
         color: var(--color-text-secondary);
         font-size: var(--font-size-xs);
         line-height: var(--line-height-tight);
+        white-space: nowrap;
     }
 
-    &__value {
+    &__account-value {
         display: block;
-        margin-top: var(--space-1);
+        overflow: hidden;
         color: var(--color-text-primary);
         font-size: var(--font-size-sm);
         line-height: var(--line-height-tight);
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
-    &__supporting-value {
-        margin-top: var(--space-1);
-        color: var(--color-primary);
-    }
-
-    &__progress-content {
+    &__score-content {
         display: grid;
         width: 100%;
         gap: var(--space-2);
     }
 
-    &__progress-heading {
+    &__score-heading {
         justify-content: space-between;
-        gap: var(--space-4);
-    }
-
-    &__score {
-        flex: 0 0 auto;
-        color: var(--color-text-primary);
-        font-size: var(--font-size-xs);
+        gap: var(--space-3);
     }
 }
 
-@media (max-width: 75rem) {
+@media (max-width: 80rem) {
     .marketplace-header {
+        gap: var(--space-4);
 
-        &__tagline,
-        &__divider {
+        &__exchange {
             display: none;
         }
 
-        &__information-item {
-            padding-inline: var(--space-4);
+        &__identity,
+        &__account {
+            gap: var(--space-3);
+        }
 
-            &--progress {
-                width: 15rem;
-            }
+        &__account-item--score {
+            width: 14rem;
         }
     }
 }

@@ -3,15 +3,18 @@ withDefaults(
     defineProps<{
         label: string
         disabled?: boolean
+        variant?: 'surface' | 'ghost'
     }>(),
     {
         disabled: false,
+        variant: 'surface',
     },
 )
 </script>
 
 <template>
-    <button class="app-icon-button" type="button" :aria-label="label" :title="label" :disabled="disabled">
+    <button class="app-icon-button" :class="`app-icon-button--${variant}`" type="button" :aria-label="label"
+        :disabled="disabled">
         <slot />
     </button>
 </template>
@@ -22,18 +25,27 @@ withDefaults(
     width: 2.75rem;
     height: 2.75rem;
     place-items: center;
-    border: var(--border-width) solid var(--color-border);
+    border: var(--border-width) solid transparent;
     border-radius: var(--radius-md);
-    background: var(--color-surface-raised);
-    color: var(--color-text-secondary);
     cursor: pointer;
     transition:
-        background-color var(--duration-fast) var(--ease-standard),
         border-color var(--duration-fast) var(--ease-standard),
+        background-color var(--duration-fast) var(--ease-standard),
         color var(--duration-fast) var(--ease-standard);
 
+    &--surface {
+        border-color: var(--color-border);
+        background: var(--color-surface-raised);
+        color: var(--color-text-secondary);
+    }
+
+    &--ghost {
+        background: transparent;
+        color: var(--color-text-secondary);
+    }
+
     &:not(:disabled):hover {
-        border-color: var(--color-border-strong);
+        border-color: var(--color-border);
         background: var(--color-surface-hover);
         color: var(--color-text-primary);
     }

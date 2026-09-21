@@ -11,10 +11,12 @@ import type {
 import { applyTheme } from '@/integrations/theme/applyTheme'
 import { useMarketplaceStore } from '@/stores/marketplace.store'
 import { usePortalStore } from '@/stores/portal.store'
+import { usePortalActions } from '@/composables/usePortalActions'
 
 export function usePortalLifecycle(): void {
     const marketplaceStore = useMarketplaceStore()
     const portalStore = usePortalStore()
+    const { requestPortalClose } = usePortalActions()
 
     const unsubscribeFunctions: Array<() => void> = []
 
@@ -70,26 +72,11 @@ export function usePortalLifecycle(): void {
         }
     }
 
-    async function requestClose(): Promise<void> {
-        if (!isFiveMEnvironment()) return
-
-        closePortal()
-
-        try {
-            await postNui<NuiResponse>(NUI_CALLBACKS.close)
-        } catch (error) {
-            console.error(
-                '[t1ger_moneywash] Failed to close the portal cleanly.',
-                error,
-            )
-        }
-    }
-
     function handleKeydown(event: KeyboardEvent): void {
         if (event.key !== 'Escape') return
         if (!portalStore.isVisible) return
 
-        void requestClose()
+        void requestPortalClose()
     }
 
     onMounted(async () => {

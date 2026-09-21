@@ -242,6 +242,7 @@ export const mockPortalBootstrap: PortalBootstrapPayload = {
                 header: {
                     city: 'Los Santos',
                     portalName: 'Business Portal',
+                    exchangeName: 'Commercial Property Exchange',
                     tagline: 'Legitimate opportunities. Real returns.',
                     investor: 'Investor',
                     bankBalance: 'Bank Balance',
