@@ -239,8 +239,15 @@ export const mockPortalBootstrap: PortalBootstrapPayload = {
                 loading: 'Loading…',
             },
             portal: {
-                title: 'Los Santos Business Portal',
-                subtitle: 'Legitimate opportunities. Real returns.',
+                header: {
+                    city: 'Los Santos',
+                    portalName: 'Business Portal',
+                    tagline: 'Legitimate opportunities. Real returns.',
+                    investor: 'Investor',
+                    bankBalance: 'Bank Balance',
+                    investorScore: 'Investor Score',
+                    investorScoreProgress: 'Progress toward the next investor rank',
+                },
             },
         },
     },
