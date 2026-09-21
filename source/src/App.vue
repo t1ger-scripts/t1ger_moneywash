@@ -16,7 +16,7 @@ import {
   AppProgressBar,
   AppSearchInput,
   AppSurface,
-} from './design-system'
+} from '@/design-system'
 
 const searchQuery = ref('')
 const purchaseModalOpen = ref(false)

@@ -22,7 +22,13 @@
         ],
         "types": [
             "vite/client"
-        ]
+        ],
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "src/*"
+            ]
+        },
     },
     "include": [
         "env.d.ts",
