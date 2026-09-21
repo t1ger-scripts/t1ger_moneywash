@@ -1,0 +1,25 @@
+h1,
+h2,
+h3 {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--letter-spacing-heading);
+    line-height: var(--line-height-tight);
+}
+
+h1 {
+    font-size: var(--font-size-3xl);
+}
+
+h2 {
+    font-size: var(--font-size-2xl);
+}
+
+h3 {
+    font-size: var(--font-size-xl);
+}
+
+p {
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-normal);
+}

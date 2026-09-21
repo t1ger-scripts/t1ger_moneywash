@@ -1,0 +1,10 @@
+@use "tokens/colors";
+@use "tokens/typography";
+@use "tokens/spacing";
+@use "tokens/borders";
+@use "tokens/shadows";
+@use "tokens/motion";
+
+@use "foundations/reset";
+@use "foundations/base";
+@use "foundations/typography" as foundation-typography;

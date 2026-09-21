@@ -1,0 +1,22 @@
+:root {
+    --duration-fast: 120ms;
+    --duration-normal: 200ms;
+    --duration-slow: 320ms;
+
+    --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+    --z-index-map: 10;
+    --z-index-drawer: 20;
+    --z-index-header: 30;
+    --z-index-overlay: 40;
+    --z-index-modal: 50;
+    --z-index-toast: 60;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --duration-fast: 0ms;
+        --duration-normal: 0ms;
+        --duration-slow: 0ms;
+    }
+}

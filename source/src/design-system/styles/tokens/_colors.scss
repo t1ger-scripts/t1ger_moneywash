@@ -1,0 +1,36 @@
+:root {
+    color-scheme: dark;
+
+    // Application surfaces
+    --color-background: #07111f;
+    --color-surface: #0c1a2a;
+    --color-surface-raised: #102238;
+    --color-surface-hover: #142b45;
+    --color-overlay: rgb(2 8 18 / 78%);
+
+    // Borders
+    --color-border: #1d3854;
+    --color-border-strong: #2d5579;
+
+    // Typography
+    --color-text-primary: #f3f7fb;
+    --color-text-secondary: #a9bad0;
+    --color-text-muted: #70839b;
+    --color-text-inverse: #ffffff;
+
+    // Primary interaction
+    --color-primary: #1687ff;
+    --color-primary-hover: #3a9aff;
+    --color-primary-active: #0a6fd8;
+    --color-primary-subtle: rgb(22 135 255 / 14%);
+
+    // Status colors
+    --color-success: #20c985;
+    --color-success-subtle: rgb(32 201 133 / 14%);
+
+    --color-warning: #f2b84b;
+    --color-warning-subtle: rgb(242 184 75 / 14%);
+
+    --color-danger: #ef6262;
+    --color-danger-subtle: rgb(239 98 98 / 14%);
+}
