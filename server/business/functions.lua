@@ -94,9 +94,9 @@ function BuyBusiness(src, businessType, locationId)
         return false, "already_owned"
     end
 
-    if PlayerOwnsType(identifier, businessType) then
+    if PlayerOwnsBusiness(identifier) then
         ReleaseOwnershipLocks(lockKeys)
-        return false, "already_owns_type"
+        return false, "already_owns_business"
     end
 
     if not MeetsReputationRequirement(src, tier) then
@@ -329,9 +329,9 @@ function TransferBusiness(src, targetSrc, businessId)
         return false, "raid_pending"
     end
 
-    if PlayerOwnsType(targetIdentifier, business.type) then
+    if PlayerOwnsBusiness(targetIdentifier) then
         ReleaseOwnershipLocks(lockKeys)
-        return false, "target_owns_type"
+        return false, "target_owns_business"
     end
 
     local tier = GetTierByType(business.type)
@@ -1432,9 +1432,9 @@ function AdminAddBusiness(identifier, businessType, locationId)
         return false, "already_owned"
     end
 
-    if PlayerOwnsType(identifier, businessType) then
+    if PlayerOwnsBusiness(identifier) then
         ReleaseOwnershipLocks(lockKeys)
-        return false, "already_owns_type"
+        return false, "already_owns_business"
     end
 
     local now = os.time()
@@ -1506,6 +1506,7 @@ function AdminAddBusiness(identifier, businessType, locationId)
 
     return true, "success"
 end
+
 exports("AddBusiness", AdminAddBusiness)
 
 --- Admin: forcibly removes a business and returns its location to the market.
@@ -1553,11 +1554,11 @@ function AdminRemoveBusiness(businessType, locationId)
         {
             {
                 query = "DELETE FROM moneywash_receipts WHERE business_id = ?",
-                values = {businessId},
+                values = { businessId },
             },
             {
                 query = "DELETE FROM moneywash_businesses WHERE id = ?",
-                values = {businessId},
+                values = { businessId },
             },
         }
     )
@@ -1612,4 +1613,5 @@ function AdminRemoveBusiness(businessType, locationId)
 
     return true, "success"
 end
+
 exports("RemoveBusiness", AdminRemoveBusiness)

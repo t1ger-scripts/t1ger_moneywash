@@ -73,16 +73,16 @@ function IsLocationOwned(businessType, locationId)
     return GetBusinessByLocation(businessType, locationId) ~= nil
 end
 
---- Returns whether a player already owns a business of the given type
+--- Returns whether a player currently owns any business.
 --- @param identifier string
---- @param businessType string
 --- @return boolean
-function PlayerOwnsType(identifier, businessType)
+function PlayerOwnsBusiness(identifier)
     for _, business in pairs(Businesses) do
-        if business.identifier == identifier and business.type == businessType then
+        if business.identifier == identifier then
             return true
         end
     end
+
     return false
 end
 
