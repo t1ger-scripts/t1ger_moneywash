@@ -4,7 +4,7 @@ import {
     Building2,
     Landmark,
     Star,
-    UserRound,
+    CircleUserRound,
     X,
 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
@@ -86,7 +86,8 @@ const formattedInvestorScore = computed(() => {
 
         <section class="marketplace-header__account">
             <div class="marketplace-header__account-item">
-                <UserRound class="marketplace-header__account-icon" :size="25" aria-hidden="true" />
+                <CircleUserRound class="marketplace-header__account-icon" :size="27" :stroke-width="2"
+                    aria-hidden="true" />
 
                 <div class="marketplace-header__account-content">
                     <strong class="marketplace-header__account-value">

@@ -2,15 +2,20 @@
 withDefaults(
     defineProps<{
         tone?: 'neutral' | 'primary' | 'success' | 'warning' | 'danger'
+        shape?: 'pill' | 'rounded'
     }>(),
     {
         tone: 'neutral',
+        shape: 'pill',
     },
 )
 </script>
 
 <template>
-    <span class="app-badge" :class="`app-badge--${tone}`">
+    <span class="app-badge" :class="[
+        `app-badge--${tone}`,
+        `app-badge--${shape}`,
+    ]">
         <slot />
     </span>
 </template>
@@ -20,13 +25,19 @@ withDefaults(
     display: inline-flex;
     min-height: 1.625rem;
     align-items: center;
-    justify-content: center;
     padding: 0 var(--space-3);
     border: var(--border-width) solid transparent;
-    border-radius: var(--radius-pill);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
     line-height: 1;
+
+    &--pill {
+        border-radius: var(--radius-pill);
+    }
+
+    &--rounded {
+        border-radius: var(--radius-sm);
+    }
 
     &--neutral {
         border-color: var(--color-border);

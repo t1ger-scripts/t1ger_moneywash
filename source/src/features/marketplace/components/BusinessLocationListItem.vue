@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Building2, MapPin, Store } from '@lucide/vue'
+import { Building2 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import AppBadge from '@/design-system/components/AppBadge.vue'
@@ -9,7 +9,6 @@ import { formatCurrency } from '@/utils/formatters'
 
 const props = defineProps<{
     location: BusinessLocation
-    tierName: string
     currencySymbol: string
     selected: boolean
 }>()
@@ -70,36 +69,26 @@ function handleImageError(): void {
         <span class="business-list-item__thumbnail">
             <img v-if="imageSource" :src="imageSource" :alt="location.displayName" @error="handleImageError" />
 
-            <Building2 v-else :size="27" :stroke-width="1.7" aria-hidden="true" />
+            <Building2 v-else :size="25" :stroke-width="1.7" aria-hidden="true" />
         </span>
 
         <span class="business-list-item__content">
-            <span class="business-list-item__heading">
-                <strong class="business-list-item__name">
-                    {{ location.displayName }}
-                </strong>
+            <strong class="business-list-item__name">
+                {{ location.displayName }}
+            </strong>
 
-                <AppBadge v-if="location.ownership === 'ownedByPlayer'" tone="success">
-                    {{ t('portal.businessList.owned') }}
-                </AppBadge>
-
-                <AppBadge v-else tone="primary">
-                    {{ formattedPrice }}
-                </AppBadge>
-            </span>
-
-            <span class="business-list-item__metadata">
-                <span>
-                    <Store :size="14" aria-hidden="true" />
-                    {{ tierName }}
-                </span>
-
-                <span>
-                    <MapPin :size="14" aria-hidden="true" />
-                    {{ locationLabel }}
-                </span>
+            <span class="business-list-item__location">
+                {{ locationLabel }}
             </span>
         </span>
+
+        <AppBadge v-if="location.ownership === 'ownedByPlayer'" tone="success" shape="rounded">
+            {{ t('portal.businessList.owned') }}
+        </AppBadge>
+
+        <AppBadge v-else tone="primary" shape="rounded">
+            {{ formattedPrice }}
+        </AppBadge>
     </button>
 </template>
 
@@ -107,27 +96,31 @@ function handleImageError(): void {
 .business-list-item {
     display: grid;
     width: 100%;
-    min-height: 6rem;
-    grid-template-columns: 6.5rem minmax(0, 1fr);
+    min-height: 4.75rem;
+    grid-template-columns:
+        7.25rem minmax(0, 1fr) auto;
+    align-items: center;
     gap: var(--space-3);
-    padding: var(--space-3);
+    padding: var(--space-2);
     border: var(--border-width) solid transparent;
-    border-radius: var(--radius-md);
+    border-bottom-color: var(--color-border);
+    border-radius: 0;
     background: transparent;
     color: var(--color-text-primary);
     cursor: pointer;
     text-align: left;
     transition:
         border-color var(--duration-fast) var(--ease-standard),
+        border-radius var(--duration-fast) var(--ease-standard),
         background-color var(--duration-fast) var(--ease-standard);
 
     &:hover {
-        border-color: var(--color-border);
         background: var(--color-surface-hover);
     }
 
     &--selected {
         border-color: var(--color-primary);
+        border-radius: var(--radius-sm);
         background: var(--color-primary-subtle);
     }
 
@@ -139,7 +132,7 @@ function handleImageError(): void {
 
     &__thumbnail {
         display: grid;
-        height: 4.5rem;
+        height: 3.75rem;
         overflow: hidden;
         place-items: center;
         border: var(--border-width) solid var(--color-border);
@@ -157,43 +150,26 @@ function handleImageError(): void {
     &__content {
         display: grid;
         min-width: 0;
-        align-content: center;
-        gap: var(--space-2);
+        gap: var(--space-1);
     }
 
-    &__heading {
-        display: flex;
-        min-width: 0;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--space-2);
-    }
-
-    &__name {
+    &__name,
+    &__location {
         overflow: hidden;
-        font-size: var(--font-size-sm);
-        line-height: var(--line-height-tight);
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
-    &__metadata {
-        display: grid;
-        gap: var(--space-1);
+    &__name {
+        color: var(--color-text-primary);
+        font-size: var(--font-size-sm);
+        line-height: var(--line-height-tight);
+    }
+
+    &__location {
         color: var(--color-text-secondary);
         font-size: var(--font-size-xs);
-
-        span {
-            display: flex;
-            min-width: 0;
-            align-items: center;
-            gap: var(--space-2);
-        }
-
-        svg {
-            flex: 0 0 auto;
-            color: var(--color-text-muted);
-        }
+        line-height: var(--line-height-tight);
     }
 }
 </style>

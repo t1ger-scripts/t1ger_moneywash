@@ -58,22 +58,20 @@ function updateSearchQuery(value: string): void {
 <template>
     <AppSurface v-if="selectedTier" class="business-list">
         <header class="business-list__header">
-            <div class="business-list__title-row">
-                <div>
-                    <div class="business-list__title">
-                        <h2>{{ selectedTier.displayName }}</h2>
+            <div class="business-list__heading">
+                <h2>{{ selectedTier.displayName }}</h2>
 
-                        <AppBadge tone="primary">
-                            {{
-                                t('portal.tierSelector.tier', {
-                                    number: selectedTier.tierNumber,
-                                })
-                            }}
-                        </AppBadge>
-                    </div>
+                <AppBadge tone="primary" shape="rounded">
+                    {{
+                        t('portal.tierSelector.tier', {
+                            number: selectedTier.tierNumber,
+                    })
+                    }}
+                </AppBadge>
 
-                    <p>{{ availabilitySummary }}</p>
-                </div>
+                <span class="business-list__availability">
+                    {{ availabilitySummary }}
+                </span>
             </div>
 
             <AppSearchInput :model-value="marketplaceStore.searchQuery" :label="t('portal.businessList.searchLabel')"
@@ -83,7 +81,7 @@ function updateSearchQuery(value: string): void {
 
         <div v-if="locations.length > 0" class="business-list__locations">
             <BusinessLocationListItem v-for="location in locations" :key="location.id" :location="location"
-                :tier-name="selectedTier.displayName" :currency-symbol="marketplaceStore.currencySymbol" :selected="marketplaceStore.selectedLocationId === location.id
+                :currency-symbol="marketplaceStore.currencySymbol" :selected="marketplaceStore.selectedLocationId === location.id
                     " @select="selectLocation" />
         </div>
 
@@ -108,33 +106,36 @@ function updateSearchQuery(value: string): void {
     &__header {
         display: grid;
         gap: var(--space-4);
-        padding: var(--space-5);
+        padding: var(--space-4);
         border-bottom: var(--border-width) solid var(--color-border);
     }
 
-    &__title-row {
+    &__heading {
         display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: var(--space-4);
-
-        p {
-            margin-top: var(--space-2);
-            color: var(--color-text-secondary);
-            font-size: var(--font-size-xs);
-        }
-    }
-
-    &__title {
-        display: flex;
+        min-width: 0;
         align-items: center;
         gap: var(--space-3);
 
         h2 {
+            flex: 0 1 auto;
+            overflow: hidden;
             color: var(--color-text-primary);
             font-size: var(--font-size-lg);
             line-height: var(--line-height-tight);
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
+    }
+
+    &__availability {
+        min-width: 0;
+        margin-left: auto;
+        overflow: hidden;
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-xs);
+        line-height: var(--line-height-tight);
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     &__locations {

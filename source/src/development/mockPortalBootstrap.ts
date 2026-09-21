@@ -262,7 +262,7 @@ export const mockPortalBootstrap: PortalBootstrapPayload = {
             BorderColor: '#26384a',
             BorderSoftColor: '#33485d',
             TextColor: '#f3f7fb',
-            MutedTextColor: '#91a3b7',
+            MutedTextColor: '#bdcadb',
             SuccessColor: '#22a06b',
             WarningColor: '#d6a332',
             DangerColor: '#d9534f',
@@ -300,8 +300,7 @@ export const mockPortalBootstrap: PortalBootstrapPayload = {
                     locked: 'Locked',
                 },
                 businessList: {
-                    availability:
-                        '{available} of {total} locations currently available',
+                    availability: '{available} of {total} locations currently available',
                     searchPlaceholder: 'Search locations…',
                     clearSearch: 'Clear location search',
                     owned: 'Owned',
