@@ -95,7 +95,7 @@ export function createMarketplaceSnapshot(
             ownedBusinessId: location.ownedBusinessId,
             businessType: location.businessType,
             displayName: location.displayName,
-            imageFileName: location.imageFileName,
+            imageFileName: location.imageFileName ?? null,
             price: location.price,
             ownership: location.ownership,
             coordinates: location.coordinates,

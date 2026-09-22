@@ -55,6 +55,10 @@ end
 --- @param locationId number
 --- @return boolean success, string reason
 function BuyBusiness(src, businessType, locationId)
+    if not IsBusinessStoreReady() then
+        return false, "business_store_not_ready"
+    end
+
     local identifier = _API.Player.GetIdentifier(src)
     if not identifier then
         return false, "invalid_player"
@@ -75,7 +79,7 @@ function BuyBusiness(src, businessType, locationId)
     end
 
     local location = GetLocationConfig(businessType, locationId)
-    if not location then
+    if not location or not location.coords then
         return false, "invalid_location"
     end
 
@@ -122,13 +126,17 @@ function BuyBusiness(src, businessType, locationId)
     local insertSucceeded, id = pcall(
         MySQL.insert.await,
         "INSERT INTO moneywash_businesses " ..
-        "(identifier, business_type, location_id, stock, safe_covered, safe_exposed, " ..
-        "suspicion, total_laundered, last_laundered_at, is_closed, purchased_at) " ..
-        "VALUES (?, ?, ?, 0, 0, 0, 0, 0, 0, 0, ?)",
+        "(identifier, business_type, location_id, location_x, location_y, location_z, " ..
+        "stock, safe_covered, safe_exposed, suspicion, total_laundered, " ..
+        "last_laundered_at, is_closed, purchased_at) " ..
+        "VALUES (?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, 0, 0, ?)",
         {
             identifier,
             businessType,
             locationId,
+            location.coords.x + 0.0,
+            location.coords.y + 0.0,
+            location.coords.z + 0.0,
             now,
         }
     )
@@ -1100,6 +1108,7 @@ end
 --- Active raid queues keyed by businessId
 --- { businessId = raidsAt (timestamp) }
 local QueuedRaids = {}
+local RAID_LOCATION_COORDINATE_TOLERANCE = 0.25
 
 --- Queues a raid for a business after the configured delay
 --- @param businessId number
@@ -1131,6 +1140,15 @@ function ExecuteRaid(businessId, policeSrc)
     local business = GetBusiness(businessId)
     if not business then return end
 
+    local location = GetLocationConfig(
+        business.type,
+        business.locationId
+    )
+
+    if not location or not location.coords then
+        return
+    end
+
     local seizedAmount = business.safeExposed
 
     -- Seize exposed funds
@@ -1149,8 +1167,17 @@ function ExecuteRaid(businessId, policeSrc)
 
     -- Log raid history
     MySQL.insert(
-        "INSERT INTO moneywash_raid_history (business_type, location_id, raided_at) VALUES (?, ?, ?)",
-        { business.type, business.locationId, os.time() }
+        "INSERT INTO moneywash_raid_history " ..
+        "(business_type, location_id, location_x, location_y, location_z, raided_at) " ..
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        {
+            business.type,
+            business.locationId,
+            location.coords.x + 0.0,
+            location.coords.y + 0.0,
+            location.coords.z + 0.0,
+            os.time(),
+        }
     )
 
     -- Check escalation
@@ -1179,12 +1206,36 @@ function CheckRaidEscalation(businessId)
     local business = GetBusiness(businessId)
     if not business then return end
 
+    local location = GetLocationConfig(
+        business.type,
+        business.locationId
+    )
+
+    if not location or not location.coords then
+        return
+    end
+
     local windowSeconds = Config.Suspicion.RaidHistory.WindowDays * 86400
     local since = os.time() - windowSeconds
 
     local raidCount = MySQL.scalar.await(
-        "SELECT COUNT(*) FROM moneywash_raid_history WHERE business_type = ? AND location_id = ? AND raided_at > ?",
-        { business.type, business.locationId, since }
+        "SELECT COUNT(*) FROM moneywash_raid_history " ..
+        "WHERE business_type = ? AND location_id = ? " ..
+        "AND ABS(location_x - ?) <= ? " ..
+        "AND ABS(location_y - ?) <= ? " ..
+        "AND ABS(location_z - ?) <= ? " ..
+        "AND raided_at > ?",
+        {
+            business.type,
+            business.locationId,
+            location.coords.x + 0.0,
+            RAID_LOCATION_COORDINATE_TOLERANCE,
+            location.coords.y + 0.0,
+            RAID_LOCATION_COORDINATE_TOLERANCE,
+            location.coords.z + 0.0,
+            RAID_LOCATION_COORDINATE_TOLERANCE,
+            since,
+        }
     )
 
     raidCount = raidCount or 0
@@ -1395,6 +1446,10 @@ end
 --- @param locationId number
 --- @return boolean success, string reason
 function AdminAddBusiness(identifier, businessType, locationId)
+    if not IsBusinessStoreReady() then
+        return false, "business_store_not_ready"
+    end
+
     if type(identifier) ~= "string" or identifier == "" then
         return false, "invalid_player"
     end
@@ -1414,7 +1469,7 @@ function AdminAddBusiness(identifier, businessType, locationId)
     end
 
     local location = GetLocationConfig(businessType, locationId)
-    if not location then
+    if not location or not location.coords then
         return false, "invalid_location"
     end
 
@@ -1442,13 +1497,17 @@ function AdminAddBusiness(identifier, businessType, locationId)
     local insertSucceeded, id = pcall(
         MySQL.insert.await,
         "INSERT INTO moneywash_businesses " ..
-        "(identifier, business_type, location_id, stock, safe_covered, safe_exposed, " ..
-        "suspicion, total_laundered, last_laundered_at, is_closed, purchased_at) " ..
-        "VALUES (?, ?, ?, 0, 0, 0, 0, 0, 0, 0, ?)",
+        "(identifier, business_type, location_id, location_x, location_y, location_z, " ..
+        "stock, safe_covered, safe_exposed, suspicion, total_laundered, " ..
+        "last_laundered_at, is_closed, purchased_at) " ..
+        "VALUES (?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, 0, 0, ?)",
         {
             identifier,
             businessType,
             locationId,
+            location.coords.x + 0.0,
+            location.coords.y + 0.0,
+            location.coords.z + 0.0,
             now,
         }
     )

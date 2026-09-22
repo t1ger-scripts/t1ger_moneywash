@@ -21,6 +21,9 @@ CREATE TABLE IF NOT EXISTS `moneywash_businesses` (
     `identifier`        VARCHAR(100) NOT NULL,               -- owner player identifier
     `business_type`     VARCHAR(50)  NOT NULL,               -- matches type key in business_locations.lua
     `location_id`       INT(11)      NOT NULL,               -- matches id key in business_locations.lua
+    `location_x`        DECIMAL(12,6) NOT NULL,              -- immutable purchased-location snapshot
+    `location_y`        DECIMAL(12,6) NOT NULL,
+    `location_z`        DECIMAL(12,6) NOT NULL,
     `stock`             INT(11)      NOT NULL DEFAULT 0,      -- current stock units held
     `safe_covered`      BIGINT(20)   NOT NULL DEFAULT 0,      -- clean covered funds in Safe
     `safe_exposed`      BIGINT(20)   NOT NULL DEFAULT 0,      -- clean exposed funds in Safe
@@ -52,6 +55,9 @@ CREATE TABLE IF NOT EXISTS `moneywash_raid_history` (
     `id`            INT(11)     NOT NULL AUTO_INCREMENT,
     `business_type` VARCHAR(50) NOT NULL,                -- business type key
     `location_id`   INT(11)     NOT NULL,                -- location id
+    `location_x`    DECIMAL(12,6) NOT NULL,              -- location snapshot at raid time
+    `location_y`    DECIMAL(12,6) NOT NULL,
+    `location_z`    DECIMAL(12,6) NOT NULL,
     `raided_at`     BIGINT(20)  NOT NULL,                -- unix timestamp of raid
     PRIMARY KEY (`id`),
     KEY `location` (`business_type`, `location_id`)

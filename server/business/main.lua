@@ -11,6 +11,10 @@
 --- Returns available, unowned locations for an unlocked business tier.
 --- Locked-tier coordinates are never returned by this callback.
 lib.callback.register("t1ger_moneywash:server:getAvailableLocations", function(source, businessType)
+    if not IsBusinessStoreReady() then
+        return {}
+    end
+    
     local identifier = _API.Player.GetIdentifier(source)
     if not identifier then return {} end
 

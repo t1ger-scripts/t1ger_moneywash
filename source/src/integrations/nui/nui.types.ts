@@ -23,7 +23,7 @@ export interface PortalBusinessLocation {
     ownedBusinessId: number | null
     businessType: string
     displayName: string
-    imageFileName: string | null
+    imageFileName?: string | null
     price: number
     ownership: PortalLocationOwnership
     coordinates: PortalCoordinates

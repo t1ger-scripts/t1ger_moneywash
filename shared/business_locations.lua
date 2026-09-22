@@ -1,8 +1,8 @@
 -- All 96 real GTA V business locations indexed by [type][id]
 -- id is an explicit table key (not array position) so locations can be
 -- reordered or removed without breaking existing ownership records in the DB
--- Optional per-location `price` field overrides the tier base price
--- (useful for rural/less desirable spots e.g. Paleto Bay, Sandy Shores)
+-- Optional per-location `price` field overrides the tier base price (useful for rural/less desirable spots e.g. Paleto Bay, Sandy Shores)
+-- Optional per-location `image` field references an image filename from source/public/images/businesses
 
 return {
     -- TIER 1: Coffee Shop (21 locations)
