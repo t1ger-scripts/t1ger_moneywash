@@ -23,10 +23,7 @@ usePortalLifecycle()
   height: 100vh;
   overflow: hidden;
   place-items: center;
-  background:
-    radial-gradient(circle at center,
-      rgb(2 8 18 / 72%) 0%,
-      rgb(2 8 18 / 95%) 100%);
+  background: radial-gradient(circle at 50% 38%, rgba(29, 33, 39, .74), rgba(4, 6, 8, .96) 70%);
 
   &__window {
     width: 80vw;
