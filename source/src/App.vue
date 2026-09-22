@@ -10,15 +10,42 @@ usePortalLifecycle()
 
 <template>
   <div v-if="portalStore.isVisible" class="portal-root">
-    <MarketplaceView />
+    <div class="portal-root__window">
+      <MarketplaceView />
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .portal-root {
+  display: grid;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: var(--color-background);
+  place-items: center;
+  background:
+    radial-gradient(circle at center,
+      rgb(2 8 18 / 42%) 0%,
+      rgb(2 8 18 / 76%) 100%);
+
+  &__window {
+    width: 86vw;
+    height: 80vh;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    border: var(--border-width) solid var(--color-border-strong);
+    border-radius: var(--radius-xl);
+    background: var(--color-background);
+    box-shadow: var(--shadow-modal);
+  }
+}
+
+@media (max-width: 90rem),
+(max-height: 50rem) {
+  .portal-root__window {
+    width: 96vw;
+    height: 94vh;
+  }
 }
 </style>
