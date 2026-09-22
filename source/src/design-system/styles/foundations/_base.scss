@@ -1,5 +1,10 @@
+html,
+body,
+#app {
+    background: transparent !important;
+}
+
 html {
-    background: transparent;
     font-family: var(--font-family-sans);
     font-size: 16px;
     text-rendering: optimizeLegibility;
@@ -9,7 +14,6 @@ html {
 body {
     min-width: 20rem;
     overflow: hidden;
-    background: transparent;
     color: var(--color-text-primary);
 }
 
