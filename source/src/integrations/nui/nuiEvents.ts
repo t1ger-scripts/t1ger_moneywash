@@ -1,14 +1,14 @@
 export const NUI_CALLBACKS = {
-    ready: 't1ger_moneywash:browser:ready',
-    purchaseBusiness: 't1ger_moneywash:browser:purchaseBusiness',
-    setBusinessWaypoint: 't1ger_moneywash:browser:setBusinessWaypoint',
-    close: 't1ger_moneywash:browser:close',
+    ready: 't1ger_moneywash:portal:ready',
+    purchaseBusiness: 't1ger_moneywash:portal:purchaseBusiness',
+    setBusinessWaypoint: 't1ger_moneywash:portal:setBusinessWaypoint',
+    close: 't1ger_moneywash:portal:close',
 } as const
 
 export const NUI_MESSAGES = {
-    open: 't1ger_moneywash:browser:open',
-    refresh: 't1ger_moneywash:browser:refresh',
-    close: 't1ger_moneywash:browser:close',
+    open: 't1ger_moneywash:portal:open',
+    refresh: 't1ger_moneywash:portal:refresh',
+    close: 't1ger_moneywash:portal:close',
 } as const
 
 export type NuiCallbackName =
