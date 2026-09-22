@@ -20,7 +20,7 @@ import PurchaseBusinessModal from './PurchaseBusinessModal.vue'
     display: grid;
     min-height: 0;
     grid-template-columns:
-        minmax(20rem, 30%) minmax(28rem, 1fr) minmax(22rem, 27%);
+        minmax(19rem, 25%) minmax(30rem, 1fr) minmax(22rem, 27%);
     gap: var(--space-3);
     padding: var(--space-3);
 }
