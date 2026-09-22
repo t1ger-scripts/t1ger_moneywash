@@ -1,5 +1,5 @@
 import type {
-    BrowserThemeConfig,
+    PortalThemeConfig,
     ThemeVariableName,
 } from './theme.types'
 
@@ -7,7 +7,7 @@ const themeVariables:
     Readonly<
         Partial<
             Record<
-                keyof BrowserThemeConfig,
+                keyof PortalThemeConfig,
                 ThemeVariableName
             >
         >
@@ -38,7 +38,7 @@ function isValidCssColor(value: string): boolean {
 }
 
 export function applyTheme(
-    theme: BrowserThemeConfig | undefined,
+    theme: PortalThemeConfig | undefined,
 ): void {
     if (!theme) {
         return
@@ -51,7 +51,7 @@ export function applyTheme(
         of Object.entries(themeVariables)
     ) {
         const value =
-            theme[configKey as keyof BrowserThemeConfig]
+            theme[configKey as keyof PortalThemeConfig]
 
         if (
             typeof value === 'string' &&

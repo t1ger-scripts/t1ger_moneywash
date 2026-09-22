@@ -1,5 +1,5 @@
 import type { LocaleMessages } from '@/integrations/localization/localization.types'
-import type { BrowserThemeConfig } from '@/integrations/theme/theme.types'
+import type { PortalThemeConfig } from '@/integrations/theme/theme.types'
 
 export interface PortalCoordinates {
     x: number
@@ -60,7 +60,7 @@ export interface PortalPlayerProfile {
 
 export interface PortalRuntimeSettings {
     currencySymbol: string
-    theme: BrowserThemeConfig
+    theme: PortalThemeConfig
 }
 
 export interface PortalLocalization {

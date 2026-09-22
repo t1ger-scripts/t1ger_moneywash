@@ -1,4 +1,4 @@
-export interface BrowserThemeConfig {
+export interface PortalThemeConfig {
     AccentColor?: string
     AccentHoverColor?: string
     AccentDarkColor?: string
