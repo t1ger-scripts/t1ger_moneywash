@@ -1,23 +1,27 @@
 export interface PortalThemeConfig {
-    AccentColor?: string
-    AccentHoverColor?: string
-    AccentDarkColor?: string
-    AccentSoftColor?: string
+    PrimaryColor?: string
+    PrimaryHoverColor?: string
+    PrimaryActiveColor?: string
+    PrimarySubtleColor?: string
 
-    BodyColor?: string
-    PanelColor?: string
-    PanelAltColor?: string
-    CardColor?: string
+    BackgroundColor?: string
+    SurfaceColor?: string
+    RaisedSurfaceColor?: string
+    HoverSurfaceColor?: string
 
     BorderColor?: string
-    BorderSoftColor?: string
+    StrongBorderColor?: string
 
-    TextColor?: string
+    PrimaryTextColor?: string
+    SecondaryTextColor?: string
     MutedTextColor?: string
 
     SuccessColor?: string
+    SuccessSubtleColor?: string
     WarningColor?: string
+    WarningSubtleColor?: string
     DangerColor?: string
+    DangerSubtleColor?: string
 }
 
 export type ThemeVariableName = `--${string}`

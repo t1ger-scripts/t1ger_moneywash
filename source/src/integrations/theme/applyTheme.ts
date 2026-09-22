@@ -12,25 +12,29 @@ const themeVariables:
             >
         >
     > = {
-    AccentColor: '--color-primary',
-    AccentHoverColor: '--color-primary-hover',
-    AccentDarkColor: '--color-primary-active',
-    AccentSoftColor: '--color-primary-subtle',
+    PrimaryColor: '--color-primary',
+    PrimaryHoverColor: '--color-primary-hover',
+    PrimaryActiveColor: '--color-primary-active',
+    PrimarySubtleColor: '--color-primary-subtle',
 
-    BodyColor: '--color-background',
-    PanelColor: '--color-surface',
-    PanelAltColor: '--color-surface-raised',
-    CardColor: '--color-surface-hover',
+    BackgroundColor: '--color-background',
+    SurfaceColor: '--color-surface',
+    RaisedSurfaceColor: '--color-surface-raised',
+    HoverSurfaceColor: '--color-surface-hover',
 
-    BorderColor: '--color-border-strong',
-    BorderSoftColor: '--color-border',
+    BorderColor: '--color-border',
+    StrongBorderColor: '--color-border-strong',
 
-    TextColor: '--color-text-primary',
-    MutedTextColor: '--color-text-secondary',
+    PrimaryTextColor: '--color-text-primary',
+    SecondaryTextColor: '--color-text-secondary',
+    MutedTextColor: '--color-text-muted',
 
     SuccessColor: '--color-success',
+    SuccessSubtleColor: '--color-success-subtle',
     WarningColor: '--color-warning',
+    WarningSubtleColor: '--color-warning-subtle',
     DangerColor: '--color-danger',
+    DangerSubtleColor: '--color-danger-subtle',
 }
 
 function isValidCssColor(value: string): boolean {

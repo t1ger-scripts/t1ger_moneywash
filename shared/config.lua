@@ -29,7 +29,39 @@ Config.Police = {
 
 Config.BusinessPortal = {
     Locale = "en",
-    
+
+    -- Runtime portal colors. Changes only require a resource restart.
+    Theme = {
+        -- Primary interaction colors
+        PrimaryColor       = "#1687ff",
+        PrimaryHoverColor  = "#3a9aff",
+        PrimaryActiveColor = "#0a6fd8",
+        PrimarySubtleColor = "rgb(22 135 255 / 14%)",
+
+        -- Application surfaces
+        BackgroundColor    = "#07111f",
+        SurfaceColor       = "#0c1a2a",
+        RaisedSurfaceColor = "#102238",
+        HoverSurfaceColor  = "#142b45",
+
+        -- Borders
+        BorderColor       = "#1d3854",
+        StrongBorderColor = "#2d5579",
+
+        -- Typography
+        PrimaryTextColor   = "#f3f7fb",
+        SecondaryTextColor = "#bdcadb",
+        MutedTextColor     = "#8295ac",
+
+        -- Status colors
+        SuccessColor       = "#20c985",
+        SuccessSubtleColor = "rgb(32 201 133 / 14%)",
+        WarningColor       = "#f2b84b",
+        WarningSubtleColor = "rgb(242 184 75 / 14%)",
+        DangerColor        = "#ef6262",
+        DangerSubtleColor  = "rgb(239 98 98 / 14%)",
+    },
+
     -- Computer and laptop models that provide access to the business portal
     Models = {
         "prop_monitor_01a",

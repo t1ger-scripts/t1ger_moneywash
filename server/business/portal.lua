@@ -182,7 +182,7 @@ local function createMarketplaceSnapshot(source)
 
     for _, business in ipairs(playerBusinesses) do
         ownedLocations[
-            ("%s:%d"):format(business.type, business.locationId)
+        ("%s:%d"):format(business.type, business.locationId)
         ] = business
     end
 
@@ -300,10 +300,7 @@ local function createMarketplaceSnapshot(source)
         locations = visibleLocations,
 
         settings = {
-            currencySymbol = Config.Currency or "$",
-
-            -- These values will begin overriding the compiled design tokens
-            -- when Config.BusinessPortal.Theme is added later.
+            currencySymbol = Config.CurrencySymbol or "$",
             theme = portalConfig.Theme or {},
         },
 
@@ -329,7 +326,6 @@ function RefreshBusinessPortalViewers(excludedSource)
         end
     end
 end
-
 
 --- Returns the initial portal snapshot and registers the player as a viewer.
 lib.callback.register(
