@@ -157,5 +157,87 @@
         "drive_to_bank": "Drive to the bank and deposit your cash",
         "interact_teller": "[E] Interact with bank teller",
         "drive_to_office": "Drive to the accountant office"
+    },
+    "common": {
+        "close": "Close",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "loading": "Loading..."
+    },
+    "portal": {
+        "header": {
+            "city": "Los Santos",
+            "portalName": "Business Portal",
+            "exchangeName": "Commercial Property Exchange",
+            "tagline": "Legitimate opportunities. Real returns.",
+            "bankBalance": "Bank Balance",
+            "investorScore": "Investor Score",
+            "investorScoreProgress": "Progress toward the next investor rank",
+            "scorePoints": "{points} pts",
+            "scoreProgressValue": "{current} / {next} pts"
+        },
+        "tierSelector": {
+            "ariaLabel": "Business tiers",
+            "tier": "Tier {number}",
+            "requiredScore": "{score} pts required",
+            "scoreRequirement": "{score} pts",
+            "available": "Available",
+            "locked": "Locked"
+        },
+        "businessList": {
+            "availability": "{available} of {total} locations currently available",
+            "searchPlaceholder": "Search locations...",
+            "clearSearch": "Clear location search",
+            "owned": "Owned",
+            "unknownLocation": "Unknown area",
+            "selectLocation": "View {business}",
+            "noLocations": "No locations are currently available for this business type.",
+            "noSearchResults": "No locations match your search.",
+            "searchLabel": "Search business locations"
+        },
+        "map": {
+            "ariaLabel": "Interactive business map",
+            "loadingTitle": "Loading satellite map",
+            "loadingDescription": "Preparing map tiles...",
+            "unavailableTitle": "Map unavailable",
+            "unavailableDescription": "The satellite map tiles could not be loaded.",
+            "retry": "Retry",
+            "zoomIn": "Zoom in",
+            "zoomOut": "Zoom out",
+            "showEntireMap": "Show entire map"
+        },
+        "businessDetails": {
+            "ariaLabel": "Business details",
+            "available": "Available",
+            "owned": "Owned",
+            "unknownStreet": "Street information unavailable",
+            "unknownZone": "Unknown area",
+            "acquisitionPrice": "Acquisition Price",
+            "projectedRevenue": "Projected Revenue",
+            "revenueCycle": "{amount} / cycle",
+            "operatingFee": "Operating Fee",
+            "operatingFeeValue": "{percentage}%",
+            "requiredInvestorScore": "Required Investor Score",
+            "investorScoreValue": "{points} pts",
+            "purchase": "Purchase Business",
+            "setWaypoint": "Set Waypoint",
+            "noSelectionTitle": "No locations available",
+            "noSelectionDescription": "There are no selectable business locations in this tier.",
+            "purchaseBlocked": {
+                "alreadyOwnsBusiness": "You can only own one business at a time.",
+                "insufficientFunds": "Your bank balance is too low to purchase this business.",
+                "tierLocked": "Your investor score does not meet this tier requirement.",
+                "locationUnavailable": "This business is no longer available."
+            }
+        },
+        "purchaseDialog": {
+            "eyebrow": "Business Acquisition",
+            "title": "Purchase {business}",
+            "confirmation": "You are about to acquire {business}.",
+            "price": "Acquisition Price",
+            "notice": "The purchase is final once the transaction has been approved.",
+            "confirm": "Confirm Purchase",
+            "failed": "The purchase could not be completed. Please try again."
+        }
     }
 }

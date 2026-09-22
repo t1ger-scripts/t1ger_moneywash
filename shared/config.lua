@@ -28,6 +28,8 @@ Config.Police = {
 }
 
 Config.BusinessPortal = {
+    Locale = "en",
+    
     -- Computer and laptop models that provide access to the business portal
     Models = {
         "prop_monitor_01a",

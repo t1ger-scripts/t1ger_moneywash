@@ -366,7 +366,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <section class="business-location-map" :aria-label="t('portal.map.label')">
+    <section class="business-location-map" :aria-label="t('portal.map.ariaLabel')">
         <div ref="mapElement" class="business-location-map__canvas" />
 
         <div class="business-location-map__controls">
