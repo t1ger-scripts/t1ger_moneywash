@@ -1,44 +1,17 @@
 <script setup lang="ts">
-import type { Component } from 'vue'
 import { computed } from 'vue'
-import {
-    Building2,
-    CarFront,
-    Coffee,
-    Dices,
-    Fuel,
-    Martini,
-    Music2,
-    Sparkles,
-    UtensilsCrossed,
-    WashingMachine,
-} from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import type { BusinessTier } from '@/domain/marketplace'
 import { useMarketplaceStore } from '@/stores/marketplace.store'
 import { formatNumber } from '@/utils/formatters'
 
+import BusinessTypeIcon from './BusinessTypeIcon.vue'
+
 const marketplaceStore = useMarketplaceStore()
 const { locale, t } = useI18n()
 
 const tiers = computed(() => marketplaceStore.tiers)
-
-const tierIcons: Readonly<Record<string, Component>> = {
-    coffee_shop: Coffee,
-    gas_station: Fuel,
-    restaurant: UtensilsCrossed,
-    laundromat: WashingMachine,
-    bar: Martini,
-    nightclub: Music2,
-    stripclub: Sparkles,
-    carwash: CarFront,
-    casino: Dices,
-}
-
-function getTierIcon(businessType: string): Component {
-    return tierIcons[businessType] ?? Building2
-}
 
 function isTierAccessible(tier: BusinessTier): boolean {
     if (tier.isUnlocked) return true
@@ -88,7 +61,7 @@ function createTierLabel(tier: BusinessTier): string {
             }" type="button" :disabled="!isTierAccessible(tier)" :aria-pressed="isTierSelected(tier)"
                 :aria-label="createTierLabel(tier)" @click="selectTier(tier)">
                 <span class="tier-selector__icon">
-                    <component :is="getTierIcon(tier.businessType)" :size="26" :stroke-width="2" aria-hidden="true" />
+                    <BusinessTypeIcon :business-type="tier.businessType" :size="26" :stroke-width="2.1" />
                 </span>
 
                 <span class="tier-selector__content">
@@ -103,7 +76,7 @@ function createTierLabel(tier: BusinessTier): string {
                                     tier.requiredInvestorScore,
                                     locale,
                                 ),
-                        })
+                            })
                         }}
                     </span>
                 </span>

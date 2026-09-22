@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 
 import '@fontsource-variable/inter'
+import 'leaflet/dist/leaflet.css'
 import '@/design-system/styles/main.scss'
 
 import App from '@/App.vue'

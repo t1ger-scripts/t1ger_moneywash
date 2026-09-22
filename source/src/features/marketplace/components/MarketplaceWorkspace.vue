@@ -1,60 +1,28 @@
 <script setup lang="ts">
-import { Map } from '@lucide/vue'
-import { useI18n } from 'vue-i18n'
-
-import AppSurface from '@/design-system/components/AppSurface.vue'
-
 import BusinessLocationList from './BusinessLocationList.vue'
-
-const { t } = useI18n()
+import BusinessLocationMap from './BusinessLocationMap.vue'
 </script>
 
 <template>
-    <section class="marketplace-workspace">
+    <main class="marketplace-workspace">
         <BusinessLocationList />
-
-        <AppSurface class="marketplace-workspace__map" elevation="raised">
-            <Map :size="42" :stroke-width="1.5" aria-hidden="true" />
-
-            <div>
-                <h2>{{ t('portal.mapPlaceholder.title') }}</h2>
-                <p>{{ t('portal.mapPlaceholder.description') }}</p>
-            </div>
-        </AppSurface>
-    </section>
+        <BusinessLocationMap />
+    </main>
 </template>
 
 <style scoped lang="scss">
 .marketplace-workspace {
     display: grid;
-    min-width: 0;
-    min-height: 0;
-    grid-template-columns:
-        minmax(20rem, 3fr) minmax(0, 7fr);
+    grid-template-columns: minmax(21rem, 30%) minmax(0, 70%);
     gap: var(--space-4);
-    padding:
-        var(--space-4) var(--space-6) var(--space-6);
+    min-height: 0;
+    padding: var(--space-4);
+    flex: 1;
+}
 
-    &__map {
-        display: grid;
-        min-width: 0;
-        min-height: 0;
-        align-content: center;
-        justify-items: center;
-        gap: var(--space-4);
-        color: var(--color-text-muted);
-        text-align: center;
-
-        h2 {
-            color: var(--color-text-primary);
-            font-size: var(--font-size-lg);
-        }
-
-        p {
-            margin-top: var(--space-2);
-            color: var(--color-text-secondary);
-            font-size: var(--font-size-sm);
-        }
+@media (max-width: 80rem) {
+    .marketplace-workspace {
+        grid-template-columns: minmax(19rem, 34%) minmax(0, 66%);
     }
 }
 </style>

@@ -8,14 +8,6 @@ const fallbackMessages: LocaleMessages = {
         cancel: 'Cancel',
         loading: 'Loading...',
     },
-
-    marketplace: {
-        portalName: 'Los Santos Business Portal',
-        portalSubtitle: 'Commercial Property Exchange',
-        bankBalance: 'Bank Balance',
-        investorScore: 'Investor Score',
-        pointsAbbreviation: 'pts',
-    },
 }
 
 export const i18n = createI18n<
