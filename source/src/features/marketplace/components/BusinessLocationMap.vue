@@ -167,12 +167,16 @@ function showEntireMap(animated = true) {
 
     map.invalidateSize(false)
 
+    const overviewZoom = map.getMinZoom()
+    const zoomDistance = Math.abs(map.getZoom() - overviewZoom)
+    const shouldAnimate = animated && zoomDistance <= 1
+
     map.setView(
         mapBounds.getCenter(),
-        map.getMinZoom(),
+        overviewZoom,
         {
-            animate: animated,
-            duration: animated ? 0.65 : 0,
+            animate: shouldAnimate,
+            duration: shouldAnimate ? 0.65 : 0,
         },
     )
 }
@@ -236,6 +240,9 @@ function loadSatelliteTiles(preferredExtension: TileExtension = 'jpg') {
             minZoom: 0,
             maxZoom: MAXIMUM_MAP_ZOOM,
             noWrap: true,
+            updateWhenZooming: true,
+            updateWhenIdle: false,
+            updateInterval: 200,
             keepBuffer: 2,
             bounds: mapBounds,
         },
@@ -280,6 +287,13 @@ function retryMapTiles() {
     loadSatelliteTiles('jpg')
 }
 
+function setMapInteractionState(isInteracting: boolean) {
+    mapElement.value?.classList.toggle(
+        'business-location-map__canvas--interacting',
+        isInteracting,
+    )
+}
+
 onMounted(async () => {
     await nextTick()
 
@@ -293,12 +307,23 @@ onMounted(async () => {
         zoom: 3,
         minZoom: 0,
         maxZoom: MAXIMUM_MAP_ZOOM,
+        zoomAnimation: true,
+        fadeAnimation: true,
+        markerZoomAnimation: true,
         zoomSnap: 0.25,
         zoomDelta: 0.5,
         zoomControl: false,
         attributionControl: false,
         maxBounds: mapBounds,
         maxBoundsViscosity: 1,
+    })
+
+    map.on('movestart', () => {
+        setMapInteractionState(true)
+    })
+
+    map.on('moveend', () => {
+        setMapInteractionState(false)
     })
 
     markerLayer = L.layerGroup().addTo(map)
@@ -523,6 +548,14 @@ onBeforeUnmount(() => {
         color: var(--color-primary);
         background: transparent;
         cursor: pointer;
+    }
+}
+
+.business-location-map__canvas {
+    background-color: #000;
+
+    :global(.leaflet-container img.leaflet-tile) {
+        mix-blend-mode: screen;
     }
 }
 
