@@ -628,6 +628,44 @@ onBeforeUnmount(() => {
     transform: translateX(-50%);
 }
 
+:global(.business-map-marker--owned.business-map-marker--selected) {
+    filter:
+        drop-shadow(0 0 5px var(--color-success))
+        drop-shadow(0 0 12px var(--color-success));
+}
+
+:global(.business-map-marker--owned.business-map-marker--selected::before) {
+    background: var(--color-success);
+}
+
+:global(.business-map-marker--owned.business-map-marker--selected::after) {
+    border-color:
+        color-mix(
+            in srgb,
+            var(--color-success) 85%,
+            #ffffff
+        );
+    background:
+        color-mix(
+            in srgb,
+            var(--color-success) 16%,
+            transparent
+        );
+    box-shadow:
+        0 0 0 0.28rem
+            color-mix(
+                in srgb,
+                var(--color-success) 14%,
+                transparent
+            ),
+        0 0 1rem
+            color-mix(
+                in srgb,
+                var(--color-success) 75%,
+                transparent
+            );
+}
+
 :global(.business-map-marker__icon) {
     position: absolute;
     z-index: 2;

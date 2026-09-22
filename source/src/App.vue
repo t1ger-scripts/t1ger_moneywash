@@ -25,11 +25,11 @@ usePortalLifecycle()
   place-items: center;
   background:
     radial-gradient(circle at center,
-      rgb(2 8 18 / 42%) 0%,
-      rgb(2 8 18 / 76%) 100%);
+      rgb(2 8 18 / 72%) 0%,
+      rgb(2 8 18 / 95%) 100%);
 
   &__window {
-    width: 86vw;
+    width: 80vw;
     height: 80vh;
     min-width: 0;
     min-height: 0;

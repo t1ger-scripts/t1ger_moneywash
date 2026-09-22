@@ -125,10 +125,12 @@ function createTierLabel(tier: BusinessTier): string {
         }
 
         &--accessible {
+            .tier-selector__icon {
+                color: var(--color-text-secondary);
+            }
 
-            .tier-selector__icon,
             .tier-selector__requirement {
-                color: var(--color-success);
+                color: var(--color-text-muted);
             }
         }
 
