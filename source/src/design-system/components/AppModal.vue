@@ -33,9 +33,14 @@ function closeModal(): void {
 }
 
 function handleKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape' && props.open) {
-        closeModal()
+    if (event.key !== 'Escape' || !props.open) {
+        return
     }
+
+    event.preventDefault()
+    event.stopPropagation()
+
+    closeModal()
 }
 
 watch(
@@ -92,7 +97,7 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .app-modal {
     position: fixed;
-    z-index: var(--z-index-overlay);
+    z-index: var(--z-index-modal);
     inset: 0;
     display: grid;
     padding: var(--space-6);

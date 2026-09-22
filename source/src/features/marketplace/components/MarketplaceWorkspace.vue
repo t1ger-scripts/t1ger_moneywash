@@ -1,28 +1,34 @@
 <script setup lang="ts">
+import BusinessLocationDetails from './BusinessLocationDetails.vue'
 import BusinessLocationList from './BusinessLocationList.vue'
 import BusinessLocationMap from './BusinessLocationMap.vue'
+import PurchaseBusinessModal from './PurchaseBusinessModal.vue'
 </script>
 
 <template>
     <main class="marketplace-workspace">
         <BusinessLocationList />
         <BusinessLocationMap />
+        <BusinessLocationDetails />
+
+        <PurchaseBusinessModal />
     </main>
 </template>
 
 <style scoped lang="scss">
 .marketplace-workspace {
     display: grid;
-    grid-template-columns: minmax(21rem, 30%) minmax(0, 70%);
-    gap: var(--space-4);
     min-height: 0;
-    padding: var(--space-4);
-    flex: 1;
+    grid-template-columns:
+        minmax(20rem, 30%) minmax(28rem, 1fr) minmax(22rem, 27%);
+    gap: var(--space-3);
+    padding: var(--space-3);
 }
 
-@media (max-width: 80rem) {
+@media (max-width: 90rem) {
     .marketplace-workspace {
-        grid-template-columns: minmax(19rem, 34%) minmax(0, 66%);
+        grid-template-columns:
+            minmax(19rem, 29%) minmax(25rem, 1fr) minmax(21rem, 28%);
     }
 }
 </style>

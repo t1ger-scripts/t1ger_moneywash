@@ -31,6 +31,28 @@ function isTierAccessible(
     return tier.isUnlocked || tierContainsOwnedBusiness(snapshot, tier)
 }
 
+function findPreferredLocationId(
+    snapshot: MarketplaceSnapshot,
+    tierNumber: number | null,
+): string | null {
+    const tier = snapshot.tiers.find(
+        (candidate) => candidate.tierNumber === tierNumber,
+    )
+
+    if (!tier) return null
+
+    const tierLocations = snapshot.locations.filter(
+        (location) =>
+            location.businessType === tier.businessType,
+    )
+
+    const ownedLocation = tierLocations.find(
+        (location) => location.ownership === 'ownedByPlayer',
+    )
+
+    return ownedLocation?.id ?? tierLocations[0]?.id ?? null
+}
+
 export const useMarketplaceStore = defineStore('marketplace', () => {
     const snapshot = ref<MarketplaceSnapshot | null>(null)
     const selectedTierNumber = ref<number | null>(null)
@@ -148,19 +170,23 @@ export const useMarketplaceStore = defineStore('marketplace', () => {
                 )?.tierNumber ?? null
         }
 
+        const activeTier = nextSnapshot.tiers.find(
+            (tier) =>
+                tier.tierNumber === selectedTierNumber.value,
+        )
+
         const selectedLocationStillExists =
             nextSnapshot.locations.some(
                 (location) =>
                     location.id === selectedLocationId.value
-                    && location.businessType
-                    === nextSnapshot.tiers.find(
-                        (tier) =>
-                            tier.tierNumber === selectedTierNumber.value,
-                    )?.businessType,
+                    && location.businessType === activeTier?.businessType,
             )
 
         if (!selectedLocationStillExists) {
-            selectedLocationId.value = null
+            selectedLocationId.value = findPreferredLocationId(
+                nextSnapshot,
+                selectedTierNumber.value,
+            )
         }
 
         const dialogLocation = nextSnapshot.locations.find(
@@ -195,7 +221,10 @@ export const useMarketplaceStore = defineStore('marketplace', () => {
         if (!tier || !isTierAccessible(currentSnapshot, tier)) return
 
         selectedTierNumber.value = tierNumber
-        selectedLocationId.value = null
+        selectedLocationId.value = findPreferredLocationId(
+            currentSnapshot,
+            tierNumber,
+        )
         purchaseDialogLocationId.value = null
         searchQuery.value = ''
     }

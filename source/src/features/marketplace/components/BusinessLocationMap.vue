@@ -13,6 +13,7 @@ type TileExtension = 'jpg' | 'png'
 
 const MAXIMUM_MAP_ZOOM = 5
 const SELECTED_LOCATION_ZOOM = 5
+const OVERVIEW_ZOOM_OFFSET = 0.20
 
 const { t } = useI18n()
 const marketplaceStore = useMarketplaceStore()
@@ -114,8 +115,7 @@ function createMarkerIcon(
         className: 'business-map-marker-shell',
         html: markerElement,
         iconSize: [width, height],
-        iconAnchor: [width / 2, height],
-        tooltipAnchor: [0, -height + 4],
+        iconAnchor: [width / 2, height]
     })
 }
 
@@ -165,11 +165,16 @@ function showEntireMap(animated = true) {
         return
     }
 
-    map.fitBounds(mapBounds, {
-        animate: animated,
-        duration: animated ? 0.65 : 0,
-        padding: [12, 12],
-    })
+    map.invalidateSize(false)
+
+    map.setView(
+        mapBounds.getCenter(),
+        map.getMinZoom(),
+        {
+            animate: animated,
+            duration: animated ? 0.65 : 0,
+        },
+    )
 }
 
 function zoomIn() {
@@ -187,9 +192,15 @@ function updateMinimumZoom() {
 
     map.invalidateSize(false)
 
-    const minimumZoom = Math.max(
-        0,
-        map.getBoundsZoom(mapBounds, true),
+    const fittedZoom = map.getBoundsZoom(
+        mapBounds,
+        false,
+        L.point(12, 12),
+    )
+
+    const minimumZoom = Math.min(
+        MAXIMUM_MAP_ZOOM,
+        Math.max(0, fittedZoom + OVERVIEW_ZOOM_OFFSET),
     )
 
     map.setMinZoom(minimumZoom)
@@ -280,8 +291,10 @@ onMounted(async () => {
         crs: gtaCrs,
         center: [0, 0],
         zoom: 3,
-        minZoom: 1,
+        minZoom: 0,
         maxZoom: MAXIMUM_MAP_ZOOM,
+        zoomSnap: 0.25,
+        zoomDelta: 0.5,
         zoomControl: false,
         attributionControl: false,
         maxBounds: mapBounds,
@@ -296,7 +309,12 @@ onMounted(async () => {
     await nextTick()
 
     updateMinimumZoom()
-    showEntireMap(false)
+
+    if (marketplaceStore.selectedLocation) {
+        focusSelectedLocation(false)
+    } else {
+        showEntireMap(false)
+    }
 
     resizeObserver = new ResizeObserver(() => {
         updateMinimumZoom()
@@ -348,24 +366,24 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <section class="business-location-map" :aria-label="t('marketplace.map.label')">
+    <section class="business-location-map" :aria-label="t('portal.map.label')">
         <div ref="mapElement" class="business-location-map__canvas" />
 
         <div class="business-location-map__controls">
-            <button type="button" class="business-location-map__control" :aria-label="t('marketplace.map.zoomIn')"
-                :title="t('marketplace.map.zoomIn')" @click="zoomIn">
+            <button type="button" class="business-location-map__control" :aria-label="t('portal.map.zoomIn')"
+                :title="t('portal.map.zoomIn')" @click="zoomIn">
                 <Plus :size="21" :stroke-width="2.2" />
             </button>
 
-            <button type="button" class="business-location-map__control" :aria-label="t('marketplace.map.zoomOut')"
-                :title="t('marketplace.map.zoomOut')" @click="zoomOut">
+            <button type="button" class="business-location-map__control" :aria-label="t('portal.map.zoomOut')"
+                :title="t('portal.map.zoomOut')" @click="zoomOut">
                 <Minus :size="21" :stroke-width="2.2" />
             </button>
 
             <span class="business-location-map__control-divider" />
 
-            <button type="button" class="business-location-map__control" :aria-label="t('marketplace.map.showAll')"
-                :title="t('marketplace.map.showAll')" @click="showEntireMap()">
+            <button type="button" class="business-location-map__control" :aria-label="t('portal.map.showEntireMap')"
+                :title="t('portal.map.showEntireMap')" @click="showEntireMap()">
                 <LocateFixed :size="20" :stroke-width="2.1" />
             </button>
         </div>
@@ -373,21 +391,21 @@ onBeforeUnmount(() => {
         <div v-if="isLoading" class="business-location-map__status" role="status">
             <span class="business-location-map__spinner" />
 
-            <strong>{{ t('marketplace.map.loadingTitle') }}</strong>
+            <strong>{{ t('portal.map.loadingTitle') }}</strong>
 
-            <span>{{ t('marketplace.map.loadingDescription') }}</span>
+            <span>{{ t('portal.map.loadingDescription') }}</span>
         </div>
 
         <div v-else-if="hasTileError" class="business-location-map__status" role="alert">
             <TriangleAlert :size="30" :stroke-width="1.8" />
 
-            <strong>{{ t('marketplace.map.unavailableTitle') }}</strong>
+            <strong>{{ t('portal.map.unavailableTitle') }}</strong>
 
-            <span>{{ t('marketplace.map.unavailableDescription') }}</span>
+            <span>{{ t('portal.map.unavailableDescription') }}</span>
 
             <button type="button" class="business-location-map__retry" @click="retryMapTiles">
                 <RotateCcw :size="16" />
-                {{ t('marketplace.map.retry') }}
+                {{ t('portal.map.retry') }}
             </button>
         </div>
     </section>
@@ -396,13 +414,15 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .business-location-map {
     position: relative;
+    z-index: var(--z-index-map);
+    isolation: isolate;
     min-width: 0;
     min-height: 0;
     overflow: hidden;
-    border: 1px solid var(--color-border-default);
+    border: var(--border-width) solid var(--color-border);
     border-radius: var(--radius-lg);
     background: var(--color-surface-raised);
-    box-shadow: var(--shadow-panel);
+    box-shadow: var(--shadow-surface);
 
     &__canvas {
         width: 100%;
@@ -419,12 +439,12 @@ onBeforeUnmount(() => {
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        border: 1px solid var(--color-border-strong);
+        border: var(--border-width) solid var(--color-border-strong);
         border-radius: var(--radius-md);
         background: color-mix(in srgb,
-                var(--color-surface-overlay) 94%,
+                var(--color-surface) 94%,
                 transparent);
-        box-shadow: var(--shadow-lg);
+        box-shadow: var(--shadow-surface);
         backdrop-filter: blur(12px);
     }
 
@@ -438,8 +458,8 @@ onBeforeUnmount(() => {
         background: transparent;
         cursor: pointer;
         transition:
-            color var(--transition-fast),
-            background-color var(--transition-fast);
+            color var(--duration-fast) var(--ease-standard),
+            background-color var(--duration-fast) var(--ease-standard);
 
         &:hover {
             color: var(--color-primary);
@@ -457,7 +477,7 @@ onBeforeUnmount(() => {
     &__control-divider {
         height: 1px;
         margin-inline: var(--space-2);
-        background: var(--color-border-default);
+        background: var(--color-border);
     }
 
     &__status {
