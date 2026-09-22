@@ -66,16 +66,6 @@ function getLocationCoordinates(location: BusinessLocation): L.LatLngExpression 
     return [location.coordinates.y, location.coordinates.x]
 }
 
-function getLocationAddress(location: BusinessLocation): string {
-    const { street, crossingRoad, zone } = location.address
-
-    if (street && crossingRoad) {
-        return `${street} / ${crossingRoad}`
-    }
-
-    return street || zone || ''
-}
-
 function clearRenderedIcons() {
     for (const iconHost of renderedIconHosts) {
         render(null, iconHost)
@@ -117,8 +107,8 @@ function createMarkerIcon(
 
     renderedIconHosts.push(iconHost)
 
-    const width = isSelected ? 46 : 38
-    const height = isSelected ? 54 : 46
+    const width = 40
+    const height = 48
 
     return L.divIcon({
         className: 'business-map-marker-shell',
@@ -127,17 +117,6 @@ function createMarkerIcon(
         iconAnchor: [width / 2, height],
         tooltipAnchor: [0, -height + 4],
     })
-}
-
-function createMarkerTooltip(location: BusinessLocation): HTMLElement {
-    const tooltip = document.createElement('span')
-    const address = getLocationAddress(location)
-
-    tooltip.textContent = address
-        ? `${location.displayName} · ${address}`
-        : location.displayName
-
-    return tooltip
 }
 
 function renderMarkers() {
@@ -156,13 +135,6 @@ function renderMarkers() {
             icon: createMarkerIcon(location, isSelected),
             keyboard: true,
             riseOnHover: true,
-            title: location.displayName,
-        })
-
-        marker.bindTooltip(createMarkerTooltip(location), {
-            direction: 'top',
-            offset: [0, -4],
-            opacity: 1,
         })
 
         marker.on('click', () => {
@@ -541,86 +513,76 @@ onBeforeUnmount(() => {
 
 :global(.business-map-marker) {
     position: relative;
-    display: grid;
-    width: 2.35rem;
-    height: 2.85rem;
-    justify-items: center;
-    padding-top: 0.52rem;
+    isolation: isolate;
+    width: 2.5rem;
+    height: 3rem;
     color: #ffffff;
-    filter: drop-shadow(0 4px 7px rgb(0 0 0 / 45%));
+    filter: drop-shadow(0 4px 6px rgb(0 0 0 / 55%));
     transform-origin: center bottom;
     transition:
-        transform var(--transition-fast),
-        filter var(--transition-fast);
+        transform var(--duration-fast) var(--ease-standard),
+        filter var(--duration-fast) var(--ease-standard);
 }
 
 :global(.business-map-marker::before) {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 2.35rem;
-    height: 2.35rem;
-    border: 2px solid #ffffff;
-    border-radius: 50%;
-    background: var(--color-primary);
-    content: '';
-}
-
-:global(.business-map-marker::after) {
-    position: absolute;
-    bottom: 0.08rem;
+    z-index: 1;
+    top: 0.2rem;
     left: 50%;
-    border-top: 0.9rem solid var(--color-primary);
-    border-right: 0.53rem solid transparent;
-    border-left: 0.53rem solid transparent;
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid #ffffff;
+    border-radius: 50% 50% 50% 0;
+    background: var(--color-primary);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
     content: '';
-    transform: translateX(-50%);
+    transform: translateX(-50%) rotate(-45deg);
 }
 
 :global(.business-map-marker--owned::before) {
     background: var(--color-success);
 }
 
-:global(.business-map-marker--owned::after) {
-    border-top-color: var(--color-success);
-}
-
 :global(.business-map-marker--selected) {
     filter:
-        drop-shadow(0 0 6px var(--color-primary)) drop-shadow(0 0 14px var(--color-primary));
-    transform: scale(1.18);
+        drop-shadow(0 0 5px var(--color-primary)) drop-shadow(0 0 12px var(--color-primary));
+    transform: scale(1.12);
 }
 
 :global(.business-map-marker--selected::before) {
-    border-width: 3px;
+    border-width: 2px;
     background: var(--color-primary);
 }
 
 :global(.business-map-marker--selected::after) {
-    border-top-color: var(--color-primary);
+    position: absolute;
+    z-index: 0;
+    top: -0.38rem;
+    left: 50%;
+    width: 3.2rem;
+    height: 3.2rem;
+    border: 2px solid color-mix(in srgb,
+            var(--color-primary) 85%,
+            #ffffff);
+    border-radius: 50%;
+    background: color-mix(in srgb,
+            var(--color-primary) 16%,
+            transparent);
+    box-shadow:
+        0 0 0 0.28rem rgb(47 129 247 / 14%),
+        0 0 1rem rgb(47 129 247 / 75%);
+    content: '';
+    transform: translateX(-50%);
 }
 
 :global(.business-map-marker__icon) {
-    position: relative;
-    z-index: 1;
+    position: absolute;
+    z-index: 2;
+    top: 0.62rem;
+    left: 50%;
     display: grid;
     place-items: center;
-}
-
-:global(.leaflet-tooltip) {
-    padding: 0.5rem 0.7rem;
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
-    color: var(--color-text-primary);
-    font-family: var(--font-family-body);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold);
-    background: var(--color-surface-overlay);
-    box-shadow: var(--shadow-md);
-}
-
-:global(.leaflet-tooltip-top::before) {
-    border-top-color: var(--color-surface-overlay);
+    transform: translateX(-50%);
 }
 
 @keyframes map-spin {
