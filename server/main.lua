@@ -174,7 +174,7 @@ CreateThread(function()
     else
         print(
             "[MoneyWash] Failed to load businesses. " ..
-            "The browser marketplace will remain unavailable."
+            "The business portal will remain unavailable."
         )
     end
 

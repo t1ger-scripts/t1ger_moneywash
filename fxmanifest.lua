@@ -37,7 +37,7 @@ client_scripts {
     'client/functions.lua',
     'client/reputation.lua',
     'client/customize.lua',
-    'client/browser.lua',
+    'client/business/portal.lua',
     'client/business/main.lua',
     'client/business/menu.lua',
     'client/business/missions.lua',
@@ -59,8 +59,8 @@ server_scripts {
     'server/business/store.lua',
     'server/business/functions.lua',
     'server/business/main.lua',
-
-    'server/browser.lua',
+    'server/business/portal.lua',
+    
     'server/main.lua',
 }
 

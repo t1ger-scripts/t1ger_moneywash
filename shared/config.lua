@@ -27,7 +27,7 @@ Config.Police = {
     DepositReviewMinGrade = 2,                       -- minimum grade required to review flagged bank deposits
 }
 
-Config.Browser = {
+Config.BusinessPortal = {
     -- Computer and laptop models that provide access to the business portal
     Models = {
         "prop_monitor_01a",
