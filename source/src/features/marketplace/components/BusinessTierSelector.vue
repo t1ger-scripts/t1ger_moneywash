@@ -53,7 +53,7 @@ function createTierLabel(tier: BusinessTier): string {
 
 <template>
     <nav class="tier-selector" :aria-label="t('portal.tierSelector.ariaLabel')">
-        <div class="tier-selector__track">
+        <div class="tier-selector__track app-scrollbar">
             <button v-for="tier in tiers" :key="tier.businessType" class="tier-selector__item" :class="{
                 'tier-selector__item--accessible': isTierAccessible(tier),
                 'tier-selector__item--selected': isTierSelected(tier),
@@ -98,9 +98,6 @@ function createTierLabel(tier: BusinessTier): string {
         grid-template-columns: repeat(9, minmax(9.5rem, 1fr));
         gap: var(--space-2);
         padding-bottom: var(--space-1);
-        scrollbar-width: thin;
-        scrollbar-color:
-            var(--color-border-strong) transparent;
     }
 
     &__item {

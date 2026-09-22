@@ -58,7 +58,7 @@ function handleImageError(): void {
 </script>
 
 <template>
-    <button class="business-list-item" :class="{
+    <button class="business-list-item" :data-location-id="location.id" :class="{
         'business-list-item--selected': selected,
         'business-list-item--owned':
             location.ownership === 'ownedByPlayer',

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { Building2, SearchX } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
@@ -13,6 +13,8 @@ import BusinessLocationListItem from './BusinessLocationListItem.vue'
 
 const marketplaceStore = useMarketplaceStore()
 const { locale, t } = useI18n()
+
+const locationListElement = ref<HTMLDivElement | null>(null)
 
 const selectedTier = computed(
     () => marketplaceStore.selectedTier,
@@ -46,6 +48,50 @@ const emptyStateTranslation = computed(() => {
     return 'portal.businessList.noSearchResults'
 })
 
+async function scrollSelectedLocationIntoView(
+    locationId: string,
+): Promise<void> {
+    if (!locations.value.some((location) => location.id === locationId)) {
+        marketplaceStore.setSearchQuery('')
+    }
+
+    await nextTick()
+
+    const listElement = locationListElement.value
+
+    if (!listElement) {
+        return
+    }
+
+    const selectedItem = Array.from(
+        listElement.querySelectorAll<HTMLElement>(
+            '[data-location-id]',
+        ),
+    ).find(
+        (item) => item.dataset.locationId === locationId,
+    )
+
+    selectedItem?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest',
+    })
+}
+
+watch(
+    () => marketplaceStore.selectedLocationId,
+    (locationId) => {
+        if (!locationId) {
+            return
+        }
+
+        void scrollSelectedLocationIntoView(locationId)
+    },
+    {
+        flush: 'post',
+    },
+)
+
 function selectLocation(locationId: string): void {
     marketplaceStore.selectLocation(locationId)
 }
@@ -65,7 +111,7 @@ function updateSearchQuery(value: string): void {
                     {{
                         t('portal.tierSelector.tier', {
                             number: selectedTier.tierNumber,
-                    })
+                        })
                     }}
                 </AppBadge>
 
@@ -79,7 +125,7 @@ function updateSearchQuery(value: string): void {
                 :clear-label="t('portal.businessList.clearSearch')" @update:model-value="updateSearchQuery" />
         </header>
 
-        <div v-if="locations.length > 0" class="business-list__locations">
+        <div v-if="locations.length > 0" ref="locationListElement" class="business-list__locations app-scrollbar">
             <BusinessLocationListItem v-for="location in locations" :key="location.id" :location="location"
                 :currency-symbol="marketplaceStore.currencySymbol" :selected="marketplaceStore.selectedLocationId === location.id
                     " @select="selectLocation" />
@@ -142,9 +188,6 @@ function updateSearchQuery(value: string): void {
         min-height: 0;
         overflow-y: auto;
         padding: var(--space-2);
-        scrollbar-width: thin;
-        scrollbar-color:
-            var(--color-border-strong) transparent;
     }
 
     &__empty {
