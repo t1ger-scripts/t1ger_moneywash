@@ -163,7 +163,7 @@ function updateSearchQuery(value: string): void {
         gap: var(--space-3);
 
         h2 {
-            flex: 0 1 auto;
+            flex: 0 0 auto;
             overflow: hidden;
             color: var(--color-text-primary);
             font-size: var(--font-size-lg);

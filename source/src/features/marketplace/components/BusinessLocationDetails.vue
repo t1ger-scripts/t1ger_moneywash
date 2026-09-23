@@ -163,13 +163,13 @@ async function setWaypoint(): Promise<void> {
                 </div>
             </div>
 
-            <div class="business-details__content">
+            <div class="business-details__content app-scrollbar">
                 <header class="business-details__header">
                     <h2>{{ selectedLocation.displayName }}</h2>
 
                     <AppBadge :tone="selectedLocation.ownership === 'ownedByPlayer'
-                            ? 'success'
-                            : 'primary'
+                        ? 'success'
+                        : 'primary'
                         " shape="rounded">
                         {{
                             selectedLocation.ownership === 'ownedByPlayer'
@@ -340,8 +340,6 @@ async function setWaypoint(): Promise<void> {
         min-height: 0;
         overflow-y: auto;
         padding: var(--space-5);
-        scrollbar-width: thin;
-        scrollbar-color: var(--color-border-strong) transparent;
     }
 
     &__header {
@@ -475,4 +473,22 @@ async function setWaypoint(): Promise<void> {
         }
     }
 }
+
+@media (max-width: 90rem), (max-height: 50rem) {
+    .business-details {
+        &__image {
+            min-height: 10rem;
+
+            img,
+            &-placeholder {
+                min-height: 10rem;
+            }
+        }
+
+        &__content {
+            padding: var(--space-4);
+        }
+    }
+}
+
 </style>

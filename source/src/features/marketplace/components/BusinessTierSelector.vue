@@ -104,8 +104,8 @@ function createTierLabel(tier: BusinessTier): string {
         display: flex;
         min-height: 4.75rem;
         align-items: center;
-        gap: var(--space-3);
-        padding: var(--space-3) var(--space-4);
+        gap: var(--space-2);
+        padding: var(--space-3);
         border: var(--border-width) solid var(--color-border);
         border-radius: var(--radius-md);
         background: var(--color-surface);
@@ -191,4 +191,16 @@ function createTierLabel(tier: BusinessTier): string {
         line-height: var(--line-height-tight);
     }
 }
+
+@media (max-width: 90rem), (max-height: 50rem) {
+    .tier-selector {
+        padding: var(--space-3) var(--space-4);
+
+        &__track {
+            grid-template-columns:
+                repeat(9, minmax(9.25rem, 1fr));
+        }
+    }
+}
+
 </style>

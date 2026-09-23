@@ -23,11 +23,14 @@ usePortalLifecycle()
   height: 100vh;
   overflow: hidden;
   place-items: center;
-  background: radial-gradient(circle at 50% 38%, rgba(29, 33, 39, .74), rgba(4, 6, 8, .96) 70%);
+  background:
+    radial-gradient(circle at 50% 38%,
+      rgba(29, 33, 39, 0.74),
+      rgba(4, 6, 8, 0.96) 70%);
 
   &__window {
-    width: 80vw;
-    height: 80vh;
+    width: min(96rem, 92vw);
+    height: min(54rem, 88vh);
     min-width: 0;
     min-height: 0;
     overflow: hidden;
@@ -35,14 +38,6 @@ usePortalLifecycle()
     border-radius: var(--radius-xl);
     background: var(--color-background);
     box-shadow: var(--shadow-modal);
-  }
-}
-
-@media (max-width: 90rem),
-(max-height: 50rem) {
-  .portal-root__window {
-    width: 96vw;
-    height: 94vh;
   }
 }
 </style>

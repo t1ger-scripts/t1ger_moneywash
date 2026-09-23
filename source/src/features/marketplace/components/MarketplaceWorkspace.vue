@@ -18,17 +18,13 @@ import PurchaseBusinessModal from './PurchaseBusinessModal.vue'
 <style scoped lang="scss">
 .marketplace-workspace {
     display: grid;
+    min-width: 0;
     min-height: 0;
     grid-template-columns:
-        minmax(19rem, 25%) minmax(30rem, 1fr) minmax(22rem, 27%);
+        minmax(18rem, 25%)
+        minmax(24rem, 1fr)
+        minmax(20rem, 27%);
     gap: var(--space-3);
     padding: var(--space-3);
-}
-
-@media (max-width: 90rem) {
-    .marketplace-workspace {
-        grid-template-columns:
-            minmax(19rem, 29%) minmax(25rem, 1fr) minmax(21rem, 28%);
-    }
 }
 </style>

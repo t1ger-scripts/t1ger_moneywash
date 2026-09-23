@@ -172,4 +172,13 @@ function handleImageError(): void {
         line-height: var(--line-height-tight);
     }
 }
+
+@media (max-width: 90rem), (max-height: 50rem) {
+    .business-list-item {
+        grid-template-columns:
+            5.75rem minmax(0, 1fr) auto;
+        gap: var(--space-2);
+    }
+}
+
 </style>

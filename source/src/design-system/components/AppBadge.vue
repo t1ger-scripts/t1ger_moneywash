@@ -23,6 +23,8 @@ withDefaults(
 <style scoped lang="scss">
 .app-badge {
     display: inline-flex;
+    flex: 0 0 auto;
+    white-space: nowrap;
     min-height: 1.625rem;
     align-items: center;
     padding: 0 var(--space-3);

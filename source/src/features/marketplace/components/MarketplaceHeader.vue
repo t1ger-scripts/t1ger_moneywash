@@ -286,9 +286,10 @@ const formattedInvestorScore = computed(() => {
     }
 }
 
-@media (max-width: 80rem) {
+@media (max-width: 90rem), (max-height: 50rem) {
     .marketplace-header {
         gap: var(--space-4);
+        padding-inline: var(--space-4);
 
         &__exchange {
             display: none;
