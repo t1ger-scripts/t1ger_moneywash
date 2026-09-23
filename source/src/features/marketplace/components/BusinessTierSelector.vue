@@ -192,7 +192,7 @@ function createTierLabel(tier: BusinessTier): string {
     }
 }
 
-@media (max-width: 90rem), (max-height: 50rem) {
+@container portal (max-width: 80rem) {
     .tier-selector {
         padding: var(--space-3) var(--space-4);
 

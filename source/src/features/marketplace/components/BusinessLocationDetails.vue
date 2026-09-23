@@ -474,13 +474,15 @@ async function setWaypoint(): Promise<void> {
     }
 }
 
-@media (max-width: 90rem), (max-height: 50rem) {
+@container portal (max-width: 80rem) {
     .business-details {
         &__image {
+            height: 10rem;
             min-height: 10rem;
 
             img,
             &-placeholder {
+                height: 10rem;
                 min-height: 10rem;
             }
         }

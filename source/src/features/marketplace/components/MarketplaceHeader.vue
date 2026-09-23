@@ -286,7 +286,7 @@ const formattedInvestorScore = computed(() => {
     }
 }
 
-@media (max-width: 90rem), (max-height: 50rem) {
+@container portal (max-width: 80rem) {
     .marketplace-header {
         gap: var(--space-4);
         padding-inline: var(--space-4);

@@ -173,7 +173,7 @@ function handleImageError(): void {
     }
 }
 
-@media (max-width: 90rem), (max-height: 50rem) {
+@container portal (max-width: 80rem) {
     .business-list-item {
         grid-template-columns:
             5.75rem minmax(0, 1fr) auto;

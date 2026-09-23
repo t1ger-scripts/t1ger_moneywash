@@ -29,15 +29,18 @@ usePortalLifecycle()
       rgba(4, 6, 8, 0.96) 70%);
 
   &__window {
-    width: min(96rem, 92vw);
-    height: min(54rem, 88vh);
+    width: clamp(80vw, calc(20vw + 72rem), 92vw);
+    height: clamp(80vh, calc(40vh + 27rem), 88vh);
     min-width: 0;
     min-height: 0;
     overflow: hidden;
+    container-name: portal;
+    container-type: inline-size;
     border: var(--border-width) solid var(--color-border-strong);
     border-radius: var(--radius-xl);
     background: var(--color-background);
     box-shadow: var(--shadow-modal);
   }
 }
+
 </style>
