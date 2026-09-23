@@ -68,6 +68,7 @@ files {
     'locales/*.json',
     'web/index.html',
     'web/assets/**/*',
+    'web/images/**/*',
 
     'web/mapStyles/styleSatelite/0/**/*',
     'web/mapStyles/styleSatelite/1/**/*',

@@ -248,7 +248,7 @@ local function createMarketplaceSnapshot(source)
                         or nil,
                     businessType = tier.type,
                     displayName = location.brand or tier.label,
-                    imageFileName = location.image,
+                    imageFileName = location.imageFileName,
                     price = location.price or tier.price,
                     ownership = ownedBusiness
                         and "ownedByPlayer"
