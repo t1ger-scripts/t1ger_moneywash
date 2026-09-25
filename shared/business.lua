@@ -31,11 +31,15 @@ Config.Business = {
         manage      = "fa-solid fa-gear",
         transfer    = "fa-solid fa-right-left",
         abandon     = "fa-solid fa-door-open",
+        profile     = "fa-solid fa-user",
     },
 
     -- Flat % tax deducted when a bank deposit clears into the player's personal bank
     -- Set to 0 to disable
     WithdrawalTax = 15,
+
+    -- Maximum distance (metres) between two players for a business transfer
+    TransferDistance = 10.0,
 
     -- Global stock economy ratios - all stock values are derived from expectedRevenue
     -- using these ratios so server owners only need to set expectedRevenue per tier

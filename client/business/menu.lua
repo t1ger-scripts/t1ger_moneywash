@@ -320,53 +320,78 @@ function OpenManageBusinessMenu(businessId, status)
     lib.showContext("moneywash:handler:manage")
 end
 
---- Transfer dialog — target player must be online and nearby.
+--- Returns display names for a list of ox_lib nearby player objects —
+--- character names when available, otherwise game names, resolved in
+--- a single round-trip regardless of list size.
+--- @param players table  Array of ox_lib nearby player objects { id, ... }
+--- @return table  [serverId] = name
+local function GetNearbyPlayerNames(players)
+    local serverIds = {}
+
+    for i = 1, #players do
+        serverIds[i] = GetPlayerServerId(players[i].id)
+    end
+
+    return lib.callback.await("t1ger_moneywash:server:getPlayerNames", false, serverIds) or {}
+end
+
+--- Transfer dialog — lets the player pick a nearby online player from a
+--- searchable dropdown and confirm via checkbox, all in one dialog.
+--- Cancelling, or submitting without checking the box, returns to the
+--- Manage Business menu rather than closing outright.
 --- @param businessId number
 function OpenTransferDialog(businessId)
+    local transferDistance = Config.Business.TransferDistance or 10.0
+    local coords = GetEntityCoords(PlayerPedId())
+
+    local nearbyPlayers = lib.getNearbyPlayers(coords, transferDistance, Config.Debug and true or false)
+    local players = {}
+
+    if #nearbyPlayers == 0 then
+        _API.ShowNotification(locale("menu.transfer.no_players_nearby"), "inform")
+        return lib.showContext("moneywash:handler:manage")
+    end
+
+    local names = GetNearbyPlayerNames(nearbyPlayers)
+    local playerOptions = {}
+
+    for i = 1, #nearbyPlayers do
+        local targetId = GetPlayerServerId(nearbyPlayers[i].id)
+        local targetName = names[targetId] or GetPlayerName(nearbyPlayers[i].id)
+
+        playerOptions[#playerOptions + 1] = {
+            value = targetId,
+            label = ("[%d] %s"):format(targetId, targetName),
+        }
+    end
+
     local input = lib.inputDialog(locale("menu.transfer.title"), {
         {
-            type        = "number",
-            label       = locale("menu.transfer.player_id_label"),
-            description = locale("menu.transfer.player_id_desc"),
-            required    = true,
-            min         = 1,
+            type       = "select",
+            label      = locale("menu.transfer.select_label"),
+            options    = playerOptions,
+            required   = true,
+            searchable = true,
+        },
+        {
+            type  = "checkbox",
+            label = locale("menu.transfer.confirm_body"),
+            required = true,
         },
     })
 
-    if not input or not input[1] then
-        return
+    if not input or not input[1] or not input[2] then
+        return lib.showContext("moneywash:handler:manage")
     end
 
     local targetId = tonumber(input[1])
-    if not targetId then
-        return
-    end
 
-    local confirmed = lib.alertDialog({
-        header   = locale("menu.transfer.confirm_title"),
-        content  = string.format(
-            locale("menu.transfer.confirm_body"),
-            targetId
-        ),
-        centered = true,
-        cancel   = true,
-    })
-
-    if confirmed ~= "confirm" then
-        return
-    end
-
-    local result = lib.callback.await(
-        "t1ger_moneywash:server:transferBusiness",
-        false,
-        targetId,
-        businessId
-    )
+    local result = lib.callback.await("t1ger_moneywash:server:transferBusiness", false, targetId, businessId)
 
     if result.success then
-        _API.ShowNotification(locale("menu.transfer.success"), "success", {})
+        _API.ShowNotification(locale("menu.transfer.success"), "success")
     else
-        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error", {})
+        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error")
     end
 end
 

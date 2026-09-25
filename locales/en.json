@@ -62,10 +62,9 @@
         },
         "transfer": {
             "title": "Transfer Business",
-            "player_id_label": "Nearby Player ID",
-            "player_id_desc": "The player must be online and within 10 metres",
-            "confirm_title": "Confirm Transfer",
-            "confirm_body": "Transfer this business to player ID %s?\n\nAll Safe balances, stock and suspicion will carry over to the new owner.",
+            "select_label": "Select a nearby player",
+            "no_players_nearby": "No players nearby",
+            "confirm_body": "I confirm I want to transfer this business. All Safe balances, stock and suspicion will carry over to the new owner. This cannot be undone.",
             "success": "Business transferred successfully"
         },
         "abandon": {

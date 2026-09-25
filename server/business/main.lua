@@ -100,14 +100,33 @@ lib.callback.register("t1ger_moneywash:server:buyBusiness", function(source, bus
     return { success = success, reason = reason }
 end)
 
+--- Returns display names for a list of player server IDs — character
+--- names when available, otherwise game names. Batched into a single
+--- callback so the transfer player picker only needs one round-trip
+--- regardless of how many nearby players there are.
+--- @param src number
+--- @param serverIds table  Array of player server IDs
+--- @return table  [serverId] = name
+lib.callback.register("t1ger_moneywash:server:getPlayerNames", function(src, serverIds)
+    local names = {}
+
+    if type(serverIds) ~= "table" then
+        return names
+    end
+
+    for _, targetSrc in ipairs(serverIds) do
+        names[targetSrc] = (Config.UseCharacterNames and _API.Player.GetCharacterName(targetSrc))
+            or GetPlayerName(targetSrc)
+            or ("Player %d"):format(targetSrc)
+    end
+
+    return names
+end)
+
 --- Transfer a business to another player
 lib.callback.register("t1ger_moneywash:server:transferBusiness", function(source, targetId, businessId)
     local success, reason = TransferBusiness(source, targetId, businessId)
-
-    return {
-        success = success,
-        reason = reason,
-    }
+    return {success = success, reason = reason}
 end)
 
 --- Abandon a business

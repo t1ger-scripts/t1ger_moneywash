@@ -4,6 +4,10 @@ Config.Debug = true   -- set to false in production
 
 Config.Currency = "$" -- currency symbol used in menus and notifications
 
+-- true = prefer the player's in-game character name where one is shown
+-- (e.g. the business transfer picker); false = always use their game name
+Config.UseCharacterNames = true
+
 --- Defines how dirty (unlaundered) money is represented on your server.
 --- Supports account-based dirty money (e.g. black_money) or item-based
 --- (stacked or metadata, e.g. markedbills). No logic files need changing.
@@ -80,7 +84,6 @@ Config.BusinessPortal = {
     },
 
     TargetDistance   = 2.0,
-    TransferDistance = 10.0,
     TargetIcon       = "fa-solid fa-building",
 }
 
