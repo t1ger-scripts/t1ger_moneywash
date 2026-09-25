@@ -1,33 +1,47 @@
--- All 96 real GTA V business locations indexed by [type][id]
--- id is an explicit table key (not array position) so locations can be
--- reordered or removed without breaking existing ownership records in the DB
--- Optional per-location `price` field overrides the tier base price (useful for rural/less desirable spots e.g. Paleto Bay, Sandy Shores)
--- Optional per-location `image` field references an image filename from source/public/images/businesses
+-- All 96 real GTA V business locations indexed by [type][id].
+--
+-- The ID is an explicit and permanent table key, not an array position.
+-- Locations may be reordered safely, but existing IDs must never be changed
+-- or reused because ownership records reference them in the database.
+--
+-- Optional per-location fields:
+-- `price` overrides the tier's default purchase price.
+-- `image` overrides the automatically generated business image filename.
+--
+-- Default image filenames use the following format:
+-- `<business_type>_<three-digit-location-id>.webp`
+-- Example: coffee_shop location [1] uses `coffee_shop_001.webp`.
+--
+-- Distributed business images are stored in:
+-- `web/images/businesses/`
+--
+-- Images can be replaced without rebuilding the UI when the existing filename
+-- is retained. Restart the resource afterward so clients receive the update.
 
 return {
     -- TIER 1: Coffee Shop (21 locations)
     coffee_shop = {
-        [1]  = { coords = vector4(-836.874695, -609.507690, 29.010254, 144.566910), brand = "Bean Machine", imageFileName = "coffee_shop_001.webp", },
-        [2]  = { coords = vector4(-1368.092285, -207.679123, 44.512085, 147.401581), brand = "Bean Machine", imageFileName = "coffee_shop_001.webp", },
-        [3]  = { coords = vector4(-689.208801, -854.716492, 23.820557, 0.000000), brand = "Bean Machine", imageFileName = "coffee_shop_001.webp", },
-        [4]  = { coords = vector4(282.659332, -963.784607, 29.414673, 357.165344), brand = "Bean Machine", imageFileName = "coffee_shop_001.webp", },
-        [5]  = { coords = vector4(-1706.202148, -1100.083496, 13.137695, 320.314972), brand = "Bean Machine", imageFileName = "coffee_shop_001.webp", },
-        [6]  = { coords = vector4(-602.017578, -1107.112061, 22.320923, 269.291351), brand = "Bean Machine", imageFileName = "coffee_shop_006.webp", },
-        [7]  = { coords = vector4(-312.237366, -823.542847, 32.413940, 107.716537), brand = "Bean Machine", imageFileName = "coffee_shop_007.webp", },
-        [8]  = { coords = vector4(-844.193420, -349.503296, 38.665161, 249.448822), brand = "Bean Machine", imageFileName = "coffee_shop_008.webp", },
-        [9]  = { coords = vector4(-629.182434, 238.298904, 81.885010, 8.503937), brand = "Bean Machine", imageFileName = "coffee_shop_009.webp", },
-        [10] = { coords = vector4(-691.806580, 314.887909, 83.098145, 192.755920), brand = "Bean Machine", imageFileName = "coffee_shop_010.webp", },
-        [11] = { coords = vector4(-1283.749390, -1130.703247, 6.785400, 136.062988), brand = "Bean Machine", imageFileName = "coffee_shop_011.webp", },
-        [12] = { coords = vector4(126.342857, -1028.162598, 29.347290, 348.661407), brand = "Bean Machine", imageFileName = "coffee_shop_012.webp", },
-        [13] = { coords = vector4(-660.738464, -815.630737, 24.528198, 235.275589), brand = "Bean Machine", imageFileName = "coffee_shop_013.webp", },
-        [14] = { coords = vector4(-271.279114, -977.010986, 31.200684, 181.417328), brand = "Bean Machine", imageFileName = "coffee_shop_014.webp", },
-        [15] = { coords = vector4(-1345.265991, -610.021973, 28.605835, 291.968506), brand = "Bean Machine", imageFileName = "coffee_shop_015.webp", },
-        [16] = { coords = vector4(-1548.237305, -434.610992, 35.885010, 240.944885), brand = "Bean Machine", imageFileName = "coffee_shop_016.webp", },
-        [17] = { coords = vector4(-1280.610962, -875.261536, 11.924561, 138.897629), brand = "Cool Beans", imageFileName = "coffee_shop_017.webp", },
-        [18] = { coords = vector4(1177.318726, -405.560425, 67.764893, 266.456696), brand = "Cool Beans", imageFileName = "coffee_shop_018.webp", },
-        [19] = { coords = vector4(265.292297, -981.731873, 29.347290, 70.866142), brand = "Cool Beans", imageFileName = "coffee_shop_019.webp", },
-        [20] = { coords = vector4(-1206.210938, -1136.043945, 7.678345, 110.551186), brand = "Cool Beans", imageFileName = "coffee_shop_020.webp", },
-        [21] = { coords = vector4(462.843964, -718.153870, 27.510620, 85.039368), brand = "Bean Machine", imageFileName = "coffee_shop_021.webp", },
+        [1]  = { coords = vector4(-836.874695, -609.507690, 29.010254, 144.566910), brand = "Bean Machine" },
+        [2]  = { coords = vector4(-1368.092285, -207.679123, 44.512085, 147.401581), brand = "Bean Machine" },
+        [3]  = { coords = vector4(-689.208801, -854.716492, 23.820557, 0.000000), brand = "Bean Machine" },
+        [4]  = { coords = vector4(282.659332, -963.784607, 29.414673, 357.165344), brand = "Bean Machine" },
+        [5]  = { coords = vector4(-1706.202148, -1100.083496, 13.137695, 320.314972), brand = "Bean Machine" },
+        [6]  = { coords = vector4(-602.017578, -1107.112061, 22.320923, 269.291351), brand = "Bean Machine" },
+        [7]  = { coords = vector4(-312.237366, -823.542847, 32.413940, 107.716537), brand = "Bean Machine" },
+        [8]  = { coords = vector4(-844.193420, -349.503296, 38.665161, 249.448822), brand = "Bean Machine" },
+        [9]  = { coords = vector4(-629.182434, 238.298904, 81.885010, 8.503937), brand = "Bean Machine" },
+        [10] = { coords = vector4(-691.806580, 314.887909, 83.098145, 192.755920), brand = "Bean Machine" },
+        [11] = { coords = vector4(-1283.749390, -1130.703247, 6.785400, 136.062988), brand = "Bean Machine" },
+        [12] = { coords = vector4(126.342857, -1028.162598, 29.347290, 348.661407), brand = "Bean Machine" },
+        [13] = { coords = vector4(-660.738464, -815.630737, 24.528198, 235.275589), brand = "Bean Machine" },
+        [14] = { coords = vector4(-271.279114, -977.010986, 31.200684, 181.417328), brand = "Bean Machine" },
+        [15] = { coords = vector4(-1345.265991, -610.021973, 28.605835, 291.968506), brand = "Bean Machine" },
+        [16] = { coords = vector4(-1548.237305, -434.610992, 35.885010, 240.944885), brand = "Bean Machine" },
+        [17] = { coords = vector4(-1280.610962, -875.261536, 11.924561, 138.897629), brand = "Cool Beans" },
+        [18] = { coords = vector4(1177.318726, -405.560425, 67.764893, 266.456696), brand = "Cool Beans" },
+        [19] = { coords = vector4(265.292297, -981.731873, 29.347290, 70.866142), brand = "Cool Beans" },
+        [20] = { coords = vector4(-1206.210938, -1136.043945, 7.678345, 110.551186), brand = "Cool Beans" },
+        [21] = { coords = vector4(462.843964, -718.153870, 27.510620, 85.039368), brand = "Bean Machine" },
     },
 
     -- TIER 2: Gas Station (24 locations)

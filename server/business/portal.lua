@@ -248,7 +248,7 @@ local function createMarketplaceSnapshot(source)
                         or nil,
                     businessType = tier.type,
                     displayName = location.brand or tier.label,
-                    imageFileName = location.imageFileName,
+                    imageFileName = location.image or ("%s_%03d.webp"):format(tier.type, locationId),
                     price = location.price or tier.price,
                     ownership = ownedBusiness
                         and "ownedByPlayer"
