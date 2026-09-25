@@ -21,6 +21,18 @@ Config.Business = {
     HandlerBlipScale   = 0.7,
     HandlerBlipColor   = 2,
 
+    -- Icons shown for each option in the Handler NPC's main menu
+    -- and Manage Business submenu
+    MenuIcons = {
+        launder     = "fa-solid fa-money-bill-wave",
+        orderStock  = "fa-solid fa-box",
+        bankDeposit = "fa-solid fa-building-columns",
+        reviewBooks = "fa-solid fa-book",
+        manage      = "fa-solid fa-gear",
+        transfer    = "fa-solid fa-right-left",
+        abandon     = "fa-solid fa-door-open",
+    },
+
     -- Flat % tax deducted when a bank deposit clears into the player's personal bank
     -- Set to 0 to disable
     WithdrawalTax = 15,
@@ -56,7 +68,7 @@ Config.Business = {
             type             = "gas_station",
             label            = "Gas Station",
             requiredPoints   = 500,
-            npc              = "s_m_y_xmech_02",
+            npc              = "s_m_y_xmech_01",
             expectedRevenue  = 6000,
             launderFee       = 23,
         },

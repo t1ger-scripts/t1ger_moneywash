@@ -52,6 +52,8 @@ function OpenHandlerMenu(businessId)
         { label = locale("menu.handler.review_receipts"), value = receiptCount },
     }
 
+    local menuIcons = Config.Business.MenuIcons or {}
+
     lib.registerContext({
         id       = "moneywash:handler:main",
         title    = locale("menu.handler.title"),
@@ -59,7 +61,7 @@ function OpenHandlerMenu(businessId)
         options  = {
             {
                 title       = locale("menu.handler.launder"),
-                icon        = "fa-solid fa-money-bill-wave",
+                icon        = menuIcons.launder or "fa-solid fa-money-bill-wave",
                 description = launderDesc,
                 disabled    = launderDisabled,
                 onSelect    = function()
@@ -68,7 +70,7 @@ function OpenHandlerMenu(businessId)
             },
             {
                 title       = locale("menu.handler.order_stock"),
-                icon        = "fa-solid fa-box",
+                icon        = menuIcons.orderStock or "fa-solid fa-box",
                 description = stockDesc,
                 disabled    = stockDisabled,
                 onSelect    = function()
@@ -77,7 +79,7 @@ function OpenHandlerMenu(businessId)
             },
             {
                 title       = locale("menu.handler.bank_deposit"),
-                icon        = "fa-solid fa-building-columns",
+                icon        = menuIcons.bankDeposit or "fa-solid fa-building-columns",
                 description = depositDesc,
                 disabled    = depositDisabled,
                 onSelect    = function()
@@ -86,7 +88,7 @@ function OpenHandlerMenu(businessId)
             },
             {
                 title       = locale("menu.handler.review_books"),
-                icon        = "fa-solid fa-book",
+                icon        = menuIcons.reviewBooks or "fa-solid fa-book",
                 description = reviewDesc,
                 disabled    = reviewDisabled,
                 metadata    = reviewMeta,
@@ -96,7 +98,7 @@ function OpenHandlerMenu(businessId)
             },
             {
                 title    = locale("menu.handler.manage"),
-                icon     = "fa-solid fa-gear",
+                icon     = menuIcons.manage or "fa-solid fa-gear",
                 onSelect = function()
                     OpenManageBusinessMenu(businessId, status)
                 end,
@@ -289,6 +291,8 @@ end
 --- @param businessId number
 --- @param status table
 function OpenManageBusinessMenu(businessId, status)
+    local menuIcons = Config.Business.MenuIcons or {}
+
     lib.registerContext({
         id      = "moneywash:handler:manage",
         title   = locale("menu.manage.title"),
@@ -296,7 +300,7 @@ function OpenManageBusinessMenu(businessId, status)
         options = {
             {
                 title       = locale("menu.manage.transfer"),
-                icon        = "fa-solid fa-right-left",
+                icon        = menuIcons.transfer or "fa-solid fa-right-left",
                 description = locale("menu.manage.transfer_desc"),
                 onSelect    = function()
                     OpenTransferDialog(businessId)
@@ -304,7 +308,7 @@ function OpenManageBusinessMenu(businessId, status)
             },
             {
                 title       = locale("menu.manage.abandon"),
-                icon        = "fa-solid fa-door-open",
+                icon        = menuIcons.abandon or "fa-solid fa-door-open",
                 description = locale("menu.manage.abandon_desc"),
                 onSelect    = function()
                     ConfirmAbandonBusiness(businessId)
