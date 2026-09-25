@@ -31,6 +31,23 @@ function isTierAccessible(
     return tier.isUnlocked || tierContainsOwnedBusiness(snapshot, tier)
 }
 
+function findOwnedBusinessTierNumber(
+    snapshot: MarketplaceSnapshot,
+): number | null {
+    const ownedLocation = snapshot.locations.find(
+        (location) => location.ownership === 'ownedByPlayer',
+    )
+
+    if (!ownedLocation) return null
+
+    const tier = snapshot.tiers.find(
+        (candidate) =>
+            candidate.businessType === ownedLocation.businessType,
+    )
+
+    return tier?.tierNumber ?? null
+}
+
 function findPreferredLocationId(
     snapshot: MarketplaceSnapshot,
     tierNumber: number | null,
@@ -165,9 +182,11 @@ export const useMarketplaceStore = defineStore('marketplace', () => {
             || !isTierAccessible(nextSnapshot, currentTier)
         ) {
             selectedTierNumber.value =
-                nextSnapshot.tiers.find(
+                findOwnedBusinessTierNumber(nextSnapshot)
+                ?? nextSnapshot.tiers.find(
                     (tier) => isTierAccessible(nextSnapshot, tier),
-                )?.tierNumber ?? null
+                )?.tierNumber
+                ?? null
         }
 
         const activeTier = nextSnapshot.tiers.find(
@@ -285,6 +304,7 @@ export const useMarketplaceStore = defineStore('marketplace', () => {
     }
 
     function resetInteractionState(): void {
+        selectedTierNumber.value = null
         selectedLocationId.value = null
         purchaseDialogLocationId.value = null
         pendingPurchaseLocationId.value = null
