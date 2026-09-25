@@ -168,41 +168,29 @@ end)
 RegisterNetEvent("t1ger_moneywash:client:businessSeized", function(businessId)
     OwnedBusinesses[businessId] = nil
     DespawnHandlerNPC(businessId)
-    _API.ShowNotification(locale("notification.business_seized"), "error")
+    _API.ShowNotification(locale("notification.business_seized"), "error", {})
 end)
 
 --- Business raided - notify player
 RegisterNetEvent("t1ger_moneywash:client:businessRaided", function(businessId, seizedAmount)
-    _API.ShowNotification(
-        string.format(locale("notification.business_raided"), FormatMoney(seizedAmount)),
-        "error"
-    )
+    _API.ShowNotification(string.format(locale("notification.business_raided"), FormatMoney(seizedAmount)), "error", {})
 end)
 
 --- Suspicion label changed - notify player if enabled
 RegisterNetEvent("t1ger_moneywash:client:suspicionLabelChanged", function(newLabel)
     if Config.Suspicion.NotifyOnLabelChange then
-        _API.ShowNotification(
-            string.format(locale("notification.suspicion_changed"), newLabel.name),
-            "inform"
-        )
+        _API.ShowNotification(string.format(locale("notification.suspicion_changed"), newLabel.name), "inform", {})
     end
 end)
 
 --- Bank deposit cleared - notify player
 RegisterNetEvent("t1ger_moneywash:client:depositCleared", function(amount)
-    _API.ShowNotification(
-        string.format(locale("notification.deposit_cleared"), FormatMoney(amount)),
-        "success"
-    )
+    _API.ShowNotification(string.format(locale("notification.deposit_cleared"), FormatMoney(amount)), "success", {})
 end)
 
 --- Bank deposit confiscated by police
 RegisterNetEvent("t1ger_moneywash:client:depositConfiscated", function(amount)
-    _API.ShowNotification(
-        string.format(locale("notification.deposit_confiscated"), FormatMoney(amount)),
-        "error"
-    )
+    _API.ShowNotification(string.format(locale("notification.deposit_confiscated"), FormatMoney(amount)), "error", {})
 end)
 
 --- Pending deposit synced on login (player had a deposit in progress)
@@ -227,7 +215,7 @@ function TriggerRaidAction(businessId)
         _API.ShowNotification(locale("notification.raid_failed_" .. (result.reason or "unknown")), "error")
         return
     end
-    _API.ShowNotification(locale("notification.raid_executed"), "success")
+    _API.ShowNotification(locale("notification.raid_executed"), "success", {})
 end
 
 --- -------------------------------------------------------------------------

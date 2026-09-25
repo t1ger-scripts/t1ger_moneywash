@@ -10,7 +10,7 @@
 function OpenHandlerMenu(businessId)
     local status = lib.callback.await("t1ger_moneywash:server:getBusinessStatus", false, businessId)
     if not status then
-        _API.ShowNotification({ title = locale("menu.handler.not_found"), type = "error" })
+        _API.ShowNotification(locale("menu.handler.not_found"), "error", {})
         return
     end
 
@@ -119,7 +119,7 @@ function OpenLaunderDialog(businessId, status)
     local dirtyMoney = _API.Player:GetDirtyMoney()
 
     if dirtyMoney <= 0 then
-        _API.ShowNotification({ title = locale("menu.launder.no_dirty_cash"), type = "error" })
+        _API.ShowNotification(locale("menu.launder.no_dirty_cash"), "error", {})
         return
     end
 
@@ -171,7 +171,7 @@ function OpenStockOrderDialog(businessId, status)
 
     local units = math.floor(tonumber(input[1]) or 0)
     if units < minOrder or units > maxOrder then
-        _API.ShowNotification({ title = locale("menu.stock.invalid_units"), type = "error" })
+        _API.ShowNotification(locale("menu.stock.invalid_units"), "error", {})
         return
     end
 
@@ -228,7 +228,7 @@ end
 --- @param receipts table available receipts from server
 function OpenReviewBooksMenu(businessId, receipts)
     if not receipts or #receipts == 0 then
-        _API.ShowNotification({ title = locale("menu.review.no_receipts"), type = "error" })
+        _API.ShowNotification(locale("menu.review.no_receipts"), "error", {})
         return
     end
 
@@ -265,7 +265,7 @@ function OpenReviewBooksMenu(businessId, receipts)
     )
 
     if not estimate then
-        _API.ShowNotification({ title = locale("menu.review.estimate_failed"), type = "error" })
+        _API.ShowNotification(locale("menu.review.estimate_failed"), "error", {})
         return
     end
 
@@ -364,17 +364,9 @@ function OpenTransferDialog(businessId)
     )
 
     if result.success then
-        _API.ShowNotification({
-            title = locale("menu.transfer.success"),
-            type = "success",
-        })
+        _API.ShowNotification(locale("menu.transfer.success"), "success", {})
     else
-        _API.ShowNotification({
-            title = locale(
-                "notification.error_" .. (result.reason or "unknown")
-            ),
-            type = "error",
-        })
+        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error", {})
     end
 end
 
@@ -393,12 +385,9 @@ function ConfirmAbandonBusiness(businessId)
     local result = lib.callback.await("t1ger_moneywash:server:abandonBusiness", false, businessId)
 
     if result.success then
-        _API.ShowNotification({ title = locale("menu.abandon.success"), type = "success" })
+        _API.ShowNotification(locale("menu.abandon.success"), "success", {})
     else
-        _API.ShowNotification({
-            title = locale("notification.error_" .. (result.reason or "unknown")),
-            type  = "error",
-        })
+        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error", {})
     end
 end
 
@@ -412,7 +401,7 @@ function OpenPoliceTellerMenu(bankCoords)
     local deposits = lib.callback.await("t1ger_moneywash:server:getFlaggedDeposits", false, bankCoords)
 
     if not deposits or #deposits == 0 then
-        _API.ShowNotification({ title = locale("menu.police.no_flagged_deposits"), type = "inform" })
+        _API.ShowNotification(locale("menu.police.no_flagged_deposits"), "inform", {})
         return
     end
 
@@ -464,11 +453,8 @@ function ConfirmConfiscateDeposit(targetIdentifier, amount)
     local result = lib.callback.await("t1ger_moneywash:server:confiscateDeposit", false, targetIdentifier)
 
     if result.success then
-        _API.ShowNotification({ title = locale("menu.police.confiscate_success"), type = "success" })
+        _API.ShowNotification(locale("menu.police.confiscate_success"), "success", {})
     else
-        _API.ShowNotification({
-            title = locale("notification.error_" .. (result.reason or "unknown")),
-            type  = "error",
-        })
+        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error", {})
     end
 end
