@@ -103,15 +103,6 @@ export function usePortalLifecycle(): void {
 
         window.addEventListener('keydown', handleKeydown)
 
-        if (import.meta.env.DEV && !isFiveMEnvironment()) {
-            const { mockPortalBootstrap } = await import(
-                '@/development/mockPortalBootstrap'
-            )
-
-            openPortal(mockPortalBootstrap)
-            return
-        }
-
         if (isFiveMEnvironment()) {
             await notifyFiveMReady()
         }
