@@ -11,6 +11,16 @@ Config.Business = {
     -- Idle animation used by every Handler NPC regardless of tier
     HandlerScenario = "WORLD_HUMAN_STAND_IMPATIENT",
 
+    -- Handler NPC interaction target
+    HandlerTargetIcon     = "fa-solid fa-briefcase",
+    HandlerTargetDistance = 2.0,
+
+    -- Handler NPC map blip
+    HandlerBlipSprite  = 375,
+    HandlerBlipDisplay = 4,
+    HandlerBlipScale   = 0.7,
+    HandlerBlipColor   = 2,
+
     -- Flat % tax deducted when a bank deposit clears into the player's personal bank
     -- Set to 0 to disable
     WithdrawalTax = 15,

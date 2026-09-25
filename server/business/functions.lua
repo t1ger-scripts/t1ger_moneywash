@@ -195,13 +195,7 @@ function BuyBusiness(src, businessType, locationId)
         end
     end
 
-    TriggerClientEvent(
-        "t1ger_moneywash:client:businessPurchased",
-        src,
-        id,
-        businessType,
-        locationId
-    )
+    TriggerClientEvent("t1ger_moneywash:client:businessPurchased", src, id, businessType, locationId)
 
     if Config.Debug then
         print(("[MoneyWash] %s purchased %s #%d for $%d"):format(

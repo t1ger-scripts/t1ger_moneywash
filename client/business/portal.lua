@@ -5,6 +5,7 @@
 --- ============================================================================
 
 local TARGET_OPTION_NAME = "t1ger_moneywash_business_portal"
+local TARGET_OPTION_LABEL = locale("target.portal_npc")
 
 local SERVER_CALLBACKS = {
     getSnapshot = "t1ger_moneywash:server:businessPortal:getSnapshot",
@@ -415,7 +416,7 @@ CreateThread(function()
         {
             name = TARGET_OPTION_NAME,
             icon = portalConfig.TargetIcon,
-            label = portalConfig.TargetLabel,
+            label = TARGET_OPTION_LABEL,
             distance = portalConfig.TargetDistance or 2.0,
 
             canInteract = function()
@@ -454,7 +455,7 @@ AddEventHandler("onResourceStop", function(resourceName)
                 TARGET_OPTION_NAME,
             },
             labels = {
-                Config.BusinessPortal.TargetLabel,
+                TARGET_OPTION_LABEL,
             },
         })
     end

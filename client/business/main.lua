@@ -38,7 +38,11 @@ local function SpawnHandlerNPC(businessId, businessData)
 
     -- Create blip
     HandlerBlips[businessId] = CreateMapBlip(
-        location.coords, 375, 4, 0.7, 2,
+        location.coords,
+        Config.Business.HandlerBlipSprite or 375,
+        Config.Business.HandlerBlipDisplay or 4,
+        Config.Business.HandlerBlipScale or 0.7,
+        Config.Business.HandlerBlipColor or 2,
         ("%s — %s"):format(tier.label, location.brand or tier.label)
     )
 
@@ -47,9 +51,9 @@ local function SpawnHandlerNPC(businessId, businessData)
     _API.Target.AddLocalEntity(ped, {
         {
             name        = ("t1ger_moneywash:handler:%d"):format(businessId),
-            icon        = "fa-solid fa-briefcase",
+            icon        = Config.Business.HandlerTargetIcon or "fa-solid fa-briefcase",
             label       = locale("target.handler_npc"),
-            distance    = 2.0,
+            distance    = Config.Business.HandlerTargetDistance or 2.0,
             canInteract = CanInteractWithHandlerNPC,
             onSelect    = function()
                 OpenHandlerMenu(businessId)
@@ -57,9 +61,9 @@ local function SpawnHandlerNPC(businessId, businessData)
         },
         {
             name        = ("t1ger_moneywash:handler:raid:%d"):format(businessId),
-            icon        = "fa-solid fa-shield-halved",
+            icon        = Config.Police.RaidTargetIcon or "fa-solid fa-shield-halved",
             label       = locale("target.raid_business"),
-            distance    = 2.0,
+            distance    = Config.Police.RaidTargetDistance or 2.0,
             canInteract = CanPoliceRaidBusiness,
             onSelect    = function()
                 TriggerRaidAction(businessId)

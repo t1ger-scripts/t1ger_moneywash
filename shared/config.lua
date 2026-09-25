@@ -25,6 +25,9 @@ Config.Police = {
     Jobs                  = { "police", "sheriff" }, -- jobs that can access police interactions
     RaidMinGrade          = 0,                       -- minimum grade required to raid a business
     DepositReviewMinGrade = 2,                       -- minimum grade required to review flagged bank deposits
+
+    RaidTargetIcon        = "fa-solid fa-shield-halved",
+    RaidTargetDistance    = 2.0,
 }
 
 Config.BusinessPortal = {
@@ -79,7 +82,6 @@ Config.BusinessPortal = {
     TargetDistance   = 2.0,
     TransferDistance = 10.0,
     TargetIcon       = "fa-solid fa-building",
-    TargetLabel      = "Access Business Portal",
 }
 
 --- Bank deposit settings
