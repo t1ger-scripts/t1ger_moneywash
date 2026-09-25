@@ -28,8 +28,6 @@ Config.Business = {
     -- type         : internal key, must match a key in shared/business_locations.lua
     -- label        : display name shown in menus
     -- requiredPoints: reputation points needed to unlock purchasing this tier
-    -- price        : base purchase price in clean money from personal bank
-    --                individual locations in business_locations.lua can override this
     -- npc          : ped model for the Handler NPC spawned after purchase
     -- expectedRevenue: maximum believable gross revenue per cycle
     --                  this is the single most important value per tier -
@@ -40,7 +38,6 @@ Config.Business = {
             type             = "coffee_shop",
             label            = "Coffee Shop",
             requiredPoints   = 0,
-            price            = 15000,
             npc              = "s_m_y_waiter_01",
             expectedRevenue  = 3000,
             launderFee       = 25, -- % fee deducted from laundered amount
@@ -49,7 +46,6 @@ Config.Business = {
             type             = "gas_station",
             label            = "Gas Station",
             requiredPoints   = 500,
-            price            = 25000,
             npc              = "s_m_y_xmech_02",
             expectedRevenue  = 6000,
             launderFee       = 23,
@@ -58,7 +54,6 @@ Config.Business = {
             type             = "restaurant",
             label            = "Restaurant",
             requiredPoints   = 1500,
-            price            = 40000,
             npc              = "s_m_y_chef_01",
             expectedRevenue  = 10000,
             launderFee       = 22,
@@ -67,7 +62,6 @@ Config.Business = {
             type             = "laundromat",
             label            = "Laundromat",
             requiredPoints   = 2750,
-            price            = 55000,
             npc              = "s_m_o_busker_01",
             expectedRevenue  = 15000,
             launderFee       = 21,
@@ -76,7 +70,6 @@ Config.Business = {
             type             = "bar",
             label            = "Bar",
             requiredPoints   = 4000,
-            price            = 75000,
             npc              = "s_m_y_barman_01",
             expectedRevenue  = 22000,
             launderFee       = 20,
@@ -85,7 +78,6 @@ Config.Business = {
             type             = "nightclub",
             label            = "Nightclub",
             requiredPoints   = 5500,
-            price            = 100000,
             npc              = "s_m_y_clubbar_01",
             expectedRevenue  = 32000,
             launderFee       = 19,
@@ -94,7 +86,6 @@ Config.Business = {
             type             = "stripclub",
             label            = "Strip Club",
             requiredPoints   = 7500,
-            price            = 150000,
             npc              = "s_m_y_doorman_01",
             expectedRevenue  = 45000,
             launderFee       = 18,
@@ -103,7 +94,6 @@ Config.Business = {
             type             = "carwash",
             label            = "Car Wash",
             requiredPoints   = 10000,
-            price            = 250000,
             npc              = "s_m_y_winclean_01",
             expectedRevenue  = 65000,
             launderFee       = 17,
@@ -112,7 +102,6 @@ Config.Business = {
             type             = "casino",
             label            = "Casino",
             requiredPoints   = 15000,
-            price            = 750000,
             npc              = "s_m_y_casino_01",
             expectedRevenue  = 100000,
             launderFee       = 15,

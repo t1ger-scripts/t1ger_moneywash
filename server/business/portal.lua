@@ -217,7 +217,6 @@ local function createMarketplaceSnapshot(source)
             businessType = tier.type,
             displayName = tier.label,
             requiredInvestorScore = tier.requiredPoints,
-            purchasePrice = tier.price,
             projectedRevenue = tier.expectedRevenue,
             operatingFeePercentage = tier.launderFee,
             isUnlocked = isUnlocked,
@@ -249,7 +248,7 @@ local function createMarketplaceSnapshot(source)
                     businessType = tier.type,
                     displayName = location.brand or tier.label,
                     imageFileName = location.image or ("%s_%03d.webp"):format(tier.type, locationId),
-                    price = location.price or tier.price,
+                    price = location.price,
                     ownership = ownedBusiness
                         and "ownedByPlayer"
                         or "available",

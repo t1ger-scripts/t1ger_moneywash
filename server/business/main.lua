@@ -44,7 +44,7 @@ lib.callback.register("t1ger_moneywash:server:getAvailableLocations", function(s
                 id = locationId,
                 coords = locationData.coords,
                 brand = locationData.brand,
-                price = locationData.price or tier.price,
+                price = locationData.price,
             }
         end
     end
@@ -85,7 +85,6 @@ lib.callback.register("t1ger_moneywash:server:getUnlockedTiers", function(source
             type           = tier.type,
             label          = tier.label,
             requiredPoints = tier.requiredPoints,
-            price          = tier.price,
             unlocked       = isUnlocked,
             alreadyOwns    = playerOwnsBusiness,
         }

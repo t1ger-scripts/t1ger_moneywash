@@ -108,7 +108,7 @@ function BuyBusiness(src, businessType, locationId)
         return false, "insufficient_reputation"
     end
 
-    local price = tonumber(location.price or tier.price)
+    local price = tonumber(location.price)
     if not price or price <= 0 then
         ReleaseOwnershipLocks(lockKeys)
         return false, "invalid_price"
