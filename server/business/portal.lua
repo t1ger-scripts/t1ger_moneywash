@@ -169,6 +169,13 @@ local function createMarketplaceSnapshot(source)
         return nil, "business_store_not_ready"
     end
 
+    if Config.Reputation.Enable
+        and type(IsReputationReady) == "function"
+        and not IsReputationReady(source)
+    then
+        return nil, "reputation_not_ready"
+    end
+
     local identifier = _API.Player.GetIdentifier(source)
 
     if not identifier then

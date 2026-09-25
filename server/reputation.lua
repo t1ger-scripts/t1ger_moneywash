@@ -126,6 +126,14 @@ function GetPlayerReputation(src)
 end
 exports("GetPlayerReputation", GetPlayerReputation)
 
+--- Returns whether a player's reputation has finished loading from DB.
+--- @param src number
+--- @return boolean
+function IsReputationReady(src)
+    return PlayerReputation[src] ~= nil
+end
+exports("IsReputationReady", IsReputationReady)
+
 --- Adds reputation points to a player
 --- @param src number
 --- @param amount number

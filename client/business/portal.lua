@@ -25,6 +25,14 @@ local NUI_MESSAGES = {
     close = "t1ger_moneywash:portal:close",
 }
 
+local NOT_READY_REASONS = {
+    business_store_not_ready = true,
+    reputation_not_ready = true,
+}
+
+local MAX_READY_RETRIES = 10
+local READY_RETRY_DELAY = 500
+
 local isPortalOpen = false
 local isPortalOpening = false
 local isTargetRegistered = false
@@ -167,6 +175,18 @@ function OpenBusinessPortal()
     isPortalOpening = true
 
     local response = requestMarketplaceSnapshot()
+    local attempts = 0
+
+    while
+        response
+        and not response.success
+        and NOT_READY_REASONS[response.reason]
+        and attempts < MAX_READY_RETRIES
+    do
+        attempts = attempts + 1
+        Wait(READY_RETRY_DELAY)
+        response = requestMarketplaceSnapshot()
+    end
 
     if not response or not response.success or not response.data then
         isPortalOpening = false
