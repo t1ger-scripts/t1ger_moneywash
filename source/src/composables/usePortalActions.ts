@@ -35,60 +35,8 @@ export function usePortalActions() {
     async function requestBusinessPurchase(
         location: BusinessLocation,
     ): Promise<NuiResponse> {
-        if (!isFiveMEnvironment()) {
-            const currentSnapshot = marketplaceStore.snapshot
-
-            if (!currentSnapshot) {
-                return {
-                    success: false,
-                    reason: 'snapshotUnavailable',
-                }
-            }
-
-            marketplaceStore.replaceSnapshot({
-                ...currentSnapshot,
-
-                profile: {
-                    ...currentSnapshot.profile,
-                    bankBalance: Math.max(
-                        0,
-                        currentSnapshot.profile.bankBalance - location.price,
-                    ),
-                    ownsBusiness: true,
-                },
-
-                tiers: currentSnapshot.tiers.map((tier) =>
-                    tier.businessType === location.businessType
-                        ? {
-                            ...tier,
-                            availableLocationCount: Math.max(
-                                0,
-                                tier.availableLocationCount - 1,
-                            ),
-                        }
-                        : tier,
-                ),
-
-                locations: currentSnapshot.locations.map((candidate) =>
-                    candidate.id === location.id
-                        ? {
-                            ...candidate,
-                            ownedBusinessId:
-                                candidate.ownedBusinessId ?? 1,
-                            ownership: 'ownedByPlayer' as const,
-                        }
-                        : candidate,
-                ),
-            })
-
-            return { success: true }
-        }
-
         try {
-            return await postNui<
-                NuiResponse,
-                PurchaseBusinessRequest
-            >(
+            return await postNui<NuiResponse, PurchaseBusinessRequest>(
                 NUI_CALLBACKS.purchaseBusiness,
                 {
                     businessType: location.businessType,
@@ -111,15 +59,8 @@ export function usePortalActions() {
     async function requestBusinessWaypoint(
         location: BusinessLocation,
     ): Promise<boolean> {
-        if (!isFiveMEnvironment()) {
-            return true
-        }
-
         try {
-            const response = await postNui<
-                NuiResponse,
-                SetBusinessWaypointRequest
-            >(
+            const response = await postNui<NuiResponse, SetBusinessWaypointRequest>(
                 NUI_CALLBACKS.setBusinessWaypoint,
                 {
                     businessType: location.businessType,
