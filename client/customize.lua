@@ -81,9 +81,3 @@ end
 function GetCashBagModel()
     return "prop_money_bag_01"
 end
-
---- Prop model used for the stock box during supply missions
---- @return string model name
-function GetStockBoxModel()
-    return "prop_box_cardboard_02a"
-end

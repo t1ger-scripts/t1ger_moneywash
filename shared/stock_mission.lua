@@ -9,7 +9,26 @@ return {
     CancelCooldown       = 300,           -- seconds before a new order can be placed after a cancel (gates re-rolling)
 
     PickupDistance    = 25.0, -- how close the player must be before the pickup box spawns
-    BoxTargetDistance = 2.0,  -- interaction distance for targeting the box/vehicle
+    PickupTargetDistance = 2.0,  -- interaction distance for targeting the box/vehicle
+
+    -- Pickup box prop, attached to the player's hand during transport
+    PickupObject = {
+        model = "prop_cs_cardbox_01",
+        pos   = { x = 0.0,   y = -0.2, z = -0.1 },
+        rot   = { x = 135.0, y = 0.0,  z = 0.0  },
+        bone  = 28422, -- attach bone index
+    },
+
+    -- Map blip shown at the pickup location until the player arrives
+    PickupBlip = {
+        Sprite     = 1,
+        Display    = 4,
+        Scale      = 0.8,
+        Color      = 5,
+        Route      = true, -- draw a GPS route line to the blip
+        RouteColor = 5,
+        Label = "Stock Pickup"
+    },
 
     -- Cargo damage from vehicle collisions during transport
     CollisionDamage = {
@@ -18,14 +37,6 @@ return {
         MaxDeductionPercent = 15,    -- maximum % of current stock lost per confirmed collision
         PingCooldown        = 3000,  -- ms between accepted collision reports per shipment
         MinImpactSpeed      = 5.0,   -- client-side filter: vehicle speed (m/s) required to report a hit
-    },
-
-    -- Carried box prop, attached to the player while walking
-    CarriedProp = {
-        model = "prop_cs_cardbox_01",
-        pos   = { x = 0.0,   y = -0.2, z = -0.1 },
-        rot   = { x = 135.0, y = 0.0,  z = 0.0  },
-        bone  = 28422, -- attach bone index
     },
 
     -- Randomly selected for every stock order, regardless of business type.
