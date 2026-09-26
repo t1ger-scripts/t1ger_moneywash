@@ -180,26 +180,6 @@ lib.callback.register("t1ger_moneywash:server:launderMoney", function(source, bu
 end)
 
 --- -------------------------------------------------------------------------
---- STOCK
---- -------------------------------------------------------------------------
-
-lib.callback.register("t1ger_moneywash:server:orderStock", function(source, businessId, units)
-    local success, reason, missionData = OrderStock(source, businessId, units)
-    return { success = success, reason = reason, missionData = missionData }
-end)
-
-lib.callback.register("t1ger_moneywash:server:completeStockDelivery", function(source)
-    local success, reason = CompleteStockDelivery(source)
-    return { success = success, reason = reason }
-end)
-
---- Player cancels stock mission (voluntary)
-RegisterServerEvent("t1ger_moneywash:server:cancelStockMission")
-AddEventHandler("t1ger_moneywash:server:cancelStockMission", function()
-    CancelStockMission(source)
-end)
-
---- -------------------------------------------------------------------------
 --- BANK DEPOSITS
 --- -------------------------------------------------------------------------
 

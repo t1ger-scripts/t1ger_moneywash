@@ -55,6 +55,9 @@ Config.Business = {
         maxOrderRatio    = 0.50, -- maximum units per order = expectedRevenue * maxOrderRatio
     },
 
+    -- Stock delivery mission settings - see shared/stock_mission.lua
+    StockMission = require("shared/stock_mission"),
+
     -- The business ladder
     -- type         : internal key, must match a key in shared/business_locations.lua
     -- label        : display name shown in menus

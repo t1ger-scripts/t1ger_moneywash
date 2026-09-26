@@ -40,7 +40,7 @@ client_scripts {
     'client/business/portal.lua',
     'client/business/main.lua',
     'client/business/menu.lua',
-    'client/business/missions.lua',
+    'client/business/stock.lua',
     'client/main.lua',
 }
 
@@ -58,6 +58,7 @@ server_scripts {
 
     'server/business/store.lua',
     'server/business/functions.lua',
+    'server/business/stock.lua',
     'server/business/main.lua',
     'server/business/portal.lua',
     
@@ -78,7 +79,7 @@ files {
     'web/mapStyles/styleSatelite/5/**/*',
 
     'shared/business_locations.lua',
-    'shared/stocklocations.lua',
+    'shared/stock_mission.lua',
     'shared/banklocations.lua',
     'shared/accountantoffices.lua',
 }

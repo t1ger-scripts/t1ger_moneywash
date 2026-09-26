@@ -28,8 +28,8 @@ function OpenHandlerMenu(businessId)
     end
 
     local overviewMetadata = {
-        { label = locale("menu.handler.total_cash"),     value = FormatMoney(status.safeCovered + status.safeExposed) },
-        { label = locale("menu.handler.stock"),           value = status.stock .. " " .. locale("menu.handler.units") },
+        { label = locale("menu.handler.total_cash"), value = FormatMoney(status.safeCovered + status.safeExposed) },
+        { label = locale("menu.handler.stock"),      value = status.stock .. " " .. locale("menu.handler.units") },
         suspicionEntry,
         { label = locale("menu.handler.cycle_progress"), value = FormatMoney(status.totalLaundered) .. " / " .. FormatMoney(status.expectedRevenue) },
     }
@@ -140,10 +140,16 @@ function OpenStockMenu(businessId, status)
         or math.floor(math.min(1, status.stock / stockNeeded) * 100)
 
     local isClosed = status.isClosed
-    local stockDisabled = isClosed
-    local stockDesc = isClosed
-        and locale("menu.handler.closed_reason")
-        or locale("menu.handler.order_stock_desc")
+    local missionActive = IsStockMissionActive()
+    local stockDisabled = isClosed or missionActive
+    local stockDesc
+    if isClosed then
+        stockDesc = locale("menu.handler.closed_reason")
+    elseif missionActive then
+        stockDesc = string.format(locale("menu.handler.order_in_progress"), Config.Business.StockMission.CancelCommand)
+    else
+        stockDesc = locale("menu.handler.order_stock_desc")
+    end
 
     lib.registerContext({
         id      = "moneywash:handler:stock",
@@ -492,8 +498,8 @@ function OpenTransferDialog(businessId)
             searchable = true,
         },
         {
-            type  = "checkbox",
-            label = locale("menu.transfer.confirm_body"),
+            type     = "checkbox",
+            label    = locale("menu.transfer.confirm_body"),
             required = true,
         },
     })
