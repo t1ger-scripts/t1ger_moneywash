@@ -5,11 +5,31 @@
 local StockMissionActive = false
 local ActiveMissionBusinessId = nil
 local GroundBoxProp = nil
+local CarriedBoxProp = nil
 local PickupBlip = nil
 
 --- @return boolean
 function IsStockMissionActive()
     return StockMissionActive
+end
+
+--- Spawns an object and settles it properly onto the ground/surface below
+--- using the native placement helper, rather than trusting an exact Z.
+--- @param model string
+--- @param coords vector3|vector4
+--- @return number
+local function SpawnGroundObject(model, coords)
+    lib.requestModel(model)
+    local obj = CreateObject(GetHashKey(model), coords.x, coords.y, coords.z, true, true, true)
+    PlaceObjectOnGroundOrObjectProperly(obj)
+    SetEntityAsMissionEntity(obj, true, true)
+    SetModelAsNoLongerNeeded(GetHashKey(model))
+    return obj
+end
+
+--- @return boolean
+local function IsCarryingStockBox()
+    return CarriedBoxProp ~= nil
 end
 
 --- Starts a stock order: requests the mission from the server, then walks
@@ -50,9 +70,8 @@ function StartStockMission(businessId, units)
             Wait(500)
 
             if IsNearCoords(pickup, cfg.PickupDistance) then
-                GroundBoxProp = SpawnGroundBoxProp(pickup)
-                lib.showTextUI(locale("textui.pickup_box"), { icon = "fa-solid fa-box" })
-
+                GroundBoxProp = SpawnGroundObject(cfg.PickupObject.model, pickup)
+                _API.ShowNotification(locale("notification.stock_box_ready"), "inform")
                 _API.Target.AddLocalEntity(GroundBoxProp, {
                     {
                         name     = "moneywash:stock:pickup",
@@ -60,7 +79,7 @@ function StartStockMission(businessId, units)
                         label    = locale("target.pickup_box"),
                         distance = cfg.PickupTargetDistance,
                         canInteract = function()
-                            return StockMissionActive
+                            return StockMissionActive and not IsCarryingStockBox()
                         end,
                         onSelect = function()
                             RequestStockPickup(businessId)
