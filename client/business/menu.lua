@@ -10,55 +10,70 @@
 function OpenHandlerMenu(businessId)
     local status = lib.callback.await("t1ger_moneywash:server:getBusinessStatus", false, businessId)
     if not status then
-        _API.ShowNotification(locale("menu.handler.not_found"), "error", {})
+        _API.ShowNotification(locale("menu.handler.not_found"), "error")
         return
     end
 
     local isClosed = status.isClosed
+    local menuIcons = Config.Business.MenuIcons or {}
 
-    -- Build header metadata showing live business state
-    local headerMetadata = {
-        { label = locale("menu.handler.safe_covered"),   value = FormatMoney(status.safeCovered) },
-        { label = locale("menu.handler.safe_exposed"),   value = FormatMoney(status.safeExposed) },
-        { label = locale("menu.handler.stock"),          value = status.stock .. " " .. locale("menu.handler.units") },
-        { label = locale("menu.handler.suspicion"),      value = status.suspicionLabel },
+    -- Overview row - a single hover-metadata row showing totals only.
+    -- Breakdown of each figure lives one level deeper, in Stock/Safe.
+    local suspicionEntry = { label = locale("menu.handler.suspicion"), value = status.suspicionLabel }
+
+    if Config.Suspicion.ShowExactValue and status.suspicion then
+        suspicionEntry.value = ("%s (%d)"):format(status.suspicionLabel, status.suspicion)
+        suspicionEntry.progress = status.suspicion
+        suspicionEntry.colorScheme = status.suspicionColor
+    end
+
+    local overviewMetadata = {
+        { label = locale("menu.handler.total_cash"),     value = FormatMoney(status.safeCovered + status.safeExposed) },
+        { label = locale("menu.handler.stock"),           value = status.stock .. " " .. locale("menu.handler.units") },
+        suspicionEntry,
         { label = locale("menu.handler.cycle_progress"), value = FormatMoney(status.totalLaundered) .. " / " .. FormatMoney(status.expectedRevenue) },
     }
 
     -- Launder Money
     local launderDisabled = isClosed
-    local launderDesc = isClosed and locale("menu.handler.closed_reason") or nil
+    local launderDesc = isClosed
+        and locale("menu.handler.closed_reason")
+        or locale("menu.handler.launder_desc")
 
-    -- Order Stock
+    -- Stock submenu
     local stockDisabled = isClosed
-    local stockDesc = isClosed and locale("menu.handler.closed_reason") or nil
+    local stockDesc = isClosed
+        and locale("menu.handler.closed_reason")
+        or locale("menu.handler.stock_desc")
 
-    -- Bank Deposit
-    local depositDisabled = isClosed or (status.safeCovered + status.safeExposed) <= 0
-    local depositDesc = nil
+    -- Safe submenu
+    local safeDisabled = isClosed or (status.safeCovered + status.safeExposed) <= 0
+    local safeDesc
     if isClosed then
-        depositDesc = locale("menu.handler.closed_reason")
+        safeDesc = locale("menu.handler.closed_reason")
     elseif (status.safeCovered + status.safeExposed) <= 0 then
-        depositDesc = locale("menu.handler.no_safe_balance")
+        safeDesc = locale("menu.handler.no_safe_balance")
+    else
+        safeDesc = locale("menu.handler.safe_desc")
     end
 
     -- Review Books
-    local reviewDisabled = false
-    local reviewDesc = nil
-    -- Effectiveness estimate shown in metadata
     local receipts = lib.callback.await("t1ger_moneywash:server:getBusinessReceipts", false, businessId)
     local receiptCount = receipts and #receipts or 0
     local reviewMeta = {
         { label = locale("menu.handler.review_receipts"), value = receiptCount },
     }
 
-    local menuIcons = Config.Business.MenuIcons or {}
-
     lib.registerContext({
-        id       = "moneywash:handler:main",
-        title    = locale("menu.handler.title"),
-        metadata = headerMetadata,
-        options  = {
+        id      = "moneywash:handler:main",
+        title   = locale("menu.handler.title"),
+        options = {
+            {
+                title       = locale("menu.handler.overview"),
+                icon        = menuIcons.overview or "fa-solid fa-chart-line",
+                description = locale("menu.handler.overview_desc"),
+                metadata    = overviewMetadata,
+            },
             {
                 title       = locale("menu.handler.launder"),
                 icon        = menuIcons.launder or "fa-solid fa-money-bill-wave",
@@ -69,6 +84,85 @@ function OpenHandlerMenu(businessId)
                 end,
             },
             {
+                title       = locale("menu.handler.stock"),
+                icon        = menuIcons.stock or "fa-solid fa-boxes-stacked",
+                description = stockDesc,
+                disabled    = stockDisabled,
+                onSelect    = function()
+                    OpenStockMenu(businessId, status)
+                end,
+            },
+            {
+                title       = locale("menu.handler.safe"),
+                icon        = menuIcons.safe or "fa-solid fa-lock",
+                description = safeDesc,
+                disabled    = safeDisabled,
+                onSelect    = function()
+                    OpenSafeMenu(businessId, status)
+                end,
+            },
+            {
+                title       = locale("menu.handler.review_books"),
+                icon        = menuIcons.reviewBooks or "fa-solid fa-book",
+                description = locale("menu.handler.review_books_desc"),
+                metadata    = reviewMeta,
+                onSelect    = function()
+                    OpenReviewBooksMenu(businessId, receipts)
+                end,
+            },
+            {
+                title       = locale("menu.handler.manage"),
+                icon        = menuIcons.manage or "fa-solid fa-gear",
+                description = locale("menu.handler.manage_desc"),
+                onSelect    = function()
+                    OpenManageBusinessMenu(businessId, status)
+                end,
+            },
+        },
+    })
+
+    lib.showContext("moneywash:handler:main")
+end
+
+--- Stock submenu - shows current stock (units, value, coverage) and
+--- lets the player place a new order.
+--- @param businessId number
+--- @param status table
+function OpenStockMenu(businessId, status)
+    local menuIcons = Config.Business.MenuIcons or {}
+
+    local unitPrice = math.floor(status.expectedRevenue * Config.Business.Stock.costRatio)
+    local stockValue = status.stock * unitPrice
+
+    local remaining = math.max(0, status.expectedRevenue - status.totalLaundered)
+    local stockNeeded = math.ceil(remaining * Config.Business.Stock.consumptionRatio)
+    local coverage = stockNeeded <= 0 and 100
+        or math.floor(math.min(1, status.stock / stockNeeded) * 100)
+
+    local isClosed = status.isClosed
+    local stockDisabled = isClosed
+    local stockDesc = isClosed
+        and locale("menu.handler.closed_reason")
+        or locale("menu.handler.order_stock_desc")
+
+    lib.registerContext({
+        id      = "moneywash:handler:stock",
+        title   = locale("menu.handler.stock"),
+        menu    = "moneywash:handler:main",
+        options = {
+            {
+                title       = ("%s: %d %s (%s)"):format(
+                    locale("menu.handler.view_stock"),
+                    status.stock,
+                    locale("menu.handler.units"),
+                    FormatMoney(stockValue)
+                ),
+                icon        = menuIcons.viewStock or "fa-solid fa-warehouse",
+                description = locale("menu.handler.stock_coverage_desc"),
+                progress    = coverage,
+                disabled    = true,
+            },
+            {
                 title       = locale("menu.handler.order_stock"),
                 icon        = menuIcons.orderStock or "fa-solid fa-box",
                 description = stockDesc,
@@ -76,6 +170,47 @@ function OpenHandlerMenu(businessId)
                 onSelect    = function()
                     OpenStockOrderDialog(businessId, status)
                 end,
+            },
+        },
+    })
+
+    lib.showContext("moneywash:handler:stock")
+end
+
+--- Safe submenu - shows the covered/exposed balance breakdown and
+--- lets the player make a bank deposit.
+--- @param businessId number
+--- @param status table
+function OpenSafeMenu(businessId, status)
+    local menuIcons = Config.Business.MenuIcons or {}
+    local isClosed = status.isClosed
+
+    local depositDisabled = isClosed or (status.safeCovered + status.safeExposed) <= 0
+    local depositDesc
+    if isClosed then
+        depositDesc = locale("menu.handler.closed_reason")
+    elseif (status.safeCovered + status.safeExposed) <= 0 then
+        depositDesc = locale("menu.handler.no_safe_balance")
+    else
+        depositDesc = locale("menu.handler.bank_deposit_desc")
+    end
+
+    lib.registerContext({
+        id      = "moneywash:handler:safe",
+        title   = locale("menu.handler.safe"),
+        menu    = "moneywash:handler:main",
+        options = {
+            {
+                title       = ("%s: %s"):format(locale("menu.handler.safe_covered"), FormatMoney(status.safeCovered)),
+                icon        = menuIcons.safeCovered or "fa-solid fa-shield-halved",
+                description = locale("menu.handler.safe_covered_desc"),
+                disabled    = true,
+            },
+            {
+                title       = ("%s: %s"):format(locale("menu.handler.safe_exposed"), FormatMoney(status.safeExposed)),
+                icon        = menuIcons.safeExposed or "fa-solid fa-triangle-exclamation",
+                description = locale("menu.handler.safe_exposed_desc"),
+                disabled    = true,
             },
             {
                 title       = locale("menu.handler.bank_deposit"),
@@ -86,27 +221,10 @@ function OpenHandlerMenu(businessId)
                     OpenBankDepositDialog(businessId, status)
                 end,
             },
-            {
-                title       = locale("menu.handler.review_books"),
-                icon        = menuIcons.reviewBooks or "fa-solid fa-book",
-                description = reviewDesc,
-                disabled    = reviewDisabled,
-                metadata    = reviewMeta,
-                onSelect    = function()
-                    OpenReviewBooksMenu(businessId, receipts)
-                end,
-            },
-            {
-                title    = locale("menu.handler.manage"),
-                icon     = menuIcons.manage or "fa-solid fa-gear",
-                onSelect = function()
-                    OpenManageBusinessMenu(businessId, status)
-                end,
-            },
         },
     })
 
-    lib.showContext("moneywash:handler:main")
+    lib.showContext("moneywash:handler:safe")
 end
 
 --- ============================================================================
@@ -348,7 +466,7 @@ function OpenTransferDialog(businessId)
     local players = {}
 
     if #nearbyPlayers == 0 then
-        _API.ShowNotification(locale("menu.transfer.no_players_nearby"), "inform")
+        _API.ShowNotification(locale("menu.transfer.no_players_nearby"), "inform", {})
         return lib.showContext("moneywash:handler:manage")
     end
 
@@ -389,9 +507,9 @@ function OpenTransferDialog(businessId)
     local result = lib.callback.await("t1ger_moneywash:server:transferBusiness", false, targetId, businessId)
 
     if result.success then
-        _API.ShowNotification(locale("menu.transfer.success"), "success")
+        _API.ShowNotification(locale("menu.transfer.success"), "success", {})
     else
-        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error")
+        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error", {})
     end
 end
 

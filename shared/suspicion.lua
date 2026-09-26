@@ -29,7 +29,7 @@ Config.Suspicion = {
 
     -- Show exact suspicion value instead of label
     -- Default: false (label only)
-    ShowExactValue = false,
+    ShowExactValue = true,
 
     -- -------------------------------------------------------------------------
     -- POLICE NOTIFICATION

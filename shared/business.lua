@@ -22,16 +22,21 @@ Config.Business = {
     HandlerBlipColor   = 2,
 
     -- Icons shown for each option in the Handler NPC's main menu
-    -- and Manage Business submenu
+    -- and its submenus
     MenuIcons = {
+        overview    = "fa-solid fa-chart-line",
         launder     = "fa-solid fa-money-bill-wave",
+        stock       = "fa-solid fa-boxes-stacked",
+        viewStock   = "fa-solid fa-warehouse",
         orderStock  = "fa-solid fa-box",
+        safe        = "fa-solid fa-lock",
+        safeCovered = "fa-solid fa-shield-halved",
+        safeExposed = "fa-solid fa-triangle-exclamation",
         bankDeposit = "fa-solid fa-building-columns",
         reviewBooks = "fa-solid fa-book",
         manage      = "fa-solid fa-gear",
         transfer    = "fa-solid fa-right-left",
         abandon     = "fa-solid fa-door-open",
-        profile     = "fa-solid fa-user",
     },
 
     -- Flat % tax deducted when a bank deposit clears into the player's personal bank
