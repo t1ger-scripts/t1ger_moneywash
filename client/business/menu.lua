@@ -131,11 +131,15 @@ end
 function OpenStockMenu(businessId, status)
     local menuIcons = Config.Business.MenuIcons or {}
 
-    local unitPrice = math.floor(status.expectedRevenue * Config.Business.Stock.costRatio)
+    local stockCfg = Config.Business.Stock
+    local unitPrice = math.floor(stockCfg.LaunderDollarsPerUnit * (stockCfg.UnitPricePercent / 100))
     local stockValue = status.stock * unitPrice
 
+    local unitsPerCycle = status.expectedRevenue / stockCfg.LaunderDollarsPerUnit
+    local capacity = math.floor(unitsPerCycle * stockCfg.maxCapacityCycles)
+
     local remaining = math.max(0, status.expectedRevenue - status.totalLaundered)
-    local stockNeeded = math.ceil(remaining * Config.Business.Stock.consumptionRatio)
+    local stockNeeded = math.ceil(remaining / stockCfg.LaunderDollarsPerUnit)
     local coverage = stockNeeded <= 0 and 100
         or math.floor(math.min(1, status.stock / stockNeeded) * 100)
 
@@ -157,16 +161,16 @@ function OpenStockMenu(businessId, status)
         menu    = "moneywash:handler:main",
         options = {
             {
-                title       = ("%s: %d %s (%s)"):format(
+                title       = ("%s: %d / %d %s (%s)"):format(
                     locale("menu.handler.view_stock"),
                     status.stock,
+                    capacity,
                     locale("menu.handler.units"),
                     FormatMoney(stockValue)
                 ),
                 icon        = menuIcons.viewStock or "fa-solid fa-warehouse",
                 description = locale("menu.handler.stock_coverage_desc"),
                 progress    = coverage,
-                disabled    = true,
             },
             {
                 title       = locale("menu.handler.order_stock"),
