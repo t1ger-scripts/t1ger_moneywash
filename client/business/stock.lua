@@ -97,6 +97,30 @@ local function StopCarryAnimation()
     end
 end
 
+--- Watchdog: if the carry animation gets interrupted for any reason while
+--- the box is still meant to be carried (damage, ragdoll, another system's
+--- animation, etc.), this notices and restarts it. Single persistent
+--- thread for the resource's lifetime - cheap no-op whenever there's
+--- nothing to fix.
+CreateThread(function()
+    while true do
+        Wait(1000)
+
+        if stockMission and stockMission.state == "carried" then
+            local anim = Config.Business.StockMission.CarryAnimation
+            local playerPed = PlayerPedId()
+
+            local inVehicle = IsPedInAnyVehicle(playerPed, false)
+            local ragdolling = IsPedRagdoll(playerPed)
+            local playing = IsEntityPlayingAnim(playerPed, anim.dict, anim.name, 3)
+
+            if not inVehicle and not ragdolling and not playing then
+                StartCarryAnimation()
+            end
+        end
+    end
+end)
+
 --- Attaches the box to the player's hand using the configured offset,
 --- and starts the carry animation.
 local function AttachBoxToPlayer()
