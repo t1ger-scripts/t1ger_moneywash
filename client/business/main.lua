@@ -69,6 +69,18 @@ local function SpawnHandlerNPC(businessId, businessData)
                 TriggerRaidAction(businessId)
             end,
         },
+        {
+            name        = ("t1ger_moneywash:handler:deliverstock:%d"):format(businessId),
+            icon        = Config.Business.StockMission.Icons.DeliverTarget,
+            label       = locale("target.deliver_stock"),
+            distance    = Config.Business.StockMission.PickupTargetDistance,
+            canInteract = function()
+                return IsCarryingStockBox(businessId)
+            end,
+            onSelect    = function()
+                DeliverStock()
+            end,
+        },
     })
 
     if Config.Debug then

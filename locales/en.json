@@ -1,13 +1,13 @@
 {
     "target": {
-        "load_stock": "Load Stock",
-        "unload_stock": "Unload Stock",
         "portal_npc": "Access Business Portal",
         "handler_npc": "Manage Business",
-        "raid_business": "Raid Business",
-        "bank_teller": "Bank Teller",
         "pickup_box": "Pick Up Stock",
-        "deliver_stock": "Deliver Stock"
+        "load_stock": "Load Stock",
+        "unload_stock": "Unload Stock",
+        "deliver_stock": "Deliver Stock",
+        "raid_business": "Raid Business",
+        "bank_teller": "Bank Teller"
     },
     "menu": {
         "handler": {
@@ -130,6 +130,9 @@
         "error_target_owns_business": "The target already owns a business",
         "error_self_transfer": "You cannot transfer a business to yourself",
         "error_target_too_far": "The selected player is too far away",
+        "error_vehicle_too_far": "You're too far away from the vehicle",
+        "error_business_too_far": "You're too far away from the business",
+        "error_pickup_too_far": "You're too far away from the pickup location",
         "error_target_insufficient_reputation": "The selected player does not meet the reputation requirement",
         "error_active_stock_mission": "Complete or cancel the active stock order before changing ownership",
         "error_pending_business_deposit": "Wait for the pending bank deposit to complete before changing ownership",

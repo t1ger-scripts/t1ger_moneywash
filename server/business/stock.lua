@@ -166,7 +166,7 @@ function PickupStockShipment(src)
     if mission.state ~= "awaiting_pickup" then return false, "invalid_state" end
 
     if not IsPlayerNearCoords(src, mission.pickupLocation, Config.Business.StockMission.PickupDistance) then
-        return false, "target_too_far"
+        return false, "pickup_too_far"
     end
 
     mission.state = "carried"
@@ -189,7 +189,8 @@ local function ResolveVehicle(netId)
     return entity
 end
 
---- Loads the carried shipment into a vehicle.
+--- Loads the carried shipment into a vehicle. The player targets the
+--- vehicle from outside it, so proximity is validated by distance.
 --- @param src number
 --- @param vehicleNetId number  the vehicle the client is targeting
 --- @return boolean success, string reason
@@ -200,6 +201,10 @@ function LoadStockIntoVehicle(src, vehicleNetId)
 
     local vehicle = ResolveVehicle(vehicleNetId)
     if not vehicle then return false, "invalid_vehicle" end
+
+    if not IsPlayerNearCoords(src, GetEntityCoords(vehicle), Config.Business.StockMission.VehicleTargetDistance) then
+        return false, "vehicle_too_far"
+    end
 
     mission.state = "loaded"
     mission.vehicleNetId = vehicleNetId
@@ -218,8 +223,8 @@ function UnloadStockFromVehicle(src)
 
     local vehicle = ResolveVehicle(mission.vehicleNetId)
     if vehicle then
-        if not IsPlayerNearCoords(src, GetEntityCoords(vehicle), Config.Business.StockMission.PickupTargetDistance) then
-            return false, "target_too_far"
+        if not IsPlayerNearCoords(src, GetEntityCoords(vehicle), Config.Business.StockMission.VehicleTargetDistance) then
+            return false, "vehicle_too_far"
         end
     end
 
@@ -299,7 +304,7 @@ function CompleteStockDelivery(src)
 
     local location = GetLocationConfig(business.type, business.locationId)
     if not location or not IsPlayerNearCoords(src, location.coords, 5.0) then
-        return false, "target_too_far"
+        return false, "business_too_far"
     end
 
     local deliveredUnits = math.floor(mission.currentUnits)

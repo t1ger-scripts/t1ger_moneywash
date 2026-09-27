@@ -8,18 +8,23 @@ return {
     CancelPenaltyPercent = 10,            -- % of the paid cost forfeited on manual cancel
     CancelCooldown       = 300,           -- seconds before a new order can be placed after a cancel (gates re-rolling)
 
-    PickupDistance       = 50.0,          -- how close the player must be before the pickup box spawns
-    PickupTargetDistance = 2.0,           -- interaction distance for targeting the box/vehicle
+    PickupDistance       = 25.0, -- how close the player must be before the pickup box spawns
+    PickupTargetDistance = 2.0,  -- interaction distance for targeting the ground box and the Handler NPC delivery option
+    VehicleTargetDistance = 2.5, -- interaction distance for the load/unload vehicle target options
 
     -- Icons used throughout the mission
-    Icons = {
-        PickupTarget = "fa-solid fa-hand",           -- target option to pick the box up
-        LoadTarget   = "fa-solid fa-truck-ramp-box",  -- target option to load the box into a vehicle
-        UnloadTarget = "fa-solid fa-hand",            -- target option to take the box back out
+    Icons                = {
+        PickupTarget  = "fa-solid fa-hand",           -- target option to pick the box up
+        LoadTarget    = "fa-solid fa-truck-ramp-box", -- target option to load the box into a vehicle
+        UnloadTarget  = "fa-solid fa-hand",           -- target option to take the box back out
+        DeliverTarget = "fa-solid fa-dolly",          -- target option on the Handler NPC to deliver
     },
 
     -- Pickup box prop, attached to the player's hand during transport
     PickupObject         = { model = "prop_cs_cardbox_01", pos = { x = 0.0, y = -0.2, z = -0.1 }, rot = { x = 135.0, y = 0.0, z = 0.0 }, bone = 28422 },
+
+    -- Looping animation played while the player is carrying the box
+    CarryAnimation       = { dict = "anim@heists@box_carry@", name = "idle", blendIn = 4.0, blendOut = 1.0, duration = -1, flag = 49 },
 
     -- Map blip shown at the pickup location until the player arrives
     PickupBlip           = { Sprite = 1, Display = 6, Scale = 0.7, Color = 5, Route = true, RouteColor = 5, Label = "Stock Pickup" },
@@ -62,9 +67,9 @@ return {
         vector4(-677.367004, -2459.723145, 13.929688, 121.889763),
         vector4(830.940674, -1984.035156, 29.296753, 5.669291),
         vector4(502.404388, -654.197815, 24.747314, 272.125977),
-        vector4(2477.485840, 4122.843750, 38.008057, 28.346457),   -- sandy shores
-        vector4(2564.347168, 4692.883301, 34.014648, 73.700790),   -- sandy shores
-        vector4(1305.177979, 4312.773438, 37.654175, 266.456696),  -- sandy shores
+        vector4(2477.485840, 4122.843750, 38.008057, 28.346457),   -- sandy shore
+        vector4(2564.347168, 4692.883301, 34.014648, 73.700790),   -- sandy shore
+        vector4(1305.177979, 4312.773438, 37.654175, 266.456696),  -- sandy shore
         vector4(177.336258, 6399.666016, 31.318726, 308.976379),   -- paleto
         vector4(-6.646149, 6307.358398, 31.217529, 28.346457),     -- paleto
         vector4(-78.184616, 6265.134277, 31.352417, 325.984253),   -- paleto

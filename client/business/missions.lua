@@ -7,7 +7,6 @@
 --- ============================================================================
 
 --- Active mission state flags — prevent overlapping missions
-local StockMissionActive   = false
 local DepositMissionActive = false
 local ReviewMissionActive  = false
 

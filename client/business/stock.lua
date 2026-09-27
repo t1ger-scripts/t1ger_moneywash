@@ -77,7 +77,28 @@ local function RemoveStockBlip(blip)
     end
 end
 
---- Attaches the box to the player's hand using the configured offset.
+--- Starts the looping carry animation.
+local function StartCarryAnimation()
+    local anim = Config.Business.StockMission.CarryAnimation
+    local playerPed = PlayerPedId()
+
+    lib.requestAnimDict(anim.dict)
+    TaskPlayAnim(playerPed, anim.dict, anim.name, anim.blendIn, anim.blendOut, anim.duration, anim.flag, 0, false, false, false)
+    RemoveAnimDict(anim.dict)
+end
+
+--- Stops the carry animation, if currently playing.
+local function StopCarryAnimation()
+    local anim = Config.Business.StockMission.CarryAnimation
+    local playerPed = PlayerPedId()
+
+    if IsEntityPlayingAnim(playerPed, anim.dict, anim.name, 3) then
+        StopAnimTask(playerPed, anim.dict, anim.name, anim.blendOut)
+    end
+end
+
+--- Attaches the box to the player's hand using the configured offset,
+--- and starts the carry animation.
 local function AttachBoxToPlayer()
     local cfg = Config.Business.StockMission.PickupObject
     local playerPed = PlayerPedId()
@@ -89,9 +110,12 @@ local function AttachBoxToPlayer()
         cfg.rot.x, cfg.rot.y, cfg.rot.z,
         true, true, false, true, 1, true
     )
+
+    StartCarryAnimation()
 end
 
---- Hides the box and attaches it to the vehicle currently carrying it.
+--- Hides the box and attaches it to the vehicle currently carrying it,
+--- and stops the carry animation since the player's hands are free again.
 --- @param vehicle number
 local function AttachBoxToVehicle(vehicle)
     SetEntityVisible(stockMission.prop, false, false)
@@ -100,6 +124,8 @@ local function AttachBoxToVehicle(vehicle)
         0.0, -1.0, 0.0, 0.0, 0.0, 0.0,
         true, true, false, true, 1, true
     )
+
+    StopCarryAnimation()
 end
 
 -- -----------------------------------------------------------------------
@@ -111,9 +137,12 @@ function IsStockMissionActive()
     return stockMission ~= nil and stockMission.active
 end
 
+--- @param businessId number|nil  if given, also requires the carried box to belong to this business
 --- @return boolean
-function IsCarryingStockBox()
-    return stockMission ~= nil and stockMission.state == "carried"
+function IsCarryingStockBox(businessId)
+    if not stockMission or stockMission.state ~= "carried" then return false end
+    if businessId and stockMission.businessId ~= businessId then return false end
+    return true
 end
 
 -- -----------------------------------------------------------------------
@@ -124,6 +153,10 @@ end
 --- to call for both a successful delivery and a full cancel.
 local function ResetStockMission()
     if stockMission then
+        if stockMission.state == "carried" then
+            StopCarryAnimation()
+        end
+
         if stockMission.point then
             stockMission.point:remove()
         end
@@ -242,7 +275,7 @@ local function RegisterVehicleTargets()
             name        = "moneywash:stock:load",
             icon        = cfg.Icons.LoadTarget,
             label       = locale("target.load_stock"),
-            distance    = cfg.PickupTargetDistance,
+            distance    = cfg.VehicleTargetDistance,
             canInteract = function()
                 return IsCarryingStockBox()
             end,
@@ -254,7 +287,7 @@ local function RegisterVehicleTargets()
             name        = "moneywash:stock:unload",
             icon        = cfg.Icons.UnloadTarget,
             label       = locale("target.unload_stock"),
-            distance    = cfg.PickupTargetDistance,
+            distance    = cfg.VehicleTargetDistance,
             canInteract = function(vehicle)
                 return stockMission ~= nil and stockMission.state == "loaded"
                     and stockMission.vehicleNetId == NetworkGetNetworkIdFromEntity(vehicle)
@@ -269,7 +302,6 @@ end
 --- @param vehicle number
 function RequestStockLoad(vehicle)
     local netId = NetworkGetNetworkIdFromEntity(vehicle)
-    print("netId: ", netId)
     local result = lib.callback.await("t1ger_moneywash:server:loadStockShipment", false, netId)
 
     if not result.success then
@@ -391,6 +423,7 @@ function DeliverStock()
         return
     end
 
+    StopCarryAnimation()
     ResetStockMission()
     _API.ShowNotification(locale("notification.stock_delivered"), "success")
 end
