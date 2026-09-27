@@ -40,7 +40,7 @@ const formattedInvestorScore = computed(() => {
         locale.value,
     )
 
-    if (progress.nextRankPoints === null) {
+    if (progress.nextRankPoints == null) {
         return t('portal.header.scorePoints', {
             points: currentPoints,
         })
