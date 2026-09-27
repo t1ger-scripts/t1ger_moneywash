@@ -8,35 +8,43 @@ return {
     CancelPenaltyPercent = 10,            -- % of the paid cost forfeited on manual cancel
     CancelCooldown       = 300,           -- seconds before a new order can be placed after a cancel (gates re-rolling)
 
-    PickupDistance    = 25.0, -- how close the player must be before the pickup box spawns
-    PickupTargetDistance = 2.0,  -- interaction distance for targeting the box/vehicle
+    PickupDistance       = 50.0,          -- how close the player must be before the pickup box spawns
+    PickupTargetDistance = 2.0,           -- interaction distance for targeting the box/vehicle
 
-    -- Pickup box prop, attached to the player's hand during transport
-    PickupObject = {
-        model = "prop_cs_cardbox_01",
-        pos   = { x = 0.0,   y = -0.2, z = -0.1 },
-        rot   = { x = 135.0, y = 0.0,  z = 0.0  },
-        bone  = 28422, -- attach bone index
+    -- Icons used throughout the mission
+    Icons = {
+        PickupTarget = "fa-solid fa-hand",           -- target option to pick the box up
+        LoadTarget   = "fa-solid fa-truck-ramp-box",  -- target option to load the box into a vehicle
+        UnloadTarget = "fa-solid fa-hand",            -- target option to take the box back out
     },
 
+    -- Pickup box prop, attached to the player's hand during transport
+    PickupObject         = { model = "prop_cs_cardbox_01", pos = { x = 0.0, y = -0.2, z = -0.1 }, rot = { x = 135.0, y = 0.0, z = 0.0 }, bone = 28422 },
+
     -- Map blip shown at the pickup location until the player arrives
-    PickupBlip = {
-        Sprite     = 1,
-        Display    = 4,
-        Scale      = 0.8,
-        Color      = 5,
-        Route      = true, -- draw a GPS route line to the blip
-        RouteColor = 5,
-        Label = "Stock Pickup"
+    PickupBlip           = { Sprite = 1, Display = 6, Scale = 0.7, Color = 5, Route = true, RouteColor = 5, Label = "Stock Pickup" },
+
+    -- Marker drawn above the ground box once it has spawned
+    PickupMarker         = {
+        Distance      = 20.0,                            -- only draw once this close, even though the box exists from PickupDistance
+        Type          = 20,                              -- FiveM marker type (see docs.fivem.net/docs/game-references/markers)
+        Scale         = { x = 0.5, y = 0.5, z = 0.5 },
+        ZOffset       = 1.0,                             -- height above the box's resting position
+        Rotation      = { x = 180.0, y = 0.0, z = 0.0 }, -- 180 on X flips the marker upside down
+        Color         = { r = 255, g = 190, b = 40, a = 180 },
+        BobUpAndDown  = true,
+        FaceCamera    = false,
+        Rotate        = false,
+        RotationOrder = 2,
     },
 
     -- Cargo damage from vehicle collisions during transport
-    CollisionDamage = {
+    CollisionDamage      = {
         Enable              = true, -- set false to disable cargo damage entirely
-        MinDeductionPercent = 5,     -- minimum % of current stock lost per confirmed collision
-        MaxDeductionPercent = 15,    -- maximum % of current stock lost per confirmed collision
-        PingCooldown        = 3000,  -- ms between accepted collision reports per shipment
-        MinImpactSpeed      = 5.0,   -- client-side filter: vehicle speed (m/s) required to report a hit
+        MinDeductionPercent = 5,    -- minimum % of current stock lost per confirmed collision
+        MaxDeductionPercent = 15,   -- maximum % of current stock lost per confirmed collision
+        PingCooldown        = 3000, -- ms between accepted collision reports per shipment
+        MinImpactSpeed      = 5.0,  -- client-side filter: vehicle speed (m/s) required to report a hit
     },
 
     -- Randomly selected for every stock order, regardless of business type.

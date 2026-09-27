@@ -276,6 +276,21 @@ end
 --- @param businessId number
 --- @param status table
 function OpenStockOrderDialog(businessId, status)
+    if IsStockMissionActive() then
+        _API.ShowNotification(locale("notification.mission_already_active"), "error")
+        return lib.showContext("moneywash:handler:stock")
+    end
+
+    local eligibility = lib.callback.await("t1ger_moneywash:server:canPlaceStockOrder", false)
+
+    if not eligibility.eligible then
+        _API.ShowNotification(
+            string.format(locale("menu.stock.order_on_cooldown"), eligibility.cooldownRemaining or 0),
+            "error"
+        )
+        return lib.showContext("moneywash:handler:stock")
+    end
+
     local minOrder = status.minOrder
     local maxOrder = status.maxOrder
     local unitPrice = status.unitPrice
@@ -296,7 +311,7 @@ function OpenStockOrderDialog(businessId, status)
     local units = math.floor(tonumber(input[1]) or 0)
     if units < minOrder or units > maxOrder then
         _API.ShowNotification(locale("menu.stock.invalid_units"), "error", {})
-        return
+        return lib.showContext("moneywash:handler:stock")
     end
 
     local totalCost = units * unitPrice
@@ -308,10 +323,18 @@ function OpenStockOrderDialog(businessId, status)
         cancel   = true,
     })
 
-    if confirmed ~= "confirm" then return end
+    if confirmed ~= "confirm" then
+        return lib.showContext("moneywash:handler:stock")
+    end
 
-    -- Trigger stock mission flow in missions.lua
-    StartStockMission(businessId, units)
+    local result = lib.callback.await("t1ger_moneywash:server:orderStock", false, businessId, units)
+
+    if not result.success then
+        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error")
+        return lib.showContext("moneywash:handler:stock")
+    end
+
+    StartStockMission(businessId, result.missionData)
 end
 
 --- ============================================================================

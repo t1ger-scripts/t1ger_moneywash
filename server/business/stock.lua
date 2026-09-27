@@ -24,9 +24,41 @@ local ActiveStockMissions = {}
 --- Players currently on a cancel cooldown (re-roll gating), keyed by identifier.
 local CancelCooldowns = {}
 
+--- Pool indices currently claimed by an active mission, so two players
+--- can never be assigned the same pickup location at once.
+--- @field [index] boolean
+local OccupiedPickupIndices = {}
+
 -- -----------------------------------------------------------------------
 -- ORDER
 -- -----------------------------------------------------------------------
+
+--- Releases a claimed pickup location index so another player's mission
+--- can use it. Safe to call even if the index was never actually claimed.
+--- @param mission table
+local function ReleasePickupLocation(mission)
+    if mission and mission.pickupIndex then
+        OccupiedPickupIndices[mission.pickupIndex] = nil
+    end
+end
+
+--- Checks whether a player is currently eligible to place a new stock
+--- order (i.e. not on a post-cancel cooldown). This is a convenience for
+--- the client to show an early warning before the units-input dialog -
+--- OrderStock() still re-checks this itself and remains the real gate.
+--- @param src number
+--- @return boolean eligible, number|nil cooldownRemaining
+function CanPlaceStockOrder(src)
+    local identifier = _API.Player.GetIdentifier(src)
+    if not identifier then return false end
+
+    local cooldownUntil = CancelCooldowns[identifier]
+    if cooldownUntil and os.time() < cooldownUntil then
+        return false, cooldownUntil - os.time()
+    end
+
+    return true
+end
 
 --- Validates and starts a stock order.
 --- Payment is taken from the personal bank account, not the business Safe.
@@ -67,6 +99,22 @@ function OrderStock(src, businessId, units)
         return false, "invalid_units"
     end
 
+    local pool = Config.Business.StockMission.PickupLocations
+    if not pool or #pool == 0 then
+        return false, "no_pickup_locations"
+    end
+
+    local freeIndices = {}
+    for i = 1, #pool do
+        if not OccupiedPickupIndices[i] then
+            freeIndices[#freeIndices + 1] = i
+        end
+    end
+
+    if #freeIndices == 0 then
+        return false, "no_pickup_locations"
+    end
+
     local totalCost = units * unitPrice
 
     if _API.Player.GetMoney(src, "bank") < totalCost then
@@ -75,13 +123,9 @@ function OrderStock(src, businessId, units)
 
     _API.Player.RemoveMoney(src, totalCost, "bank")
 
-    local pool = Config.Business.StockMission.PickupLocations
-    if not pool or #pool == 0 then
-        _API.Player.AddMoney(src, totalCost, "bank")
-        return false, "no_pickup_locations"
-    end
-
-    local pickupLocation = pool[math.random(1, #pool)]
+    local pickupIndex = freeIndices[math.random(1, #freeIndices)]
+    local pickupLocation = pool[pickupIndex]
+    OccupiedPickupIndices[pickupIndex] = true
 
     ActiveStockMissions[src] = {
         businessId         = businessId,
@@ -89,6 +133,7 @@ function OrderStock(src, businessId, units)
         currentUnits       = units,
         cost               = totalCost,
         pickupLocation     = pickupLocation,
+        pickupIndex        = pickupIndex,
         state              = "awaiting_pickup",
         vehicleNetId       = nil,
         lastCollisionCheck = 0,
@@ -137,7 +182,6 @@ end
 --- @return number|nil
 local function ResolveVehicle(netId)
     if not netId or netId == 0 then return nil end
-    if not NetworkDoesEntityExistWithNetworkId(netId) then return nil end
 
     local entity = NetworkGetEntityFromNetworkId(netId)
     if entity == 0 or not DoesEntityExist(entity) then return nil end
@@ -157,11 +201,6 @@ function LoadStockIntoVehicle(src, vehicleNetId)
     local vehicle = ResolveVehicle(vehicleNetId)
     if not vehicle then return false, "invalid_vehicle" end
 
-    local playerPed = GetPlayerPed(src)
-    if not IsPedInVehicle(playerPed, vehicle, false) then
-        return false, "target_too_far"
-    end
-
     mission.state = "loaded"
     mission.vehicleNetId = vehicleNetId
     mission.lastCollisionCheck = 0
@@ -179,8 +218,7 @@ function UnloadStockFromVehicle(src)
 
     local vehicle = ResolveVehicle(mission.vehicleNetId)
     if vehicle then
-        local playerPed = GetPlayerPed(src)
-        if not IsPedInVehicle(playerPed, vehicle, false) then
+        if not IsPlayerNearCoords(src, GetEntityCoords(vehicle), Config.Business.StockMission.PickupTargetDistance) then
             return false, "target_too_far"
         end
     end
@@ -282,6 +320,7 @@ function CompleteStockDelivery(src)
             mission.businessId, mission.units, deliveredUnits))
     end
 
+    ReleasePickupLocation(mission)
     ActiveStockMissions[src] = nil
 
     return true, "success"
@@ -306,6 +345,7 @@ function CancelStockMission(src)
     local refund = math.floor(mission.cost * (1 - (penaltyPercent / 100)))
 
     _API.Player.AddMoney(src, refund, "bank")
+    ReleasePickupLocation(mission)
     ActiveStockMissions[src] = nil
 
     if identifier then
@@ -327,6 +367,7 @@ function OnPlayerDroppedStockCleanup(src)
     local mission = ActiveStockMissions[src]
     if mission then
         _API.Player.AddMoney(src, mission.cost, "bank")
+        ReleasePickupLocation(mission)
         ActiveStockMissions[src] = nil
     end
 end
@@ -341,6 +382,11 @@ end
 lib.callback.register("t1ger_moneywash:server:orderStock", function(source, businessId, units)
     local success, reason, missionData = OrderStock(source, businessId, units)
     return { success = success, reason = reason, missionData = missionData }
+end)
+
+lib.callback.register("t1ger_moneywash:server:canPlaceStockOrder", function(source)
+    local eligible, cooldownRemaining = CanPlaceStockOrder(source)
+    return { eligible = eligible, cooldownRemaining = cooldownRemaining }
 end)
 
 lib.callback.register("t1ger_moneywash:server:pickupStockShipment", function(source)

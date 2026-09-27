@@ -58,6 +58,7 @@
             "amount_label": "Units to order (min %d, max %d)",
             "price_desc": "Price per unit: %s",
             "invalid_units": "Invalid order amount",
+            "order_on_cooldown": "You can place a new order in %d seconds",
             "confirm_title": "Confirm Stock Order",
             "confirm_body": "Order %d units for %s?\n\nPayment will be taken from your bank."
         },
@@ -158,8 +159,8 @@
         "launder_success": "Money laundered",
         "launder_detail": "Clean: %s | Fee: %s | Suspicion: %s",
         "mission_already_active": "You already have an active mission",
-        "stock_order_placed": "Stock order placed",
-        "stock_box_ready": "Your shipment has arrived - go pick it up",
+        "stock_order_placed": "Stock order placed. GPS waypoint set to pickup location.",
+        "stock_box_ready": "Pick up your stock at the marked location",
         "stock_picked_up": "Stock picked up — load it into your vehicle",
         "stock_loaded": "Stock loaded — drive back to your business",
         "stock_delivered": "Stock delivered successfully",

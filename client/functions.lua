@@ -36,17 +36,6 @@ function IsEntityValid(entity)
     return DoesEntityExist(entity)
 end
 
---- Returns whether the player can interact with the Accountant NPC
---- Police jobs cannot interact at all
---- @param entity number
---- @return boolean
-function CanInteractWithAccountantNPC(entity)
-    if IsPoliceJob() then return false end
-    if not IsEntityValid(entity) or GetEntityType(entity) == 0 then return false end
-    if IsPedInAnyVehicle(PlayerPedId(), false) then return false end
-    return true
-end
-
 --- Returns whether the player can interact with a Handler NPC they own
 --- Police jobs cannot interact
 --- @param entity number
