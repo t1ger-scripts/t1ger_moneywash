@@ -136,7 +136,6 @@ function OpenStockMenu(businessId, status)
     local stockCfg = Config.Business.Stock
 
     local unitPrice = math.floor(stockCfg.LaunderDollarsPerUnit * (stockCfg.UnitPricePercent / 100))
-    local stockValue = status.stock * unitPrice
 
     local unitsPerCycle = status.expectedRevenue / stockCfg.LaunderDollarsPerUnit
     local capacity = math.floor(unitsPerCycle * stockCfg.maxCapacityCycles)
@@ -168,12 +167,11 @@ function OpenStockMenu(businessId, status)
 
     local options = {
         {
-            title       = ("%s: %d / %d %s (%s)"):format(
+            title       = ("%s: %d / %d %s"):format(
                 locale("menu.handler.view_stock"),
                 status.stock,
                 capacity,
-                locale("menu.handler.units"),
-                FormatMoney(stockValue)
+                locale("menu.handler.units")
             ),
             icon        = menuIcons.viewStock or "fa-solid fa-warehouse",
             description = locale("menu.handler.view_stock_desc"),
