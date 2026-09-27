@@ -124,24 +124,35 @@ function OpenHandlerMenu(businessId)
     lib.showContext("moneywash:handler:main")
 end
 
---- Stock submenu - shows current stock (units, value, coverage) and
---- lets the player place a new order.
+--- Stock submenu - separate rows for storage (units held vs. capacity) and
+--- cycle readiness (whether stock can fully cover the rest of this cycle's
+--- laundering), plus the order action. Cycle Readiness can be hidden
+--- entirely via Config.Business.Stock.ShowCycleReadiness for servers that
+--- don't want to hint at this to players.
 --- @param businessId number
 --- @param status table
 function OpenStockMenu(businessId, status)
     local menuIcons = Config.Business.MenuIcons or {}
-
     local stockCfg = Config.Business.Stock
+
     local unitPrice = math.floor(stockCfg.LaunderDollarsPerUnit * (stockCfg.UnitPricePercent / 100))
     local stockValue = status.stock * unitPrice
 
     local unitsPerCycle = status.expectedRevenue / stockCfg.LaunderDollarsPerUnit
     local capacity = math.floor(unitsPerCycle * stockCfg.maxCapacityCycles)
+    local storagePercent = capacity > 0 and math.floor((status.stock / capacity) * 100) or 0
 
     local remaining = math.max(0, status.expectedRevenue - status.totalLaundered)
     local stockNeeded = math.ceil(remaining / stockCfg.LaunderDollarsPerUnit)
     local coverage = stockNeeded <= 0 and 100
         or math.floor(math.min(1, status.stock / stockNeeded) * 100)
+
+    local coverageColor = "green"
+    if coverage <= 30 then
+        coverageColor = "red"
+    elseif coverage <= 60 then
+        coverageColor = "orange"
+    end
 
     local isClosed = status.isClosed
     local missionActive = IsStockMissionActive()
@@ -155,33 +166,50 @@ function OpenStockMenu(businessId, status)
         stockDesc = locale("menu.handler.order_stock_desc")
     end
 
+    local options = {
+        {
+            title       = ("%s: %d / %d %s (%s)"):format(
+                locale("menu.handler.view_stock"),
+                status.stock,
+                capacity,
+                locale("menu.handler.units"),
+                FormatMoney(stockValue)
+            ),
+            icon        = menuIcons.viewStock or "fa-solid fa-warehouse",
+            description = locale("menu.handler.view_stock_desc"),
+            progress    = storagePercent,
+            colorScheme = "blue",
+        },
+    }
+
+    if stockCfg.ShowCycleReadiness then
+        options[#options + 1] = {
+            title       = ("%s: %d%%"):format(
+                locale("menu.handler.cycle_readiness"),
+                coverage
+            ),
+            icon        = menuIcons.cycleReadiness or "fa-solid fa-gauge-high",
+            description = locale("menu.handler.cycle_readiness_desc"),
+            progress    = coverage,
+            colorScheme = coverageColor,
+        }
+    end
+
+    options[#options + 1] = {
+        title       = locale("menu.handler.order_stock"),
+        icon        = menuIcons.orderStock or "fa-solid fa-box",
+        description = stockDesc,
+        disabled    = stockDisabled,
+        onSelect    = function()
+            OpenStockOrderDialog(businessId, status)
+        end,
+    }
+
     lib.registerContext({
         id      = "moneywash:handler:stock",
         title   = locale("menu.handler.stock"),
         menu    = "moneywash:handler:main",
-        options = {
-            {
-                title       = ("%s: %d / %d %s (%s)"):format(
-                    locale("menu.handler.view_stock"),
-                    status.stock,
-                    capacity,
-                    locale("menu.handler.units"),
-                    FormatMoney(stockValue)
-                ),
-                icon        = menuIcons.viewStock or "fa-solid fa-warehouse",
-                description = locale("menu.handler.stock_coverage_desc"),
-                progress    = coverage,
-            },
-            {
-                title       = locale("menu.handler.order_stock"),
-                icon        = menuIcons.orderStock or "fa-solid fa-box",
-                description = stockDesc,
-                disabled    = stockDisabled,
-                onSelect    = function()
-                    OpenStockOrderDialog(businessId, status)
-                end,
-            },
-        },
+        options = options,
     })
 
     lib.showContext("moneywash:handler:stock")
