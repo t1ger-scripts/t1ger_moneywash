@@ -57,6 +57,24 @@ return {
         MinImpactSpeed      = 5.0,  -- client-side filter: vehicle speed (m/s) required to report a hit
     },
 
+    -- HUD meter shown from the moment the box is picked up until delivery,
+    -- reflecting live cargo condition. Visible while carried or loaded, so
+    -- damage taken earlier is still visible even if the player unloads to
+    -- walk the rest of the way.
+    DamageMeter = {
+        Enable   = true,
+        Position = "bottom-center", -- "top-left" | "top-right" | "bottom-left" | "bottom-right" | "top-center" | "bottom-center"
+        Width    = 0.10,           -- screen-relative (0.0-1.0)
+        Height   = 0.02,
+        Margin   = 0.02,
+        BackgroundColor  = { r = 0,   g = 0,   b = 0,   a = 150 },
+        FillColor        = { r = 46,  g = 204, b = 113, a = 220 }, -- good condition
+        WarningColor     = { r = 230, g = 126, b = 34,  a = 220 }, -- mid condition
+        DangerColor      = { r = 231, g = 76,  b = 60,  a = 220 }, -- low condition
+        WarningThreshold = 60, -- % remaining, below this uses WarningColor
+        DangerThreshold  = 30, -- % remaining, below this uses DangerColor
+    },    
+
     -- Randomly selected for every stock order, regardless of business type.
     -- Add as many locations as you like.
     PickupLocations       = {

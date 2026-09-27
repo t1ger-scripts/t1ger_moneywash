@@ -128,6 +128,65 @@ local function AttachBoxToVehicle(vehicle)
     StopCarryAnimation()
 end
 
+local METER_POSITIONS = {
+    ["top-left"]      = function(cfg) return cfg.Margin + cfg.Width / 2,       cfg.Margin + cfg.Height / 2 end,
+    ["top-right"]     = function(cfg) return 1.0 - cfg.Margin - cfg.Width / 2, cfg.Margin + cfg.Height / 2 end,
+    ["bottom-left"]   = function(cfg) return cfg.Margin + cfg.Width / 2,       1.0 - cfg.Margin - cfg.Height / 2 end,
+    ["bottom-right"]  = function(cfg) return 1.0 - cfg.Margin - cfg.Width / 2, 1.0 - cfg.Margin - cfg.Height / 2 end,
+    ["top-center"]    = function(cfg) return 0.5,                              cfg.Margin + cfg.Height / 2 end,
+    ["bottom-center"] = function(cfg) return 0.5,                              1.0 - cfg.Margin - cfg.Height / 2 end,
+}
+
+--- Draws the cargo condition meter for the current frame.
+local function DrawStockDamageMeter()
+    local cfg = Config.Business.StockMission.DamageMeter
+    if not cfg.Enable then return end
+
+    local percent = math.max(0, math.min(100, (stockMission.currentUnits / stockMission.units) * 100))
+    local getCenter = METER_POSITIONS[cfg.Position] or METER_POSITIONS["bottom-right"]
+    local centerX, centerY = getCenter(cfg)
+
+    local bg = cfg.BackgroundColor
+    DrawRect(centerX, centerY, cfg.Width, cfg.Height, bg.r, bg.g, bg.b, bg.a)
+
+    local fillWidth = cfg.Width * (percent / 100)
+
+    if fillWidth > 0 then
+        local fillCenterX = (centerX - cfg.Width / 2) + (fillWidth / 2)
+        local color = cfg.FillColor
+
+        if percent <= cfg.DangerThreshold then
+            color = cfg.DangerColor
+        elseif percent <= cfg.WarningThreshold then
+            color = cfg.WarningColor
+        end
+
+        DrawRect(fillCenterX, centerY, fillWidth, cfg.Height, color.r, color.g, color.b, color.a)
+    end
+
+    SetTextFont(4)
+    SetTextScale(0.3, 0.3)
+    SetTextColour(255, 255, 255, 255)
+    SetTextCentre(true)
+    SetTextOutline()
+    BeginTextCommandDisplayText("STRING")
+    AddTextComponentSubstringPlayerName(("%d%%"):format(math.floor(percent)))
+    EndTextCommandDisplayText(centerX, centerY - 0.01)
+end
+
+--- Single persistent render loop, for the resource's whole lifetime - no
+--- new thread per mission. Draws only while a mission genuinely holds
+--- cargo the player could see damage on.
+CreateThread(function()
+    while true do
+        Wait(0)
+
+        if stockMission and (stockMission.state == "carried" or stockMission.state == "loaded") then
+            DrawStockDamageMeter()
+        end
+    end
+end)
+
 -- -----------------------------------------------------------------------
 -- STATE QUERIES
 -- -----------------------------------------------------------------------
@@ -377,6 +436,8 @@ AddEventHandler("gameEventTriggered", function(eventName, args)
         lib.callback.await("t1ger_moneywash:server:reportStockCollision", false, netId)
 
     if applied then
+        stockMission.currentUnits = remainingUnits
+
         _API.ShowNotification(
             string.format(locale("notification.stock_damaged"), deductedPercent, remainingUnits),
             "error"
@@ -405,6 +466,7 @@ function StartStockMission(businessId, missionData)
         active         = true,
         businessId     = businessId,
         units          = missionData.units,
+        currentUnits   = missionData.units, -- live, only ever updated from server-confirmed collision reports
         cost           = missionData.cost,
         pickupLocation = missionData.pickupLocation,
         businessCoords = missionData.businessCoords,
