@@ -85,20 +85,6 @@ function OrderStock(src, businessId, units)
         end
     end
 
-    units = math.floor(tonumber(units) or 0)
-
-    local minOrder = GetMinOrder(business.type)
-    local maxOrder = GetMaxOrder(business.type)
-    local unitPrice = GetUnitPrice(business.type)
-
-    if not minOrder or not maxOrder or not unitPrice then
-        return false, "invalid_type"
-    end
-
-    if units < minOrder or units > maxOrder then
-        return false, "invalid_units"
-    end
-
     local pool = Config.Business.StockMission.PickupLocations
     if not pool or #pool == 0 then
         return false, "no_pickup_locations"
@@ -113,6 +99,34 @@ function OrderStock(src, businessId, units)
 
     if #freeIndices == 0 then
         return false, "no_pickup_locations"
+    end
+
+    units = math.floor(tonumber(units) or 0)
+
+    local minOrder = GetMinOrder(business.type)
+    local maxOrder = GetMaxOrder(business.type)
+    local unitPrice = GetUnitPrice(business.type)
+
+    if not minOrder or not maxOrder or not unitPrice then
+        return false, "invalid_type"
+    end
+
+    if units < minOrder or units > maxOrder then
+        return false, "invalid_units"
+    end
+
+    local capacity = GetStockCapacity(business.type)
+    if not capacity then
+        return false, "invalid_type"
+    end
+
+    local roomRemaining = capacity - business.stock
+    if roomRemaining <= 0 then
+        return false, "stock_full"
+    end
+
+    if units > roomRemaining then
+        units = roomRemaining -- clamp down rather than reject - never waste the physical trip
     end
 
     local totalCost = units * unitPrice

@@ -535,7 +535,7 @@ local function CalculateCoveredExposed(business, amount, tier)
     -- Stock check on within-revenue portion only
     local stockConsumed = GetStockConsumed(amount)
     local stockValue = business.stock -- units available
-    local stockSupported = math.min(withinRevenue, stockValue * (tier.expectedRevenue * Config.Business.Stock.costRatio))
+    local stockSupported = math.min(withinRevenue, stockValue * Config.Business.Stock.LaunderDollarsPerUnit)
 
     local covered = math.floor(stockSupported)
     local exposed = math.floor(overRevenue + (withinRevenue - stockSupported))
@@ -638,9 +638,13 @@ function LaunderMoney(src, businessId, amount)
     -- Calculate covered/exposed split
     local coveredAmount, exposedAmount = CalculateCoveredExposed(business, amount, tier)
 
-    -- Calculate fee and clean money
-    local fee = math.floor(amount * (tier.launderFee / 100))
-    local cleanAmount = amount - fee
+    -- No fee is taken at the moment of laundering - the full amount becomes
+    -- clean money. The only guaranteed fee in the whole pipeline is
+    -- Config.BankDeposit.Tax, paid later when converting Safe balance to
+    -- real bank money. fee is kept at 0 (not removed) since existing
+    -- client notification text still references result.fee.
+    local fee = 0
+    local cleanAmount = amount
 
     -- Split clean money proportionally between covered and exposed
     local coveredRatio = amount > 0 and (coveredAmount / amount) or 0
@@ -835,6 +839,9 @@ function CompleteBankDeposit(identifier)
     local deposit = ActiveDeposits[identifier]
     if not deposit then return end
 
+    local taxPercent = Config.BankDeposit.Tax or 0
+    local netAmount = math.floor(deposit.total_amount * (1 - (taxPercent / 100)))
+
     -- Find player source if online
     local src = nil
     for _, player in ipairs(_API.GetOnlinePlayers()) do
@@ -846,17 +853,17 @@ function CompleteBankDeposit(identifier)
 
     -- Wire to personal bank
     if src then
-        _API.Player.AddMoney(src, deposit.total_amount, "bank")
+        _API.Player.AddMoney(src, netAmount, "bank")
 
         -- Award reputation
         if Config.Reputation.Enable and Config.Reputation.Rewards.bankDeposit.enable then
             AddReputationPoints(src, Config.Reputation.Rewards.bankDeposit.points)
         end
 
-        TriggerClientEvent("t1ger_moneywash:client:depositCleared", src, deposit.total_amount)
+        TriggerClientEvent("t1ger_moneywash:client:depositCleared", src, netAmount)
     else
         -- Player offline - add directly via identifier
-        _API.Player.AddMoneyByIdentifier(identifier, deposit.total_amount, "bank")
+        _API.Player.AddMoneyByIdentifier(identifier, netAmount, "bank")
     end
 
     -- Clean up
@@ -864,7 +871,8 @@ function CompleteBankDeposit(identifier)
     ActiveDeposits[identifier] = nil
 
     if Config.Debug then
-        print(("[MoneyWash] Deposit cleared: %s | $%d wired to bank"):format(identifier, deposit.total_amount))
+        print(("[MoneyWash] Deposit cleared: %s | $%d gross -> $%d net (%d%% tax) wired to bank"):format(
+            identifier, deposit.total_amount, netAmount, taxPercent))
     end
 end
 

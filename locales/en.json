@@ -118,6 +118,7 @@
         "error_invalid_state": "This action isn't available right now",
         "error_invalid_vehicle": "Invalid vehicle",
         "error_order_on_cooldown": "You need to wait before placing a new order",
+        "error_stock_full": "Your stock is already at full capacity",
         "error_operation_in_progress": "An ownership action is already being processed. Please try again.",
         "error_insufficient_funds": "You don't have enough money",
         "error_invalid_job": "You are not on duty for this action",

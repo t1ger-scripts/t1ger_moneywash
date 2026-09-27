@@ -92,6 +92,10 @@ Config.BankDeposit = {
     ProcessingTime  = 10,   -- real minutes for a deposit to clear into personal bank
     PoliceKeepMoney = true, -- true = confiscated funds go to police job account, false = vanish
 
+    -- The only guaranteed fee in the entire laundering pipeline - paid once,
+    -- when a Safe balance converts into real bank money. Set to 0 to disable.
+    Tax = 30,
+
     -- % chance a deposit is flagged based on business suspicion label at moment of teller interaction
     FlagChance      = {
         Low      = 0,

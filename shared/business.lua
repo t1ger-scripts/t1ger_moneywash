@@ -39,20 +39,20 @@ Config.Business = {
         abandon     = "fa-solid fa-door-open",
     },
 
-    -- Flat % tax deducted when a bank deposit clears into the player's personal bank
-    -- Set to 0 to disable
-    WithdrawalTax = 15,
-
     -- Maximum distance (metres) between two players for a business transfer
     TransferDistance = 10.0,
 
-    -- Global stock economy ratios - all stock values are derived from expectedRevenue
-    -- using these ratios so server owners only need to set expectedRevenue per tier
+    -- Global stock economy - every number below applies the same way to
+    -- every business type. Bigger tiers naturally need/hold more stock
+    -- because their expectedRevenue is bigger, not because anything here
+    -- is set per-tier.
     Stock = {
-        costRatio        = 0.10, -- unit price = expectedRevenue * costRatio
-        consumptionRatio = 0.01, -- stock consumed per $ laundered = expectedRevenue * consumptionRatio
-        minOrderRatio    = 0.05, -- minimum units per order = expectedRevenue * minOrderRatio
-        maxOrderRatio    = 0.50, -- maximum units per order = expectedRevenue * maxOrderRatio
+        LaunderDollarsPerUnit = 100, -- $ laundered per 1 unit of stock consumed
+        UnitPricePercent      = 15,  -- cost to BUY 1 unit, as % of the value it represents
+
+        maxCapacityCycles = 3.0, -- total capacity = this many cycles' worth of consumption
+        minOrderPercent   = 1,   -- smallest order = this % of total capacity
+        maxOrderPercent   = 50,  -- largest single order = this % of total capacity
     },
 
     -- Stock delivery mission settings - see shared/stock_mission.lua
@@ -66,7 +66,6 @@ Config.Business = {
     -- expectedRevenue: maximum believable gross revenue per cycle
     --                  this is the single most important value per tier -
     --                  all stock economy values derive from it
-    -- launderFee   : % of the laundered amount taken as a fee (remainder becomes clean money in Safe)
     Tiers = {
         [1] = {
             type             = "coffee_shop",
@@ -74,7 +73,6 @@ Config.Business = {
             requiredPoints   = 0,
             npc              = "s_m_y_waiter_01",
             expectedRevenue  = 3000,
-            launderFee       = 25, -- % fee deducted from laundered amount
         },
         [2] = {
             type             = "gas_station",
@@ -82,7 +80,6 @@ Config.Business = {
             requiredPoints   = 500,
             npc              = "s_m_y_xmech_01",
             expectedRevenue  = 6000,
-            launderFee       = 23,
         },
         [3] = {
             type             = "restaurant",
@@ -90,7 +87,6 @@ Config.Business = {
             requiredPoints   = 1500,
             npc              = "s_m_y_chef_01",
             expectedRevenue  = 10000,
-            launderFee       = 22,
         },
         [4] = {
             type             = "laundromat",
@@ -98,7 +94,6 @@ Config.Business = {
             requiredPoints   = 2750,
             npc              = "s_m_o_busker_01",
             expectedRevenue  = 15000,
-            launderFee       = 21,
         },
         [5] = {
             type             = "bar",
@@ -106,7 +101,6 @@ Config.Business = {
             requiredPoints   = 4000,
             npc              = "s_m_y_barman_01",
             expectedRevenue  = 22000,
-            launderFee       = 20,
         },
         [6] = {
             type             = "nightclub",
@@ -114,7 +108,6 @@ Config.Business = {
             requiredPoints   = 5500,
             npc              = "s_m_y_clubbar_01",
             expectedRevenue  = 32000,
-            launderFee       = 19,
         },
         [7] = {
             type             = "stripclub",
@@ -122,7 +115,6 @@ Config.Business = {
             requiredPoints   = 7500,
             npc              = "s_m_y_doorman_01",
             expectedRevenue  = 45000,
-            launderFee       = 18,
         },
         [8] = {
             type             = "carwash",
@@ -130,7 +122,6 @@ Config.Business = {
             requiredPoints   = 10000,
             npc              = "s_m_y_winclean_01",
             expectedRevenue  = 65000,
-            launderFee       = 17,
         },
         [9] = {
             type             = "casino",
@@ -138,7 +129,6 @@ Config.Business = {
             requiredPoints   = 15000,
             npc              = "s_m_y_casino_01",
             expectedRevenue  = 100000,
-            launderFee       = 15,
         },
     },
 }
