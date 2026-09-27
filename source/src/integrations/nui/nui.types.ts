@@ -36,7 +36,6 @@ export interface PortalBusinessTier {
     displayName: string
     requiredInvestorScore: number
     projectedRevenue: number
-    operatingFeePercentage: number
     isUnlocked: boolean
     availableLocationCount: number
     totalLocationCount: number

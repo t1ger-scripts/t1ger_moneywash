@@ -3,7 +3,6 @@ import { computed, ref, watch } from 'vue'
 import {
     Building2,
     ChartColumn,
-    Coins,
     MapPin,
     Navigation,
     ShoppingCart,
@@ -218,22 +217,6 @@ async function setWaypoint(): Promise<void> {
                             {{
                                 t('portal.businessDetails.revenueCycle', {
                                     amount: formattedRevenue,
-                                })
-                            }}
-                        </dd>
-                    </div>
-
-                    <div>
-                        <dt>
-                            <Coins :size="19" aria-hidden="true" />
-                            {{ t('portal.businessDetails.operatingFee') }}
-                        </dt>
-
-                        <dd>
-                            {{
-                                t('portal.businessDetails.operatingFeeValue', {
-                                    percentage:
-                                        selectedTier.operatingFeePercentage,
                                 })
                             }}
                         </dd>

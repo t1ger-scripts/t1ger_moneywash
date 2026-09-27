@@ -35,7 +35,6 @@ export interface BusinessTier {
     displayName: string
     requiredInvestorScore: number
     projectedRevenue: number
-    operatingFeePercentage: number
     isUnlocked: boolean
     availableLocationCount: number
     totalLocationCount: number
@@ -77,7 +76,6 @@ export function createMarketplaceSnapshot(
             displayName: tier.displayName,
             requiredInvestorScore: tier.requiredInvestorScore,
             projectedRevenue: tier.projectedRevenue,
-            operatingFeePercentage: tier.operatingFeePercentage,
             isUnlocked: tier.isUnlocked,
             availableLocationCount: tier.availableLocationCount,
             totalLocationCount: tier.totalLocationCount,
