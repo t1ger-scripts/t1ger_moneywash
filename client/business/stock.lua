@@ -52,7 +52,7 @@ end
 --- @param color number
 --- @param label string|nil
 --- @return number
-local function CreateStockBlip(coords, sprite, display, scale, color, label)
+local function CreateMissionBlip(coords, sprite, display, scale, color, label)
     local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
     SetBlipSprite(blip, sprite)
     SetBlipDisplay(blip, display)
@@ -71,7 +71,7 @@ end
 
 --- Removes a map blip.
 --- @param blip number
-local function RemoveStockBlip(blip)
+local function RemoveMissionBlip(blip)
     if blip and DoesBlipExist(blip) then
         RemoveBlip(blip)
     end
@@ -162,7 +162,11 @@ local function ResetStockMission()
         end
 
         if stockMission.blip then
-            RemoveStockBlip(stockMission.blip)
+            RemoveMissionBlip(stockMission.blip)
+        end
+
+        if stockMission.deliveryBlip then
+            RemoveMissionBlip(stockMission.deliveryBlip)
         end
 
         if stockMission.prop and DoesEntityExist(stockMission.prop) then
@@ -253,8 +257,21 @@ function RequestStockPickup()
     end
 
     if stockMission.blip then
-        RemoveStockBlip(stockMission.blip)
+        RemoveMissionBlip(stockMission.blip)
         stockMission.blip = nil
+    end
+
+    if stockMission.businessCoords then
+        local cfg = Config.Business.StockMission.DeliveryBlip
+
+        stockMission.deliveryBlip = CreateMissionBlip(
+            stockMission.businessCoords, cfg.Sprite, cfg.Display, cfg.Scale, cfg.Color, cfg.Label
+        )
+
+        if cfg.Route then
+            SetBlipRoute(stockMission.deliveryBlip, true)
+            SetBlipRouteColour(stockMission.deliveryBlip, cfg.RouteColor)
+        end
     end
 
     _API.ShowNotification(locale("notification.stock_picked_up"), "inform")
@@ -390,16 +407,18 @@ function StartStockMission(businessId, missionData)
         units          = missionData.units,
         cost           = missionData.cost,
         pickupLocation = missionData.pickupLocation,
+        businessCoords = missionData.businessCoords,
         state          = "awaiting_pickup",
         prop           = nil,
         point          = nil,
         blip           = nil,
+        deliveryBlip   = nil,
         vehicleNetId   = nil,
     }
 
     _API.ShowNotification(locale("notification.stock_order_placed"), "inform")
 
-    stockMission.blip = CreateStockBlip(
+    stockMission.blip = CreateMissionBlip(
         stockMission.pickupLocation, blipCfg.Sprite, blipCfg.Display, blipCfg.Scale, blipCfg.Color, blipCfg.Label
     )
 

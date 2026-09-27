@@ -4,16 +4,16 @@
 -- ============================================================================
 
 return {
-    CancelCommand        = "cancelstock", -- chat command to voluntarily cancel an active mission
-    CancelPenaltyPercent = 10,            -- % of the paid cost forfeited on manual cancel
-    CancelCooldown       = 300,           -- seconds before a new order can be placed after a cancel (gates re-rolling)
+    CancelCommand         = "cancelstock", -- chat command to voluntarily cancel an active mission
+    CancelPenaltyPercent  = 10,           -- % of the paid cost forfeited on manual cancel
+    CancelCooldown        = 300,          -- seconds before a new order can be placed after a cancel (gates re-rolling)
 
-    PickupDistance       = 25.0, -- how close the player must be before the pickup box spawns
-    PickupTargetDistance = 2.0,  -- interaction distance for targeting the ground box and the Handler NPC delivery option
-    VehicleTargetDistance = 2.5, -- interaction distance for the load/unload vehicle target options
+    PickupDistance        = 25.0,         -- how close the player must be before the pickup box spawns
+    PickupTargetDistance  = 2.0,          -- interaction distance for targeting the ground box and the Handler NPC delivery option
+    VehicleTargetDistance = 2.5,          -- interaction distance for the load/unload vehicle target options
 
     -- Icons used throughout the mission
-    Icons                = {
+    Icons                 = {
         PickupTarget  = "fa-solid fa-hand",           -- target option to pick the box up
         LoadTarget    = "fa-solid fa-truck-ramp-box", -- target option to load the box into a vehicle
         UnloadTarget  = "fa-solid fa-hand",           -- target option to take the box back out
@@ -21,16 +21,21 @@ return {
     },
 
     -- Pickup box prop, attached to the player's hand during transport
-    PickupObject         = { model = "prop_cs_cardbox_01", pos = { x = 0.0, y = -0.2, z = -0.1 }, rot = { x = 135.0, y = 0.0, z = 0.0 }, bone = 28422 },
+    PickupObject          = { model = "prop_cs_cardbox_01", pos = { x = 0.0, y = -0.2, z = -0.1 }, rot = { x = 135.0, y = 0.0, z = 0.0 }, bone = 28422 },
 
     -- Looping animation played while the player is carrying the box
-    CarryAnimation       = { dict = "anim@heists@box_carry@", name = "idle", blendIn = 4.0, blendOut = 1.0, duration = -1, flag = 49 },
+    CarryAnimation        = { dict = "anim@heists@box_carry@", name = "idle", blendIn = 4.0, blendOut = 1.0, duration = -1, flag = 49 },
 
     -- Map blip shown at the pickup location until the player arrives
-    PickupBlip           = { Sprite = 1, Display = 6, Scale = 0.7, Color = 5, Route = true, RouteColor = 5, Label = "Stock Pickup" },
+    PickupBlip            = { Sprite = 1, Display = 6, Scale = 0.7, Color = 5, Route = true, RouteColor = 5, Label = "Stock Pickup" },
+
+    -- Map blip shown at the business, from the moment the box is picked up
+    -- until delivery, so the player always has a way back even if they miss
+    -- the chat notifications
+    DeliveryBlip          = { Sprite = 1, Display = 4, Scale = 0.8, Color = 2, Route = true, RouteColor = 2, Label = "Deliver Stock" },
 
     -- Marker drawn above the ground box once it has spawned
-    PickupMarker         = {
+    PickupMarker          = {
         Distance      = 20.0,                            -- only draw once this close, even though the box exists from PickupDistance
         Type          = 20,                              -- FiveM marker type (see docs.fivem.net/docs/game-references/markers)
         Scale         = { x = 0.5, y = 0.5, z = 0.5 },
@@ -44,7 +49,7 @@ return {
     },
 
     -- Cargo damage from vehicle collisions during transport
-    CollisionDamage      = {
+    CollisionDamage       = {
         Enable              = true, -- set false to disable cargo damage entirely
         MinDeductionPercent = 5,    -- minimum % of current stock lost per confirmed collision
         MaxDeductionPercent = 15,   -- maximum % of current stock lost per confirmed collision
@@ -54,7 +59,7 @@ return {
 
     -- Randomly selected for every stock order, regardless of business type.
     -- Add as many locations as you like.
-    PickupLocations      = {
+    PickupLocations       = {
         vector4(845.432983, -3205.714355, 6.010254, 175.748032),
         vector4(1245.085693, -3201.362549, 6.027100, 280.629913),
         vector4(647.024170, -3013.740723, 6.229248, 0.000000),

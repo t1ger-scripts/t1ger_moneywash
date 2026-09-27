@@ -144,10 +144,13 @@ function OrderStock(src, businessId, units)
             src, businessId, units, totalCost))
     end
 
+    local location = GetLocationConfig(business.type, business.locationId)
+
     return true, "success", {
         units          = units,
         cost           = totalCost,
         pickupLocation = pickupLocation,
+        businessCoords = location and location.coords,
     }
 end
 
