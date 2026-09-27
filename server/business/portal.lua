@@ -224,6 +224,7 @@ local function createMarketplaceSnapshot(source)
             businessType = tier.type,
             displayName = tier.label,
             requiredInvestorScore = tier.requiredPoints,
+            projectedRevenue = tier.expectedRevenue,
             isUnlocked = isUnlocked,
             availableLocationCount = availableLocationCount,
             totalLocationCount = totalLocationCount,
