@@ -197,6 +197,8 @@ function BuyBusiness(src, businessType, locationId)
 
     TriggerClientEvent("t1ger_moneywash:client:businessPurchased", src, id, businessType, locationId)
 
+    OnBusinessPurchased(identifier, businessType, locationId, price)
+
     if Config.Debug then
         print(("[MoneyWash] %s purchased %s #%d for $%d"):format(
             identifier,
@@ -381,13 +383,9 @@ function TransferBusiness(src, targetSrc, businessId)
         businessId
     )
 
-    TriggerClientEvent(
-        "t1ger_moneywash:client:businessReceived",
-        targetSrc,
-        businessId,
-        business.type,
-        business.locationId
-    )
+    TriggerClientEvent("t1ger_moneywash:client:businessReceived", targetSrc, businessId, business.type, business.locationId)
+
+    OnBusinessTransferred(identifier, targetIdentifier, businessId, business.type, business.locationId)
 
     if Config.Debug then
         print(("[MoneyWash] Business %d transferred: %s -> %s"):format(
@@ -504,11 +502,9 @@ function AbandonBusiness(src, businessId)
     ClearBusinessRuntimeState(businessId)
     ReleaseOwnershipLocks(lockKeys)
 
-    TriggerClientEvent(
-        "t1ger_moneywash:client:businessAbandoned",
-        src,
-        businessId
-    )
+    TriggerClientEvent("t1ger_moneywash:client:businessAbandoned", src, businessId)
+
+    OnBusinessAbandoned(identifier, businessId, business.type, business.locationId)
 
     if Config.Debug then
         print(("[MoneyWash] Business %d abandoned by %s"):format(

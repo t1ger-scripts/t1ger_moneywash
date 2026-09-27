@@ -55,6 +55,7 @@ server_scripts {
     'server/reputation.lua',
     'server/functions.lua',
     'server/customize.lua',
+    'server/hooks.lua',
 
     'server/business/store.lua',
     'server/business/functions.lua',
