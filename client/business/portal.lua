@@ -173,6 +173,7 @@ function OpenBusinessPortal()
         return
     end
 
+    if not BeginMoneywashUi("marketplace") then return end
     isPortalOpening = true
 
     local response = requestMarketplaceSnapshot()
@@ -191,6 +192,7 @@ function OpenBusinessPortal()
 
     if not response or not response.success or not response.data then
         isPortalOpening = false
+        CloseMoneywashUi("marketplace")
 
         _API.ShowNotification(
             "The business portal is currently unavailable.",
@@ -200,12 +202,7 @@ function OpenBusinessPortal()
         return
     end
 
-    SetNuiFocus(true, true)
-
-    SendNUIMessage({
-        action = NUI_MESSAGES.open,
-        data = response.data,
-    })
+    ShowMoneywashUi("marketplace", NUI_MESSAGES.open, response.data)
 
     isPortalOpen = true
     isPortalOpening = false
@@ -223,6 +220,7 @@ local function refreshBusinessPortal()
         return
     end
 
+    if not isPortalOpen or GetMoneywashUiScreen() ~= "marketplace" then return end
     SendNUIMessage({
         action = NUI_MESSAGES.refresh,
         data = response.data,
@@ -239,7 +237,7 @@ local function closeBusinessPortal(notifyNui)
         })
     end
 
-    SetNuiFocus(false, false)
+    CloseMoneywashUi("marketplace")
 
     isPortalOpen = false
     isPortalOpening = false
@@ -420,7 +418,7 @@ CreateThread(function()
             distance = portalConfig.TargetDistance or 2.0,
 
             canInteract = function()
-                return not isPortalOpen and not isPortalOpening
+                return not isPortalOpen and not isPortalOpening and GetMoneywashUiScreen() == nil
             end,
 
             onSelect = function()

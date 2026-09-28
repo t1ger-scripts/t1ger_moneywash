@@ -2,21 +2,16 @@ import { onMounted, onUnmounted } from 'vue'
 
 import { createMarketplaceSnapshot } from '@/domain/marketplace'
 import { installLocaleMessages } from '@/integrations/localization/i18n'
-import { isFiveMEnvironment, onNuiMessage, postNui } from '@/integrations/nui/nuiClient'
-import { NUI_CALLBACKS, NUI_MESSAGES } from '@/integrations/nui/nuiEvents'
-import type {
-    NuiResponse,
-    PortalBootstrapPayload,
-} from '@/integrations/nui/nui.types'
+import { onNuiMessage } from '@/integrations/nui/nuiClient'
+import { NUI_MESSAGES } from '@/integrations/nui/nuiEvents'
+import type { PortalBootstrapPayload } from '@/integrations/nui/nui.types'
 import { applyTheme } from '@/integrations/theme/applyTheme'
 import { useMarketplaceStore } from '@/stores/marketplace.store'
 import { usePortalStore } from '@/stores/portal.store'
-import { usePortalActions } from '@/composables/usePortalActions'
 
 export function usePortalLifecycle(): void {
     const marketplaceStore = useMarketplaceStore()
     const portalStore = usePortalStore()
-    const { requestPortalClose } = usePortalActions()
 
     const unsubscribeFunctions: Array<() => void> = []
 
@@ -35,11 +30,9 @@ export function usePortalLifecycle(): void {
             marketplaceStore.resetInteractionState()
         }
 
-        marketplaceStore.replaceSnapshot(
-            createMarketplaceSnapshot(payload),
-        )
+        marketplaceStore.replaceSnapshot(createMarketplaceSnapshot(payload))
 
-        portalStore.show()
+        if (resetInteractionState) portalStore.show()
     }
 
     function openPortal(payload: PortalBootstrapPayload): void {
@@ -55,36 +48,9 @@ export function usePortalLifecycle(): void {
         marketplaceStore.resetInteractionState()
     }
 
-    async function notifyFiveMReady(): Promise<void> {
-        try {
-            const response = await postNui<
-                NuiResponse<PortalBootstrapPayload>
-            >(NUI_CALLBACKS.ready)
-
-            if (response.success && response.data) {
-                openPortal(response.data)
-            }
-        } catch (error) {
-            console.error(
-                '[t1ger_moneywash] Failed to notify FiveM that the portal is ready.',
-                error,
-            )
-        }
-    }
-
-    function handleKeydown(event: KeyboardEvent): void {
-        if (event.key !== 'Escape') return
-        if (!portalStore.isVisible) return
-
-        void requestPortalClose()
-    }
-
-    onMounted(async () => {
+    onMounted(() => {
         unsubscribeFunctions.push(
-            onNuiMessage<PortalBootstrapPayload>(
-                NUI_MESSAGES.open,
-                openPortal,
-            ),
+            onNuiMessage<PortalBootstrapPayload>(NUI_MESSAGES.open, openPortal),
         )
 
         unsubscribeFunctions.push(
@@ -95,24 +61,13 @@ export function usePortalLifecycle(): void {
         )
 
         unsubscribeFunctions.push(
-            onNuiMessage<void>(
-                NUI_MESSAGES.close,
-                closePortal,
-            ),
+            onNuiMessage<void>(NUI_MESSAGES.close, closePortal),
         )
-
-        window.addEventListener('keydown', handleKeydown)
-
-        if (isFiveMEnvironment()) {
-            await notifyFiveMReady()
-        }
     })
 
     onUnmounted(() => {
         for (const unsubscribe of unsubscribeFunctions) {
             unsubscribe()
         }
-
-        window.removeEventListener('keydown', handleKeydown)
     })
 }

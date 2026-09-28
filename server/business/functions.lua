@@ -38,6 +38,10 @@ local function ReleaseOwnershipLocks(keys)
     end
 end
 
+-- Shared with the counter to exclude transfers/removal while a batch is reserved.
+function AcquireCashCounterOwnershipLocks(keys) return TryAcquireOwnershipLocks(keys) end
+function ReleaseCashCounterOwnershipLocks(keys) ReleaseOwnershipLocks(keys) end
+
 --- Returns whether a player meets the reputation requirement for a given tier
 --- @param src number
 --- @param tier table
@@ -613,100 +617,45 @@ end
 --- @param amount number gross dirty cash amount to launder
 --- @return boolean success, string reason, table|nil result
 function LaunderMoney(src, businessId, amount)
-    local identifier = _API.Player.GetIdentifier(src)
-    if not identifier then return false, "invalid_player" end
+    -- No instant-money bypass: callers must use the server cash-counter session.
+    return false, "cash_counter_required"
+end
 
-    local business = GetBusiness(businessId)
-    if not business then return false, "not_found" end
-    if business.identifier ~= identifier then return false, "not_owner" end
-    if business.isClosed then return false, "business_closed" end
-
-    amount = math.floor(tonumber(amount) or 0)
-    if amount <= 0 then return false, "invalid_amount" end
-
-    -- Player must physically carry the dirty cash
-    if not HasDirtyMoney(src, amount) then
-        return false, "insufficient_dirty_cash"
-    end
-
+--- Pure calculation shared by the server-controlled cash-counter settlement.
+function BuildCashInjection(business, amount)
     local tier = GetTierByType(business.type)
-    if not tier then return false, "invalid_tier" end
-
-    -- Calculate stock consumed
-    local stockConsumed = GetStockConsumed(amount)
-
-    -- Calculate covered/exposed split
-    local coveredAmount, exposedAmount = CalculateCoveredExposed(business, amount, tier)
-
-    -- No fee is taken at the moment of laundering - the full amount becomes
-    -- clean money. The only guaranteed fee in the whole pipeline is
-    -- Config.BankDeposit.Tax, paid later when converting Safe balance to
-    -- real bank money. fee is kept at 0 (not removed) since existing
-    -- client notification text still references result.fee.
-    local fee = 0
-    local cleanAmount = amount
-
-    -- Split clean money proportionally between covered and exposed
-    local coveredRatio = amount > 0 and (coveredAmount / amount) or 0
-    local cleanCovered = math.floor(cleanAmount * coveredRatio)
-    local cleanExposed = cleanAmount - cleanCovered
-
-    -- Calculate suspicion gain
-    local suspicionGain = CalculateSuspicionGain(business, amount, tier)
-
-    -- Execute: remove dirty cash from player
-    RemoveDirtyMoney(src, amount)
-
-    -- Consume stock (can't go below 0)
-    local newStock = math.max(0, business.stock - stockConsumed)
-
-    -- Update business state
-    UpdateBusinessFields(businessId, {
-        stock           = newStock,
-        safeCovered     = business.safeCovered + cleanCovered,
-        safeExposed     = business.safeExposed + cleanExposed,
-        suspicion       = math.min(100, business.suspicion + suspicionGain),
-        totalLaundered  = business.totalLaundered + amount,
+    if not tier then return nil end
+    local covered, exposed = CalculateCoveredExposed(business, amount, tier)
+    local gain = CalculateSuspicionGain(business, amount, tier)
+    local suspicion = math.min(100, business.suspicion + gain)
+    return {
+        stock = math.max(0, business.stock - GetStockConsumed(amount)),
+        safeCovered = business.safeCovered + covered,
+        safeExposed = business.safeExposed + exposed,
+        suspicion = suspicion,
+        totalLaundered = business.totalLaundered + amount,
         lastLaunderedAt = os.time(),
-    })
+    }, { oldLabel = GetSuspicionLabel(business.suspicion), newLabel = GetSuspicionLabel(suspicion) }
+end
 
-    -- Award reputation
+--- Side effects run only after durable settlement, never on a client completion event.
+function PublishCashInjection(src, identifier, businessId, result)
+    local business = GetBusiness(businessId)
+    if not business then return end
     if Config.Reputation.Enable and Config.Reputation.Rewards.launder.enable then
-        AddReputationPoints(src, Config.Reputation.Rewards.launder.points)
+        local points = Config.Reputation.Rewards.launder.points
+        if src and IsReputationReady(src) then
+            AddReputationPoints(src, points)
+            SavePlayerReputation(src)
+        else
+            MySQL.update("UPDATE moneywash_reputation SET points = points + ? WHERE identifier = ?", { points, identifier })
+        end
     end
-
-    -- Police notification roll
-    local updatedBusiness = GetBusiness(businessId)
-    RollPoliceNotification(updatedBusiness)
-
-    -- Check if suspicion crossed a label threshold and notify owner
-    local oldLabel = GetSuspicionLabel(business.suspicion)
-    local newLabel = GetSuspicionLabel(updatedBusiness.suspicion)
-    if Config.Suspicion.NotifyOnLabelChange and oldLabel.name ~= newLabel.name then
-        TriggerClientEvent("t1ger_moneywash:client:suspicionLabelChanged", src, newLabel)
+    RollPoliceNotification(business)
+    if src and Config.Suspicion.NotifyOnLabelChange and result.oldLabel.name ~= result.newLabel.name then
+        TriggerClientEvent("t1ger_moneywash:client:suspicionLabelChanged", src, result.newLabel)
     end
-
-    -- Check if suspicion has hit 100 - queue raid
-    if updatedBusiness.suspicion >= 100 then
-        QueueRaid(businessId)
-    end
-
-    if Config.Debug then
-        print(("[MoneyWash] Launder: business %d | amount $%d | covered $%d | exposed $%d | suspicion +%.1f → %.1f")
-            :format(
-                businessId, amount, cleanCovered, cleanExposed, suspicionGain, updatedBusiness.suspicion))
-    end
-
-    return true, "success", {
-        amount        = amount,
-        fee           = fee,
-        cleanCovered  = cleanCovered,
-        cleanExposed  = cleanExposed,
-        stockConsumed = stockConsumed,
-        suspicionGain = suspicionGain,
-        newSuspicion  = updatedBusiness.suspicion,
-        newLabel      = newLabel,
-    }
+    if business.suspicion >= 100 then QueueRaid(businessId) end
 end
 
 --- ============================================================================
@@ -745,6 +694,7 @@ end
 --- @param amount number
 --- @return boolean success, string reason, table|nil depositData
 function InitiateBankDeposit(src, businessId, amount)
+    if HasPendingCashCounter(businessId) then return false, "operation_in_progress" end
     local identifier = _API.Player.GetIdentifier(src)
     if not identifier then return false, "invalid_player" end
 
@@ -973,6 +923,7 @@ end
 --- @param businessId number
 --- @param policeSrc number|nil nil if triggered by queue tick
 function ExecuteRaid(businessId, policeSrc)
+    if HasPendingCashCounter(businessId) then return end
     local business = GetBusiness(businessId)
     if not business then return end
 
@@ -1211,6 +1162,7 @@ end
 --- @param currentCycle number the current global cycle number
 --- @return boolean success, string reason, table|nil result
 function ExecuteAccountantReview(src, businessId, selectedReceiptIds, currentCycle)
+    if HasPendingCashCounter(businessId) then return false, "operation_in_progress" end
     local identifier = _API.Player.GetIdentifier(src)
     if not identifier then return false, "invalid_player" end
 

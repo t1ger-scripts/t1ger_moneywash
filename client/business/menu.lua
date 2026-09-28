@@ -80,7 +80,7 @@ function OpenHandlerMenu(businessId)
                 description = launderDesc,
                 disabled    = launderDisabled,
                 onSelect    = function()
-                    OpenLaunderDialog(businessId, status)
+                    StartLaunderFlow(businessId, status)
                 end,
             },
             {
@@ -264,39 +264,20 @@ function OpenSafeMenu(businessId, status)
 end
 
 --- ============================================================================
---- LAUNDER DIALOG
+--- LAUNDER FLOW
 --- ============================================================================
 
 --- @param businessId number
---- @param status table live business status
-function OpenLaunderDialog(businessId, status)
+--- @param status table
+function StartLaunderFlow(businessId, status)
     local dirtyMoney = _API.Player:GetDirtyMoney()
 
     if dirtyMoney <= 0 then
         _API.ShowNotification(locale("menu.launder.no_dirty_cash"), "error", {})
         return
     end
-
-    local input = lib.inputDialog(locale("menu.launder.title"), {
-        {
-            type        = "number",
-            label       = string.format(locale("menu.launder.amount_label"),
-                FormatMoney(dirtyMoney)),
-            description = string.format(locale("menu.launder.amount_desc"),
-                FormatMoney(math.floor(status.expectedRevenue - status.totalLaundered))),
-            min         = 1,
-            max         = dirtyMoney,
-            required    = true,
-        },
-    })
-
-    if not input or not input[1] then return end
-
-    local amount = math.floor(tonumber(input[1]) or 0)
-    if amount <= 0 then return end
-
-    -- Trigger launder mission flow in missions.lua
-    StartLaunderFlow(businessId, amount)
+    
+    OpenCashCounter(businessId, "inject")
 end
 
 --- ============================================================================

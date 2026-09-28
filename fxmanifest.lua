@@ -37,7 +37,9 @@ client_scripts {
     'client/functions.lua',
     'client/reputation.lua',
     'client/customize.lua',
+    'client/ui.lua',
     'client/business/portal.lua',
+    'client/business/cash_counter.lua',
     'client/business/main.lua',
     'client/business/menu.lua',
     'client/business/stock.lua',
@@ -62,6 +64,7 @@ server_scripts {
     'server/business/stock.lua',
     'server/business/main.lua',
     'server/business/portal.lua',
+    'server/business/cash_counter.lua',
     
     'server/main.lua',
 }

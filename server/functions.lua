@@ -66,11 +66,14 @@ function RemoveDirtyMoney(src, amount)
     if type(amount) ~= "number" or amount <= 0 then return false end
     if not HasDirtyMoney(src, amount) then return false end
 
+    local before = GetDirtyMoney(src)
     if Config.DirtyMoney.useItem then
         _API.Inventory.RemoveItem(src, Config.DirtyMoney.item.name, amount)
     else
         _API.Player.RemoveMoney(src, amount, Config.DirtyMoney.account)
     end
+    -- Several bridges discard the inventory export's return value. Verify the debit.
+    if GetDirtyMoney(src) ~= before - amount then return false end
 
     return true
 end

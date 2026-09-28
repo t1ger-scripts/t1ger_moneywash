@@ -1,4 +1,8 @@
 export const NUI_CALLBACKS = {
+    uiReady: 't1ger_moneywash:ui:ready',
+    cashStart: 't1ger_moneywash:cashCounter:start',
+    cashStatus: 't1ger_moneywash:cashCounter:status',
+    cashClose: 't1ger_moneywash:cashCounter:close',
     ready: 't1ger_moneywash:portal:ready',
     purchaseBusiness: 't1ger_moneywash:portal:purchaseBusiness',
     setBusinessWaypoint: 't1ger_moneywash:portal:setBusinessWaypoint',
@@ -6,6 +10,8 @@ export const NUI_CALLBACKS = {
 } as const
 
 export const NUI_MESSAGES = {
+    cashOpen: 't1ger_moneywash:cashCounter:open',
+    cashClose: 't1ger_moneywash:cashCounter:close',
     open: 't1ger_moneywash:portal:open',
     refresh: 't1ger_moneywash:portal:refresh',
     close: 't1ger_moneywash:portal:close',

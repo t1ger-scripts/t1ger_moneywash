@@ -91,7 +91,7 @@ local function ApplySuspicionDecay(business)
 
     local decayPerCycle = isOnline
         and Config.Suspicion.Decay.OnlinePointsPerCycle
-        or  Config.Suspicion.Decay.OfflinePointsPerCycle
+        or Config.Suspicion.Decay.OfflinePointsPerCycle
 
     -- Convert per-cycle to per-tick (tick = 1 real minute, cycle = CycleDuration minutes)
     local decayPerTick = decayPerCycle / Config.Business.CycleDuration
@@ -109,8 +109,8 @@ local function CheckClosure(business)
     if not business.closedUntil then return end
     if os.time() < business.closedUntil then return end
 
-    UpdateBusinessFields(business.id, {isClosed = false, closedUntil = nil})
-    MySQL.update("UPDATE moneywash_businesses SET is_closed = 0, closed_until = NULL WHERE id = ?", {business.id})
+    UpdateBusinessFields(business.id, { isClosed = false, closedUntil = nil })
+    MySQL.update("UPDATE moneywash_businesses SET is_closed = 0, closed_until = NULL WHERE id = ?", { business.id })
 
     for _, player in ipairs(_API.GetOnlinePlayers()) do
         if player.identifier == business.identifier then
@@ -128,7 +128,7 @@ local function ProcessDeposits()
     local now = os.time()
     -- Query DB for all deposits that have cleared
     local cleared = MySQL.query.await(
-        "SELECT identifier FROM moneywash_deposits WHERE clears_at <= ?", {now})
+        "SELECT identifier FROM moneywash_deposits WHERE clears_at <= ?", { now })
 
     if not cleared then return end
 
@@ -339,11 +339,18 @@ end)
 --- SAVE FUNCTIONS
 --- -------------------------------------------------------------------------
 
-function SaveBusiness(id)
+local BusinessSaves = {}
+function IsBusinessSaveInProgress(id) return BusinessSaves[id] == true end
+
+function SaveBusiness(id, force)
+    if not force and IsCashCounterSaveBlocked(id) then return end
+    while BusinessSaves[id] do Wait(10) end
+    if not force and IsCashCounterSaveBlocked(id) then return end
     local b = GetBusiness(id)
     if not b then return end
 
-    MySQL.update(
+    BusinessSaves[id] = true
+    local succeeded, err = pcall(MySQL.update.await,
         "UPDATE moneywash_businesses SET " ..
         "stock = ?, safe_covered = ?, safe_exposed = ?, suspicion = ?, " ..
         "total_laundered = ?, last_laundered_at = ?, is_closed = ?, closed_until = ? " ..
@@ -355,6 +362,10 @@ function SaveBusiness(id)
             b.id
         }
     )
+    BusinessSaves[id] = nil
+    if not succeeded then print("[MoneyWash] Business save failed: " .. tostring(err)) end
+
+    return succeeded and err ~= nil
 end
 
 local function SaveAllBusinesses()
@@ -411,7 +422,8 @@ for action, cfg in pairs(Config.Reputation.Commands or {}) do
             local amount = tonumber(args[2])
 
             if not target or not amount then
-                local msg = string.format(Config.Reputation.CommandSuggestion or "Usage: /%s <playerId> <amount>", cfg.name)
+                local msg = string.format(Config.Reputation.CommandSuggestion or "Usage: /%s <playerId> <amount>",
+                    cfg.name)
                 if isConsole then print(msg) else _API.SendNotification(src, msg, "inform") end
                 return
             end
@@ -427,7 +439,7 @@ for action, cfg in pairs(Config.Reputation.Commands or {}) do
 
             local msg = success
                 and ("[MoneyWash] %s %d rep points for player %d"):format(action, amount, target)
-                or  ("[MoneyWash] Failed to %s rep for player %d"):format(action, target)
+                or ("[MoneyWash] Failed to %s rep for player %d"):format(action, target)
             if isConsole then print(msg) else _API.SendNotification(src, msg, success and "success" or "error") end
         end, true)
     end

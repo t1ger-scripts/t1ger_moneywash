@@ -150,3 +150,11 @@ Config.Reputation = {
         { threshold = 100, color = "#16a34a" },
     },
 }
+-- Cash counter presentation duration is server-authoritative. MaxAmount is a safety
+-- ceiling, not the demo balance; the available amount always comes from the player.
+Config.CashCounter = {
+    MinDurationMs = 3000,
+    MaxDurationMs = 6000,
+    MaxAmount = 1000000000,
+    InteractionDistance = 5.0,
+}
