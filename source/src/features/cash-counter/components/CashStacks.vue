@@ -2,10 +2,12 @@
 import { computed } from 'vue'
 import { stackCount } from '../cash-counter.utils'
 const props = withDefaults(
-    defineProps<{ amount: number; compact?: boolean }>(),
+    defineProps<{ amount: number; compact?: boolean; stacks?: number }>(),
     { compact: false },
 )
-const count = computed(() => (props.compact ? 1 : stackCount(props.amount)))
+const count = computed(() =>
+    props.compact ? 1 : (props.stacks ?? stackCount(props.amount)),
+)
 function position(i: number) {
     const layer = Math.floor(i / 2)
     return {
@@ -17,16 +19,7 @@ function position(i: number) {
 }
 </script>
 <template>
-    <span
-        class="cash-stacks"
-        :class="{ 'cash-stacks--compact': compact }"
-        aria-hidden="true"
-    >
-        <span
-            v-for="i in count"
-            :key="i"
-            class="cash-bundle"
-            :style="position(i - 1)"
-        />
+    <span class="cash-stacks" :class="{ 'cash-stacks--compact': compact }" aria-hidden="true">
+        <span v-for="i in count" :key="i" class="cash-bundle" :style="position(i - 1)" />
     </span>
 </template>

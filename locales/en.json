@@ -307,6 +307,11 @@
         "autoFeed": "AUTO FEED",
         "dropHere": "DROP CASH HERE",
         "countedCash": "Counted cash",
+        "readyToDeposit": "Ready to deposit",
+        "confirmDeposit": "Deposit {amount}",
+        "recount": "Re-count",
+        "depositing": "Depositing…",
+        "deposited": "DEPOSITED",
         "errors": {
             "invalid_amount": "Choose a whole amount within your available balance.",
             "insufficient_dirty_cash": "Your available cash has changed. Choose a smaller amount.",
@@ -316,8 +321,10 @@
             "operation_in_progress": "Another operation is already in progress.",
             "request_failed": "Unable to confirm the request. Checking the transaction status…",
             "not_ready": "The cash counter is not ready yet.",
-            "manual_review": "This batch needs administrator review. Your transaction has been recorded.",
-            "unsupported_operation": "This cash operation is not available."
+            "manual_review": "The cash removal could not be confirmed. Contact an administrator before retrying.",
+            "unsupported_operation": "This cash operation is not available.",
+            "count_not_ready": "Wait for the machine to finish counting.",
+            "invalid_batch": "This count has expired. Start a new count."
         }
     }
 }

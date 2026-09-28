@@ -33,6 +33,11 @@ const messages = {
         autoFeed: 'AUTO FEED',
         dropHere: 'DROP CASH HERE',
         countedCash: 'Counted cash',
+        readyToDeposit: 'Ready to deposit',
+        confirmDeposit: 'Deposit {amount}',
+        recount: 'Re-count',
+        depositing: 'Depositing…',
+        deposited: 'DEPOSITED',
         errors: {
             invalid_amount:
                 'Choose a whole amount within your available balance.',

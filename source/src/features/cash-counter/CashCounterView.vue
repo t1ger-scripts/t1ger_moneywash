@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { X } from '@lucide/vue'
 import CashStacks from './components/CashStacks.vue'
@@ -7,7 +7,8 @@ import CounterMachine from './components/CounterMachine.vue'
 import CounterAmountSelector from './components/CounterAmountSelector.vue'
 import { useCashCounterStore } from './cash-counter.store'
 import { useCashDrag } from './composables/useCashDrag'
-import { validAmount } from './cash-counter.utils'
+import { useCounterSound } from './composables/useCounterSound'
+import { stackCount, validAmount } from './cash-counter.utils'
 import { createCashTextures } from './cash-counter.textures'
 import { isFiveMEnvironment } from '@/integrations/nui/nuiClient'
 import './cash-counter.scss'
@@ -25,16 +26,18 @@ const progress = computed(() => {
     const b = store.batch
     if (!b) return 0
     if (b.status === 'review') return 0
-    if (b.status === 'complete') return 1
+    if (b.status !== 'counting') return 1
     return Math.max(
         0,
         Math.min(
-            1,
+            0.999,
             1 - (b.remainingMs - (now.value - store.receivedAt)) / b.durationMs,
         ),
     )
 })
 const complete = computed(() => store.batch?.status === 'complete')
+const ready = computed(() => store.batch?.status === 'ready')
+const settling = computed(() => store.batch?.status === 'settling')
 const counting = computed(() => store.batch?.status === 'counting')
 const shownCash = computed(() =>
     store.batch
@@ -46,38 +49,49 @@ const shownCash = computed(() =>
 const counted = computed(() =>
     store.batch ? Math.floor(store.batch.amount * progress.value) : 0,
 )
+const totalStacks = computed(() =>
+    stackCount(store.batch?.amount ?? (valid.value ? store.amount : 0)),
+)
+const movedStacks = computed(() =>
+    Math.floor(totalStacks.value * progress.value),
+)
+const leftStacks = computed(() => totalStacks.value - movedStacks.value)
+const rightStacks = computed(() => movedStacks.value)
 const status = computed(() =>
-    t(
-        complete.value
-            ? 'cashCounter.complete'
-            : counting.value
-                ? 'cashCounter.counting'
-                : 'cashCounter.ready',
-    ),
+    t(complete.value ? 'cashCounter.complete'
+        : ready.value ? 'cashCounter.readyToDeposit'
+            : counting.value || settling.value ? 'cashCounter.counting'
+                : 'cashCounter.ready'),
 )
 const errorMessage = computed(() => {
     if (store.batch?.status === 'review')
         return t('cashCounter.errors.manual_review')
-
     if (store.error)
         return t(
             te(`cashCounter.errors.${store.error}`)
                 ? `cashCounter.errors.${store.error}`
                 : 'cashCounter.errors.request_failed',
         )
-
     if (!store.busy && store.amount > store.available)
         return t('cashCounter.errors.invalid_amount')
-
     return ''
 })
+const sound = useCounterSound()
+function startCount() {
+    sound.prime()
+    void store.start()
+}
 const drag = useCashDrag(
     root,
     () => !store.busy && valid.value,
-    () => {
-        void store.start()
-    },
+    startCount,
 )
+watch(() => store.batch?.status, (state, previous) => {
+    if (state === 'counting' && previous !== 'counting') sound.start()
+    if (state === 'ready' && previous === 'counting') sound.counted()
+    if (state === 'complete' && previous !== 'complete') sound.deposited()
+    if (!state || state === 'settling' || state === 'review') sound.stop()
+})
 let animation = 0,
     poll = 0,
     polling = false
@@ -105,18 +119,20 @@ onMounted(() => {
     textures.value = createCashTextures()
     function tick() {
         now.value = performance.now()
+        if (counting.value && progress.value < 1) sound.feed()
         animation = requestAnimationFrame(tick)
     }
     tick()
     poll = window.setInterval(() => {
         void refresh()
-    }, 750)
+    }, 250)
     document.addEventListener('keydown', escape)
 })
 onUnmounted(() => {
     cancelAnimationFrame(animation)
     clearInterval(poll)
     drag.cancel()
+    sound.dispose()
     document.removeEventListener('keydown', escape)
 })
 </script>
@@ -157,13 +173,12 @@ onUnmounted(() => {
                                 amount: format(store.amount),
                             })
                                 " @pointerdown="drag.down" @pointermove="drag.move" @pointerup="drag.up"
-                            @pointercancel="drag.cancel" @keydown.enter.prevent="store.start"
-                            @keydown.space.prevent="store.start">
-                            <CashStacks :amount="shownCash" />
+                            @pointercancel="drag.cancel" @keydown.enter.prevent="startCount"
+                            @keydown.space.prevent="startCount">
+                            <CashStacks :amount="shownCash" :stacks="leftStacks" />
                         </button>
                     </div>
-
-                    <small>{{
+                    <small v-if="!ready && !settling && !complete">{{
                         t(
                             counting
                                 ? 'cashCounter.waitingToFeed'
@@ -173,10 +188,12 @@ onUnmounted(() => {
                 </div>
                 <CounterMachine :value="format(counted)" :display-state="t(
                     complete
-                        ? 'cashCounter.cashInjected'
-                        : counting
-                            ? 'cashCounter.counting'
-                            : 'cashCounter.awaiting',
+                        ? 'cashCounter.deposited'
+                        : ready
+                            ? 'cashCounter.batchComplete'
+                            : counting || settling
+                                ? 'cashCounter.counting'
+                                : 'cashCounter.awaiting',
                 )
                     " :running="counting && progress < 1" :over="drag.over.value" :feeder-label="drag.over.value
                         ? t('cashCounter.release', {
@@ -184,27 +201,38 @@ onUnmounted(() => {
                         })
                         : t(
                             complete
-                                ? 'cashCounter.batchComplete'
-                                : counting
-                                    ? 'cashCounter.autoFeed'
-                                    : 'cashCounter.dropHere',
+                                ? 'cashCounter.deposited'
+                                : ready || settling
+                                    ? 'cashCounter.batchComplete'
+                                    : counting
+                                        ? 'cashCounter.autoFeed'
+                                        : 'cashCounter.dropHere',
                         )
                         " />
-                <div class="counter-output">
+                <div class="counter-output" :class="{ 'is-ready': ready }">
                     <div class="counter-tray">
-                        <span v-for="i in 5" :key="i" class="cash-bundle" :style="{
-                            opacity: Math.max(
-                                0,
-                                Math.min(1, (progress - (i - 1) / 5) * 5),
-                            ),
-                            bottom: 15 + (i - 1) * 16 + 'px',
-                        }" />
+                        <CashStacks :amount="counted" :stacks="rightStacks" />
                     </div>
                     <small>{{ t('cashCounter.countedCash') }}</small>
                 </div>
             </div>
-            <CounterAmountSelector v-model="store.amount" :available="store.available" :disabled="store.busy"
-                :format="format" />
+            <div class="counter-bottom">
+                <CounterAmountSelector v-model="store.amount" :available="store.available" :disabled="store.busy"
+                    :format="format" />
+
+                <div v-if="ready" class="counter-final-actions">
+                    <button type="button" class="counter-recount" :disabled="store.submitting" @click="store.recount">
+                        {{ t('cashCounter.recount') }}
+                    </button>
+                    <button type="button" class="counter-confirm" :disabled="store.submitting" @click="store.confirm">
+                        {{ t('cashCounter.confirmDeposit', { amount: format(store.batch!.amount) }) }}
+                    </button>
+                </div>
+
+                <small v-else-if="settling" class="counter-saving">
+                    {{ t('cashCounter.depositing') }}
+                </small>
+            </div>
             <div v-if="drag.dragging.value" class="counter-ghost"
                 :style="{ left: drag.x.value + 'px', top: drag.y.value + 'px' }">
                 <CashStacks :amount="store.amount" compact /><span>{{

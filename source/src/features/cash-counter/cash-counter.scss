@@ -10,7 +10,7 @@
     font-family: 'Inter Variable', Arial, sans-serif;
 
     .counter-demo {
-        width: min(780px, 95vw);
+        width: min(900px, 95vw);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -33,7 +33,7 @@
 .cash-counter {
     --counter-gold: #dac493;
     position: relative;
-    width: min(780px, 95vw);
+    width: min(900px, 95vw);
     max-height: 94vh;
     overflow: auto;
     color: #e6e8e2;
@@ -124,7 +124,7 @@
 
     .counter-desk {
         display: grid;
-        grid-template-columns: 1.05fr 1.8fr 0.8fr;
+        grid-template-columns: 1.1fr 1.8fr 0.9fr;
         gap: 18px;
         min-height: 400px;
         align-items: center;
@@ -142,12 +142,47 @@
         padding-top: 14px;
     }
 
+    .counter-cash-tray {
+        position: relative;
+        width: 205px;
+        max-width: 100%;
+        margin: auto;
+        padding-bottom: 15px;
+
+        &::before {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 5%;
+            width: 90%;
+            height: 45px;
+            border: 1px solid #71796c;
+            border-radius: 5px;
+            background: linear-gradient(145deg, #454e43, #202923 60%, #151c17);
+            box-shadow: inset 0 5px 10px #080e0b, 0 13px 13px #0009;
+            transform: perspective(130px) rotateX(32deg);
+        }
+
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            left: 12%;
+            width: 76%;
+            height: 4px;
+            border-radius: 3px;
+            background: linear-gradient(#9caa94, #333c34);
+            box-shadow: 0 4px 6px #0008;
+        }
+    }
+
     .counter-pile {
+        z-index: 1;
         display: block;
         position: relative;
         width: 180px;
         max-width: 100%;
-        height: 210px;
+        height: 238px;
         padding: 0;
         margin: auto;
         background: none;
@@ -169,7 +204,7 @@
         display: block;
         position: relative;
         width: 100%;
-        height: 210px;
+        height: 238px;
         pointer-events: none;
     }
 
@@ -229,13 +264,6 @@
             border-right: 1px solid #0005;
             box-shadow: 2px 0 3px #0003;
         }
-    }
-
-    .counter-batch-label {
-        margin-top: 16px;
-        font-size: 13px;
-        color: #d9ddcf;
-        font-variant-numeric: tabular-nums;
     }
 
     .counter-source>small,
@@ -468,80 +496,160 @@
 
     .counter-output {
         text-align: center;
-        padding-top: 24px;
+        min-width: 0;
+        padding-top: 14px;
+
+        &.is-ready .counter-tray {
+            filter: drop-shadow(0 0 9px #c5b58355);
+        }
     }
 
     .counter-tray {
-        height: 167px;
-        width: 114px;
+        height: 238px;
+        width: 205px;
         max-width: 100%;
         position: relative;
         margin: auto;
 
-        .cash-bundle {
-            left: 2px;
-            width: 90px;
-            height: 43px;
-            transition: opacity 0.2s;
-        }
-    }
-
-    .counter-controls {
-        position: relative;
-        padding: 20px 26px 12px;
-
         &::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 26px;
-            right: 26px;
-            height: 1px;
-            background: #373d33;
+            bottom: 2px;
+            left: 5%;
+            width: 90%;
+            height: 45px;
+            border: 1px solid #71796c;
+            border-radius: 5px;
+            background: linear-gradient(145deg, #454e43, #202923 60%, #151c17);
+            box-shadow: inset 0 5px 10px #080e0b, 0 13px 13px #0009;
+            transform: perspective(130px) rotateX(32deg);
         }
+
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            left: 12%;
+            width: 76%;
+            height: 4px;
+            border-radius: 3px;
+            background: linear-gradient(#9caa94, #333c34);
+            box-shadow: 0 4px 6px #0008;
+        }
+
+        .cash-stacks {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            width: 180px;
+            height: 238px;
+            z-index: 1;
+            transform: translateX(-50%);
+            transform-origin: center bottom;
+        }
+    }
+
+    .counter-bottom {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        column-gap: 18px;
+        padding: 15px 26px 12px;
+        border-top: 1px solid #373d33;
+    }
+
+    .counter-final-actions {
+        display: flex;
+        align-items: center;
+        grid-column: 2;
+        grid-row: 1;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .counter-confirm {
+        min-height: 38px;
+        padding: 8px 14px;
+        border: 1px solid #e0d0a5;
+        border-radius: 5px;
+        background: #c7ba92;
+        color: #181d18;
+        font-size: 11px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        box-shadow: 0 3px 9px #0005;
+
+        &:hover:not(:disabled) {
+            background: #e1d5ae;
+        }
+    }
+
+    .counter-recount {
+        min-height: 38px;
+        padding: 8px 13px;
+        border: 1px solid #67725f;
+        border-radius: 5px;
+        background: #30392f;
+        color: #e3e9db;
+        font-size: 11px;
+        font-weight: 600;
+
+        &:hover:not(:disabled) {
+            border-color: #a9b69a;
+            background: #3e4b3a;
+        }
+    }
+
+    .counter-saving {
+        display: block;
+        grid-column: 2;
+        grid-row: 1;
+        margin-top: 16px;
+    }
+
+    .counter-controls {
+        display: contents;
     }
 
     .counter-selection {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 11px;
+        gap: 14px;
+        grid-column: 1;
+        grid-row: 1;
+        min-height: 38px;
+        margin-bottom: 0;
 
-        label {
-            display: flex;
-            gap: 14px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        label span {
-            font-size: 11px;
+        span {
+            font-size: 12px;
             color: #a5ad9d;
         }
-
-        output {
-            font-size: 20px;
-            color: #e7e5d7;
-            font-variant-numeric: tabular-nums;
-        }
     }
 
-    .counter-text-button {
-        font-size: 10px;
-        padding: 7px 10px;
-        border: 0;
+    .counter-amount-input {
+        min-width: 0;
+        width: 220px;
+        padding: 5px 9px;
+        color: #e7e5d7;
         background: transparent;
-        color: #a8b09f;
-    }
-
-    .counter-max {
-        border: 1px solid #4b5443;
-        background: #2c3329;
-        color: #d8decc;
+        border: 1px solid transparent;
         border-radius: 5px;
-        padding: 6px 10px;
-        font-size: 10px;
+        font-size: 20px;
+        font-variant-numeric: tabular-nums;
+
+        &:hover,
+        &:focus {
+            background: #111711;
+            border-color: #465040;
+        }
+
+        &:disabled {
+            opacity: 0.65;
+        }
+
+        &[aria-invalid='true'] {
+            border-color: #b86554;
+        }
     }
 
     .counter-slider {
@@ -556,6 +664,8 @@
                 #c4b791 var(--fill, 100%),
                 #343c30 var(--fill, 100%),
                 #343c30 100%);
+        grid-column: 1 / -1;
+        grid-row: 2;
         margin: 9px 0;
         cursor: ew-resize;
 
@@ -578,28 +688,11 @@
     .counter-range-labels {
         display: flex;
         justify-content: space-between;
+        grid-column: 1 / -1;
+        grid-row: 3;
         font-size: 10px;
         color: #7f8b76;
         margin-top: 5px;
-    }
-
-    .counter-exact {
-        display: block;
-        margin-top: 12px;
-        font-size: 11px;
-        color: #a5ad9d;
-
-        input {
-            display: block;
-            width: min(100%, 230px);
-            padding: 8px 10px;
-            margin-top: 6px;
-            font-size: 16px;
-            color: #eee;
-            background: #111711;
-            border: 1px solid #465040;
-            border-radius: 5px;
-        }
     }
 
     .counter-footer {
@@ -612,16 +705,6 @@
         padding: 12px 22px 19px;
         font-size: 11px;
         color: #a2ab9a;
-    }
-
-    .counter-load {
-        font-size: 10px;
-        padding: 5px 8px;
-        background: none;
-        border: 0;
-        color: #c9c4ae;
-        text-decoration: underline;
-        text-underline-offset: 3px;
     }
 
     .counter-done {
@@ -709,7 +792,17 @@
         }
 
         .counter-output {
-            display: none;
+            display: block;
+            grid-column: 1 / -1;
+            padding-top: 0;
+
+            .counter-tray {
+                height: 160px;
+
+                .cash-stacks {
+                    transform: translateX(-50%) scale(0.65);
+                }
+            }
         }
 
         .counter-pile {
@@ -717,11 +810,6 @@
             width: 150px;
             max-width: none;
             margin-left: -8px;
-        }
-
-        .counter-batch-label {
-            font-size: 11px;
-            margin-top: 0;
         }
 
         .counter-housing {
@@ -742,20 +830,36 @@
             letter-spacing: 0.5px;
         }
 
-        .counter-controls {
-            padding: 16px 17px 9px;
+        .counter-bottom {
+            grid-template-columns: 1fr;
+            padding: 16px 17px 13px;
         }
 
-        .counter-selection label {
-            display: block;
-
-            span {
-                display: block;
-                margin-bottom: 5px;
-            }
+        .counter-final-actions,
+        .counter-saving {
+            grid-column: 1;
+            grid-row: 2;
         }
 
-        .counter-selection output {
+        .counter-final-actions {
+            justify-content: flex-end;
+        }
+
+        .counter-slider {
+            grid-row: 3;
+        }
+
+        .counter-range-labels {
+            grid-row: 4;
+        }
+
+        .counter-selection {
+            flex-wrap: wrap;
+            gap: 4px 10px;
+        }
+
+        .counter-amount-input {
+            width: min(220px, 100%);
             font-size: 19px;
         }
 
@@ -770,143 +874,5 @@
     .cash-counter .is-running .counter-moving-note {
         animation: none;
         top: 15px;
-    }
-}
-
-// Cash counter refinements
-.cash-counter-overlay .counter-demo,
-.cash-counter {
-    width: min(900px, 95vw);
-}
-
-.cash-counter {
-    .counter-selection {
-        justify-content: flex-start;
-        gap: 14px;
-
-        >span {
-            font-size: 12px;
-            color: #a5ad9d;
-        }
-    }
-
-    .counter-amount-input {
-        min-width: 0;
-        width: 220px;
-        padding: 5px 9px;
-        color: #e7e5d7;
-        background: transparent;
-        border: 1px solid transparent;
-        border-radius: 5px;
-        font-size: 20px;
-        font-variant-numeric: tabular-nums;
-
-        &:hover,
-        &:focus {
-            background: #111711;
-            border-color: #465040;
-        }
-
-        &:disabled {
-            opacity: 0.65;
-        }
-
-        &[aria-invalid='true'] {
-            border-color: #b86554;
-        }
-    }
-
-    .counter-cash-tray {
-        position: relative;
-        width: 205px;
-        max-width: 100%;
-        margin: auto;
-        padding-bottom: 15px;
-
-        &::before {
-            content: '';
-            position: absolute;
-            bottom: 2px;
-            left: 5%;
-            width: 90%;
-            height: 45px;
-            border: 1px solid #71796c;
-            border-radius: 5px;
-            background: linear-gradient(145deg,
-                    #454e43,
-                    #202923 60%,
-                    #151c17);
-            box-shadow:
-                inset 0 5px 10px #080e0b,
-                0 13px 13px #0009;
-            transform: perspective(130px) rotateX(32deg);
-        }
-
-        &::after {
-            content: '';
-            position: absolute;
-            bottom: 3px;
-            left: 12%;
-            width: 76%;
-            height: 4px;
-            border-radius: 3px;
-            background: linear-gradient(#9caa94, #333c34);
-            box-shadow: 0 4px 6px #0008;
-        }
-    }
-
-    .counter-pile {
-        z-index: 1;
-    }
-
-    .counter-tray {
-        &::before {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: -5px;
-            width: 108px;
-            height: 43px;
-            border: 1px solid #5f6a5c;
-            border-radius: 4px;
-            background: linear-gradient(145deg,
-                    #404a3e,
-                    #1b241d 70%);
-            box-shadow:
-                inset 0 5px 8px #080e0b,
-                0 11px 12px #0009;
-            transform: perspective(130px) rotateX(30deg);
-        }
-
-        &::after {
-            content: '';
-            position: absolute;
-            bottom: 2px;
-            left: 4px;
-            width: 90px;
-            height: 4px;
-            border-radius: 3px;
-            background: #7b8977;
-        }
-    }
-}
-
-@media (min-width: 601px) {
-    .cash-counter .counter-desk {
-        grid-template-columns: 1.1fr 1.8fr 0.9fr;
-    }
-}
-
-@media (max-width: 600px) {
-    .cash-counter {
-        .counter-selection {
-            flex-wrap: wrap;
-            gap: 4px 10px;
-        }
-
-        .counter-amount-input {
-            width: min(220px, 100%);
-            font-size: 19px;
-        }
     }
 }

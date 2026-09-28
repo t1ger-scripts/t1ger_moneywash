@@ -4,7 +4,7 @@ export interface CounterBatch {
     amount: number
     durationMs: number
     remainingMs: number
-    status: 'counting' | 'complete' | 'review'
+    status: 'counting' | 'ready' | 'settling' | 'complete' | 'review'
 }
 export interface CashCounterPayload {
     businessId: number
