@@ -6,7 +6,7 @@ import 'leaflet/dist/leaflet.css'
 import '@/portal/styles/portal.scss'
 
 import App from '@/App.vue'
-import { i18n } from '@/integrations/localization/i18n'
+import { i18n } from '@/integrations/i18n'
 
 const app = createApp(App)
 

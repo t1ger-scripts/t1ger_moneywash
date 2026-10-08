@@ -8,8 +8,8 @@ import {
     isFiveMEnvironment,
     onNuiMessage,
     postNui,
-} from '@/integrations/nui/nuiClient'
-import { NUI_CALLBACKS, NUI_MESSAGES } from '@/integrations/nui/nuiEvents'
+} from '@/integrations/nui'
+import { NUI_CALLBACKS, NUI_MESSAGES } from '@/integrations/nui'
 export function useUiLifecycle() {
     usePortalLifecycle()
     const ui = useUiStore()

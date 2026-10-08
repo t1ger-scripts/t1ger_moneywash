@@ -1,4 +1,4 @@
-import type { LocaleMessages } from '@/integrations/localization/localization.types'
+import type { LocaleMessages } from '@/integrations/i18n'
 export interface CounterBatch {
     id: number
     amount: number

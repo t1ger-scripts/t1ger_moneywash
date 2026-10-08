@@ -10,7 +10,7 @@ import { useCashDrag } from './composables/useCashDrag'
 import { useCounterSound } from './composables/useCounterSound'
 import { stackCount, validAmount } from './cash-counter.utils'
 import { createCashTextures } from './cash-counter.textures'
-import { isFiveMEnvironment } from '@/integrations/nui/nuiClient'
+import { isFiveMEnvironment } from '@/integrations/nui'
 import './cash-counter.scss'
 const store = useCashCounterStore()
 const { t, te } = useI18n()

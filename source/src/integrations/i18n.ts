@@ -1,6 +1,8 @@
 import { createI18n } from 'vue-i18n'
 
-import type { LocaleMessages } from './localization.types'
+export interface LocaleMessages {
+    [key: string]: string | LocaleMessages
+}
 
 const fallbackMessages: LocaleMessages = {
     common: {
@@ -10,11 +12,7 @@ const fallbackMessages: LocaleMessages = {
     },
 }
 
-export const i18n = createI18n<
-    [LocaleMessages],
-    string,
-    false
->({
+export const i18n = createI18n<[LocaleMessages], string, false>({
     legacy: false,
     locale: 'en',
     fallbackLocale: 'en',

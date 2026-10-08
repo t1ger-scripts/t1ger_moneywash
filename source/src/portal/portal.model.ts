@@ -1,4 +1,4 @@
-import type { PortalBootstrapPayload } from '@/integrations/nui/nui.types'
+import type { PortalBootstrapPayload } from './portal.types'
 
 export type BusinessOwnership =
     | 'available'

@@ -1,5 +1,43 @@
-import type { NuiCallbackName, NuiMessageName } from './nuiEvents'
-import type { NuiMessage } from './nui.types'
+export const NUI_CALLBACKS = {
+    uiReady: 't1ger_moneywash:ui:ready',
+
+    cashStart: 't1ger_moneywash:cashCounter:start',
+    cashConfirm: 't1ger_moneywash:cashCounter:confirm',
+    cashReset: 't1ger_moneywash:cashCounter:reset',
+    cashStatus: 't1ger_moneywash:cashCounter:status',
+    cashClose: 't1ger_moneywash:cashCounter:close',
+
+    ready: 't1ger_moneywash:portal:ready',
+    purchaseBusiness: 't1ger_moneywash:portal:purchaseBusiness',
+    setBusinessWaypoint: 't1ger_moneywash:portal:setBusinessWaypoint',
+    close: 't1ger_moneywash:portal:close',
+} as const
+
+export const NUI_MESSAGES = {
+    cashOpen: 't1ger_moneywash:cashCounter:open',
+    cashClose: 't1ger_moneywash:cashCounter:close',
+
+    open: 't1ger_moneywash:portal:open',
+    refresh: 't1ger_moneywash:portal:refresh',
+    close: 't1ger_moneywash:portal:close',
+} as const
+
+export type NuiCallbackName =
+    (typeof NUI_CALLBACKS)[keyof typeof NUI_CALLBACKS]
+
+export type NuiMessageName =
+    (typeof NUI_MESSAGES)[keyof typeof NUI_MESSAGES]
+
+export interface NuiResponse<TData = undefined> {
+    success: boolean
+    reason?: string
+    data?: TData
+}
+
+export interface NuiMessage<TData = unknown> {
+    action: string
+    data?: TData
+}
 
 const FALLBACK_RESOURCE_NAME = 't1ger_moneywash'
 

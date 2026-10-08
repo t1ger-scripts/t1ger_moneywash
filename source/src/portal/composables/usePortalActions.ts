@@ -2,13 +2,13 @@ import type { BusinessLocation } from '@/portal/portal.model'
 import {
     isFiveMEnvironment,
     postNui,
-} from '@/integrations/nui/nuiClient'
-import { NUI_CALLBACKS } from '@/integrations/nui/nuiEvents'
+} from '@/integrations/nui'
+import { NUI_CALLBACKS } from '@/integrations/nui'
+import type { NuiResponse } from '@/integrations/nui'
 import type {
-    NuiResponse,
     PurchaseBusinessRequest,
     SetBusinessWaypointRequest,
-} from '@/integrations/nui/nui.types'
+} from '@/portal/portal.types'
 import { usePortalStore } from '@/portal/stores/portal.store'
 import { useUiStore } from '@/shared/stores/ui.store'
 

@@ -1,5 +1,5 @@
-import type { LocaleMessages } from '@/integrations/localization/localization.types'
-import type { PortalThemeConfig } from '@/portal/theme/theme.types'
+import type { LocaleMessages } from '@/integrations/i18n'
+import type { PortalThemeConfig } from './theme/theme.types'
 
 export interface PortalCoordinates {
     x: number
@@ -82,15 +82,4 @@ export interface PurchaseBusinessRequest {
 export interface SetBusinessWaypointRequest {
     businessType: string
     locationId: number
-}
-
-export interface NuiResponse<TData = undefined> {
-    success: boolean
-    reason?: string
-    data?: TData
-}
-
-export interface NuiMessage<TData = unknown> {
-    action: string
-    data?: TData
 }
