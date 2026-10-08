@@ -39,3 +39,15 @@ end
 --- @param cost number amount paid for the order
 function OnStockOrderCompleted(identifier, businessId, businessType, unitsOrdered, unitsDelivered, cost)
 end
+
+--- Called when a cash-counter batch successfully settles (dirty cash laundered
+--- into a business's Safe). Never fires on a failed or retried settlement -
+--- only once the result is durably saved.
+--- @param identifier string business owner
+--- @param businessId number
+--- @param businessType string
+--- @param amount number gross dirty cash amount laundered
+--- @param coveredAmount number portion that landed as covered (stock-backed, raid-safe)
+--- @param exposedAmount number portion that landed as exposed (raid-seizable)
+function OnMoneyLaundered(identifier, businessId, businessType, amount, coveredAmount, exposedAmount)
+end

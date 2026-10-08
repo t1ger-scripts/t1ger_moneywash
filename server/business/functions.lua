@@ -604,17 +604,6 @@ local function RollPoliceNotification(business, notificationChances)
     end
 end
 
---- Executes a launder action
---- Dirty cash must be carried by the player (not from Safe)
---- @param src number
---- @param businessId number
---- @param amount number gross dirty cash amount to launder
---- @return boolean success, string reason, table|nil result
-function LaunderMoney(src, businessId, amount)
-    -- No instant-money bypass: callers must use the server cash-counter session.
-    return false, "cash_counter_required"
-end
-
 --- Pure calculation shared by the server-controlled cash-counter settlement.
 function BuildCashInjection(business, amount)
     local tier = GetTierByType(business.type)
@@ -629,13 +618,21 @@ function BuildCashInjection(business, amount)
         suspicion = suspicion,
         totalLaundered = business.totalLaundered + amount,
         lastLaunderedAt = os.time(),
-    }, { oldLabel = GetSuspicionLabel(business.suspicion), newLabel = GetSuspicionLabel(suspicion) }
+    }, {
+        oldLabel = GetSuspicionLabel(business.suspicion),
+        newLabel = GetSuspicionLabel(suspicion),
+        covered  = covered,
+        exposed  = exposed,
+    }
 end
 
 --- Side effects run only after durable settlement, never on a client completion event.
-function PublishCashInjection(src, identifier, businessId, result)
+function PublishCashInjection(src, identifier, businessId, amount, result)
     local business = GetBusiness(businessId)
     if not business then return end
+
+    OnMoneyLaundered(identifier, businessId, business.type, amount, result.covered, result.exposed)
+    
     if Config.Reputation.Enable and Config.Reputation.Rewards.launder.enable then
         local points = Config.Reputation.Rewards.launder.points
         if src and IsReputationReady(src) then

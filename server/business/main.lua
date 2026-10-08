@@ -178,11 +178,6 @@ lib.callback.register("t1ger_moneywash:server:getDirtyMoney", function(source)
     return _API.Player.GetDirtyMoney(source)
 end)
 
-lib.callback.register("t1ger_moneywash:server:launderMoney", function(source, businessId, amount)
-    local success, reason, result = LaunderMoney(source, businessId, amount)
-    return { success = success, reason = reason, result = result }
-end)
-
 --- -------------------------------------------------------------------------
 --- BANK DEPOSITS
 --- -------------------------------------------------------------------------

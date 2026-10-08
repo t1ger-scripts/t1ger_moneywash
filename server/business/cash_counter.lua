@@ -257,7 +257,7 @@ local function settle(row)
     for _, session in pairs(Sessions) do
         if session.identifier == row.identifier and session.batchId == row.id then session.result = row end
     end
-    PublishCashInjection(onlineSource(row.identifier), row.identifier, row.businessId, row.result)
+    PublishCashInjection(onlineSource(row.identifier), row.identifier, row.businessId, row.amount, row.result)
     row.working = false
 end
 
@@ -348,6 +348,7 @@ CreateThread(function()
         end
     end
 end)
+
 AddEventHandler("playerDropped", function()
     local src = source
     local session = Sessions[src]

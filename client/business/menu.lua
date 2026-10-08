@@ -261,13 +261,11 @@ function OpenSafeMenu(businessId)
                 title       = ("%s: %s"):format(locale("menu.handler.safe_covered"), FormatMoney(status.safeCovered)),
                 icon        = menuIcons.safeCovered or "fa-solid fa-shield-halved",
                 description = locale("menu.handler.safe_covered_desc"),
-                disabled    = true,
             },
             {
                 title       = ("%s: %s"):format(locale("menu.handler.safe_exposed"), FormatMoney(status.safeExposed)),
                 icon        = menuIcons.safeExposed or "fa-solid fa-triangle-exclamation",
                 description = locale("menu.handler.safe_exposed_desc"),
-                disabled    = true,
             },
             {
                 title       = locale("menu.handler.bank_deposit"),
