@@ -181,42 +181,44 @@ end
 --- @param src number The player ID.
 --- @param item string The item name.
 --- @param count number The amount to remove.
-function _API.Inventory.RemoveItem(src, item, count)
+--- @param metadata table|nil (optional) Metadata filter. If provided, only items matching this metadata will be removed.
+--- @param slot number|nil (optional) Specific slot to remove from. 
+function _API.Inventory.RemoveItem(src, item, count, metadata, slot)
     if type(src) ~= "number" then
         return error("[_API.Inventory.RemoveItem] Invalid source type. Must be a number equivalent to player ID")
     end
-    
+
     if type(item) ~= "string" or item == "" then
         return error("[_API.Inventory.RemoveItem] Invalid item type. Must be a non-empty string for the item name")
     end
-    
+
     if type(count) ~= "number" then
         return error("[_API.Inventory.RemoveItem] Invalid count type. Must be a number")
     end
 
     if _Inventory == "ox_inventory" then
-        exports[_Inventory]:RemoveItem(src, item, count, metadata or false)
+        exports[_Inventory]:RemoveItem(src, item, count, metadata or false, slot)
     elseif _Inventory == "qb-inventory" then
-        exports[_Inventory]:RemoveItem(src, item, count, false)
+        exports[_Inventory]:RemoveItem(src, item, count, slot or false)
         if Framework == "qbcore" then
             TriggerClientEvent(_Inventory..":client:ItemBox", src, _FW[Framework].Shared.Items[item], "remove", count)
         end
     elseif _Inventory == "qs-inventory" then
-        exports[_Inventory]:RemoveItem(src, item, count, nil, metadata or false)
+        exports[_Inventory]:RemoveItem(src, item, count, slot, metadata or false)
     elseif _Inventory == "codem-inventory" then
-        exports[_Inventory]:RemoveItem(src, item, count, false)
+        exports[_Inventory]:RemoveItem(src, item, count, metadata or false, slot)
     elseif _Inventory == "core_inventory" then
         exports[_Inventory]:removeItem(src, item, count)
-    elseif _Inventory == "origen_inventory" then 
-        exports[_Inventory]:removeItem(src, item, count, metadata or false)
+    elseif _Inventory == "origen_inventory" then
+        exports[_Inventory]:removeItem(src, item, count, slot)
     elseif _Inventory == "ak47_inventory" or _Inventory == "ak47_qb_inventory" then
-        exports[_Inventory]:RemoveItem(src, item, count)
+        exports[_Inventory]:RemoveItem(src, item, count, slot)
     elseif _Inventory == "tgiann-inventory" then
-        return exports[_Inventory]:RemoveItem(src, item, count, nil, metadata or false)
-    elseif _Inventory == "custom" then 
+        return exports[_Inventory]:RemoveItem(src, item, count, slot, metadata or false)
+    elseif _Inventory == "custom" then
         -- add custom function in here
     else
-        _API.Player.RemoveItem(src, item, count)
+        _API.Player.RemoveItem(src, item, count, metadata, slot)
     end
 end
 
