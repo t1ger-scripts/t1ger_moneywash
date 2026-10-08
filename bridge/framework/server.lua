@@ -460,7 +460,8 @@ end
 --- @param item string The item name.
 --- @param count number The amount to add.
 --- @param metadata table|nil (optional) Additional item metadata, such as custom properties.
-function _API.Player.AddItem(src, item, count, metadata)
+--- @param slot number|nil (optional) Specific slot to add into. Ignored by base ESX, which has no slot concept.
+function _API.Player.AddItem(src, item, count, metadata, slot)
     if type(src) ~= "number" then
         return error("[_API.Player.AddItem] Invalid source type. Must be a number equivalent to player ID")
     end
@@ -479,10 +480,10 @@ function _API.Player.AddItem(src, item, count, metadata)
     if Framework == "esx" then
         player.addInventoryItem(item, count)
     elseif Framework == "qbcore" or (Framework == "qbox" and GetResourceState("ox_inventory") ~= "started") then
-        player.Functions.AddItem(item, count, false, metadata or false)
+        player.Functions.AddItem(item, count, slot or false, metadata or false)
         TriggerClientEvent("inventory:client:ItemBox", src, _FW[Framework].Shared.Items[item], "add", count)
     elseif Framework == "qbox" then
-        exports["ox_inventory"]:AddItem(src, item, count, metadata or false)
+        exports["ox_inventory"]:AddItem(src, item, count, metadata or false, slot)
     else
         return error(("[_API.Player.AddItem] Unsupported framework detected (Framework: %s)"):format(tostring(Framework)))
     end
