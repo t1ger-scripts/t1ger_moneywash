@@ -278,6 +278,8 @@
         }
     },
     "cashCounter": {
+        "amountAvailable": "Available to count: %s",
+        "collectedAmount": "Counted {amount}",
         "loadPile": "Load {amount}",
         "releasePile": "Release to count",
         "nextPile": "Load next pile",

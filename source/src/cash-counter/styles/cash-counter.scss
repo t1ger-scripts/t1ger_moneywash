@@ -221,10 +221,17 @@
     .cash-bundle {
         position: absolute;
         display: block;
-        width: 40%;
-        height: 25%;
+        width: 38%;
+        height: 21%;
+        padding: 0;
+        border: 0;
+        background: none;
+        transform: rotate(var(--pile-turn, 0deg));
         filter: drop-shadow(1px 3px 2px #0008);
         pointer-events: none;
+        transition:
+            transform 140ms ease,
+            filter 140ms ease;
 
         img {
             width: 100%;
@@ -234,6 +241,7 @@
 
         &.is-lifted {
             opacity: 0;
+            pointer-events: none !important;
         }
     }
 
@@ -244,43 +252,93 @@
         transform: none;
     }
 
-    .counter-pile:not(:disabled) .cash-bundle:last-child {
+    .counter-pile .cash-bundle:not(:disabled) {
         pointer-events: auto;
         cursor: grab;
         touch-action: none;
 
-        &:hover {
+        &:hover,
+        &:focus-visible {
+            z-index: 50 !important;
+            transform: translateY(-4px) rotate(var(--pile-turn, 0deg));
             filter:
-                brightness(1.1)
-                drop-shadow(0 0 4px #dcccad77);
+                brightness(1.08)
+                drop-shadow(0 5px 4px #0008);
+
+            .counter-pile-value {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        &:focus-visible {
+            outline: 1px solid var(--counter-cream);
+            outline-offset: 2px;
         }
     }
 
-    .counter-pile:focus-visible {
-        outline: none;
+    .counter-pile .cash-bundle:disabled {
+        pointer-events: none;
+        cursor: default;
+    }
 
-        .cash-bundle:last-child {
-            outline: 1px solid var(--counter-cream);
-            outline-offset: 3px;
+    /* Completed piles show their value without becoming draggable. */
+    .counter-tray > .cash-stacks:not(.counter-stack-target) .cash-bundle {
+        pointer-events: auto;
+        cursor: default;
+
+        &:hover {
+            z-index: 50 !important;
+
+            .counter-pile-value {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
         }
+    }
+
+    .counter-pile-value {
+        position: absolute;
+        z-index: 60;
+        left: 50%;
+        bottom: calc(100% + 5px);
+        width: max-content;
+        padding: 4px 7px;
+        border: 1px solid #827860;
+        border-radius: 4px;
+        background: #14170ff2;
+        color: #e4d4b3;
+        font-size: 10px;
+        font-weight: 400;
+        line-height: 1.3;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        opacity: 0;
+        transform: translate(-50%, 3px);
+        transition:
+            opacity 120ms ease,
+            transform 120ms ease;
+        pointer-events: none;
     }
 
     .counter-stack-target > span {
         position: absolute;
-        width: 40%;
-        height: 25%;
+        width: 38%;
+        height: 21%;
+        border: 1px dashed transparent;
+        border-radius: 3px;
+        transform: rotate(var(--pile-turn, 0deg));
         pointer-events: none;
     }
 
-    .counter-output > small {
-        position: absolute;
-        top: calc(100% + 2px);
-        left: 0;
-        right: 0;
-        color: #aaa591;
-        font-size: 10px;
-        text-align: center;
-        white-space: nowrap;
+    .counter-output.is-target .counter-stack-target > span {
+        border-color: #d7c49366;
+        background: #d7c4930a;
+    }
+
+    .counter-output.is-over .counter-stack-target > span {
+        border-color: #e3d2a5aa;
+        background: #d7c49318;
     }
 
     .counter-output.is-target .counter-tray {
@@ -536,150 +594,6 @@
         text-shadow: 0 0 8px #b7d88066;
     }
 
-    /* Amount controls and actions keep a constant layout. */
-    .counter-bottom {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 12px 20px;
-        align-items: center;
-        padding: 18px 26px 14px;
-        border-top: 1px solid #686554;
-        background: linear-gradient(#1c1e1a, #131512);
-    }
-
-    .counter-controls {
-        display: contents;
-    }
-
-    .counter-selection {
-        grid-column: 1;
-        grid-row: 1;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        min-width: 0;
-        min-height: 38px;
-
-        > span {
-            flex-shrink: 0;
-            color: #aaa591;
-            font-size: 11px;
-        }
-    }
-
-    .counter-amount-input {
-        width: 180px;
-        min-width: 0;
-        padding: 7px 10px;
-        border: 1px solid #595949;
-        border-radius: 5px;
-        background: #10120f;
-        color: #e4d8bd;
-        font-size: 17px;
-        font-variant-numeric: tabular-nums;
-
-        &:disabled {
-            border-color: #383c31;
-            color: #aaa58f;
-        }
-    }
-
-    .counter-final-actions {
-        grid-column: 2;
-        grid-row: 1;
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        min-height: 38px;
-    }
-
-    .counter-recount,
-    .counter-confirm {
-        min-height: 38px;
-        padding: 9px 16px;
-        border: 1px solid #827860;
-        border-radius: 5px;
-        font-size: 11px;
-        font-weight: 500;
-        white-space: nowrap;
-        transition:
-            opacity 120ms ease,
-            background 120ms ease;
-    }
-
-    .counter-recount {
-        background: #262820;
-        color: #ded6c0;
-
-        &:hover:not(:disabled) {
-            background: #34372b;
-        }
-    }
-
-    .counter-confirm {
-        background: #d7c8a9;
-        color: #25271d;
-
-        &:hover:not(:disabled) {
-            background: #ebddbd;
-        }
-    }
-
-    .counter-recount:disabled,
-    .counter-confirm:disabled {
-        opacity: 0.35;
-    }
-
-    .counter-slider {
-        grid-column: 1 / -1;
-        grid-row: 2;
-        width: 100%;
-        height: 4px;
-        margin: 3px 0 0;
-        border: 0;
-        border-radius: 99px;
-        appearance: none;
-        background: linear-gradient(
-            to right,
-            #cbbd9d var(--fill, 0%),
-            #414339 var(--fill, 0%)
-        );
-        cursor: pointer;
-
-        &::-webkit-slider-thumb {
-            width: 13px;
-            height: 13px;
-            border: 1px solid #e1d4b4;
-            border-radius: 50%;
-            appearance: none;
-            background: #d3c3a0;
-            box-shadow: 0 2px 5px #0007;
-        }
-
-        &::-moz-range-thumb {
-            width: 13px;
-            height: 13px;
-            border: 1px solid #e1d4b4;
-            border-radius: 50%;
-            background: #d3c3a0;
-        }
-
-        &:disabled {
-            opacity: 0.4;
-            cursor: default;
-        }
-    }
-
-    .counter-range-labels {
-        grid-column: 1 / -1;
-        grid-row: 3;
-        display: flex;
-        justify-content: space-between;
-        margin-top: -4px;
-        color: #858673;
-        font-size: 9px;
-    }
-
     .counter-ghost {
         position: absolute;
         z-index: 100;
@@ -780,40 +694,6 @@
         .counter-display small {
             font-size: 5px;
         }
-
-        .counter-output > small {
-            font-size: 8px;
-            white-space: normal;
-        }
-
-        .counter-bottom {
-            grid-template-columns: 1fr;
-            padding: 14px;
-        }
-
-        .counter-selection {
-            grid-column: 1;
-            grid-row: 1;
-        }
-
-        .counter-final-actions {
-            grid-column: 1;
-            grid-row: 2;
-            justify-content: flex-end;
-        }
-
-        .counter-slider {
-            grid-row: 3;
-        }
-
-        .counter-range-labels {
-            grid-row: 4;
-        }
-
-        .counter-amount-input {
-            flex: 1;
-            width: 120px;
-        }
     }
 }
 
@@ -827,5 +707,118 @@
         .machine-output-note {
             visibility: hidden;
         }
+    }
+}
+
+.cash-counter {
+    /*
+     * Reserve action space beneath both trays so the right-hand
+     * confirmation does not change the machine or tray positions.
+     */
+    .counter-source,
+    .counter-output {
+        padding-bottom: 58px;
+    }
+
+    .counter-tray-action {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 4px;
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+
+        > small {
+            color: #aaa591;
+            font-size: 10px;
+            line-height: 1.4;
+        }
+    }
+
+    .counter-tray-confirm {
+        width: 100%;
+        min-height: 38px;
+        padding: 8px 10px;
+        border: 1px solid #b5a681;
+        border-radius: 5px;
+        background: #d7c8a9;
+        color: #25271d;
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1.3;
+        font-variant-numeric: tabular-nums;
+        transition:
+            background 120ms ease,
+            opacity 120ms ease;
+
+        &:hover:not(:disabled) {
+            background: #ebddbd;
+        }
+
+        &:disabled {
+            opacity: 0.55;
+        }
+
+        &.is-complete {
+            border-color: #819469;
+            background: #293321;
+            color: #d0dfb7;
+            opacity: 1;
+        }
+    }
+
+    .counter-output.is-ready:not(.is-complete) .counter-tray {
+        filter:
+            drop-shadow(0 12px 8px #0009)
+            drop-shadow(0 0 5px #d7c49355);
+    }
+
+    .counter-output.is-complete {
+        .counter-tray > .cash-stacks:not(.counter-stack-target) {
+            animation: counter-cash-cleared 450ms ease-in 100ms both;
+            pointer-events: none;
+
+            .cash-bundle {
+                pointer-events: none;
+            }
+        }
+    }
+}
+
+@keyframes counter-cash-cleared {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+}
+
+@media (max-width: 700px) {
+    .cash-counter {
+        .counter-tray-confirm {
+            padding: 7px 4px;
+            font-size: 9px;
+        }
+
+        .counter-tray-action > small {
+            font-size: 8px;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cash-counter
+        .counter-output.is-complete
+        .counter-tray
+        > .cash-stacks:not(.counter-stack-target) {
+        animation-duration: 1ms;
+        animation-delay: 0ms;
     }
 }

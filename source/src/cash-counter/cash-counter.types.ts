@@ -18,6 +18,7 @@ export interface CounterBatch {
 export interface CashCounterPayload {
     businessId: number
     operation: string
+    amount: number
     available: number
     currency: string
     locale: string
@@ -34,3 +35,9 @@ export interface CounterStatus {
 }
 
 export type CounterPhase = 'idle' | 'counting' | 'collect'
+
+export interface CashPile {
+    id: number
+    amount: number
+    slot: number
+}

@@ -11,7 +11,6 @@ import { useI18n } from 'vue-i18n'
 import { X } from '@lucide/vue'
 import CashStacks from './components/CashStacks.vue'
 import CounterMachine from './components/CounterMachine.vue'
-import CounterAmountSelector from './components/CounterAmountSelector.vue'
 import { useCashCounterStore } from './stores/cash-counter.store'
 import { useCashDrag } from './composables/useCashDrag'
 import { useCounterSound } from './composables/useCounterSound'
@@ -20,6 +19,7 @@ import {
     cashCounterImages,
     cashPilePosition,
 } from './utils/cash-counter.utils'
+import type { CashPile } from './cash-counter.types'
 import './styles/cash-counter.scss'
 
 const store = useCashCounterStore()
@@ -27,6 +27,31 @@ const sound = useCounterSound()
 const { t, te } = useI18n()
 
 const root = ref<HTMLElement | null>(null)
+
+const selectedPileId = ref<number | null>(null)
+
+const leftPiles = computed<CashPile[]>(() =>
+    store.piles.flatMap((amount, id) => {
+        if (
+            store.completedPileIds.includes(id) ||
+            store.activePileId === id
+        ) return []
+
+        return [{ id, amount, slot: id }]
+    }),
+)
+
+const rightPiles = computed<CashPile[]>(() =>
+    store.completedPileIds.map((id, slot) => ({
+        id,
+        amount: store.piles[id] ?? 0,
+        slot,
+    })),
+)
+
+const collectedAmount = computed(() =>
+    rightPiles.value.reduce((sum, pile) => sum + pile.amount, 0),
+)
 
 const format = (amount: number) =>
     `${store.payload?.currency ?? '$'}${Math.floor(
@@ -38,8 +63,11 @@ const settling = computed(() => store.batch?.status === 'settling')
 const reviewing = computed(() => store.batch?.status === 'review')
 
 async function loadPile() {
+    const id = selectedPileId.value
+    if (id === null) return
+
     sound.prime()
-    await store.loadPile()
+    await store.loadPile(id)
 
     if (store.running) sound.loaded()
 }
@@ -66,20 +94,45 @@ const activeDrag = computed(() =>
     collectDrag.dragging.value ? collectDrag : feedDrag,
 )
 
+const dragAmount = computed(() => {
+    if (collectDrag.dragging.value) return store.activeAmount
+
+    const id = selectedPileId.value
+    return id === null ? 0 : store.piles[id] ?? 0
+})
+
 const landingStyle = computed(() =>
-    cashPilePosition(store.collected),
+    cashPilePosition(store.collected, store.piles.length),
 )
 
-function keyboardLoad() {
+function keyboardLoad(id: number) {
     sound.prime()
 
-    if (feedDrag.dragging.value || collectDrag.dragging.value) return
+    if (
+        !store.canLoad ||
+        feedDrag.dragging.value ||
+        collectDrag.dragging.value
+    ) return
+
+    selectedPileId.value = id
 
     const pile = root.value?.querySelector<HTMLElement>(
-        '.counter-pile .cash-bundle:last-child',
+        `.counter-pile [data-pile-id="${id}"]`,
     )
 
     if (pile) void feedDrag.transfer(pile)
+}
+
+function pickPile(event: PointerEvent, id: number) {
+    if (
+        !store.canLoad ||
+        feedDrag.dragging.value ||
+        collectDrag.dragging.value
+    ) return
+
+    selectedPileId.value = id
+    sound.prime()
+    feedDrag.down(event)
 }
 
 function keyboardCollect() {
@@ -230,14 +283,6 @@ watch(complete, (value) => {
     }, 1200)
 })
 
-async function recount() {
-    if (!store.canConfirm) return
-
-    feedDrag.cancel()
-    collectDrag.cancel()
-    await store.recount()
-}
-
 function escape(event: KeyboardEvent) {
     if (
         event.key === 'Escape' &&
@@ -295,8 +340,7 @@ onUnmounted(() => {
 
 <template>
     <div class="cash-counter-overlay">
-        <section ref="root" class="cash-counter" role="dialog" aria-modal="true"
-            aria-labelledby="cash-counter-title">
+        <section ref="root" class="cash-counter" role="dialog" aria-modal="true" aria-labelledby="cash-counter-title">
             <header class="counter-header">
                 <h1 id="cash-counter-title">
                     {{
@@ -308,8 +352,8 @@ onUnmounted(() => {
                 </h1>
 
                 <div class="counter-balance">
-                    <span>{{ t('cashCounter.available') }}</span>
-                    <strong>{{ format(store.available) }}</strong>
+                    <span>{{ t('cashCounter.amount') }}</span>
+                    <strong>{{ format(store.amount) }}</strong>
                 </div>
 
                 <span class="counter-status">{{ status }}</span>
@@ -329,13 +373,13 @@ onUnmounted(() => {
                         <img class="counter-tray-art" :src="cashCounterImages.tray" alt="" draggable="false" />
                         <img class="counter-tray-art counter-tray-art--front" :src="cashCounterImages.tray" alt=""
                             draggable="false" />
-                        <button class="counter-pile" type="button" :disabled="!store.canLoad" :aria-label="t('cashCounter.loadPile', {
-                            amount: format(store.activeAmount),
-                        })" @pointerdown="sound.prime(); feedDrag.down($event)" @pointermove="feedDrag.move"
-                            @pointerup="feedDrag.up" @pointercancel="feedDrag.cancel"
-                            @keydown.enter.prevent="keyboardLoad" @keydown.space.prevent="keyboardLoad">
-                            <CashStacks :count="store.leftCount" :lifted="feedDrag.dragging.value" />
-                        </button>
+                        <div class="counter-pile">
+                            <CashStacks :items="leftPiles" :total-slots="store.piles.length" :format="format"
+                                interactive :disabled="!store.canLoad"
+                                :lifted-id="feedDrag.dragging.value ? selectedPileId : null" @pick="pickPile"
+                                @move="feedDrag.move" @release="feedDrag.up" @cancel="feedDrag.cancel"
+                                @load="keyboardLoad" />
+                        </div>
                     </div>
                 </div>
 
@@ -352,49 +396,45 @@ onUnmounted(() => {
                     'is-ready': store.allCollected,
                     'is-target': collectDrag.dragging.value,
                     'is-over': collectDrag.over.value,
+                    'is-complete': complete,
                 }">
                     <div class="counter-tray" data-cash-output>
                         <img class="counter-tray-art" :src="cashCounterImages.tray" alt="" draggable="false" />
                         <img class="counter-tray-art counter-tray-art--front" :src="cashCounterImages.tray" alt=""
                             draggable="false" />
-                        <CashStacks :count="store.collected" />
+                        <CashStacks :items="rightPiles" :total-slots="store.piles.length" :format="format" />
 
                         <span class="cash-stacks counter-stack-target" aria-hidden="true">
                             <span data-cash-landing :style="landingStyle" />
                         </span>
                     </div>
 
-                    <small>
-                        {{
-                            collectDrag.over.value
-                                ? t('cashCounter.releaseRight')
-                                : t('cashCounter.collectedPiles', {
-                                    current: store.collected,
-                                    total: store.piles.length,
-                                })
-                        }}
-                    </small>
-                </div>
-            </div>
+                    <div class="counter-tray-action">
+                        <button v-if="complete" type="button" class="counter-tray-confirm is-complete" disabled>
+                            {{ t('cashCounter.complete') }}
+                        </button>
 
-            <div class="counter-bottom">
-                <CounterAmountSelector v-model="store.amount" :available="store.available" :disabled="store.busy"
-                    :format="format" />
-
-                <div class="counter-final-actions">
-                    <button type="button" class="counter-recount" :disabled="!store.canConfirm" @click="recount">
-                        {{ t('cashCounter.recount') }}
-                    </button>
-
-                    <button type="button" class="counter-confirm" :disabled="!store.canConfirm" @click="store.confirm">
-                        {{
-                            t('cashCounter.confirmAmount', {
-                                amount: format(
-                                    store.batch?.amount ?? store.amount,
-                                ),
+                        <button v-else-if="store.allCollected || settling" type="button" class="counter-tray-confirm"
+                            :disabled="!store.canConfirm" @click="store.confirm">
+                            {{
+                                store.submitting || settling
+                                    ? t('cashCounter.confirming')
+                                    : t('cashCounter.confirmAmount', {
+                                        amount: format(store.batch?.amount ?? store.amount),
                             })
-                        }}
-                    </button>
+                            }}
+                        </button>
+
+                        <small v-else>
+                            {{
+                                collectDrag.over.value
+                                    ? t('cashCounter.releaseRight')
+                                    : t('cashCounter.collectedAmount', {
+                                        amount: format(collectedAmount),
+                            })
+                            }}
+                        </small>
+                    </div>
                 </div>
             </div>
 
@@ -403,7 +443,7 @@ onUnmounted(() => {
                 top: `${activeDrag.y.value}px`,
             }">
                 <CashStacks compact />
-                <span>{{ format(store.activeAmount) }}</span>
+                <span>{{ format(dragAmount) }}</span>
             </div>
         </section>
     </div>

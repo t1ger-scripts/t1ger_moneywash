@@ -27,7 +27,10 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
     const error = ref('')
 
     const phase = ref<CounterPhase>('idle')
-    const collected = ref(0)
+    const completedPileIds = ref<number[]>([])
+    const activePileId = ref<number | null>(null)
+
+    const collected = computed(() => completedPileIds.value.length)
     const progress = ref(0)
 
     let generation = 0
@@ -52,9 +55,10 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
         )
     })
 
-    const activeAmount = computed(
-        () => piles.value[collected.value] ?? 0,
-    )
+    const activeAmount = computed(() => {
+        const id = activePileId.value
+        return id === null ? 0 : piles.value[id] ?? 0
+    })
 
     const activeBatch = computed(
         () => batch.value?.status === 'counting' ||
@@ -76,7 +80,8 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
     const canCollect = computed(
         () => activeBatch.value &&
             !submitting.value &&
-            phase.value === 'collect',
+            phase.value === 'collect' &&
+            activePileId.value !== null,
     )
 
     const allCollected = computed(
@@ -102,9 +107,10 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
     )
 
     const countedAmount = computed(() => {
-        const finished = piles.value
-            .slice(0, collected.value)
-            .reduce((sum, value) => sum + value, 0)
+        const finished = completedPileIds.value.reduce(
+            (sum, id) => sum + (piles.value[id] ?? 0),
+            0,
+        )
 
         if (phase.value === 'collect') {
             return finished + activeAmount.value
@@ -121,7 +127,8 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
 
     function resetSequence() {
         phase.value = 'idle'
-        collected.value = 0
+        completedPileIds.value = []
+        activePileId.value = null
         progress.value = 0
         startedAt = 0
     }
@@ -136,7 +143,11 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
         batch.value = next
 
         if (next?.status === 'complete') {
-            collected.value = piles.value.length
+            if (completedPileIds.value.length !== piles.value.length) {
+                completedPileIds.value = piles.value.map((_, id) => id)
+            }
+
+            activePileId.value = null
             phase.value = 'idle'
             progress.value = 0
         }
@@ -150,10 +161,6 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
     function applyStatus(data: CounterStatus) {
         available.value = Math.max(0, Math.floor(data.available))
         applyBatch(data.batch)
-
-        if (!batch.value) {
-            amount.value = Math.min(amount.value, available.value)
-        }
     }
 
     function open(data: CashCounterPayload) {
@@ -163,7 +170,7 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
         installLocaleMessages(data.locale, data.messages)
 
         available.value = Math.max(0, Math.floor(data.available))
-        amount.value = data.batch?.amount ?? available.value
+        amount.value = data.batch?.amount ?? data.amount
 
         applyBatch(data.batch, true)
         submitting.value = false
@@ -214,8 +221,14 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
         }
     }
 
-    async function loadPile() {
-        if (!canLoad.value) return
+    async function loadPile(pileId: number) {
+        if (
+            !canLoad.value ||
+            !Number.isInteger(pileId) ||
+            pileId < 0 ||
+            pileId >= piles.value.length ||
+            completedPileIds.value.includes(pileId)
+        ) return
 
         const session = payload.value
 
@@ -231,18 +244,27 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
         if (
             payload.value !== session ||
             !batch.value ||
-            !canLoad.value
+            !canLoad.value ||
+            pileId >= piles.value.length ||
+            completedPileIds.value.includes(pileId)
         ) return
 
+        activePileId.value = pileId
         progress.value = 0
         startedAt = performance.now()
         phase.value = 'counting'
     }
 
     function collectPile() {
-        if (!canCollect.value) return
+        if (!canCollect.value || activePileId.value === null) return
 
-        collected.value++
+        const id = activePileId.value
+
+        if (!completedPileIds.value.includes(id)) {
+            completedPileIds.value.push(id)
+        }
+
+        activePileId.value = null
         progress.value = 0
         phase.value = 'idle'
     }
@@ -267,15 +289,6 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
 
         await request(
             NUI_CALLBACKS.cashConfirm,
-            { batchId: batch.value.id },
-        )
-    }
-
-    async function recount() {
-        if (!canConfirm.value || !batch.value) return
-
-        await request(
-            NUI_CALLBACKS.cashReset,
             { batchId: batch.value.id },
         )
     }
@@ -356,9 +369,10 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
         collectPile,
         tick,
         confirm,
-        recount,
         refresh,
         dismiss,
         close,
+        completedPileIds,
+        activePileId,
     }
 })

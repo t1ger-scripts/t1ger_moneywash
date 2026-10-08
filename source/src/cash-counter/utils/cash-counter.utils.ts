@@ -27,11 +27,19 @@ export function splitCash(amount: number, stackCount: number): number[] {
     )
 }
 
-export function cashPilePosition(index: number) {
+export function cashPilePosition(index: number, totalSlots = 10) {
+    const rows = Math.max(1, Math.ceil(totalSlots / 2))
+    const row = Math.floor(index / 2)
+    const column = index % 2
+
+    const spacing = rows > 1
+        ? Math.min(13, 44 / (rows - 1))
+        : 0
+
     return {
-        left: `${index % 2 === 0 ? 12 : 49}%`,
-        bottom: `${20 + Math.floor(index / 2) * 4.5}%`,
-        transform: `rotate(${index % 2 === 0 ? -2 : 2}deg)`,
+        left: `${column === 0 ? 11 : 50}%`,
+        bottom: `${18 + row * spacing}%`,
+        '--pile-turn': `${column === 0 ? -2 : 2}deg`,
         zIndex: index + 1,
     }
 }
