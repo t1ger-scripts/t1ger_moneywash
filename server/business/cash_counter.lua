@@ -100,7 +100,17 @@ local function onlineSource(identifier)
 end
 
 local function statusData(src, row)
-    return { available = GetDirtyMoney(src), batch = publicBatch(row) }
+    local available = 0
+    local identifier = _API.Player.GetIdentifier(src)
+
+    if identifier and (not row or identifier == row.identifier) then
+        available = GetDirtyMoney(src)
+    end
+
+    return {
+        available = available,
+        batch = publicBatch(row),
+    }
 end
 
 local function clearPreview(src, row)
@@ -113,19 +123,55 @@ local function clearPreview(src, row)
     return true
 end
 
-lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, businessId, operation)
-    if operation ~= "inject" then return failure("unsupported_operation") end
+lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, businessId, operation, amount)
+    if operation ~= "inject" then
+        return failure("unsupported_operation")
+    end
+
     businessId = tonumber(businessId)
+
     local business, reason = playerBusiness(src, businessId)
-    if not business then return failure(reason) end
-    local row = Pending[business.identifier]
-    Sessions[src] = { identifier = business.identifier, businessId = businessId, batchId = row and row.id }
+    if not business then
+        return failure(reason)
+    end
+
+    if type(amount) ~= "number"
+        or amount ~= amount
+        or amount <= 0
+        or amount > Config.CashCounter.MaxAmount
+        or amount % 1 ~= 0 then
+        return failure("invalid_amount")
+    end
+
+    local pending = Pending[business.identifier]
+
+    if pending then
+        return failure(
+            pending.state == "review"
+            and "manual_review"
+            or "operation_in_progress"
+        )
+    end
+
+    -- Initial feedback only. Confirmation checks again.
+    if not HasDirtyMoney(src, amount) then
+        return failure("insufficient_dirty_cash")
+    end
+
+    Sessions[src] = {
+        identifier = business.identifier,
+        businessId = businessId,
+        amount = amount,
+    }
+
     local localeName, messages = localization()
+
     return {
         success = true,
         data = {
             businessId = businessId,
             operation = "inject",
+            amount = amount,
             available = GetDirtyMoney(src),
             currency = Config.Currency,
             locale = localeName,
@@ -133,8 +179,7 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, b
             titleKey = "cashCounter.injectTitle",
             successKey = "cashCounter.injected",
             settings = GetCashCounterSettings(),
-            batch = publicBatch(row),
-        }
+        },
     }
 end)
 
@@ -152,6 +197,9 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:start", function(src, 
     if not business then return failure(reason) end
     if type(amount) ~= "number" or amount ~= amount or amount <= 0
         or amount > Config.CashCounter.MaxAmount or amount % 1 ~= 0 then
+        return failure("invalid_amount")
+    end
+    if amount ~= session.amount then
         return failure("invalid_amount")
     end
     if Pending[session.identifier] then return failure("operation_in_progress") end
@@ -178,15 +226,6 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:status", function(src)
     local session = Sessions[src]
     if not session or _API.Player.GetIdentifier(src) ~= session.identifier then return failure("invalid_player") end
     return { success = true, data = statusData(src, session.result or Pending[session.identifier]) }
-end)
-
-lib.callback.register("t1ger_moneywash:server:cashCounter:reset", function(src, batchId)
-    local session = Sessions[src]
-    if not session or _API.Player.GetIdentifier(src) ~= session.identifier then return failure("invalid_player") end
-    local row = Pending[session.identifier]
-    if not row or row.id ~= batchId or session.batchId ~= batchId then return failure("invalid_batch") end
-    if not clearPreview(src, row) then return failure("operation_in_progress") end
-    return { success = true, data = statusData(src) }
 end)
 
 -- A settled batch remains locked if saving fails; retry without applying twice.
@@ -225,8 +264,12 @@ end
 local function resetFailedConfirm(src, row, reason)
     ByBusiness[row.businessId] = nil
     ReleaseCashCounterOwnershipLocks(locks(row))
-    row.state, row.working = "counting", false
+
+    row.state = "counting"
+    row.working = false
+
     clearPreview(src, row)
+
     return failure(reason, statusData(src))
 end
 
@@ -253,9 +296,14 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:confirm", function(src
     if not business or _API.Player.GetIdentifier(src) ~= row.identifier then
         return resetFailedConfirm(src, row, reason or "invalid_player")
     end
+    if not GetTierByType(business.type) then
+        return resetFailedConfirm(src, row, "invalid_business_config")
+    end
+
     if not HasDirtyMoney(src, row.amount) then
         return resetFailedConfirm(src, row, "insufficient_dirty_cash")
     end
+
     local before = GetDirtyMoney(src)
     local ok, removed = pcall(RemoveDirtyMoney, src, row.amount)
     if not ok or not removed then

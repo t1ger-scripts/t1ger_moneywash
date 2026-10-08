@@ -343,29 +343,78 @@ local BusinessSaves = {}
 function IsBusinessSaveInProgress(id) return BusinessSaves[id] == true end
 
 function SaveBusiness(id, force)
-    if not force and IsCashCounterSaveBlocked(id) then return end
-    while BusinessSaves[id] do Wait(10) end
-    if not force and IsCashCounterSaveBlocked(id) then return end
-    local b = GetBusiness(id)
-    if not b then return end
+    if not force and IsCashCounterSaveBlocked(id) then
+        return false
+    end
+
+    while BusinessSaves[id] do
+        Wait(10)
+    end
+
+    if not force and IsCashCounterSaveBlocked(id) then
+        return false
+    end
+
+    local business = GetBusiness(id)
+    if not business then
+        return false
+    end
+
+    local identifier = business.identifier
 
     BusinessSaves[id] = true
-    local succeeded, err = pcall(MySQL.update.await,
+
+    local ok, affectedRows = pcall(
+        MySQL.update.await,
         "UPDATE moneywash_businesses SET " ..
         "stock = ?, safe_covered = ?, safe_exposed = ?, suspicion = ?, " ..
         "total_laundered = ?, last_laundered_at = ?, is_closed = ?, closed_until = ? " ..
-        "WHERE id = ?",
+        "WHERE id = ? AND identifier = ?",
         {
-            b.stock, b.safeCovered, b.safeExposed, b.suspicion,
-            b.totalLaundered, b.lastLaunderedAt,
-            b.isClosed and 1 or 0, b.closedUntil,
-            b.id
+            business.stock,
+            business.safeCovered,
+            business.safeExposed,
+            business.suspicion,
+            business.totalLaundered,
+            business.lastLaunderedAt,
+            business.isClosed and 1 or 0,
+            business.closedUntil,
+            business.id,
+            identifier,
         }
     )
-    BusinessSaves[id] = nil
-    if not succeeded then print("[MoneyWash] Business save failed: " .. tostring(err)) end
 
-    return succeeded and err ~= nil
+    local saved = ok
+        and type(affectedRows) == "number"
+        and affectedRows > 0
+
+    -- Zero changed rows can mean the values were already saved.
+    -- Verify that the expected business/owner still exists.
+    if ok and affectedRows == 0 then
+        local found, existingId = pcall(
+            MySQL.scalar.await,
+            "SELECT id FROM moneywash_businesses " ..
+            "WHERE id = ? AND identifier = ? LIMIT 1",
+            { id, identifier }
+        )
+
+        saved = found and existingId ~= nil and existingId ~= false
+    end
+
+    BusinessSaves[id] = nil
+
+    if not saved then
+        print((
+            "[MoneyWash] Business #%s save failed: %s"
+        ):format(
+            tostring(id),
+            ok
+            and "No valid save result for the expected business owner."
+            or tostring(affectedRows)
+        ))
+    end
+
+    return saved
 end
 
 local function SaveAllBusinesses()

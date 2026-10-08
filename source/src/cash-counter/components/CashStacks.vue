@@ -13,6 +13,7 @@ const props = withDefaults(
         liftedId?: number | null
         interactive?: boolean
         disabled?: boolean
+        banded?: boolean
         format?: (amount: number) => string
     }>(),
     {
@@ -22,6 +23,7 @@ const props = withDefaults(
         liftedId: null,
         interactive: false,
         disabled: false,
+        banded: true,
     },
 )
 
@@ -65,7 +67,7 @@ function formatAmount(amount: number) {
             @pointercancel="interactive && emit('cancel')"
             @keydown.enter.prevent="interactive && !disabled && emit('load', pile.id)"
             @keydown.space.prevent="interactive && !disabled && emit('load', pile.id)">
-            <CashPaper banded />
+            <CashPaper :banded="banded" />
 
             <span v-if="!compact" class="counter-pile-value" aria-hidden="true">
                 {{ formatAmount(pile.amount) }}

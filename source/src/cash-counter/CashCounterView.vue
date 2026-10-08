@@ -472,8 +472,8 @@ onUnmounted(() => {
                 <div class="counter-source">
                     <div class="counter-cash-tray">
                         <div class="counter-pile">
-                            <CashStacks :items="leftPiles" :total-slots="leftPiles.length" :format="format" interactive
-                                :disabled="!store.canLoad" :lifted-id="feedDrag.dragging.value
+                            <CashStacks :items="leftPiles" :banded="false" :total-slots="leftPiles.length"
+                                :format="format" interactive :disabled="!store.canLoad" :lifted-id="feedDrag.dragging.value
                                     ? selectedPileId
                                     : null
                                     " @pick="pickPile" @move="feedDrag.move" @release="feedDrag.up"
@@ -570,7 +570,7 @@ onUnmounted(() => {
                 left: `${activeDrag.x.value}px`,
                 top: `${activeDrag.y.value}px`,
             }">
-                <CashStacks compact />
+                <CashStacks compact :banded="collectDrag.dragging.value" />
                 <span class="counter-drag-amount">
                     {{ format(dragAmount) }}
                 </span>

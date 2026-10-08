@@ -1,4 +1,5 @@
 local opening = false
+local confirming = false
 
 local function cashCounterInteger(value, fallback, minimum, maximum)
     local number = tonumber(value)
@@ -39,91 +40,61 @@ local function serverRequest(name, ...)
     return response
 end
 
-local function SelectCashCounterAmount(data)
-    -- A pending batch already has a fixed amount.
-    if data.batch then
-        return data.batch.amount
+local function ShowCashCounterError(reason)
+    local key = "cashCounter.errors." .. (reason or "request_failed")
+    local message = locale(key)
+
+    if type(message) ~= "string" or message == key then
+        message = locale("cashCounter.errors.request_failed")
     end
 
-    local available = math.max(0, math.floor(tonumber(data.available) or 0))
-    local maximum = math.min(available, Config.CashCounter.MaxAmount)
-
-    if maximum < 1 then
-        _API.ShowNotification(locale("cashCounter.empty"), "error", {})
-        return nil
-    end
-
-    local input = lib.inputDialog(
-        locale(data.titleKey or "cashCounter.injectTitle"),
-        {
-            {
-                type = "number",
-                label = locale("cashCounter.amount"),
-                description = string.format(
-                    locale("cashCounter.amountAvailable"),
-                    FormatMoney(maximum)
-                ),
-                min = 1,
-                max = maximum,
-                precision = 0,
-                required = true,
-            },
-        }
-    )
-
-    if not input then return nil end
-
-    local amount = tonumber(input[1])
-
-    if not amount or amount ~= amount
-        or amount % 1 ~= 0
-        or amount < 1 or amount > maximum then
-        _API.ShowNotification(
-            locale("cashCounter.errors.invalid_amount"),
-            "error",
-            {}
-        )
-        return nil
-    end
-
-    return amount
+    _API.ShowNotification(message, "error", {})
 end
 
-function OpenCashCounter(businessId, operation)
-    if opening or not BeginMoneywashUi("cash-counter") then return end
+function OpenCashCounter(businessId, amount, operation)
+    if opening or confirming then return false end
+
+    amount = tonumber(amount)
+
+    if not amount
+        or amount ~= amount
+        or amount % 1 ~= 0
+        or amount < 1
+        or amount > Config.CashCounter.MaxAmount then
+        ShowCashCounterError("invalid_amount")
+        return false
+    end
+
+    if not BeginMoneywashUi("cash-counter") then
+        return false
+    end
+
     opening = true
 
-    local response = serverRequest("open", businessId, operation or "inject")
+    local response = serverRequest(
+        "open",
+        businessId,
+        operation or "inject",
+        amount
+    )
 
     if not response.success or not response.data then
         opening = false
         CloseMoneywashUi("cash-counter")
-
-        local key = "cashCounter.errors." .. (response.reason or "request_failed")
-        _API.ShowNotification(locale(key), "error", {})
-        return
+        ShowCashCounterError(response.reason)
+        return false
     end
-
-    local data = response.data
-    local amount = SelectCashCounterAmount(data)
-
-    if not amount then
-        serverRequest("cancel")
-        opening = false
-        CloseMoneywashUi("cash-counter")
-        return
-    end
-
-    data.amount = amount
 
     ShowMoneywashUi(
         "cash-counter",
         "t1ger_moneywash:cashCounter:open",
-        data
+        response.data
     )
 
     opening = false
+    return true
 end
+
 exports("OpenCashCounter", OpenCashCounter)
 
 RegisterNUICallback("t1ger_moneywash:cashCounter:start", function(data, cb)
@@ -134,21 +105,43 @@ RegisterNUICallback("t1ger_moneywash:cashCounter:start", function(data, cb)
 end)
 
 RegisterNUICallback("t1ger_moneywash:cashCounter:confirm", function(data, cb)
-    if GetMoneywashUiScreen() ~= "cash-counter" or type(data) ~= "table" then
+    if GetMoneywashUiScreen() ~= "cash-counter"
+        or type(data) ~= "table" then
         cb({ success = false, reason = "ui_closed" })
         return
     end
 
-    cb(serverRequest("confirm", data.batchId))
-end)
-
-RegisterNUICallback("t1ger_moneywash:cashCounter:reset", function(data, cb)
-    if GetMoneywashUiScreen() ~= "cash-counter" or type(data) ~= "table" then
-        cb({ success = false, reason = "ui_closed" })
+    if confirming then
+        cb({
+            success = false,
+            reason = "operation_in_progress",
+        })
         return
     end
 
-    cb(serverRequest("reset", data.batchId))
+    confirming = true
+
+    local response = serverRequest("confirm", data.batchId)
+
+    -- Close both the Vue screen and FiveM focus regardless
+    -- of whether confirmation succeeded or was rejected.
+    SendNUIMessage({
+        action = "t1ger_moneywash:cashCounter:close",
+    })
+
+    CloseMoneywashUi("cash-counter")
+
+    cb(response)
+
+    if not response.success then
+        ShowCashCounterError(response.reason)
+    end
+
+    -- Clears ordinary previews and the UI session.
+    -- The server preserves settling/review transactions.
+    serverRequest("cancel")
+
+    confirming = false
 end)
 
 RegisterNUICallback("t1ger_moneywash:cashCounter:status", function(_, cb)
@@ -159,9 +152,19 @@ RegisterNUICallback("t1ger_moneywash:cashCounter:status", function(_, cb)
 end)
 
 RegisterNUICallback("t1ger_moneywash:cashCounter:close", function(_, cb)
-    serverRequest("cancel")
+    opening = true
+
+    SendNUIMessage({
+        action = "t1ger_moneywash:cashCounter:close",
+    })
+
     CloseMoneywashUi("cash-counter")
+
     cb({ success = true })
+
+    serverRequest("cancel")
+
+    opening = false
 end)
 
 -- Local preview command. No server callback, inventory, or business safe is changed.
@@ -224,12 +227,6 @@ serverRequest = function(name, ...)
         testCounter.available = testCounter.available - batch.amount
         batch.status = "complete"
         batch.remainingMs = 0
-
-    elseif name == "reset" then
-        if not batch or batch.id ~= value then
-            return { success = false, reason = "invalid_batch" }
-        end
-        testCounter.batch = nil
     end
 
     return {
@@ -242,25 +239,35 @@ serverRequest = function(name, ...)
 end
 
 RegisterCommand("testcashcounter", function(_, args)
-    local balance = args[1] and tonumber(args[1]) or 100000
+    local amount = tonumber(args[1])
 
-    if not balance or balance % 1 ~= 0
-        or balance < 1 or balance > Config.CashCounter.MaxAmount then
+    if not amount
+        or amount ~= amount
+        or amount % 1 ~= 0
+        or amount < 1
+        or amount > Config.CashCounter.MaxAmount then
         print("[MoneyWash] Usage: /testcashcounter 100000")
         return
     end
 
-    if opening or not BeginMoneywashUi("cash-counter") then
+    if opening
+        or confirming
+        or not BeginMoneywashUi("cash-counter") then
         print("[MoneyWash] Close the current UI before testing the cash counter.")
         return
     end
 
     opening = true
 
-    local raw = LoadResourceFile(GetCurrentResourceName(), "locales/en.json")
+    local raw = LoadResourceFile(
+        GetCurrentResourceName(),
+        "locales/en.json"
+    )
+
     local ok, messages = pcall(json.decode, raw or "{}")
 
-    if not ok or type(messages) ~= "table"
+    if not ok
+        or type(messages) ~= "table"
         or type(messages.cashCounter) ~= "table" then
         opening = false
         CloseMoneywashUi("cash-counter")
@@ -269,43 +276,30 @@ RegisterCommand("testcashcounter", function(_, args)
     end
 
     messages.cashCounter.injectTitle = "Inject cash (test)"
-    messages.cashCounter.injected = "Test complete: {amount} counted. No cash was moved."
-    messages.cashCounter.deposited = "TEST COMPLETE"
 
     local settings = GetCashCounterSettings()
 
-    local data = {
-        businessId = 0,
-        operation = "inject",
-        available = balance,
-        currency = Config.Currency,
-        locale = "en",
-        messages = messages,
-        titleKey = "cashCounter.injectTitle",
-        successKey = "cashCounter.injected",
-        settings = settings,
-    }
-
-    local amount = SelectCashCounterAmount(data)
-
-    if not amount then
-        opening = false
-        CloseMoneywashUi("cash-counter")
-        return
-    end
-
     testCounter = {
-        available = balance,
+        available = amount,
         nextId = 0,
         settings = settings,
     }
 
-    data.amount = amount
-
     ShowMoneywashUi(
         "cash-counter",
         "t1ger_moneywash:cashCounter:open",
-        data
+        {
+            businessId = 0,
+            operation = "inject",
+            amount = amount,
+            available = amount,
+            currency = Config.Currency,
+            locale = "en",
+            messages = messages,
+            titleKey = "cashCounter.injectTitle",
+            successKey = "cashCounter.injected",
+            settings = settings,
+        }
     )
 
     opening = false

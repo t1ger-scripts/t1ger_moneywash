@@ -306,7 +306,7 @@
         "deposited": "DEPOSITED",
         "errors": {
             "invalid_amount": "Choose a whole amount within your available balance.",
-            "insufficient_dirty_cash": "Your available cash has changed. Choose a smaller amount.",
+            "insufficient_dirty_cash": "You no longer have enough dirty cash. The transaction was cancelled.",
             "business_closed": "This business is closed.",
             "not_owner": "You no longer own this business.",
             "too_far": "Return to your business handler.",
@@ -316,7 +316,8 @@
             "manual_review": "The cash removal could not be confirmed. Contact an administrator before retrying.",
             "unsupported_operation": "This cash operation is not available.",
             "count_not_ready": "Wait for the machine to finish counting.",
-            "invalid_batch": "This count has expired. Start a new count."
+            "invalid_batch": "This count has expired. Start a new count.",
+            "invalid_business_config": "This business is not configured correctly. Contact an administrator."
         }
     }
 }

@@ -273,11 +273,55 @@ function StartLaunderFlow(businessId, status)
     local dirtyMoney = _API.Player:GetDirtyMoney()
 
     if dirtyMoney <= 0 then
-        _API.ShowNotification(locale("menu.launder.no_dirty_cash"), "error", {})
+        _API.ShowNotification(
+            locale("menu.launder.no_dirty_cash"),
+            "error",
+            {}
+        )
         return
     end
-    
-    OpenCashCounter(businessId, "inject")
+
+    local maximum = math.min(
+        math.floor(dirtyMoney),
+        Config.CashCounter.MaxAmount
+    )
+
+    local input = lib.inputDialog(
+        locale("menu.launder.title"),
+        {
+            {
+                type = "number",
+                label = locale("cashCounter.amount"),
+                description = string.format(
+                    locale("cashCounter.amountAvailable"),
+                    FormatMoney(maximum)
+                ),
+                min = 1,
+                max = maximum,
+                precision = 0,
+                required = true,
+            },
+        }
+    )
+
+    if not input then return end
+
+    local amount = tonumber(input[1])
+
+    if not amount
+        or amount ~= amount
+        or amount % 1 ~= 0
+        or amount < 1
+        or amount > maximum then
+        _API.ShowNotification(
+            locale("cashCounter.errors.invalid_amount"),
+            "error",
+            {}
+        )
+        return
+    end
+
+    OpenCashCounter(businessId, amount, "inject")
 end
 
 --- ============================================================================
