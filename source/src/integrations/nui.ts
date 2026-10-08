@@ -3,7 +3,6 @@ export const NUI_CALLBACKS = {
 
     cashStart: 't1ger_moneywash:cashCounter:start',
     cashConfirm: 't1ger_moneywash:cashCounter:confirm',
-    cashReset: 't1ger_moneywash:cashCounter:reset',
     cashStatus: 't1ger_moneywash:cashCounter:status',
     cashClose: 't1ger_moneywash:cashCounter:close',
 

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import CashPaper from './CashPaper.vue'
 import CashStacks from './CashStacks.vue'
+import { cashCounterImages } from '../utils/cash-counter.utils'
 
 const props = defineProps<{
     value: string
@@ -24,9 +25,6 @@ const emit = defineEmits<{
     collectCancel: []
     collect: []
 }>()
-
-const billUrl =
-    `${import.meta.env.BASE_URL}images/cash-counter/bill-face.png`
 
 const clamp = (value: number) =>
     Math.max(0, Math.min(1, value))
@@ -184,7 +182,7 @@ function noteStyle(index: number, position: number) {
                 v-for="note in movingNotes"
                 :key="note.index"
                 class="counter-moving-note"
-                :src="billUrl"
+                :src="cashCounterImages.note"
                 :style="noteStyle(
                     note.index,
                     note.position

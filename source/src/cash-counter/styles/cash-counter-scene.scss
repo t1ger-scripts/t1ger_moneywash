@@ -231,6 +231,10 @@
         height: 73%;
     }
 
+    .counter-output .counter-tray > .cash-stacks {
+        left: 7%;
+    }
+
     .counter-pile .cash-bundle,
     .counter-tray .cash-bundle {
         filter:
@@ -280,10 +284,6 @@
         filter: none;
     }
 
-    .machine-art {
-        display: none;
-    }
-
     .counter-feeder {
         left: 30%;
         top: 7%;
@@ -299,41 +299,6 @@
             calc(var(--scene-unit) * 0.65),
             12px
         );
-    }
-
-    .machine-input-window {
-        left: 37.55%;
-        top: 9%;
-        width: 24.9%;
-        height: 10.87%;
-    }
-
-    .machine-output-window {
-        left: 12%;
-        top: 52%;
-        width: 76%;
-        height: 34%;
-    }
-
-    .machine-output-note {
-        left: 33.6%;
-        top: 0;
-        width: 32.8%;
-        height: 24%;
-    }
-
-    .machine-output-stack {
-        left: 33.6%;
-        bottom: 14%;
-        width: 32.8%;
-        height: 32%;
-    }
-
-    .machine-roller-motion {
-        left: 12%;
-        top: 46%;
-        width: 76%;
-        height: 10%;
     }
 
     /*
@@ -421,67 +386,6 @@
 
     .scene-plaque--right {
         left: 80%;
-    }
-
-    /*
-     * Only text is rendered here.
-     * The paper texture and shadow belong to the scene.
-     */
-    .scene-receipt {
-        position: absolute;
-        z-index: 40;
-        top: 77%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        gap: calc(var(--scene-unit) * 0.6);
-        width: 13%;
-        height: 10%;
-        color: #3d3024;
-        font-family: 'Courier New', monospace;
-        text-align: center;
-        pointer-events: none;
-
-        > span {
-            font-size: clamp(
-                8px,
-                calc(var(--scene-unit) * 0.95),
-                20px
-            );
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
-
-        > strong {
-            max-width: 100%;
-            font-size: clamp(
-                10px,
-                calc(var(--scene-unit) * 1.35),
-                28px
-            );
-            font-weight: 700;
-            font-variant-numeric: tabular-nums;
-            overflow-wrap: anywhere;
-        }
-
-        > small {
-            font-size: clamp(
-                7px,
-                calc(var(--scene-unit) * 0.6),
-                12px
-            );
-        }
-    }
-
-    .scene-receipt--left {
-        left: 7.6%;
-        transform: rotate(-2deg);
-    }
-
-    .scene-receipt--right {
-        left: 80.2%;
-        transform: rotate(2deg);
     }
 
     /*

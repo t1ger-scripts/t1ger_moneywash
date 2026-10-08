@@ -97,15 +97,6 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
             !submitting.value,
     )
 
-    const leftCount = computed(
-        () => Math.max(
-            0,
-            piles.value.length -
-                collected.value -
-                (phase.value === 'idle' ? 0 : 1),
-        ),
-    )
-
     const countedAmount = computed(() => {
         const finished = completedPileIds.value.reduce(
             (sum, id) => sum + (piles.value[id] ?? 0),
@@ -362,7 +353,6 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
         canCollect,
         allCollected,
         canConfirm,
-        leftCount,
         countedAmount,
         open,
         loadPile,

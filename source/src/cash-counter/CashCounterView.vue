@@ -13,7 +13,7 @@ import CounterMachine from './components/CounterMachine.vue'
 import { useCashCounterStore } from './stores/cash-counter.store'
 import { useCashDrag } from './composables/useCashDrag'
 import { useCounterSound } from './composables/useCounterSound'
-import { validAmount } from './utils/cash-counter.utils'
+import { cashCounterImages, trayPilePosition, validAmount } from './utils/cash-counter.utils'
 import type { CashPile } from './cash-counter.types'
 import './styles/cash-counter.scss'
 import './styles/cash-counter-scene.scss'
@@ -24,9 +24,6 @@ const sound = useCounterSound()
 const { t, te } = useI18n()
 
 const root = ref<HTMLElement | null>(null)
-
-const sceneUrl =
-    `${import.meta.env.BASE_URL}images/cash-counter/scene.png`
 
 const foregroundParts = [
     'left-tray',
@@ -53,34 +50,12 @@ const leftPiles = computed<CashPile[]>(() =>
         })),
 )
 
-function trayPilePosition(slot: number, totalSlots: number) {
-    const count = Math.max(1, totalSlots)
-
-    // Show paper edges between bundles, rather than whole bill faces.
-    const rise = Math.min(
-        4.8,
-        48 / Math.max(1, count - 1),
-    )
-
-    return {
-        left: '16.425%',
-        bottom: `${18 + slot * rise}%`,
-        '--pile-turn': '0deg',
-        '--pile-order': slot + 1,
-        zIndex: slot + 1,
-    }
-}
-
 const rightPiles = computed<CashPile[]>(() =>
     store.completedPileIds.map((id, slot) => ({
         id,
         amount: store.piles[id] ?? 0,
         slot,
     })),
-)
-
-const collectedAmount = computed(() =>
-    rightPiles.value.reduce((sum, pile) => sum + pile.amount, 0),
 )
 
 const format = (amount: number) =>
@@ -372,7 +347,7 @@ onUnmounted(() => {
     <div class="cash-counter-overlay cash-counter-overlay--scene">
         <section ref="root" class="cash-counter cash-counter--scene" role="dialog" aria-modal="true"
             aria-labelledby="cash-counter-title">
-            <img class="counter-scene-image" :src="sceneUrl" alt="" draggable="false" />
+            <img class="counter-scene-image" :src="cashCounterImages.scene" alt="" draggable="false" />
 
             <h1 id="cash-counter-title" class="counter-sr-only">
                 {{
@@ -400,8 +375,8 @@ onUnmounted(() => {
                 <div class="counter-source">
                     <div class="counter-cash-tray">
                         <div class="counter-pile">
-                            <CashStacks :items="leftPiles" :total-slots="leftPiles.length" :position="trayPilePosition"
-                                :format="format" interactive :disabled="!store.canLoad" :lifted-id="feedDrag.dragging.value
+                            <CashStacks :items="leftPiles" :total-slots="leftPiles.length" :format="format" interactive
+                                :disabled="!store.canLoad" :lifted-id="feedDrag.dragging.value
                                     ? selectedPileId
                                     : null
                                     " @pick="pickPile" @move="feedDrag.move" @release="feedDrag.up"
@@ -429,8 +404,7 @@ onUnmounted(() => {
                     'is-complete': complete,
                 }">
                     <div class="counter-tray" data-cash-output>
-                        <CashStacks :items="rightPiles" :total-slots="rightPiles.length" :position="trayPilePosition"
-                            :format="format" />
+                        <CashStacks :items="rightPiles" :total-slots="rightPiles.length" :format="format" />
 
                         <span class="cash-stacks counter-stack-target" aria-hidden="true">
                             <span data-cash-landing :style="landingStyle" />
@@ -440,7 +414,7 @@ onUnmounted(() => {
             </div>
 
             <img v-for="part in foregroundParts" :key="part" class="counter-scene-foreground"
-                :class="`counter-scene-foreground--${part}`" :src="sceneUrl" alt="" draggable="false"
+                :class="`counter-scene-foreground--${part}`" :src="cashCounterImages.scene" alt="" draggable="false"
                 aria-hidden="true" />
 
             <span class="scene-plaque scene-plaque--left">
@@ -450,23 +424,6 @@ onUnmounted(() => {
             <span class="scene-plaque scene-plaque--right">
                 {{ t('cashCounter.countedLabel') }}
             </span>
-
-            <div class="scene-receipt scene-receipt--left">
-                <span>{{ t('cashCounter.batchLabel') }}</span>
-                <strong>{{ format(store.amount) }}</strong>
-            </div>
-
-            <div class="scene-receipt scene-receipt--right">
-                <span>{{ t('cashCounter.countedLabel') }}</span>
-
-                <strong>
-                    {{ format(collectedAmount) }}
-                </strong>
-
-                <small v-if="collectDrag.over.value">
-                    {{ t('cashCounter.releaseRight') }}
-                </small>
-            </div>
 
             <div class="scene-confirmation">
                 <button v-if="complete" class="counter-tray-confirm is-complete" type="button" disabled>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, type CSSProperties } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { CashPile } from '../cash-counter.types'
-import { cashPilePosition } from '../utils/cash-counter.utils'
+import { trayPilePosition } from '../utils/cash-counter.utils'
 import CashPaper from './CashPaper.vue'
 
 const props = withDefaults(
@@ -15,10 +15,6 @@ const props = withDefaults(
         interactive?: boolean
         disabled?: boolean
         format?: (amount: number) => string
-        position?: (
-            slot: number,
-            totalSlots: number
-        ) => CSSProperties
     }>(),
     {
         items: () => [],
@@ -55,16 +51,13 @@ function formatAmount(amount: number) {
 <template>
     <span class="cash-stacks" :class="{
         'cash-stacks--compact': compact,
-        'cash-stacks--interactive': interactive,
     }">
         <component :is="interactive ? 'button' : 'span'" v-for="pile in items" :key="pile.id" class="cash-bundle"
             :class="{
                 'is-lifted': lifted || liftedId === pile.id,
             }" :style="compact
                 ? undefined
-                : position
-                    ? position(pile.slot, totalSlots)
-                    : cashPilePosition(pile.slot, totalSlots)" :type="interactive ? 'button' : undefined"
+                : trayPilePosition(pile.slot, totalSlots)" :type="interactive ? 'button' : undefined"
             :disabled="interactive ? disabled : undefined" :data-pile-id="pile.id" :aria-label="interactive
                 ? t('cashCounter.loadPile', {
                     amount: formatAmount(pile.amount),

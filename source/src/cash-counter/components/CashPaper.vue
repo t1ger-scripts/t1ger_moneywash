@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { cashCounterImages } from '../utils/cash-counter.utils'
 
 const props = withDefaults(
     defineProps<{
@@ -17,9 +18,9 @@ const density = computed(() =>
 )
 
 const imageUrl = computed(() =>
-    `${import.meta.env.BASE_URL}images/cash-counter/${
-        props.banded ? 'bundle.png' : 'loose-stack.png'
-    }`,
+    props.banded
+        ? cashCounterImages.bundle
+        : cashCounterImages.stack,
 )
 
 /*
@@ -36,34 +37,16 @@ const edgeStyle = computed(() => ({
 </script>
 
 <template>
-    <span
-        class="cash-paper"
-        :style="{ opacity: density > 0 ? 1 : 0 }"
-        aria-hidden="true"
-    >
-        <span
-            class="cash-paper-part cash-paper-part--edges"
-            :style="edgeStyle"
-        >
+    <span class="cash-paper" :style="{ opacity: density > 0 ? 1 : 0 }" aria-hidden="true">
+        <span class="cash-paper-part cash-paper-part--edges" :style="edgeStyle">
             <span class="cash-paper-art">
-                <img
-                    :src="imageUrl"
-                    alt=""
-                    draggable="false"
-                />
+                <img :src="imageUrl" alt="" draggable="false" />
             </span>
         </span>
 
-        <span
-            class="cash-paper-part cash-paper-part--face"
-            :style="faceStyle"
-        >
+        <span class="cash-paper-part cash-paper-part--face" :style="faceStyle">
             <span class="cash-paper-art">
-                <img
-                    :src="imageUrl"
-                    alt=""
-                    draggable="false"
-                />
+                <img :src="imageUrl" alt="" draggable="false" />
             </span>
         </span>
     </span>
