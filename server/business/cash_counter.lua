@@ -104,7 +104,7 @@ local function statusData(src, row)
     local identifier = _API.Player.GetIdentifier(src)
 
     if identifier and (not row or identifier == row.identifier) then
-        available = GetDirtyMoney(src)
+        available = _API.Player.GetDirtyMoney(src)
     end
 
     return {
@@ -154,7 +154,7 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, b
     end
 
     -- Initial feedback only. Confirmation checks again.
-    if not HasDirtyMoney(src, amount) then
+    if not _API.Player.HasDirtyMoney(src, amount) then
         return failure("insufficient_dirty_cash")
     end
 
@@ -172,7 +172,7 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, b
             businessId = businessId,
             operation = "inject",
             amount = amount,
-            available = GetDirtyMoney(src),
+            available = _API.Player.GetDirtyMoney(src),
             currency = Config.Currency,
             locale = localeName,
             messages = messages,
@@ -204,7 +204,7 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:start", function(src, 
     end
     if Pending[session.identifier] then return failure("operation_in_progress") end
     -- Early balance check is for feedback; confirm always checks again.
-    if not HasDirtyMoney(src, amount) then return failure("insufficient_dirty_cash") end
+    if not _API.Player.HasDirtyMoney(src, amount) then return failure("insufficient_dirty_cash") end
     nextBatchId = nextBatchId + 1
     local settings = GetCashCounterSettings()
     local duration = GetCashCounterBatchDuration(amount, settings)
@@ -300,14 +300,14 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:confirm", function(src
         return resetFailedConfirm(src, row, "invalid_business_config")
     end
 
-    if not HasDirtyMoney(src, row.amount) then
+    if not _API.Player.HasDirtyMoney(src, row.amount) then
         return resetFailedConfirm(src, row, "insufficient_dirty_cash")
     end
 
-    local before = GetDirtyMoney(src)
-    local ok, removed = pcall(RemoveDirtyMoney, src, row.amount)
+    local before = _API.Player.GetDirtyMoney(src)
+    local ok, removed = pcall(_API.Player.RemoveDirtyMoney, src, row.amount)
     if not ok or not removed then
-        if GetDirtyMoney(src) < before then
+        if _API.Player.GetDirtyMoney(src) < before then
             row.state, row.working = "review", false
             print(("[MoneyWash] Cash batch %d: debit uncertain; administrator review required."):format(row.id))
             return failure("manual_review", statusData(src, row))

@@ -270,21 +270,14 @@ end
 --- @param businessId number
 --- @param status table
 function StartLaunderFlow(businessId, status)
-    local dirtyMoney = _API.Player:GetDirtyMoney()
+    local dirtyMoney = lib.callback.await("t1ger_moneywash:server:getDirtyMoney", false) or 0
 
     if dirtyMoney <= 0 then
-        _API.ShowNotification(
-            locale("menu.launder.no_dirty_cash"),
-            "error",
-            {}
-        )
-        return
+        _API.ShowNotification(locale("menu.launder.no_dirty_cash"), "error", {})
+        return lib.showContext("moneywash:handler:main")
     end
 
-    local maximum = math.min(
-        math.floor(dirtyMoney),
-        Config.CashCounter.MaxAmount
-    )
+    local maximum = math.min(math.floor(dirtyMoney), Config.CashCounter.MaxAmount)
 
     local input = lib.inputDialog(
         locale("menu.launder.title"),
