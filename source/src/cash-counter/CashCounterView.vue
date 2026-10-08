@@ -8,7 +8,6 @@ import {
     watch,
 } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { X } from '@lucide/vue'
 import CashStacks from './components/CashStacks.vue'
 import CounterMachine from './components/CounterMachine.vue'
 import { useCashCounterStore } from './stores/cash-counter.store'
@@ -21,12 +20,22 @@ import {
 } from './utils/cash-counter.utils'
 import type { CashPile } from './cash-counter.types'
 import './styles/cash-counter.scss'
+import './styles/cash-counter-tabletop.scss'
 
 const store = useCashCounterStore()
 const sound = useCounterSound()
 const { t, te } = useI18n()
 
 const root = ref<HTMLElement | null>(null)
+
+const tabletopUrl = new URL(
+    `${import.meta.env.BASE_URL}images/cash-counter/tabletop.png`,
+    document.baseURI,
+).href
+
+const tabletopStyle = {
+    '--counter-table-image': `url("${tabletopUrl}")`,
+}
 
 const selectedPileId = ref<number | null>(null)
 
@@ -339,29 +348,21 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="cash-counter-overlay">
-        <section ref="root" class="cash-counter" role="dialog" aria-modal="true" aria-labelledby="cash-counter-title">
-            <header class="counter-header">
-                <h1 id="cash-counter-title">
-                    {{
-                        t(
-                            store.payload?.titleKey ??
-                            'cashCounter.injectTitle'
-                        )
-                    }}
-                </h1>
+    <div class="cash-counter-overlay cash-counter-overlay--tabletop" :style="tabletopStyle">
+        <section ref="root" class="cash-counter cash-counter--tabletop" role="dialog" aria-modal="true"
+            aria-labelledby="cash-counter-title">
+            <h1 id="cash-counter-title" class="counter-sr-only">
+                {{ t(store.payload?.titleKey ?? 'cashCounter.injectTitle') }}
+            </h1>
 
-                <div class="counter-balance">
-                    <span>{{ t('cashCounter.amount') }}</span>
-                    <strong>{{ format(store.amount) }}</strong>
-                </div>
+            <span class="counter-sr-only" role="status">
+                {{ status }}
+            </span>
 
-                <span class="counter-status">{{ status }}</span>
-
-                <button class="counter-close" type="button" :aria-label="t('common.close')" @click="store.close">
-                    <X :size="16" />
-                </button>
-            </header>
+            <button class="counter-table-close" type="button" :aria-label="t('common.close')" @click="store.close">
+                <kbd>ESC</kbd>
+                <span>{{ t('common.close') }}</span>
+            </button>
 
             <p v-if="errorMessage" class="counter-error" role="alert">
                 {{ errorMessage }}
@@ -371,15 +372,25 @@ onUnmounted(() => {
                 <div class="counter-source">
                     <div class="counter-cash-tray">
                         <img class="counter-tray-art" :src="cashCounterImages.tray" alt="" draggable="false" />
+
                         <img class="counter-tray-art counter-tray-art--front" :src="cashCounterImages.tray" alt=""
                             draggable="false" />
+
                         <div class="counter-pile">
                             <CashStacks :items="leftPiles" :total-slots="store.piles.length" :format="format"
-                                interactive :disabled="!store.canLoad"
-                                :lifted-id="feedDrag.dragging.value ? selectedPileId : null" @pick="pickPile"
-                                @move="feedDrag.move" @release="feedDrag.up" @cancel="feedDrag.cancel"
-                                @load="keyboardLoad" />
+                                interactive :disabled="!store.canLoad" :lifted-id="feedDrag.dragging.value ? selectedPileId : null
+                                    " @pick="pickPile" @move="feedDrag.move" @release="feedDrag.up"
+                                @cancel="feedDrag.cancel" @load="keyboardLoad" />
                         </div>
+                    </div>
+
+                    <span class="counter-tray-plaque">
+                        {{ t('cashCounter.toCount') }}
+                    </span>
+
+                    <div class="counter-batch-slip">
+                        <span>{{ t('cashCounter.batchLabel') }}</span>
+                        <strong>{{ format(store.amount) }}</strong>
                     </div>
                 </div>
 
@@ -409,6 +420,10 @@ onUnmounted(() => {
                         </span>
                     </div>
 
+                    <span class="counter-tray-plaque">
+                        {{ t('cashCounter.countedLabel') }}
+                    </span>
+
                     <div class="counter-tray-action">
                         <button v-if="complete" type="button" class="counter-tray-confirm is-complete" disabled>
                             {{ t('cashCounter.complete') }}
@@ -421,7 +436,7 @@ onUnmounted(() => {
                                     ? t('cashCounter.confirming')
                                     : t('cashCounter.confirmAmount', {
                                         amount: format(store.batch?.amount ?? store.amount),
-                            })
+                                    })
                             }}
                         </button>
 
@@ -431,7 +446,7 @@ onUnmounted(() => {
                                     ? t('cashCounter.releaseRight')
                                     : t('cashCounter.collectedAmount', {
                                         amount: format(collectedAmount),
-                            })
+                                    })
                             }}
                         </small>
                     </div>

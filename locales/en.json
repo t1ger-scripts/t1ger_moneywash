@@ -278,6 +278,9 @@
         }
     },
     "cashCounter": {
+        "toCount": "To count",
+        "countedLabel": "Counted",
+        "batchLabel": "Batch",
         "amountAvailable": "Available to count: %s",
         "collectedAmount": "Counted {amount}",
         "loadPile": "Load {amount}",
