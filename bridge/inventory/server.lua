@@ -222,6 +222,51 @@ function _API.Inventory.RemoveItem(src, item, count, metadata, slot)
     end
 end
 
+--- Sets (replaces) the metadata on a specific inventory slot.
+--- @param src number The player ID.
+--- @param item string The item name expected to be in that slot.
+--- @param slot number The specific slot to update.
+--- @param metadata table The metadata to set on that slot.
+function _API.Inventory.SetMetadata(src, item, slot, metadata)
+    if type(src) ~= "number" then
+        return error("[_API.Inventory.SetMetadata] Invalid source type. Must be a number equivalent to player ID")
+    end
+
+    if type(item) ~= "string" or item == "" then
+        return error("[_API.Inventory.SetMetadata] Invalid item type. Must be a non-empty string for the item name")
+    end
+
+    if type(slot) ~= "number" then
+        return error("[_API.Inventory.SetMetadata] Invalid slot type. Must be a number")
+    end
+
+    if type(metadata) ~= "table" then
+        return error("[_API.Inventory.SetMetadata] Invalid metadata type. Must be a table")
+    end
+
+    if _Inventory == "ox_inventory" then
+        return exports[_Inventory]:SetMetadata(src, slot, metadata)
+    elseif _Inventory == "qb-inventory" then
+        return exports[_Inventory]:SetItemData(src, item, "info", metadata, slot)
+    elseif _Inventory == "qs-inventory" then
+        return exports[_Inventory]:SetItemMetadata(src, slot, metadata)
+    elseif _Inventory == "codem-inventory" then
+        return exports[_Inventory]:SetMetadata(src, slot, metadata)
+    elseif _Inventory == "core_inventory" then
+        return exports[_Inventory]:setMetadata(src, slot, metadata)
+    elseif _Inventory == "origen_inventory" then
+        return exports[_Inventory]:setMetadata(src, slot, metadata)
+    elseif _Inventory == "ak47_inventory" or _Inventory == "ak47_qb_inventory" then
+        return exports[_Inventory]:SetItemInfo(src, slot, metadata)
+    elseif _Inventory == "tgiann-inventory" then
+        return exports[_Inventory]:UpdateItemMetadata(src, item, slot, metadata)
+    elseif _Inventory == "custom" then
+        -- add custom function in here
+    else
+        return error(("[_API.Inventory.SetMetadata] Unsupported inventory for metadata updates (Inventory: %s)"):format(tostring(_Inventory)))
+    end
+end
+
 ---Registers a function to a useable item
 ---@param item string The name of the item
 ---@param cb func callback function
