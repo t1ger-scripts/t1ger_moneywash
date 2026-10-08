@@ -456,7 +456,7 @@ function _API.Player.CanCarryItem(src, item, count)
 end
 
 --- Function to add an item to the player's inventory.
---- @param src integer Player's source ID..
+--- @param src integer Player's source ID.
 --- @param item string The item name.
 --- @param count number The amount to add.
 --- @param metadata table|nil (optional) Additional item metadata, such as custom properties.
@@ -464,11 +464,11 @@ function _API.Player.AddItem(src, item, count, metadata)
     if type(src) ~= "number" then
         return error("[_API.Player.AddItem] Invalid source type. Must be a number equivalent to player ID")
     end
-    
+
     if type(item) ~= "string" or item == "" then
         return error("[_API.Player.AddItem] Invalid item type. Must be a non-empty string for the item name")
     end
-    
+
     if type(count) ~= "number" then
         return error("[_API.Player.AddItem] Invalid count type. Must be a number")
     end
@@ -478,7 +478,7 @@ function _API.Player.AddItem(src, item, count, metadata)
 
     if Framework == "esx" then
         player.addInventoryItem(item, count)
-    elseif Framework == "qbcore" then
+    elseif Framework == "qbcore" or (Framework == "qbox" and GetResourceState("ox_inventory") ~= "started") then
         player.Functions.AddItem(item, count, false, metadata or false)
         TriggerClientEvent("inventory:client:ItemBox", src, _FW[Framework].Shared.Items[item], "add", count)
     elseif Framework == "qbox" then
@@ -489,18 +489,20 @@ function _API.Player.AddItem(src, item, count, metadata)
 end
 
 --- Function to remove an item from the player's inventory.
---- @param src integer Player's source ID..
+--- @param src integer Player's source ID.
 --- @param item string The item name.
 --- @param count number The amount to remove.
-function _API.Player.RemoveItem(src, item, count, metadata)
+--- @param metadata table|nil (optional) Metadata filter.
+--- @param slot number|nil (optional) Specific slot to remove from.
+function _API.Player.RemoveItem(src, item, count, metadata, slot)
     if type(src) ~= "number" then
         return error("[_API.Player.RemoveItem] Invalid source type. Must be a number equivalent to player ID")
     end
-    
+
     if type(item) ~= "string" or item == "" then
         return error("[_API.Player.RemoveItem] Invalid item type. Must be a non-empty string for the item name")
     end
-    
+
     if type(count) ~= "number" then
         return error("[_API.Player.RemoveItem] Invalid count type. Must be a number")
     end
@@ -510,11 +512,11 @@ function _API.Player.RemoveItem(src, item, count, metadata)
 
     if Framework == "esx" then
         player.removeInventoryItem(item, count)
-    elseif Framework == "qbcore" then
-        player.Functions.RemoveItem(item, count)
+    elseif Framework == "qbcore" or (Framework == "qbox" and GetResourceState("ox_inventory") ~= "started") then
+        player.Functions.RemoveItem(item, count, slot)
         TriggerClientEvent("inventory:client:ItemBox", src, _FW[Framework].Shared.Items[item], "remove", count)
     elseif Framework == "qbox" then
-        exports["ox_inventory"]:RemoveItem(src, item, count, metadata or false)
+        exports["ox_inventory"]:RemoveItem(src, item, count, metadata or false, slot)
     else
         return error(("[_API.Player.RemoveItem] Unsupported framework detected (Framework: %s)"):format(tostring(Framework)))
     end
