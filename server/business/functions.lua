@@ -548,7 +548,7 @@ local function CalculateCoveredExposed(business, amount, tier)
 end
 
 --- Calculates suspicion gain for a launder action
---- Formula: (progressAfter^2 - progressBefore^2) * BaseMultiplier * stockModifier * zoneModifier
+--- Formula: (progressAfter^2 - progressBefore^2) * BaseMultiplier * stockModifier
 --- @param business table
 --- @param amount number
 --- @param tier table
@@ -581,13 +581,7 @@ local function CalculateSuspicionGain(business, amount, tier)
         stockModifier = 1.0 - (coverage * fullReduction) + ((1 - coverage) * noPenalty)
     end
 
-    -- Zone modifier - extra penalty if exceeding expectedRevenue
-    local zoneModifier = 1.0
-    if business.totalLaundered >= expectedRevenue then
-        zoneModifier = Config.Suspicion.OverageMultiplier
-    end
-
-    local gain = turnoverGain * stockModifier * zoneModifier
+    local gain = turnoverGain * stockModifier
     return math.max(0, gain)
 end
 

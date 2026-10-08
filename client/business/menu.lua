@@ -80,7 +80,7 @@ function OpenHandlerMenu(businessId)
                 description = launderDesc,
                 disabled    = launderDisabled,
                 onSelect    = function()
-                    StartLaunderFlow(businessId, status)
+                    StartLaunderFlow(businessId)
                 end,
             },
             {
@@ -143,14 +143,19 @@ function OpenStockMenu(businessId, status)
 
     local remaining = math.max(0, status.expectedRevenue - status.totalLaundered)
     local stockNeeded = math.ceil(remaining / stockCfg.LaunderDollarsPerUnit)
-    local coverage = stockNeeded <= 0 and 100
+    local capReached = stockNeeded <= 0
+    local coverage = capReached and 100
         or math.floor(math.min(1, status.stock / stockNeeded) * 100)
 
-    local coverageColor = "green"
-    if coverage <= 30 then
+    local coverageColor
+    if capReached then
+        coverageColor = "red"
+    elseif coverage <= 30 then
         coverageColor = "red"
     elseif coverage <= 60 then
         coverageColor = "orange"
+    else
+        coverageColor = "green"
     end
 
     local isClosed = status.isClosed
@@ -181,7 +186,13 @@ function OpenStockMenu(businessId, status)
     }
 
     if stockCfg.ShowCycleReadiness then
-        options[#options + 1] = {
+        options[#options + 1] = capReached and {
+            title       = locale("menu.handler.cycle_cap_reached"),
+            icon        = menuIcons.cycleReadiness or "fa-solid fa-gauge-high",
+            description = locale("menu.handler.cycle_cap_reached_desc"),
+            progress    = coverage,
+            colorScheme = coverageColor,
+        } or {
             title       = ("%s: %d%%"):format(
                 locale("menu.handler.cycle_readiness"),
                 coverage
@@ -269,7 +280,7 @@ end
 
 --- @param businessId number
 --- @param status table
-function StartLaunderFlow(businessId, status)
+function StartLaunderFlow(businessId)
     local dirtyMoney = lib.callback.await("t1ger_moneywash:server:getDirtyMoney", false) or 0
 
     if dirtyMoney <= 0 then
