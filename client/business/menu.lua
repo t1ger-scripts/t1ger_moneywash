@@ -89,7 +89,7 @@ function OpenHandlerMenu(businessId)
                 description = stockDesc,
                 disabled    = stockDisabled,
                 onSelect    = function()
-                    OpenStockMenu(businessId, status)
+                    OpenStockMenu(businessId)
                 end,
             },
             {
@@ -98,7 +98,7 @@ function OpenHandlerMenu(businessId)
                 description = safeDesc,
                 disabled    = safeDisabled,
                 onSelect    = function()
-                    OpenSafeMenu(businessId, status)
+                    OpenSafeMenu(businessId)
                 end,
             },
             {
@@ -115,7 +115,7 @@ function OpenHandlerMenu(businessId)
                 icon        = menuIcons.manage or "fa-solid fa-gear",
                 description = locale("menu.handler.manage_desc"),
                 onSelect    = function()
-                    OpenManageBusinessMenu(businessId, status)
+                    OpenManageBusinessMenu(businessId)
                 end,
             },
         },
@@ -130,8 +130,13 @@ end
 --- entirely via Config.Business.Stock.ShowCycleReadiness for servers that
 --- don't want to hint at this to players.
 --- @param businessId number
---- @param status table
-function OpenStockMenu(businessId, status)
+function OpenStockMenu(businessId)
+    local status = lib.callback.await("t1ger_moneywash:server:getBusinessStatus", false, businessId)
+    if not status then
+        _API.ShowNotification(locale("menu.handler.not_found"), "error")
+        return
+    end
+
     local menuIcons = Config.Business.MenuIcons or {}
     local stockCfg = Config.Business.Stock
 
@@ -227,8 +232,13 @@ end
 --- Safe submenu - shows the covered/exposed balance breakdown and
 --- lets the player make a bank deposit.
 --- @param businessId number
---- @param status table
-function OpenSafeMenu(businessId, status)
+function OpenSafeMenu(businessId)
+    local status = lib.callback.await("t1ger_moneywash:server:getBusinessStatus", false, businessId)
+    if not status then
+        _API.ShowNotification(locale("menu.handler.not_found"), "error")
+        return
+    end
+
     local menuIcons = Config.Business.MenuIcons or {}
     local isClosed = status.isClosed
 
@@ -279,13 +289,12 @@ end
 --- ============================================================================
 
 --- @param businessId number
---- @param status table
 function StartLaunderFlow(businessId)
     local dirtyMoney = lib.callback.await("t1ger_moneywash:server:getDirtyMoney", false) or 0
 
     if dirtyMoney <= 0 then
         _API.ShowNotification(locale("menu.launder.no_dirty_cash"), "error", {})
-        return lib.showContext("moneywash:handler:main")
+        return OpenHandlerMenu(businessId)
     end
 
     local maximum = math.min(math.floor(dirtyMoney), Config.CashCounter.MaxAmount)
@@ -337,7 +346,7 @@ end
 function OpenStockOrderDialog(businessId, status)
     if IsStockMissionActive() then
         _API.ShowNotification(locale("notification.mission_already_active"), "error")
-        return lib.showContext("moneywash:handler:stock")
+        return OpenStockMenu(businessId)
     end
 
     local eligibility = lib.callback.await("t1ger_moneywash:server:canPlaceStockOrder", false)
@@ -347,7 +356,7 @@ function OpenStockOrderDialog(businessId, status)
             string.format(locale("menu.stock.order_on_cooldown"), eligibility.cooldownRemaining or 0),
             "error"
         )
-        return lib.showContext("moneywash:handler:stock")
+        return OpenStockMenu(businessId)
     end
 
     local minOrder = status.minOrder
@@ -370,7 +379,7 @@ function OpenStockOrderDialog(businessId, status)
     local units = math.floor(tonumber(input[1]) or 0)
     if units < minOrder or units > maxOrder then
         _API.ShowNotification(locale("menu.stock.invalid_units"), "error", {})
-        return lib.showContext("moneywash:handler:stock")
+        return OpenStockMenu(businessId)
     end
 
     local totalCost = units * unitPrice
@@ -383,14 +392,14 @@ function OpenStockOrderDialog(businessId, status)
     })
 
     if confirmed ~= "confirm" then
-        return lib.showContext("moneywash:handler:stock")
+        return OpenStockMenu(businessId)
     end
 
     local result = lib.callback.await("t1ger_moneywash:server:orderStock", false, businessId, units)
 
     if not result.success then
         _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error")
-        return lib.showContext("moneywash:handler:stock")
+        return OpenStockMenu(businessId)
     end
 
     StartStockMission(businessId, result.missionData)
@@ -495,8 +504,7 @@ end
 --- ============================================================================
 
 --- @param businessId number
---- @param status table
-function OpenManageBusinessMenu(businessId, status)
+function OpenManageBusinessMenu(businessId)
     local menuIcons = Config.Business.MenuIcons or {}
 
     lib.registerContext({
@@ -555,7 +563,7 @@ function OpenTransferDialog(businessId)
 
     if #nearbyPlayers == 0 then
         _API.ShowNotification(locale("menu.transfer.no_players_nearby"), "inform", {})
-        return lib.showContext("moneywash:handler:manage")
+        return OpenManageBusinessMenu(businessId)
     end
 
     local names = GetNearbyPlayerNames(nearbyPlayers)
@@ -587,7 +595,7 @@ function OpenTransferDialog(businessId)
     })
 
     if not input or not input[1] or not input[2] then
-        return lib.showContext("moneywash:handler:manage")
+        return OpenManageBusinessMenu(businessId)
     end
 
     local targetId = tonumber(input[1])
