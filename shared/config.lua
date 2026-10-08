@@ -157,7 +157,7 @@ Config.CashCounter = {
     StackCount = 10,
 
     -- Time spent counting EACH pile, in milliseconds.
-    StackDurationMs = 800,
+    StackDurationMs = 2000,
 
     -- Automatically place a finished pile on the right tray.
     -- Loading the next pile remains manual.

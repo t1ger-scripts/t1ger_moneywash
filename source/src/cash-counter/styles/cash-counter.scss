@@ -1,872 +1,39 @@
 .cash-counter-overlay {
     position: fixed;
     inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    background: rgb(3 7 5 / 62%);
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgb(5 7 6 / 66%);
     font-family: 'Inter Variable', Arial, sans-serif;
 }
 
 .cash-counter {
-    --counter-gold: #dac493;
+    --counter-cream: #dcccad;
+    --counter-muted: #a49f91;
+
     position: relative;
-    width: min(900px, 95vw);
+    width: min(1080px, 96vw);
     max-height: 94vh;
     overflow: auto;
-    color: #e6e8e2;
-    background: #191d1c;
-    border: 1px solid #414640;
+    border: 1px solid #65645a;
     border-radius: 12px;
-    box-shadow: 0 18px 40px #0005;
+    background: #151715;
+    color: #e6e1d5;
+    font-family: 'Inter Variable', Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+    letter-spacing: normal;
+    box-shadow: 0 24px 80px #0009;
+    scrollbar-width: thin;
+    scrollbar-color: #686653 #151715;
 
     *,
     *::before,
     *::after {
         box-sizing: border-box;
     }
-
-    button,
-    input {
-        font: inherit;
-    }
-
-    button {
-        cursor: pointer;
-    }
-
-    button:disabled {
-        cursor: default;
-    }
-
-    button:focus-visible,
-    input:focus-visible {
-        outline: 2px solid #dac493;
-        outline-offset: 3px;
-    }
-
-    .counter-header {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        padding: 14px 22px;
-
-        h1 {
-            font:
-                500 14px Arial,
-                sans-serif;
-            margin: 0;
-            color: #dce0d9;
-        }
-    }
-
-    .counter-balance {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        margin-left: auto;
-        font-size: 11px;
-        color: #91998f;
-
-        strong {
-            font-weight: 400;
-            font-size: 12px;
-            color: #d2d7cb;
-            font-variant-numeric: tabular-nums;
-        }
-    }
-
-    .counter-status {
-        color: #b8c8aa;
-        font-size: 9px;
-        letter-spacing: 0.6px;
-        text-transform: uppercase;
-    }
-
-    .counter-close {
-        display: grid;
-        place-items: center;
-        padding: 4px;
-        color: #9ca895;
-        border: 0;
-        background: none;
-    }
-
-    .counter-error {
-        margin: 0;
-        padding: 9px 22px;
-        color: #f1c9a4;
-        background: #3c2923;
-        font-size: 11px;
-    }
-
-    .counter-desk {
-        display: grid;
-        grid-template-columns: 1.1fr 1.8fr 0.9fr;
-        gap: 18px;
-        min-height: 400px;
-        align-items: center;
-        padding: 40px 26px 25px;
-        background: radial-gradient(ellipse at 46% 35%,
-                #3c423a 0,
-                #292e28 30%,
-                #20251f 61%,
-                #191e19 100%);
-    }
-
-    .counter-source {
-        min-width: 0;
-        text-align: center;
-        padding-top: 14px;
-    }
-
-    .counter-cash-tray {
-        position: relative;
-        width: 205px;
-        max-width: 100%;
-        margin: auto;
-        padding-bottom: 15px;
-
-        &::before {
-            content: '';
-            position: absolute;
-            bottom: 2px;
-            left: 5%;
-            width: 90%;
-            height: 45px;
-            border: 1px solid #71796c;
-            border-radius: 5px;
-            background: linear-gradient(145deg, #454e43, #202923 60%, #151c17);
-            box-shadow: inset 0 5px 10px #080e0b, 0 13px 13px #0009;
-            transform: perspective(130px) rotateX(32deg);
-        }
-
-        &::after {
-            content: '';
-            position: absolute;
-            bottom: 3px;
-            left: 12%;
-            width: 76%;
-            height: 4px;
-            border-radius: 3px;
-            background: linear-gradient(#9caa94, #333c34);
-            box-shadow: 0 4px 6px #0008;
-        }
-    }
-
-    .counter-pile {
-        z-index: 1;
-        display: block;
-        position: relative;
-        width: 180px;
-        max-width: 100%;
-        height: 238px;
-        padding: 0;
-        margin: auto;
-        background: none;
-        border: 0;
-        touch-action: none;
-        cursor: grab;
-        filter: drop-shadow(4px 14px 8px #0008);
-
-        &.is-dragging {
-            opacity: 0.3;
-        }
-
-        &:not(:disabled):hover {
-            filter: drop-shadow(0 0 5px #d1b97677);
-        }
-    }
-
-    .cash-stacks {
-        display: block;
-        position: relative;
-        width: 100%;
-        height: 238px;
-        pointer-events: none;
-    }
-
-    .cash-bundle {
-        display: block;
-        position: absolute;
-        width: 86px;
-        height: 40px;
-        left: var(--x, 0px);
-        bottom: var(--y, 0px);
-        z-index: var(--layer, 1);
-        transform: rotate(var(--turn, 0deg));
-        border: 1px solid #989677;
-        border-radius: 1px;
-        pointer-events: none;
-        background: repeating-linear-gradient(0deg,
-                #676e54 0,
-                #a8ab86 1px,
-                #b6b590 2px,
-                #777e60 3px);
-        box-shadow:
-            0 2px 0 #787d60,
-            0 4px 0 #c1bfa0,
-            0 5px 0 #6b7355,
-            0 7px 0 #a1a88a,
-            0 9px 0 #515c40,
-            5px 14px 12px #0009;
-
-        &::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-image: var(--banknote);
-            background-size: 100% 100%;
-            filter: sepia(0.25) brightness(0.88);
-        }
-
-        &::after {
-            content: '100';
-            position: absolute;
-            top: 0;
-            left: 61%;
-            height: 47px;
-            width: 13px;
-            padding-top: 13px;
-            font:
-                7px 'Courier New',
-                monospace;
-            text-align: center;
-            color: #605646;
-            background: linear-gradient(90deg,
-                    #aa9d7f,
-                    #d5cdb1 25%,
-                    #c6b999 75%,
-                    #94896d);
-            border-left: 1px solid #f2ead166;
-            border-right: 1px solid #0005;
-            box-shadow: 2px 0 3px #0003;
-        }
-    }
-
-    .counter-source>small,
-    .counter-output>small {
-        display: block;
-        margin-top: 6px;
-        color: #8f9b88;
-        font-size: 11px;
-    }
-
-    .counter-machine {
-        position: relative;
-        width: 100%;
-        max-width: 330px;
-        padding-top: 56px;
-        margin: auto;
-        filter: drop-shadow(9px 20px 12px #0009);
-    }
-
-    .counter-housing {
-        position: relative;
-        padding: 32px 17px 17px;
-        border: 1px solid #7c7c70;
-        border-radius: 13px 13px 22px 22px;
-        background-color: #616861;
-        background-image:
-            linear-gradient(125deg,
-                #b8bcb580,
-                #717b7044 25%,
-                #30382f99 65%,
-                #232c2299),
-            var(--grain);
-        box-shadow:
-            inset 2px 2px 2px #dae0d166,
-            inset -5px -4px 3px #1b251a,
-            6px 5px 0 #222c20,
-            7px 7px 0 #515a4d,
-            7px 10px 0 #182315;
-
-        &::before,
-        &::after {
-            content: '';
-            position: absolute;
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            top: 19px;
-            background: linear-gradient(135deg,
-                    #717267 40%,
-                    #1b211b 42%,
-                    #151915 57%,
-                    #64675c 59%);
-            border: 1px solid #272e26;
-        }
-
-        &::before {
-            left: 10px;
-        }
-
-        &::after {
-            right: 12px;
-        }
-    }
-
-    .counter-brand {
-        margin-bottom: 10px;
-        font-size: 8px;
-        letter-spacing: 1.5px;
-        color: #ccd2c3;
-    }
-
-    .counter-feeder {
-        position: absolute;
-        top: -6px;
-        left: 10%;
-        width: 80%;
-        height: 83px;
-        z-index: 3;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: 12px 19px;
-        font-size: 9px;
-        letter-spacing: 1px;
-        color: #c8c9ad;
-        border: 1px solid #8b95836e;
-        border-radius: 3px;
-        background: repeating-linear-gradient(90deg,
-                #171c16 0px,
-                #171c16 9px,
-                #21291e 10px,
-                #0d120b 13px);
-        box-shadow:
-            inset 0 7px 12px #000,
-            0 -3px 0 #5a5f52;
-
-        &::before,
-        &::after {
-            content: '';
-            position: absolute;
-            top: -8px;
-            width: 10px;
-            height: 89px;
-            background: linear-gradient(90deg,
-                    #777b6c,
-                    #353d2e 35%,
-                    #1b2419 80%);
-            border: 1px solid #75775f;
-            border-radius: 3px;
-        }
-
-        &::before {
-            left: -6px;
-            transform: rotate(-5deg);
-        }
-
-        &::after {
-            right: -6px;
-            transform: rotate(5deg);
-        }
-
-        &.is-over {
-            border-color: #e2ce9d;
-            background: #5b5139;
-            box-shadow: 0 0 18px #e4b75755;
-        }
-    }
-
-    .counter-display {
-        padding: 13px 10px;
-        border: 5px solid #1d2e23;
-        border-radius: 3px;
-        background:
-            repeating-linear-gradient(0deg,
-                #040b0744 0px,
-                #040b0744 1px,
-                transparent 1px,
-                transparent 3px),
-            #12261c;
-        box-shadow:
-            inset 0 3px 10px #000,
-            0 1px 0 #dee2c766;
-        text-align: right;
-        color: #c5f6a8;
-
-        small {
-            display: block;
-            font-size: 9px;
-            letter-spacing: 1.5px;
-            margin-bottom: 8px;
-        }
-
-        div {
-            font:
-                28px 'Courier New',
-                monospace;
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -1.5px;
-            text-shadow: 0 0 7px #9ce47780;
-        }
-    }
-
-    .counter-keys {
-        display: flex;
-        justify-content: space-between;
-        gap: 5px;
-        margin: 13px 5px 0;
-
-        span {
-            padding: 6px 7px;
-            border: 1px solid #787c6a55;
-            border-radius: 3px;
-            background: linear-gradient(#454d3d, #232d21);
-            box-shadow: 0 3px 0 #11180f;
-            color: #bcc4ad;
-            font:
-                8px Arial,
-                sans-serif;
-        }
-
-        span:last-child {
-            background: linear-gradient(#aaa38c, #6f705b);
-            color: #f1efde;
-        }
-    }
-
-    .counter-slot {
-        height: 88px;
-        position: relative;
-        overflow: hidden;
-        margin: 18px 7px 0;
-        border: 6px solid #131a12;
-        border-radius: 3px 3px 17px 17px;
-        background: repeating-linear-gradient(90deg,
-                #080f07 0,
-                #080f07 12px,
-                #454c3c 13px,
-                #171f12 16px,
-                #070c05 19px);
-        box-shadow: inset 0 14px 8px #000;
-
-        &::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 2px;
-            height: 12px;
-            background: linear-gradient(#151c10, #60664d 40%, #222a17 75%);
-        }
-    }
-
-    .counter-moving-note {
-        display: none;
-        position: absolute;
-        left: 10%;
-        top: -50px;
-        width: 80%;
-        height: 64px;
-        background-image: var(--banknote);
-        background-size: 100% 100%;
-        filter: blur(0.35px);
-    }
-
-    .is-running .counter-moving-note {
-        display: block;
-        animation: counter-feed 0.17s linear infinite;
-    }
-
-    .counter-output {
-        text-align: center;
-        min-width: 0;
-        padding-top: 14px;
-
-        &.is-ready .counter-tray {
-            filter: drop-shadow(0 0 9px #c5b58355);
-        }
-    }
-
-    .counter-tray {
-        height: 238px;
-        width: 205px;
-        max-width: 100%;
-        position: relative;
-        margin: auto;
-
-        &::before {
-            content: '';
-            position: absolute;
-            bottom: 2px;
-            left: 5%;
-            width: 90%;
-            height: 45px;
-            border: 1px solid #71796c;
-            border-radius: 5px;
-            background: linear-gradient(145deg, #454e43, #202923 60%, #151c17);
-            box-shadow: inset 0 5px 10px #080e0b, 0 13px 13px #0009;
-            transform: perspective(130px) rotateX(32deg);
-        }
-
-        &::after {
-            content: '';
-            position: absolute;
-            bottom: 3px;
-            left: 12%;
-            width: 76%;
-            height: 4px;
-            border-radius: 3px;
-            background: linear-gradient(#9caa94, #333c34);
-            box-shadow: 0 4px 6px #0008;
-        }
-
-        .cash-stacks {
-            position: absolute;
-            bottom: 15px;
-            left: 50%;
-            width: 180px;
-            height: 238px;
-            z-index: 1;
-            transform: translateX(-50%);
-            transform-origin: center bottom;
-        }
-    }
-
-    .counter-bottom {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: center;
-        column-gap: 18px;
-        padding: 15px 26px 12px;
-        border-top: 1px solid #373d33;
-    }
-
-    .counter-final-actions {
-        display: flex;
-        align-items: center;
-        grid-column: 2;
-        grid-row: 1;
-        gap: 8px;
-        white-space: nowrap;
-    }
-
-    .counter-confirm {
-        min-height: 38px;
-        padding: 8px 14px;
-        border: 1px solid #e0d0a5;
-        border-radius: 5px;
-        background: #c7ba92;
-        color: #181d18;
-        font-size: 11px;
-        font-weight: 600;
-        font-variant-numeric: tabular-nums;
-        box-shadow: 0 3px 9px #0005;
-
-        &:hover:not(:disabled) {
-            background: #e1d5ae;
-        }
-    }
-
-    .counter-recount {
-        min-height: 38px;
-        padding: 8px 13px;
-        border: 1px solid #67725f;
-        border-radius: 5px;
-        background: #30392f;
-        color: #e3e9db;
-        font-size: 11px;
-        font-weight: 600;
-
-        &:hover:not(:disabled) {
-            border-color: #a9b69a;
-            background: #3e4b3a;
-        }
-    }
-
-    .counter-saving {
-        display: block;
-        grid-column: 2;
-        grid-row: 1;
-        margin-top: 16px;
-    }
-
-    .counter-controls {
-        display: contents;
-    }
-
-    .counter-selection {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        grid-column: 1;
-        grid-row: 1;
-        min-height: 38px;
-        margin-bottom: 0;
-
-        span {
-            font-size: 12px;
-            color: #a5ad9d;
-        }
-    }
-
-    .counter-amount-input {
-        min-width: 0;
-        width: 220px;
-        padding: 5px 9px;
-        color: #e7e5d7;
-        background: transparent;
-        border: 1px solid transparent;
-        border-radius: 5px;
-        font-size: 20px;
-        font-variant-numeric: tabular-nums;
-
-        &:hover,
-        &:focus {
-            background: #111711;
-            border-color: #465040;
-        }
-
-        &:disabled {
-            opacity: 0.65;
-        }
-
-        &[aria-invalid='true'] {
-            border-color: #b86554;
-        }
-    }
-
-    .counter-slider {
-        appearance: none;
-        width: 100%;
-        padding: 0;
-        height: 4px;
-        border: 0;
-        border-radius: 3px;
-        background: linear-gradient(to right,
-                #c4b791 0%,
-                #c4b791 var(--fill, 100%),
-                #343c30 var(--fill, 100%),
-                #343c30 100%);
-        grid-column: 1 / -1;
-        grid-row: 2;
-        margin: 9px 0;
-        cursor: ew-resize;
-
-        &::-webkit-slider-thumb {
-            appearance: none;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            border: 0;
-            background: #e7dcc0;
-            box-shadow: 0 2px 7px #0006;
-        }
-
-        &:disabled {
-            opacity: 0.45;
-            cursor: default;
-        }
-    }
-
-    .counter-range-labels {
-        display: flex;
-        justify-content: space-between;
-        grid-column: 1 / -1;
-        grid-row: 3;
-        font-size: 10px;
-        color: #7f8b76;
-        margin-top: 5px;
-    }
-
-    .counter-footer {
-        min-height: 57px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        flex-wrap: wrap;
-        padding: 12px 22px 19px;
-        font-size: 11px;
-        color: #a2ab9a;
-    }
-
-    .counter-done {
-        padding: 8px 17px;
-        border: 0;
-        border-radius: 5px;
-        font-size: 10px;
-        background: #c5c4aa;
-        color: #1d2419;
-    }
-
-    .counter-progress {
-        width: 120px;
-        height: 2px;
-        background: #353d2e;
-
-        span {
-            display: block;
-            height: 100%;
-            background: #c4b791;
-        }
-    }
-
-    .counter-ghost {
-        position: absolute;
-        z-index: 10;
-        width: 130px;
-        height: 90px;
-        pointer-events: none;
-        transform: translate(-50%, -50%);
-        filter: drop-shadow(12px 15px 10px #000a);
-
-        .cash-stacks {
-            height: 54px;
-        }
-
-        .cash-bundle {
-            left: 12px;
-            bottom: 8px;
-            width: 110px;
-            height: 48px;
-            transform: rotate(-8deg);
-        }
-
-        >span:last-child {
-            display: block;
-            padding: 6px;
-            text-align: center;
-            border: 1px solid #8c7950;
-            background: #141b10;
-            color: #eed6a8;
-            font-size: 12px;
-            border-radius: 3px;
-        }
-    }
-}
-
-@keyframes counter-feed {
-    to {
-        transform: translateY(105px);
-    }
-}
-
-@media (max-width: 600px) {
-    .cash-counter-overlay {
-        padding: 8px;
-    }
-
-    .cash-counter {
-        .counter-header {
-            padding: 13px 16px;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .counter-status {
-            display: none;
-        }
-
-        .counter-desk {
-            grid-template-columns: 1fr 1.5fr;
-            padding: 36px 16px 24px 7px;
-            gap: 12px;
-            min-height: 360px;
-        }
-
-        .counter-output {
-            display: block;
-            grid-column: 1 / -1;
-            padding-top: 0;
-
-            .counter-tray {
-                height: 160px;
-
-                .cash-stacks {
-                    transform: translateX(-50%) scale(0.65);
-                }
-            }
-        }
-
-        .counter-pile {
-            transform: scale(0.76);
-            width: 150px;
-            max-width: none;
-            margin-left: -8px;
-        }
-
-        .counter-housing {
-            padding-left: 8px;
-            padding-right: 8px;
-        }
-
-        .counter-display {
-            padding: 12px 4px;
-
-            div {
-                font-size: 17px;
-            }
-        }
-
-        .counter-brand {
-            font-size: 7px;
-            letter-spacing: 0.5px;
-        }
-
-        .counter-bottom {
-            grid-template-columns: 1fr;
-            padding: 16px 17px 13px;
-        }
-
-        .counter-final-actions,
-        .counter-saving {
-            grid-column: 1;
-            grid-row: 2;
-        }
-
-        .counter-final-actions {
-            justify-content: flex-end;
-        }
-
-        .counter-slider {
-            grid-row: 3;
-        }
-
-        .counter-range-labels {
-            grid-row: 4;
-        }
-
-        .counter-selection {
-            flex-wrap: wrap;
-            gap: 4px 10px;
-        }
-
-        .counter-amount-input {
-            width: min(220px, 100%);
-            font-size: 19px;
-        }
-
-        .counter-footer {
-            padding: 10px 15px 17px;
-            gap: 6px;
-        }
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .cash-counter .is-running .counter-moving-note {
-        animation: none;
-        top: 15px;
-    }
-}
-
-/* Individual cash-pile interaction. */
-.cash-counter {
-    /*
-     * Explicit counter typography and focus styling prevent the portal's
-     * theme colors and heading rules from changing this interface.
-     */
-    font-family: 'Inter Variable', Arial, sans-serif;
-    font-size: 14px;
-    line-height: 1.4;
-    letter-spacing: normal;
 
     h1,
     h2,
@@ -878,426 +45,787 @@
 
     button,
     input {
-        font-family: inherit;
+        font: inherit;
+        color: inherit;
+    }
+
+    button {
+        padding: 0;
+        border: 0;
+        cursor: pointer;
+    }
+
+    button:disabled {
+        cursor: default;
     }
 
     button:focus-visible,
     input:focus-visible {
-        box-shadow: none;
-        outline: 2px solid #dac493;
+        outline: 2px solid var(--counter-cream);
         outline-offset: 3px;
+        box-shadow: none;
+    }
+
+    img {
+        display: block;
+        max-width: none;
+        user-select: none;
+        pointer-events: none;
     }
 
     ::selection {
-        background: #dac493;
-        color: #191d1c;
+        background: var(--counter-cream);
+        color: #151715;
     }
 
-    .counter-machine {
-        position: relative;
+    .counter-header {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        min-height: 54px;
+        padding: 13px 22px;
+        border-bottom: 1px solid #ffffff12;
+        background: linear-gradient(#20221e, #161815);
+
+        h1 {
+            color: #e3d7bc;
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.3;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+        }
     }
 
+    .counter-balance {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-left: auto;
+        font-size: 11px;
+        color: var(--counter-muted);
+
+        strong {
+            color: #e1d9c7;
+            font-size: 12px;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+    }
+
+    .counter-status {
+        max-width: 200px;
+        color: #aaa991;
+        font-size: 9px;
+        text-align: right;
+    }
+
+    .counter-close {
+        display: grid;
+        place-items: center;
+        flex: 0 0 26px;
+        height: 26px;
+        border-radius: 4px;
+        background: transparent;
+        color: #c6bda7;
+
+        &:hover {
+            background: #ffffff0c;
+        }
+    }
+
+    .counter-error {
+        padding: 10px 22px;
+        background: #35251d;
+        color: #eac1a5;
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+    /* A quiet counting mat beneath the rendered objects. */
     .counter-desk {
-        grid-template-columns: 1fr 1.8fr 1fr;
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2.1fr) minmax(0, 1fr);
+        align-items: end;
+        gap: 18px;
+        padding: 24px 26px 43px;
+        background:
+            radial-gradient(
+                ellipse at 50% 5%,
+                #79735b22,
+                transparent 65%
+            ),
+            repeating-linear-gradient(
+                36deg,
+                #ffffff02 0,
+                #ffffff02 1px,
+                transparent 1px,
+                transparent 4px
+            ),
+            #252723;
+        box-shadow: inset 0 -14px 28px #0003;
     }
 
-    /* Identical tray dimensions and pile origins on both sides. */
+    /* Shared tray geometry. */
+    .counter-source,
+    .counter-output {
+        position: relative;
+        min-width: 0;
+        padding-bottom: 14px;
+    }
+
     .counter-cash-tray,
     .counter-tray {
-        width: 205px;
-        height: 253px;
-        padding-bottom: 0;
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1.25;
+        isolation: isolate;
+        filter: drop-shadow(0 12px 8px #0009);
+    }
+
+    .counter-tray-art {
+        position: absolute;
+        z-index: -1;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+        pointer-events: none;
+    }
+
+    .counter-tray-art--front {
+        z-index: 30;
+        clip-path: inset(78% 0 0);
     }
 
     .counter-pile {
         position: absolute;
         inset: 0;
-        width: 180px;
-        height: 253px;
-        margin: 0 auto;
-        filter: none;
+        width: 100%;
+        height: 100%;
+        background: none;
+        pointer-events: none;
+        touch-action: none;
     }
 
-    .counter-pile > .cash-stacks,
-    .counter-tray > .cash-stacks {
+    .cash-stacks {
         position: absolute;
-        left: 50%;
-        bottom: 15px;
-        width: 180px;
-        height: 238px;
-        transform: translateX(-50%);
-        transform-origin: center bottom;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
     }
 
     .cash-bundle {
-        width: 86px;
-        height: 40px;
-        transition: opacity 100ms ease;
-    }
-
-    .cash-bundle.is-lifted,
-    .counter-collected-pile.is-lifted {
-        opacity: 0;
-    }
-
-    .cash-bundle.has-image {
-        width: 94px;
-        height: 48px;
-        border: 0;
-        border-radius: 0;
-        background: none;
-        box-shadow: none;
-        filter: drop-shadow(2px 5px 3px #0007);
-
-        &::before,
-        &::after {
-            display: none;
-        }
-
-        img {
-            display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            pointer-events: none;
-            user-select: none;
-        }
-    }
-
-    .counter-collected-pile {
         position: absolute;
-        z-index: 4;
-        left: 50%;
-        bottom: 12px;
-        width: 132px;
-        height: 65px;
-        padding: 0;
-        border: 0;
-        background: none;
-        transform: translateX(-50%);
-        cursor: grab;
-        touch-action: none;
-        filter: drop-shadow(0 3px 5px #0008);
-
-        .cash-stacks {
-            width: 100%;
-            height: 65px;
-        }
-
-        .cash-bundle {
-            left: 19px;
-            bottom: 10px;
-            transform: rotate(-3deg);
-        }
-
-        &:hover,
-        &:focus-visible {
-            filter: drop-shadow(0 0 5px #d1b976aa);
-        }
-
-        &:focus-visible {
-            border-radius: 5px;
-        }
-    }
-
-    .counter-moving-note.has-image {
-        background: none;
-
-        img {
-            display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            user-select: none;
-        }
-    }
-
-    .is-running .counter-moving-note {
-        animation-duration: var(--bill-duration, 67ms);
-    }
-
-    .counter-output.is-over .counter-tray {
-        filter: drop-shadow(0 0 9px #d1b976aa);
-    }
-
-    .counter-source,
-    .counter-output {
-        position: relative;
-    }
-
-    .counter-output > small {
-        position: absolute;
-        top: calc(100% + 9px);
-        left: 0;
-        right: 0;
-        margin: 0;
-        white-space: nowrap;
-    }
-
-    /* Reserve action space throughout the entire interaction. */
-    .counter-final-actions {
-        min-height: 38px;
-    }
-
-    .counter-confirm,
-    .counter-recount {
-        transition:
-            opacity 120ms ease,
-            background 120ms ease;
-    }
-
-    .counter-confirm:disabled,
-    .counter-recount:disabled {
-        opacity: 0.35;
-        cursor: default;
-    }
-
-    .counter-pile:disabled {
-        cursor: default;
-    }
-
-    .counter-ghost .cash-bundle.has-image {
-        width: 110px;
-        height: 54px;
-    }
-}
-
-@media (max-width: 600px) {
-    .cash-counter {
-        .counter-desk {
-            grid-template-columns: 1fr 1.5fr;
-        }
-
-        .counter-pile {
-            width: 180px;
-            max-width: none;
-            margin: 0 auto;
-            transform: none;
-        }
-
-        .counter-pile > .cash-stacks,
-        .counter-tray > .cash-stacks {
-            transform: translateX(-50%) scale(0.76);
-        }
-
-        .counter-output {
-            margin-bottom: 24px;
-        }
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .cash-counter .is-running .counter-moving-note {
-        animation: none;
-        top: 15px;
-    }
-}
-
-/* Cash handling polish. */
-.cash-counter {
-    /*
-     * Only the next visible pile accepts pointer input.
-     * Keyboard users can still focus the original button.
-     */
-    .counter-pile {
+        display: block;
+        width: 40%;
+        height: 25%;
+        filter: drop-shadow(1px 3px 2px #0008);
         pointer-events: none;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        &.is-lifted {
+            opacity: 0;
+        }
+    }
+
+    .cash-stacks--compact .cash-bundle {
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform: none;
     }
 
     .counter-pile:not(:disabled) .cash-bundle:last-child {
         pointer-events: auto;
         cursor: grab;
         touch-action: none;
-    }
 
-    .counter-pile:not(:disabled) .cash-bundle:last-child:hover {
-        filter:
-            brightness(1.08)
-            drop-shadow(0 0 4px #d1b97688);
+        &:hover {
+            filter:
+                brightness(1.1)
+                drop-shadow(0 0 4px #dcccad77);
+        }
     }
 
     .counter-pile:focus-visible {
         outline: none;
-    }
 
-    .counter-pile:focus-visible .cash-bundle:last-child {
-        outline: 1px solid #dac493;
-        outline-offset: 4px;
-        border-radius: 3px;
-    }
-
-    /* The marker has geometry but no visible content. */
-    .counter-stack-target {
-        pointer-events: none;
-
-        > span {
-            position: absolute;
-            left: var(--x);
-            bottom: var(--y);
-            width: 94px;
-            height: 48px;
-            transform: rotate(var(--turn));
+        .cash-bundle:last-child {
+            outline: 1px solid var(--counter-cream);
+            outline-offset: 3px;
         }
     }
 
-    /* Show cash entering the feeder while its pile shrinks. */
-    .counter-feeder-label {
-        position: relative;
-        z-index: 2;
-        transition: opacity 120ms ease;
-    }
-
-    .counter-feeder.has-cash .counter-feeder-label {
-        opacity: 0;
-    }
-
-    .counter-input-cash {
+    .counter-stack-target > span {
         position: absolute;
-        left: 50%;
-        bottom: 8px;
-        width: 132px;
-        height: 60px;
+        width: 40%;
+        height: 25%;
         pointer-events: none;
-        transform:
-            translateX(-50%)
-            scaleY(calc(1 - var(--pile-progress)));
-        transform-origin: center bottom;
-        opacity: calc(1 - var(--pile-progress) * 0.7);
+    }
 
-        .cash-stacks {
-            width: 132px;
-            height: 60px;
-        }
+    .counter-output > small {
+        position: absolute;
+        top: calc(100% + 2px);
+        left: 0;
+        right: 0;
+        color: #aaa591;
+        font-size: 10px;
+        text-align: center;
+        white-space: nowrap;
+    }
 
-        .cash-bundle {
-            left: 19px;
-            bottom: 5px;
-            transform: rotate(-3deg);
+    .counter-output.is-target .counter-tray {
+        filter:
+            drop-shadow(0 12px 8px #0009)
+            drop-shadow(0 0 4px #d7c49355);
+    }
+
+    .counter-output.is-over .counter-tray {
+        filter:
+            drop-shadow(0 12px 8px #0009)
+            drop-shadow(0 0 7px #d7c49399);
+    }
+
+    /* Rendered machine: all overlay coordinates are percentages. */
+    .counter-machine {
+        position: relative;
+        width: 100%;
+        max-width: 480px;
+        aspect-ratio: 1;
+        margin: 0 auto;
+        isolation: isolate;
+        filter: drop-shadow(0 16px 11px #0009);
+    }
+
+    .machine-art {
+        position: absolute;
+        z-index: 0;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        pointer-events: none;
+    }
+
+    .machine-art--input-front {
+        z-index: 5;
+        clip-path: polygon(
+            0 0,
+            36% 0,
+            36% 22%,
+            64% 22%,
+            64% 0,
+            100% 0,
+            100% 26%,
+            0 26%
+        );
+    }
+
+    .machine-art--output-front {
+        z-index: 5;
+        clip-path: polygon(
+            0 84%,
+            24% 84%,
+            27% 75%,
+            37% 75%,
+            41% 84%,
+            59% 84%,
+            62% 75%,
+            72% 75%,
+            76% 84%,
+            100% 84%,
+            100% 100%,
+            0 100%
+        );
+    }
+
+    .counter-feeder {
+        position: absolute;
+        z-index: 7;
+        left: 28%;
+        top: 4%;
+        width: 44%;
+        height: 20%;
+        display: grid;
+        place-items: center;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        transition:
+            background 100ms ease,
+            border-color 100ms ease;
+
+        &.is-over {
+            border-color: #d7c49388;
+            background: #d7c49314;
         }
     }
 
-    /* The machine output grows as the same pile is counted. */
-    .counter-output-cash {
+    .counter-feeder-label {
+        max-width: 90%;
+        padding: 5px 7px;
+        border-radius: 3px;
+        background: #10130cbb;
+        color: #c7c1ab;
+        font-size: 8px;
+        line-height: 1.3;
+        text-align: center;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        pointer-events: none;
+    }
+
+    .machine-input-window {
+        position: absolute;
+        z-index: 2;
+        left: 29%;
+        top: 5%;
+        width: 42%;
+        height: 20%;
+        overflow: hidden;
+        pointer-events: none;
+    }
+
+    .machine-input-stack {
+        position: absolute;
+        inset: 0;
         width: 100%;
-        height: 65px;
-        transform: scaleY(calc(0.12 + var(--pile-progress) * 0.88));
+        height: 100%;
+        object-fit: contain;
         transform-origin: center bottom;
-        opacity: calc(0.3 + var(--pile-progress) * 0.7);
+        filter: brightness(0.85);
+    }
+
+    .machine-output-window {
+        position: absolute;
+        z-index: 2;
+        left: 23%;
+        top: 52%;
+        width: 54%;
+        height: 34%;
+        overflow: hidden;
+        perspective: 260px;
+        pointer-events: none;
+    }
+
+    .machine-output-note {
+        position: absolute;
+        z-index: 1;
+        left: 10%;
+        top: 0;
+        width: 80%;
+        height: 42%;
+        object-fit: contain;
+        transform-origin: center top;
+        filter: brightness(0.78) blur(0.2px);
+    }
+
+    .machine-output-stack {
+        position: absolute;
+        z-index: 2;
+        left: 9%;
+        bottom: 0;
+        width: 82%;
+        height: 68%;
+        object-fit: contain;
+        filter: brightness(0.88);
+    }
+
+    .machine-roller-motion {
+        position: absolute;
+        z-index: 4;
+        left: 20%;
+        top: 47%;
+        width: 60%;
+        height: 9%;
+        border-radius: 5px;
+        background: repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 3px,
+            #ffffff0a 4px,
+            #00000022 6px
+        );
+        animation: counter-rollers var(--roller-time) linear infinite;
+        pointer-events: none;
     }
 
     .counter-collected-pile {
+        position: absolute;
+        z-index: 3;
+        left: 28%;
+        top: 63%;
+        width: 44%;
+        height: 22%;
+        background: none;
         pointer-events: none;
-    }
-
-    .counter-collected-pile:not(:disabled) .cash-bundle {
-        pointer-events: auto;
-        cursor: grab;
         touch-action: none;
-    }
 
-    .counter-collected-pile.is-collectable {
-        animation: counter-collect-ready 1.6s ease-in-out infinite;
-    }
-
-    .counter-collected-pile.is-lifted {
-        opacity: 0;
-        animation: none;
-    }
-
-    .counter-output.is-target .counter-tray::before {
-        border-color: #a69a78;
-        box-shadow:
-            inset 0 5px 10px #080e0b,
-            0 0 12px #c5b58333,
-            0 13px 13px #0009;
-    }
-
-    .counter-output.is-over .counter-tray::before {
-        border-color: #e2cc98;
-        box-shadow:
-            inset 0 5px 10px #080e0b,
-            0 0 15px #dac49366,
-            0 13px 13px #0009;
-    }
-
-    /* Newly collected piles settle gently onto their final position. */
-    .counter-tray > .cash-stacks:not(.counter-stack-target) > .cash-bundle {
-        animation: counter-pile-settle 180ms ease-out both;
-    }
-
-    /*
-     * Center the actual cash image under the pointer.
-     * The value label no longer changes the ghost's center.
-     */
-    .counter-ghost {
-        width: 110px;
-        height: 54px;
-        transform: translate(-50%, -50%);
-
-        .cash-stacks {
-            width: 110px;
-            height: 54px;
+        .cash-bundle {
+            pointer-events: auto;
+            cursor: grab;
+            touch-action: none;
+            animation: counter-collect-glow 1.8s ease-in-out infinite;
         }
 
-        .cash-bundle,
-        .cash-bundle.has-image {
-            inset: 0;
-            width: 110px;
-            height: 54px;
-            transform: none;
+        &.is-lifted {
+            opacity: 0;
         }
 
-        > span:last-child {
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 50%;
-            min-width: 100%;
-            width: max-content;
-            transform: translateX(-50%);
+        &:focus-visible {
+            outline: none;
+
+            .cash-bundle {
+                outline: 1px solid var(--counter-cream);
+                outline-offset: 2px;
+            }
+        }
+    }
+
+    .counter-display {
+        position: absolute;
+        z-index: 6;
+        left: 27.5%;
+        top: 29.2%;
+        width: 36.5%;
+        height: 9%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        overflow: hidden;
+        padding: 2px;
+        color: #bdcc91;
+        text-align: center;
+        text-shadow: 0 0 5px #a5c27833;
+        pointer-events: none;
+
+        strong {
+            max-width: 100%;
+            font-family: 'Courier New', monospace;
+            font-size: clamp(12px, 2vw, 25px);
+            font-weight: 700;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        small {
+            max-width: 100%;
+            overflow: hidden;
+            font-size: 7px;
+            line-height: 1.2;
+            letter-spacing: 0.6px;
+            text-overflow: ellipsis;
+            text-transform: uppercase;
+            white-space: nowrap;
         }
     }
 
     .counter-machine.is-complete .counter-display {
-        animation: counter-success 400ms ease-out both;
+        color: #dcebb8;
+        text-shadow: 0 0 8px #b7d88066;
+    }
+
+    /* Amount controls and actions keep a constant layout. */
+    .counter-bottom {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px 20px;
+        align-items: center;
+        padding: 18px 26px 14px;
+        border-top: 1px solid #686554;
+        background: linear-gradient(#1c1e1a, #131512);
+    }
+
+    .counter-controls {
+        display: contents;
+    }
+
+    .counter-selection {
+        grid-column: 1;
+        grid-row: 1;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+        min-height: 38px;
+
+        > span {
+            flex-shrink: 0;
+            color: #aaa591;
+            font-size: 11px;
+        }
+    }
+
+    .counter-amount-input {
+        width: 180px;
+        min-width: 0;
+        padding: 7px 10px;
+        border: 1px solid #595949;
+        border-radius: 5px;
+        background: #10120f;
+        color: #e4d8bd;
+        font-size: 17px;
+        font-variant-numeric: tabular-nums;
+
+        &:disabled {
+            border-color: #383c31;
+            color: #aaa58f;
+        }
+    }
+
+    .counter-final-actions {
+        grid-column: 2;
+        grid-row: 1;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-height: 38px;
+    }
+
+    .counter-recount,
+    .counter-confirm {
+        min-height: 38px;
+        padding: 9px 16px;
+        border: 1px solid #827860;
+        border-radius: 5px;
+        font-size: 11px;
+        font-weight: 500;
+        white-space: nowrap;
+        transition:
+            opacity 120ms ease,
+            background 120ms ease;
+    }
+
+    .counter-recount {
+        background: #262820;
+        color: #ded6c0;
+
+        &:hover:not(:disabled) {
+            background: #34372b;
+        }
+    }
+
+    .counter-confirm {
+        background: #d7c8a9;
+        color: #25271d;
+
+        &:hover:not(:disabled) {
+            background: #ebddbd;
+        }
+    }
+
+    .counter-recount:disabled,
+    .counter-confirm:disabled {
+        opacity: 0.35;
+    }
+
+    .counter-slider {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        width: 100%;
+        height: 4px;
+        margin: 3px 0 0;
+        border: 0;
+        border-radius: 99px;
+        appearance: none;
+        background: linear-gradient(
+            to right,
+            #cbbd9d var(--fill, 0%),
+            #414339 var(--fill, 0%)
+        );
+        cursor: pointer;
+
+        &::-webkit-slider-thumb {
+            width: 13px;
+            height: 13px;
+            border: 1px solid #e1d4b4;
+            border-radius: 50%;
+            appearance: none;
+            background: #d3c3a0;
+            box-shadow: 0 2px 5px #0007;
+        }
+
+        &::-moz-range-thumb {
+            width: 13px;
+            height: 13px;
+            border: 1px solid #e1d4b4;
+            border-radius: 50%;
+            background: #d3c3a0;
+        }
+
+        &:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+    }
+
+    .counter-range-labels {
+        grid-column: 1 / -1;
+        grid-row: 3;
+        display: flex;
+        justify-content: space-between;
+        margin-top: -4px;
+        color: #858673;
+        font-size: 9px;
+    }
+
+    .counter-ghost {
+        position: absolute;
+        z-index: 100;
+        width: 110px;
+        height: 54px;
+        transform: translate(-50%, -50%);
+        filter: drop-shadow(7px 10px 6px #0009);
+        pointer-events: none;
+
+        > span:last-child {
+            position: absolute;
+            top: calc(100% + 7px);
+            left: 50%;
+            width: max-content;
+            min-width: 90px;
+            padding: 5px 8px;
+            border: 1px solid #827860;
+            border-radius: 4px;
+            background: #13170fed;
+            color: #e2d1aa;
+            font-size: 11px;
+            text-align: center;
+            transform: translateX(-50%);
+        }
     }
 }
 
-@keyframes counter-collect-ready {
+@keyframes counter-rollers {
+    to {
+        background-position-y: 6px;
+    }
+}
+
+@keyframes counter-collect-glow {
     0%,
     100% {
-        filter: drop-shadow(0 3px 5px #0008);
+        filter: drop-shadow(0 3px 3px #0008);
     }
 
     50% {
-        filter: drop-shadow(0 0 5px #d1b97688);
+        filter: drop-shadow(0 0 4px #d7c49377);
     }
 }
 
-@keyframes counter-pile-settle {
-    from {
-        transform: translateY(-4px) rotate(var(--turn, 0deg));
-    }
+@media (max-height: 760px) and (min-width: 701px) {
+    .cash-counter {
+        width: min(920px, 96vw);
 
-    to {
-        transform: translateY(0) rotate(var(--turn, 0deg));
+        .counter-desk {
+            padding-top: 12px;
+            padding-bottom: 32px;
+        }
+
+        .counter-machine {
+            max-width: 350px;
+        }
     }
 }
 
-@keyframes counter-success {
-    from {
-        filter: brightness(1.35);
+@media (max-width: 700px) {
+    .cash-counter-overlay {
+        padding: 8px;
     }
 
-    to {
-        filter: brightness(1);
+    .cash-counter {
+        width: 98vw;
+
+        .counter-header {
+            padding: 12px;
+            gap: 10px;
+        }
+
+        .counter-status {
+            display: none;
+        }
+
+        .counter-header h1 {
+            font-size: 10px;
+        }
+
+        .counter-balance {
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0;
+        }
+
+        .counter-desk {
+            gap: 6px;
+            padding: 20px 8px 34px;
+            grid-template-columns: 1fr 2.2fr 1fr;
+        }
+
+        .counter-feeder-label {
+            font-size: 6px;
+            padding: 3px;
+        }
+
+        .counter-display small {
+            font-size: 5px;
+        }
+
+        .counter-output > small {
+            font-size: 8px;
+            white-space: normal;
+        }
+
+        .counter-bottom {
+            grid-template-columns: 1fr;
+            padding: 14px;
+        }
+
+        .counter-selection {
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        .counter-final-actions {
+            grid-column: 1;
+            grid-row: 2;
+            justify-content: flex-end;
+        }
+
+        .counter-slider {
+            grid-row: 3;
+        }
+
+        .counter-range-labels {
+            grid-row: 4;
+        }
+
+        .counter-amount-input {
+            flex: 1;
+            width: 120px;
+        }
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .cash-counter {
-        .counter-collected-pile.is-collectable,
-        .counter-tray > .cash-stacks > .cash-bundle,
-        .counter-machine.is-complete .counter-display {
+        .machine-roller-motion,
+        .counter-collected-pile .cash-bundle {
             animation: none;
+        }
+
+        .machine-output-note {
+            visibility: hidden;
         }
     }
 }

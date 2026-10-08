@@ -15,8 +15,11 @@ import CounterAmountSelector from './components/CounterAmountSelector.vue'
 import { useCashCounterStore } from './stores/cash-counter.store'
 import { useCashDrag } from './composables/useCashDrag'
 import { useCounterSound } from './composables/useCounterSound'
-import { createCashTextures } from './utils/cash-counter.textures'
-import { validAmount } from './utils/cash-counter.utils'
+import {
+    validAmount,
+    cashCounterImages,
+    cashPilePosition,
+} from './utils/cash-counter.utils'
 import './styles/cash-counter.scss'
 
 const store = useCashCounterStore()
@@ -24,7 +27,6 @@ const sound = useCounterSound()
 const { t, te } = useI18n()
 
 const root = ref<HTMLElement | null>(null)
-const textures = ref<Record<string, string>>({})
 
 const format = (amount: number) =>
     `${store.payload?.currency ?? '$'}${Math.floor(
@@ -64,15 +66,9 @@ const activeDrag = computed(() =>
     collectDrag.dragging.value ? collectDrag : feedDrag,
 )
 
-const landingStyle = computed(() => {
-    const index = store.collected
-
-    return {
-        '--x': `${9 + (index % 2) * 77}px`,
-        '--y': `${16 + Math.floor(index / 2) * 19}px`,
-        '--turn': `${index % 2 ? 4 : -5}deg`,
-    }
-})
+const landingStyle = computed(() =>
+    cashPilePosition(store.collected),
+)
 
 function keyboardLoad() {
     sound.prime()
@@ -270,7 +266,6 @@ async function refresh() {
 }
 
 onMounted(() => {
-    textures.value = createCashTextures()
 
     function tick() {
         store.tick(performance.now())
@@ -300,7 +295,7 @@ onUnmounted(() => {
 
 <template>
     <div class="cash-counter-overlay">
-        <section ref="root" class="cash-counter" :style="textures" role="dialog" aria-modal="true"
+        <section ref="root" class="cash-counter" role="dialog" aria-modal="true"
             aria-labelledby="cash-counter-title">
             <header class="counter-header">
                 <h1 id="cash-counter-title">
@@ -331,6 +326,9 @@ onUnmounted(() => {
             <div class="counter-desk">
                 <div class="counter-source">
                     <div class="counter-cash-tray">
+                        <img class="counter-tray-art" :src="cashCounterImages.tray" alt="" draggable="false" />
+                        <img class="counter-tray-art counter-tray-art--front" :src="cashCounterImages.tray" alt=""
+                            draggable="false" />
                         <button class="counter-pile" type="button" :disabled="!store.canLoad" :aria-label="t('cashCounter.loadPile', {
                             amount: format(store.activeAmount),
                         })" @pointerdown="sound.prime(); feedDrag.down($event)" @pointermove="feedDrag.move"
@@ -356,6 +354,9 @@ onUnmounted(() => {
                     'is-over': collectDrag.over.value,
                 }">
                     <div class="counter-tray" data-cash-output>
+                        <img class="counter-tray-art" :src="cashCounterImages.tray" alt="" draggable="false" />
+                        <img class="counter-tray-art counter-tray-art--front" :src="cashCounterImages.tray" alt=""
+                            draggable="false" />
                         <CashStacks :count="store.collected" />
 
                         <span class="cash-stacks counter-stack-target" aria-hidden="true">

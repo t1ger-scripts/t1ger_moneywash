@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import CashStacks from './CashStacks.vue'
 import { cashCounterImages } from '../utils/cash-counter.utils'
 
@@ -25,13 +25,60 @@ const emit = defineEmits<{
     collect: []
 }>()
 
-const billFailed = ref(false)
+const NOTE_COUNT = 20
+const TRAVEL = 0.24
+const SPACING = (1 - TRAVEL) / (NOTE_COUNT - 1)
 
-const pileProgress = computed(() =>
-    props.collectable
-        ? 1
-        : Math.max(0, Math.min(1, props.progress)),
+const clamp = (value: number) => Math.max(0, Math.min(1, value))
+
+const progress = computed(() =>
+    props.collectable ? 1 : clamp(props.progress),
 )
+
+const notes = computed(() =>
+    Array.from({ length: NOTE_COUNT }, (_, index) => {
+        const raw = (progress.value - index * SPACING) / TRAVEL
+        const position = clamp(raw)
+
+        return {
+            index,
+            entering: raw > 0 && position < 0.32,
+            exiting: position > 0.65 && raw < 1,
+            landed: raw >= 1,
+            entry: clamp(position / 0.32),
+            exit: clamp((position - 0.65) / 0.35),
+        }
+    }),
+)
+
+const outgoing = computed(() =>
+    notes.value.filter((note) => note.exiting),
+)
+
+const outputProgress = computed(() =>
+    notes.value.filter((note) => note.landed).length / NOTE_COUNT,
+)
+
+const inputStyle = computed(() => ({
+    transform: `translateY(${progress.value * 85}%)`,
+    opacity: progress.value >= 0.995 ? 0 : 1,
+}))
+
+const outputStyle = computed(() => ({
+    transform: `translateY(${(1 - outputProgress.value) * 38}%)`,
+    opacity: outputProgress.value > 0 ? 1 : 0,
+}))
+
+function outgoingStyle(index: number, exit: number) {
+    return {
+        transform: [
+            `translateY(${exit * 55}%)`,
+            `rotateX(${55 - exit * 20}deg)`,
+            `rotateZ(${(index % 2 ? 1 : -1) * 0.8}deg)`,
+        ].join(' '),
+        opacity: Math.min(1, exit * 7),
+    }
+}
 </script>
 
 <template>
@@ -42,72 +89,73 @@ const pileProgress = computed(() =>
             'is-complete': complete,
         }"
         :style="{
-            '--bill-duration': `${durationMs / 12}ms`,
-            '--pile-progress': pileProgress,
+            '--roller-time': `${Math.max(45, durationMs / NOTE_COUNT)}ms`,
         }"
     >
+        <img
+            class="machine-art"
+            :src="cashCounterImages.machine"
+            alt=""
+            draggable="false"
+        />
+
         <div
             class="counter-feeder"
-            :class="{
-                'is-over': over,
-                'has-cash': running,
-            }"
+            :class="{ 'is-over': over }"
             data-cash-feeder
+            :aria-label="feederLabel"
         >
-            <span class="counter-feeder-label">{{ feederLabel }}</span>
+            <span v-if="!running" class="counter-feeder-label">
+                {{ feederLabel }}
+            </span>
+        </div>
 
-            <div
+        <div v-if="running" class="machine-input-window">
+            <img
+                class="machine-input-stack"
+                :src="cashCounterImages.loose"
+                :style="inputStyle"
+                alt=""
+                draggable="false"
+            />
+        </div>
+
+        <div class="machine-output-window" aria-hidden="true">
+            <img
+                v-for="note in outgoing"
+                v-show="running"
+                :key="`out-${note.index}`"
+                class="machine-output-note"
+                :src="cashCounterImages.bill"
+                :style="outgoingStyle(note.index, note.exit)"
+                alt=""
+                draggable="false"
+            />
+
+            <img
                 v-if="running"
-                class="counter-input-cash"
-                aria-hidden="true"
-            >
-                <CashStacks compact />
-            </div>
+                class="machine-output-stack"
+                :src="cashCounterImages.loose"
+                :style="outputStyle"
+                alt=""
+                draggable="false"
+            />
         </div>
 
-        <div class="counter-housing">
-            <div class="counter-brand">T1GER / CASH COUNTER</div>
-
-            <div class="counter-display">
-                <small>{{ displayState }}</small>
-                <div>{{ value }}</div>
-            </div>
-
-            <div class="counter-keys" aria-hidden="true">
-                <span>UV</span>
-                <span>MODE</span>
-                <span>BATCH</span>
-                <span>AUTO</span>
-            </div>
-
-            <div class="counter-slot" aria-hidden="true">
-                <span
-                    class="counter-moving-note"
-                    :class="{ 'has-image': !billFailed }"
-                >
-                    <img
-                        v-if="!billFailed"
-                        :src="cashCounterImages.bill"
-                        alt=""
-                        draggable="false"
-                        @error="billFailed = true"
-                    />
-                </span>
-            </div>
-        </div>
+        <div
+            v-if="running"
+            class="machine-roller-motion"
+            aria-hidden="true"
+        />
 
         <button
-            v-if="running || collectable"
-            type="button"
+            v-if="collectable"
             class="counter-collected-pile"
-            :class="{
-                'is-lifted': lifted,
-                'is-collectable': collectable,
-            }"
-            :disabled="!collectable"
-            :aria-label="collectLabel"
-            :title="collectable ? collectLabel : undefined"
+            :class="{ 'is-lifted': lifted }"
+            type="button"
             data-cash-collect
+            :aria-label="collectLabel"
+            :title="collectLabel"
             @pointerdown="emit('collectDown', $event)"
             @pointermove="emit('collectMove', $event)"
             @pointerup="emit('collectUp', $event)"
@@ -115,9 +163,30 @@ const pileProgress = computed(() =>
             @keydown.enter.prevent="emit('collect')"
             @keydown.space.prevent="emit('collect')"
         >
-            <div class="counter-output-cash">
-                <CashStacks compact />
-            </div>
+            <CashStacks compact />
         </button>
+
+        <!--
+            These are clipped copies of the SAME machine image.
+            They put the actual guides and front lip in front of the cash.
+        -->
+        <img
+            class="machine-art machine-art--input-front"
+            :src="cashCounterImages.machine"
+            alt=""
+            draggable="false"
+        />
+
+        <img
+            class="machine-art machine-art--output-front"
+            :src="cashCounterImages.machine"
+            alt=""
+            draggable="false"
+        />
+
+        <div class="counter-display">
+            <strong>{{ value }}</strong>
+            <small>{{ displayState }}</small>
+        </div>
     </div>
 </template>
