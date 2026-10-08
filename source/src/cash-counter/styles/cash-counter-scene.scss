@@ -1,0 +1,543 @@
+/*
+ * Fixed scene composition.
+ * All positions are relative to the complete scene image.
+ */
+
+.cash-counter-overlay.cash-counter-overlay--scene {
+    display: grid;
+    place-items: center;
+    padding: 0;
+    overflow: hidden;
+    background: #100d09;
+}
+
+.cash-counter.cash-counter--scene {
+    /*
+     * Keep the complete artwork visible.
+     * These dimensions match the generated 1672 × 941 scene.
+     */
+    --scene-unit: min(1vw, calc(1vh * 1672 / 941));
+
+    position: relative;
+    width: min(100vw, calc(100vh * 1672 / 941));
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    aspect-ratio: 1672 / 941;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    isolation: isolate;
+
+    .counter-sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .counter-scene-image,
+    .counter-scene-foreground {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+        user-select: none;
+        pointer-events: none;
+    }
+
+    .counter-scene-image {
+        z-index: 0;
+    }
+
+    /*
+     * Copies of the scene reveal only the physical edges
+     * that need to appear in front of the cash.
+     */
+    .counter-scene-foreground {
+        z-index: 30;
+    }
+
+    .counter-scene-foreground--left-tray {
+        clip-path: polygon(
+            0% 65%,
+            1% 64%,
+            27% 64%,
+            28.5% 66%,
+            28.5% 73%,
+            0% 73%
+        );
+    }
+
+    .counter-scene-foreground--right-tray {
+        clip-path: polygon(
+            71.5% 65%,
+            73% 64%,
+            98% 64%,
+            100% 66%,
+            100% 73%,
+            71.5% 73%
+        );
+    }
+
+    .counter-scene-foreground--input {
+        clip-path: polygon(
+            35% 22.5%,
+            65% 22.5%,
+            65% 25.5%,
+            35% 25.5%
+        );
+    }
+
+    .counter-scene-foreground--output {
+        clip-path: polygon(
+            31% 68%,
+            39% 68%,
+            40.8% 62%,
+            41.5% 61.3%,
+            45% 61.3%,
+            46.5% 69.8%,
+            53.4% 69.8%,
+            54.6% 62%,
+            55.2% 61.3%,
+            58.7% 61.3%,
+            60.5% 68.7%,
+            69% 66%,
+            69% 79%,
+            31% 79%
+        );
+    }
+
+    .counter-scene-close {
+        position: absolute;
+        z-index: 110;
+        top: 2.8%;
+        right: 2%;
+        display: flex;
+        align-items: center;
+        gap: calc(var(--scene-unit) * 0.6);
+        padding: 4px;
+        background: transparent;
+        color: #eee6d7;
+        font-size: clamp(
+            10px,
+            calc(var(--scene-unit) * 0.95),
+            18px
+        );
+        text-shadow: 0 2px 4px #0008;
+
+        kbd {
+            padding: 2px 6px;
+            border: 1px solid #e1d5bc80;
+            border-radius: 3px;
+            background: #17130e55;
+            font: inherit;
+            font-size: 0.8em;
+        }
+
+        &:hover {
+            color: #fff;
+        }
+    }
+
+    .counter-error {
+        position: absolute;
+        z-index: 110;
+        top: 2.8%;
+        left: 50%;
+        width: max-content;
+        max-width: 65%;
+        padding: 9px 14px;
+        border: 1px solid #ac805b80;
+        border-radius: 3px;
+        background: #2a1b14f2;
+        color: #f1ceb3;
+        font-size: clamp(
+            10px,
+            calc(var(--scene-unit) * 0.8),
+            15px
+        );
+        text-align: center;
+        transform: translateX(-50%);
+    }
+
+    /*
+     * The desk now holds positioned interaction regions.
+     * It no longer lays out separate machine/tray artwork.
+     */
+    .counter-desk {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        background: none;
+        box-shadow: none;
+    }
+
+    .counter-source,
+    .counter-output {
+        position: absolute;
+        z-index: 10;
+        top: 21%;
+        width: 30%;
+        height: 51%;
+        padding: 0;
+    }
+
+    .counter-source {
+        left: 0;
+    }
+
+    .counter-output {
+        left: 70%;
+    }
+
+    .counter-cash-tray,
+    .counter-tray {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        aspect-ratio: auto;
+
+        /*
+         * The scene already contains the tray and its shadow.
+         * Old tray glow filters must not affect the cash layer.
+         */
+        filter: none !important;
+    }
+
+    /*
+     * Matching cash placement regions inside both trays.
+     * The landing marker uses exactly the same region.
+     */
+    .counter-pile,
+    .counter-tray > .cash-stacks {
+        position: absolute;
+        inset: auto;
+        left: 10%;
+        top: 16%;
+        width: 83%;
+        height: 73%;
+    }
+
+    .counter-pile .cash-bundle,
+    .counter-tray .cash-bundle {
+        filter:
+            sepia(0.1)
+            brightness(0.92)
+            drop-shadow(2px 4px 2px #0008);
+    }
+
+    .counter-pile .cash-bundle:not(:disabled) {
+        &:hover,
+        &:focus-visible {
+            filter:
+                sepia(0.08)
+                brightness(1.02)
+                drop-shadow(3px 7px 4px #0008);
+        }
+    }
+
+    .counter-stack-target > span {
+        border-radius: 2px;
+    }
+
+    .counter-output.is-target .counter-stack-target > span {
+        border-color: #d5c49955;
+        background: #d5c49908;
+    }
+
+    .counter-output.is-over .counter-stack-target > span {
+        border-color: #e8dab5aa;
+        background: #e8dab514;
+    }
+
+    /*
+     * Keep CounterMachine's existing animation logic.
+     * Replace its visible artwork with the scene beneath it.
+     */
+    .counter-machine {
+        position: absolute;
+        z-index: 10;
+        left: 31%;
+        top: 6%;
+        width: 38%;
+        height: 72%;
+        max-width: none;
+        margin: 0;
+        aspect-ratio: auto;
+        filter: none;
+    }
+
+    .machine-art {
+        display: none;
+    }
+
+    .counter-feeder {
+        left: 30%;
+        top: 7%;
+        width: 40%;
+        height: 17%;
+    }
+
+    .counter-feeder-label {
+        padding: 4px 6px;
+        background: #14130dcc;
+        font-size: clamp(
+            7px,
+            calc(var(--scene-unit) * 0.65),
+            12px
+        );
+    }
+
+    .machine-input-window {
+        left: 37.55%;
+        top: 9%;
+        width: 24.9%;
+        height: 10.87%;
+    }
+
+    .machine-output-window {
+        left: 12%;
+        top: 52%;
+        width: 76%;
+        height: 34%;
+    }
+
+    .machine-output-note {
+        left: 33.6%;
+        top: 0;
+        width: 32.8%;
+        height: 24%;
+    }
+
+    .machine-output-stack {
+        left: 33.6%;
+        bottom: 14%;
+        width: 32.8%;
+        height: 32%;
+    }
+
+    .machine-roller-motion {
+        left: 12%;
+        top: 46%;
+        width: 76%;
+        height: 10%;
+    }
+
+    /*
+     * Same apparent bundle size as the side trays:
+     * approximately 9.46% of the complete scene width.
+     */
+    .counter-collected-pile {
+        left: 37.55%;
+        top: 70%;
+        width: 24.9%;
+        height: 10.87%;
+
+        .cash-bundle {
+            animation: none;
+            filter:
+                sepia(0.1)
+                brightness(0.92)
+                drop-shadow(2px 4px 2px #0008);
+        }
+    }
+
+    .counter-display {
+        left: 24.5%;
+        top: 29%;
+        width: 42.5%;
+        height: 10.8%;
+        gap: calc(var(--scene-unit) * 0.15);
+        padding: 2px;
+        color: #202616;
+        text-shadow: 0 1px 0 #d7df9c20;
+
+        strong {
+            font-size: clamp(
+                12px,
+                calc(var(--scene-unit) * 1.85),
+                38px
+            );
+        }
+
+        small {
+            font-size: clamp(
+                6px,
+                calc(var(--scene-unit) * 0.7),
+                15px
+            );
+            letter-spacing: 0.5px;
+        }
+    }
+
+    .counter-machine.is-complete .counter-display {
+        color: #202d13;
+        text-shadow: none;
+    }
+
+    /*
+     * Text sits directly on the blank physical plaques.
+     */
+    .scene-plaque {
+        position: absolute;
+        z-index: 40;
+        top: 66.7%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 12.5%;
+        height: 4.2%;
+        overflow: hidden;
+        color: #30271e;
+        font-family: 'Courier New', monospace;
+        font-size: clamp(
+            8px,
+            calc(var(--scene-unit) * 1.1),
+            23px
+        );
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        text-align: center;
+        text-transform: uppercase;
+        pointer-events: none;
+    }
+
+    .scene-plaque--left {
+        left: 7.1%;
+    }
+
+    .scene-plaque--right {
+        left: 80%;
+    }
+
+    /*
+     * Only text is rendered here.
+     * The paper texture and shadow belong to the scene.
+     */
+    .scene-receipt {
+        position: absolute;
+        z-index: 40;
+        top: 77%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: calc(var(--scene-unit) * 0.6);
+        width: 13%;
+        height: 10%;
+        color: #3d3024;
+        font-family: 'Courier New', monospace;
+        text-align: center;
+        pointer-events: none;
+
+        > span {
+            font-size: clamp(
+                8px,
+                calc(var(--scene-unit) * 0.95),
+                20px
+            );
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        > strong {
+            max-width: 100%;
+            font-size: clamp(
+                10px,
+                calc(var(--scene-unit) * 1.35),
+                28px
+            );
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            overflow-wrap: anywhere;
+        }
+
+        > small {
+            font-size: clamp(
+                7px,
+                calc(var(--scene-unit) * 0.6),
+                12px
+            );
+        }
+    }
+
+    .scene-receipt--left {
+        left: 7.6%;
+        transform: rotate(-2deg);
+    }
+
+    .scene-receipt--right {
+        left: 80.2%;
+        transform: rotate(2deg);
+    }
+
+    /*
+     * Reserved location beneath the right receipt.
+     * Appearing buttons never move the scene.
+     */
+    .scene-confirmation {
+        position: absolute;
+        z-index: 50;
+        left: 77%;
+        top: 90%;
+        width: 20%;
+        height: 6%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .counter-tray-confirm {
+        width: 100%;
+        min-height: 0;
+        padding:
+            calc(var(--scene-unit) * 0.55)
+            calc(var(--scene-unit) * 0.7);
+        border: 1px solid #bca77f;
+        border-radius: 3px;
+        background: linear-gradient(#ddceaf, #bda57b);
+        color: #30271d;
+        box-shadow:
+            inset 0 1px 0 #fff3,
+            1px 4px 6px #0006;
+        font-family: 'Courier New', monospace;
+        font-size: clamp(
+            9px,
+            calc(var(--scene-unit) * 0.85),
+            18px
+        );
+        font-weight: 700;
+
+        &:hover:not(:disabled) {
+            background: linear-gradient(#eddfc2, #cdb78e);
+        }
+
+        &.is-complete {
+            border-color: #899568;
+            background: linear-gradient(#3d452d, #293020);
+            color: #dce5c4;
+        }
+    }
+
+    .counter-ghost {
+        z-index: 100;
+        width: 9.46%;
+        height: 7.83%;
+        filter:
+            sepia(0.08)
+            drop-shadow(5px 9px 5px #0008);
+    }
+}

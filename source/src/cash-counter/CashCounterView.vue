@@ -13,14 +13,11 @@ import CounterMachine from './components/CounterMachine.vue'
 import { useCashCounterStore } from './stores/cash-counter.store'
 import { useCashDrag } from './composables/useCashDrag'
 import { useCounterSound } from './composables/useCounterSound'
-import {
-    validAmount,
-    cashCounterImages,
-    cashPilePosition,
-} from './utils/cash-counter.utils'
+import { validAmount } from './utils/cash-counter.utils'
 import type { CashPile } from './cash-counter.types'
 import './styles/cash-counter.scss'
-import './styles/cash-counter-tabletop.scss'
+import './styles/cash-counter-scene.scss'
+import './styles/cash-counter-paper.scss'
 
 const store = useCashCounterStore()
 const sound = useCounterSound()
@@ -28,27 +25,51 @@ const { t, te } = useI18n()
 
 const root = ref<HTMLElement | null>(null)
 
-const tabletopUrl = new URL(
-    `${import.meta.env.BASE_URL}images/cash-counter/tabletop.png`,
-    document.baseURI,
-).href
+const sceneUrl =
+    `${import.meta.env.BASE_URL}images/cash-counter/scene.png`
 
-const tabletopStyle = {
-    '--counter-table-image': `url("${tabletopUrl}")`,
-}
+const foregroundParts = [
+    'left-tray',
+    'right-tray',
+    'input',
+    'output',
+] as const
 
 const selectedPileId = ref<number | null>(null)
 
 const leftPiles = computed<CashPile[]>(() =>
-    store.piles.flatMap((amount, id) => {
-        if (
-            store.completedPileIds.includes(id) ||
-            store.activePileId === id
-        ) return []
+    store.piles
+        .flatMap((amount, id) => {
+            if (
+                store.completedPileIds.includes(id) ||
+                store.activePileId === id
+            ) return []
 
-        return [{ id, amount, slot: id }]
-    }),
+            return [{ id, amount, slot: id }]
+        })
+        .map((pile, slot) => ({
+            ...pile,
+            slot,
+        })),
 )
+
+function trayPilePosition(slot: number, totalSlots: number) {
+    const count = Math.max(1, totalSlots)
+
+    // Show paper edges between bundles, rather than whole bill faces.
+    const rise = Math.min(
+        4.8,
+        48 / Math.max(1, count - 1),
+    )
+
+    return {
+        left: '16.425%',
+        bottom: `${18 + slot * rise}%`,
+        '--pile-turn': '0deg',
+        '--pile-order': slot + 1,
+        zIndex: slot + 1,
+    }
+}
 
 const rightPiles = computed<CashPile[]>(() =>
     store.completedPileIds.map((id, slot) => ({
@@ -111,7 +132,7 @@ const dragAmount = computed(() => {
 })
 
 const landingStyle = computed(() =>
-    cashPilePosition(store.collected, store.piles.length),
+    trayPilePosition(store.collected, rightPiles.value.length + 1)
 )
 
 function keyboardLoad(id: number) {
@@ -348,18 +369,25 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="cash-counter-overlay cash-counter-overlay--tabletop" :style="tabletopStyle">
-        <section ref="root" class="cash-counter cash-counter--tabletop" role="dialog" aria-modal="true"
+    <div class="cash-counter-overlay cash-counter-overlay--scene">
+        <section ref="root" class="cash-counter cash-counter--scene" role="dialog" aria-modal="true"
             aria-labelledby="cash-counter-title">
+            <img class="counter-scene-image" :src="sceneUrl" alt="" draggable="false" />
+
             <h1 id="cash-counter-title" class="counter-sr-only">
-                {{ t(store.payload?.titleKey ?? 'cashCounter.injectTitle') }}
+                {{
+                    t(
+                        store.payload?.titleKey ??
+                        'cashCounter.injectTitle'
+                    )
+                }}
             </h1>
 
             <span class="counter-sr-only" role="status">
                 {{ status }}
             </span>
 
-            <button class="counter-table-close" type="button" :aria-label="t('common.close')" @click="store.close">
+            <button class="counter-scene-close" type="button" :aria-label="t('common.close')" @click="store.close">
                 <kbd>ESC</kbd>
                 <span>{{ t('common.close') }}</span>
             </button>
@@ -371,37 +399,28 @@ onUnmounted(() => {
             <div class="counter-desk">
                 <div class="counter-source">
                     <div class="counter-cash-tray">
-                        <img class="counter-tray-art" :src="cashCounterImages.tray" alt="" draggable="false" />
-
-                        <img class="counter-tray-art counter-tray-art--front" :src="cashCounterImages.tray" alt=""
-                            draggable="false" />
-
                         <div class="counter-pile">
-                            <CashStacks :items="leftPiles" :total-slots="store.piles.length" :format="format"
-                                interactive :disabled="!store.canLoad" :lifted-id="feedDrag.dragging.value ? selectedPileId : null
+                            <CashStacks :items="leftPiles" :total-slots="leftPiles.length" :position="trayPilePosition"
+                                :format="format" interactive :disabled="!store.canLoad" :lifted-id="feedDrag.dragging.value
+                                    ? selectedPileId
+                                    : null
                                     " @pick="pickPile" @move="feedDrag.move" @release="feedDrag.up"
                                 @cancel="feedDrag.cancel" @load="keyboardLoad" />
                         </div>
                     </div>
-
-                    <span class="counter-tray-plaque">
-                        {{ t('cashCounter.toCount') }}
-                    </span>
-
-                    <div class="counter-batch-slip">
-                        <span>{{ t('cashCounter.batchLabel') }}</span>
-                        <strong>{{ format(store.amount) }}</strong>
-                    </div>
                 </div>
 
                 <CounterMachine :value="format(store.countedAmount)" :display-state="displayState"
-                    :feeder-label="feederLabel" :running="store.running" :over="feedDrag.over.value"
-                    :duration-ms="store.settings?.stackDurationMs ?? 800" :collectable="store.canCollect"
-                    :collect-label="t('cashCounter.collectPile', {
-                        amount: format(store.activeAmount),
-                    })" :lifted="collectDrag.dragging.value" :progress="store.progress" :complete="complete"
-                    @collect-down="sound.prime(); collectDrag.down($event)" @collect-move="collectDrag.move"
-                    @collect-up="collectDrag.up" @collect-cancel="collectDrag.cancel" @collect="keyboardCollect" />
+                    :feeder-label="feederLabel" :running="store.running" :over="feedDrag.over.value" :duration-ms="store.settings?.stackDurationMs ?? 800
+                        " :collectable="store.canCollect" :collect-label="t('cashCounter.collectPile', {
+                            amount: format(store.activeAmount),
+                        })
+                            " :lifted="collectDrag.dragging.value" :progress="store.progress" :complete="complete"
+                    @collect-down="
+                        sound.prime();
+                    collectDrag.down($event)
+                        " @collect-move="collectDrag.move" @collect-up="collectDrag.up"
+                    @collect-cancel="collectDrag.cancel" @collect="keyboardCollect" />
 
                 <div class="counter-output" :class="{
                     'is-ready': store.allCollected,
@@ -410,50 +429,69 @@ onUnmounted(() => {
                     'is-complete': complete,
                 }">
                     <div class="counter-tray" data-cash-output>
-                        <img class="counter-tray-art" :src="cashCounterImages.tray" alt="" draggable="false" />
-                        <img class="counter-tray-art counter-tray-art--front" :src="cashCounterImages.tray" alt=""
-                            draggable="false" />
-                        <CashStacks :items="rightPiles" :total-slots="store.piles.length" :format="format" />
+                        <CashStacks :items="rightPiles" :total-slots="rightPiles.length" :position="trayPilePosition"
+                            :format="format" />
 
                         <span class="cash-stacks counter-stack-target" aria-hidden="true">
                             <span data-cash-landing :style="landingStyle" />
                         </span>
                     </div>
-
-                    <span class="counter-tray-plaque">
-                        {{ t('cashCounter.countedLabel') }}
-                    </span>
-
-                    <div class="counter-tray-action">
-                        <button v-if="complete" type="button" class="counter-tray-confirm is-complete" disabled>
-                            {{ t('cashCounter.complete') }}
-                        </button>
-
-                        <button v-else-if="store.allCollected || settling" type="button" class="counter-tray-confirm"
-                            :disabled="!store.canConfirm" @click="store.confirm">
-                            {{
-                                store.submitting || settling
-                                    ? t('cashCounter.confirming')
-                                    : t('cashCounter.confirmAmount', {
-                                        amount: format(store.batch?.amount ?? store.amount),
-                                    })
-                            }}
-                        </button>
-
-                        <small v-else>
-                            {{
-                                collectDrag.over.value
-                                    ? t('cashCounter.releaseRight')
-                                    : t('cashCounter.collectedAmount', {
-                                        amount: format(collectedAmount),
-                                    })
-                            }}
-                        </small>
-                    </div>
                 </div>
             </div>
 
-            <div v-if="feedDrag.dragging.value || collectDrag.dragging.value" class="counter-ghost" :style="{
+            <img v-for="part in foregroundParts" :key="part" class="counter-scene-foreground"
+                :class="`counter-scene-foreground--${part}`" :src="sceneUrl" alt="" draggable="false"
+                aria-hidden="true" />
+
+            <span class="scene-plaque scene-plaque--left">
+                {{ t('cashCounter.toCount') }}
+            </span>
+
+            <span class="scene-plaque scene-plaque--right">
+                {{ t('cashCounter.countedLabel') }}
+            </span>
+
+            <div class="scene-receipt scene-receipt--left">
+                <span>{{ t('cashCounter.batchLabel') }}</span>
+                <strong>{{ format(store.amount) }}</strong>
+            </div>
+
+            <div class="scene-receipt scene-receipt--right">
+                <span>{{ t('cashCounter.countedLabel') }}</span>
+
+                <strong>
+                    {{ format(collectedAmount) }}
+                </strong>
+
+                <small v-if="collectDrag.over.value">
+                    {{ t('cashCounter.releaseRight') }}
+                </small>
+            </div>
+
+            <div class="scene-confirmation">
+                <button v-if="complete" class="counter-tray-confirm is-complete" type="button" disabled>
+                    {{ t('cashCounter.complete') }}
+                </button>
+
+                <button v-else-if="store.allCollected || settling" class="counter-tray-confirm" type="button"
+                    :disabled="!store.canConfirm" @click="store.confirm">
+                    {{
+                        store.submitting || settling
+                            ? t('cashCounter.confirming')
+                            : t('cashCounter.confirmAmount', {
+                                amount: format(
+                                    store.batch?.amount ??
+                                    store.amount
+                                ),
+                            })
+                    }}
+                </button>
+            </div>
+
+            <div v-if="
+                feedDrag.dragging.value ||
+                collectDrag.dragging.value
+            " class="counter-ghost" :style="{
                 left: `${activeDrag.x.value}px`,
                 top: `${activeDrag.y.value}px`,
             }">

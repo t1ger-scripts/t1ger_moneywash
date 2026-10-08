@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import CashPaper from './CashPaper.vue'
 import CashStacks from './CashStacks.vue'
-import { cashCounterImages } from '../utils/cash-counter.utils'
 
 const props = defineProps<{
     value: string
@@ -25,58 +25,116 @@ const emit = defineEmits<{
     collect: []
 }>()
 
-const NOTE_COUNT = 20
-const TRAVEL = 0.24
-const SPACING = (1 - TRAVEL) / (NOTE_COUNT - 1)
+const billUrl =
+    `${import.meta.env.BASE_URL}images/cash-counter/bill-face.png`
 
-const clamp = (value: number) => Math.max(0, Math.min(1, value))
+const clamp = (value: number) =>
+    Math.max(0, Math.min(1, value))
 
 const progress = computed(() =>
     props.collectable ? 1 : clamp(props.progress),
 )
 
-const notes = computed(() =>
-    Array.from({ length: NOTE_COUNT }, (_, index) => {
-        const raw = (progress.value - index * SPACING) / TRAVEL
-        const position = clamp(raw)
-
-        return {
-            index,
-            entering: raw > 0 && position < 0.32,
-            exiting: position > 0.65 && raw < 1,
-            landed: raw >= 1,
-            entry: clamp(position / 0.32),
-            exit: clamp((position - 0.65) / 0.35),
-        }
-    }),
+/*
+ * These are visual notes, not currency denominations.
+ * The chosen amount and transaction remain in the store.
+ */
+const noteCount = computed(() =>
+    Math.max(
+        12,
+        Math.min(48, Math.round(props.durationMs / 45)),
+    ),
 )
 
-const outgoing = computed(() =>
-    notes.value.filter((note) => note.exiting),
+/*
+ * Reserve part of the duration for the final note to land.
+ * The last note finishes exactly at progress === 1.
+ */
+const travelFraction = computed(() =>
+    Math.max(
+        0.08,
+        Math.min(0.3, 190 / Math.max(100, props.durationMs)),
+    ),
 )
 
-const outputProgress = computed(() =>
-    notes.value.filter((note) => note.landed).length / NOTE_COUNT,
+const notes = computed(() => {
+    const travel = travelFraction.value
+    const spacing = (1 - travel) / (noteCount.value - 1)
+
+    return Array.from(
+        { length: noteCount.value },
+        (_, index) => {
+            const raw =
+                (progress.value - index * spacing) / travel
+
+            return {
+                index,
+                raw,
+                position: clamp(raw),
+            }
+        },
+    )
+})
+
+const movingNotes = computed(() =>
+    notes.value.filter((note) =>
+        note.raw >= 0 && note.raw < 1,
+    ),
+)
+
+const receivedFill = computed(() => {
+    const landed = notes.value.filter(
+        (note) => note.raw >= 1,
+    ).length
+
+    return landed / noteCount.value
+})
+
+const inputFill = computed(() =>
+    Math.max(0, 1 - progress.value),
 )
 
 const inputStyle = computed(() => ({
-    transform: `translateY(${progress.value * 85}%)`,
-    opacity: progress.value >= 0.995 ? 0 : 1,
+    transform: `translateY(${progress.value * 58}%)`,
+    opacity: clamp((1 - progress.value) * 12),
 }))
 
-const outputStyle = computed(() => ({
-    transform: `translateY(${(1 - outputProgress.value) * 38}%)`,
-    opacity: outputProgress.value > 0 ? 1 : 0,
-}))
+/*
+ * The stack box starts at 56% of the output path.
+ * Its uppermost sheet rises slightly as thickness increases.
+ * Moving notes land at that same upper surface.
+ */
+const landingTop = computed(() =>
+    56 + 9.6 * (1 - receivedFill.value),
+)
 
-function outgoingStyle(index: number, exit: number) {
+function noteStyle(index: number, position: number) {
+    const eased = 1 - (1 - position) ** 1.6
+
+    const top =
+        -26 + (landingTop.value + 26) * eased
+
+    const flutter =
+        Math.sin(position * Math.PI * 4 + index) *
+        Math.sin(position * Math.PI)
+
+    const sideways = flutter * 0.35
+    const rotation = flutter * 0.65
+    const flatten = 0.62 + eased * 0.38
+
     return {
-        transform: [
-            `translateY(${exit * 55}%)`,
-            `rotateX(${55 - exit * 20}deg)`,
-            `rotateZ(${(index % 2 ? 1 : -1) * 0.8}deg)`,
+        top: `${top}%`,
+        left: `${7.7 + sideways}%`,
+        zIndex: 20 + index,
+        opacity: clamp(position * 9),
+        transform:
+            `scaleY(${flatten}) rotate(${rotation}deg)`,
+        filter: [
+            `brightness(${0.78 + eased * 0.14})`,
+            `drop-shadow(0 ${
+                1 + (1 - eased) * 3
+            }px 1px #0005)`,
         ].join(' '),
-        opacity: Math.min(1, exit * 7),
     }
 }
 </script>
@@ -88,17 +146,7 @@ function outgoingStyle(index: number, exit: number) {
             'is-running': running,
             'is-complete': complete,
         }"
-        :style="{
-            '--roller-time': `${Math.max(45, durationMs / NOTE_COUNT)}ms`,
-        }"
     >
-        <img
-            class="machine-art"
-            :src="cashCounterImages.machine"
-            alt=""
-            draggable="false"
-        />
-
         <div
             class="counter-feeder"
             :class="{ 'is-over': over }"
@@ -110,43 +158,41 @@ function outgoingStyle(index: number, exit: number) {
             </span>
         </div>
 
-        <div v-if="running" class="machine-input-window">
-            <img
-                class="machine-input-stack"
-                :src="cashCounterImages.loose"
+        <div
+            v-if="running"
+            class="counter-input-window"
+            aria-hidden="true"
+        >
+            <div
+                class="counter-input-cash"
                 :style="inputStyle"
-                alt=""
-                draggable="false"
-            />
-        </div>
-
-        <div class="machine-output-window" aria-hidden="true">
-            <img
-                v-for="note in outgoing"
-                v-show="running"
-                :key="`out-${note.index}`"
-                class="machine-output-note"
-                :src="cashCounterImages.bill"
-                :style="outgoingStyle(note.index, note.exit)"
-                alt=""
-                draggable="false"
-            />
-
-            <img
-                v-if="running"
-                class="machine-output-stack"
-                :src="cashCounterImages.loose"
-                :style="outputStyle"
-                alt=""
-                draggable="false"
-            />
+            >
+                <CashPaper :fill="inputFill" />
+            </div>
         </div>
 
         <div
             v-if="running"
-            class="machine-roller-motion"
+            class="counter-paper-path"
             aria-hidden="true"
-        />
+        >
+            <div class="counter-received-cash">
+                <CashPaper :fill="receivedFill" />
+            </div>
+
+            <img
+                v-for="note in movingNotes"
+                :key="note.index"
+                class="counter-moving-note"
+                :src="billUrl"
+                :style="noteStyle(
+                    note.index,
+                    note.position
+                )"
+                alt=""
+                draggable="false"
+            />
+        </div>
 
         <button
             v-if="collectable"
@@ -165,24 +211,6 @@ function outgoingStyle(index: number, exit: number) {
         >
             <CashStacks compact />
         </button>
-
-        <!--
-            These are clipped copies of the SAME machine image.
-            They put the actual guides and front lip in front of the cash.
-        -->
-        <img
-            class="machine-art machine-art--input-front"
-            :src="cashCounterImages.machine"
-            alt=""
-            draggable="false"
-        />
-
-        <img
-            class="machine-art machine-art--output-front"
-            :src="cashCounterImages.machine"
-            alt=""
-            draggable="false"
-        />
 
         <div class="counter-display">
             <strong>{{ value }}</strong>

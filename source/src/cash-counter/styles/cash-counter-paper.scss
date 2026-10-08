@@ -1,0 +1,223 @@
+.cash-counter.cash-counter--scene {
+    /*
+     * Shared cash artwork.
+     * Each sheet has the same perspective and proportions.
+     */
+    .cash-paper {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        isolation: isolate;
+    }
+
+    .cash-paper-part {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+
+    .cash-paper-part--face {
+        z-index: 2;
+        clip-path: inset(0 0 24% 0);
+    }
+
+    .cash-paper-part--edges {
+        z-index: 1;
+        clip-path: inset(76% 0 0 0);
+        transform-origin: center bottom;
+    }
+
+    /*
+     * Remove the transparent margins in the generated
+     * bundle images through positioning, not image editing.
+     */
+    .cash-paper-art {
+        position: absolute;
+        inset: 0;
+        display: block;
+        overflow: hidden;
+        pointer-events: none;
+    }
+
+    .cash-paper .cash-paper-art > img {
+        position: absolute;
+        inset: auto;
+        left: -1.7%;
+        top: -24.6%;
+        width: 103.4%;
+        height: 142.1%;
+        max-width: none;
+        object-fit: fill;
+        clip-path: none;
+        transform: none;
+        filter: none;
+        pointer-events: none;
+    }
+
+    /*
+     * One column in each tray.
+     * Bundle width matches the machine and drag ghost.
+     */
+    .counter-pile .cash-bundle,
+    .counter-tray > .cash-stacks .cash-bundle,
+    .counter-stack-target > span {
+        width: 67.15%;
+        height: 27.85%;
+    }
+
+    /*
+     * Compact bundles fill their parent:
+     * used by the machine and drag ghost.
+     */
+    .cash-stacks--compact .cash-bundle {
+        width: 100%;
+        height: 100%;
+    }
+
+    /*
+     * Hopper:
+     * The paper travels down behind the scene's intake lip.
+     */
+    .counter-input-window {
+        position: absolute;
+        z-index: 2;
+        left: 27%;
+        top: 9%;
+        width: 46%;
+        height: 18%;
+        overflow: hidden;
+        pointer-events: none;
+    }
+
+    .counter-input-cash {
+        position: absolute;
+        left: 2.17%;
+        top: 0;
+        width: 95.65%;
+        height: 80%;
+        transform-origin: center bottom;
+        filter: brightness(0.86);
+        pointer-events: none;
+    }
+
+    /*
+     * Output:
+     * Notes start above the visible window, behind the rollers,
+     * and travel to the upper surface of the receiving stack.
+     */
+    .counter-paper-path {
+        position: absolute;
+        z-index: 2;
+        left: 24%;
+        top: 48%;
+        width: 52%;
+        height: 36%;
+        overflow: hidden;
+        pointer-events: none;
+        isolation: isolate;
+    }
+
+    .counter-received-cash {
+        position: absolute;
+        z-index: 1;
+        left: 7.7%;
+        top: 56%;
+        width: 84.6%;
+        height: 40%;
+        filter: drop-shadow(0 3px 2px #0007);
+        pointer-events: none;
+    }
+
+    .counter-moving-note {
+        position: absolute;
+        width: 84.6%;
+        height: 30.4%;
+        object-fit: fill;
+        transform-origin: center bottom;
+        clip-path: polygon(
+            5% 0,
+            95% 0,
+            100% 100%,
+            0 100%
+        );
+        pointer-events: none;
+    }
+
+    /*
+     * Same box as the completed receiving stack.
+     * Finishing the count does not change the cash size
+     * or move it to another position.
+     */
+    .counter-collected-pile {
+        left: 28%;
+        top: 68.16%;
+        width: 44%;
+        height: 14.4%;
+
+        .cash-bundle {
+            animation: none;
+            filter: drop-shadow(0 3px 2px #0007);
+        }
+
+        &:hover .cash-paper {
+            filter: brightness(1.04);
+        }
+    }
+
+    /*
+     * 44% of the machine's 38% scene width = 16.72%.
+     */
+    .counter-ghost {
+        width: 16.72%;
+        height: 10.368%;
+        filter: drop-shadow(5px 9px 5px #0008);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cash-counter.cash-counter--scene {
+        .counter-moving-note {
+            visibility: hidden;
+        }
+    }
+}
+
+.cash-counter.cash-counter--scene {
+    .counter-source .counter-pile .cash-bundle,
+    .counter-output .counter-tray > .cash-stacks .cash-bundle {
+        left: 16.425% !important;
+        transform: none;
+        transform-origin: center bottom;
+        filter: drop-shadow(0 3px 2px #0006);
+
+        transition:
+            bottom 180ms ease-out,
+            filter 120ms ease;
+    }
+
+    .counter-source .counter-pile .cash-bundle:not(:disabled) {
+        &:hover,
+        &:focus-visible {
+            z-index: var(--pile-order) !important;
+            transform: none;
+            filter:
+                brightness(1.07)
+                drop-shadow(0 3px 2px #0007);
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cash-counter.cash-counter--scene {
+        .counter-source .counter-pile .cash-bundle,
+        .counter-output .counter-tray > .cash-stacks .cash-bundle {
+            transition: none;
+        }
+    }
+}

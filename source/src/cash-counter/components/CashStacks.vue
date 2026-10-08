@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, type CSSProperties } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { CashPile } from '../cash-counter.types'
-import {
-    cashCounterImages,
-    cashPilePosition,
-} from '../utils/cash-counter.utils'
+import { cashPilePosition } from '../utils/cash-counter.utils'
+import CashPaper from './CashPaper.vue'
 
 const props = withDefaults(
     defineProps<{
@@ -17,6 +15,10 @@ const props = withDefaults(
         interactive?: boolean
         disabled?: boolean
         format?: (amount: number) => string
+        position?: (
+            slot: number,
+            totalSlots: number
+        ) => CSSProperties
     }>(),
     {
         items: () => [],
@@ -51,50 +53,30 @@ function formatAmount(amount: number) {
 </script>
 
 <template>
-    <span
-        class="cash-stacks"
-        :class="{
-            'cash-stacks--compact': compact,
-            'cash-stacks--interactive': interactive,
-        }"
-    >
-        <component
-            :is="interactive ? 'button' : 'span'"
-            v-for="pile in items"
-            :key="pile.id"
-            class="cash-bundle"
+    <span class="cash-stacks" :class="{
+        'cash-stacks--compact': compact,
+        'cash-stacks--interactive': interactive,
+    }">
+        <component :is="interactive ? 'button' : 'span'" v-for="pile in items" :key="pile.id" class="cash-bundle"
             :class="{
                 'is-lifted': lifted || liftedId === pile.id,
-            }"
-            :style="compact
+            }" :style="compact
                 ? undefined
-                : cashPilePosition(pile.slot, totalSlots)"
-            :type="interactive ? 'button' : undefined"
-            :disabled="interactive ? disabled : undefined"
-            :data-pile-id="pile.id"
-            :aria-label="interactive
+                : position
+                    ? position(pile.slot, totalSlots)
+                    : cashPilePosition(pile.slot, totalSlots)" :type="interactive ? 'button' : undefined"
+            :disabled="interactive ? disabled : undefined" :data-pile-id="pile.id" :aria-label="interactive
                 ? t('cashCounter.loadPile', {
                     amount: formatAmount(pile.amount),
                 })
-                : undefined"
-            @pointerdown="interactive && emit('pick', $event, pile.id)"
-            @pointermove="interactive && emit('move', $event)"
-            @pointerup="interactive && emit('release', $event)"
+                : undefined" @pointerdown="interactive && emit('pick', $event, pile.id)"
+            @pointermove="interactive && emit('move', $event)" @pointerup="interactive && emit('release', $event)"
             @pointercancel="interactive && emit('cancel')"
             @keydown.enter.prevent="interactive && !disabled && emit('load', pile.id)"
-            @keydown.space.prevent="interactive && !disabled && emit('load', pile.id)"
-        >
-            <img
-                :src="cashCounterImages.pile"
-                alt=""
-                draggable="false"
-            />
+            @keydown.space.prevent="interactive && !disabled && emit('load', pile.id)">
+            <CashPaper banded />
 
-            <span
-                v-if="!compact"
-                class="counter-pile-value"
-                aria-hidden="true"
-            >
+            <span v-if="!compact" class="counter-pile-value" aria-hidden="true">
                 {{ formatAmount(pile.amount) }}
             </span>
         </component>
