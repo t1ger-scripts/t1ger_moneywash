@@ -12,6 +12,7 @@ export interface CounterBatch {
     durationMs: number
     remainingMs: number
     status: 'counting' | 'ready' | 'settling' | 'complete' | 'review'
+    settings: CashCounterSettings
 }
 
 export interface CashCounterPayload {
@@ -31,3 +32,5 @@ export interface CounterStatus {
     available: number
     batch?: CounterBatch
 }
+
+export type CounterPhase = 'idle' | 'counting' | 'collect'

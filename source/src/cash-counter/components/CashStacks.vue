@@ -1,25 +1,59 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { stackCount } from '../utils/cash-counter.utils'
+import { computed, ref } from 'vue'
+import { cashCounterImages } from '../utils/cash-counter.utils'
+
 const props = withDefaults(
-    defineProps<{ amount: number; compact?: boolean; stacks?: number }>(),
-    { compact: false },
+    defineProps<{
+        count?: number
+        compact?: boolean
+        lifted?: boolean
+    }>(),
+    {
+        count: 0,
+        compact: false,
+        lifted: false,
+    },
 )
+
+const imageFailed = ref(false)
+
 const count = computed(() =>
-    props.compact ? 1 : (props.stacks ?? stackCount(props.amount)),
+    props.compact ? 1 : Math.max(0, props.count),
 )
-function position(i: number) {
-    const layer = Math.floor(i / 2)
+
+function position(index: number) {
     return {
-        '--x': `${(i % 2) * 68 + 9 + (layer % 2 ? 4 : 0)}px`,
-        '--y': `${16 + layer * 26}px`,
-        '--turn': `${(i % 2 ? 8 : -10) + ((layer % 3) - 1) * 4}deg`,
-        '--layer': i + 1,
+        '--x': `${9 + (index % 2) * 77}px`,
+        '--y': `${16 + Math.floor(index / 2) * 19}px`,
+        '--turn': `${index % 2 ? 4 : -5}deg`,
+        '--layer': index + 1,
     }
 }
 </script>
+
 <template>
-    <span class="cash-stacks" :class="{ 'cash-stacks--compact': compact }" aria-hidden="true">
-        <span v-for="i in count" :key="i" class="cash-bundle" :style="position(i - 1)" />
+    <span
+        class="cash-stacks"
+        :class="{ 'cash-stacks--compact': compact }"
+        aria-hidden="true"
+    >
+        <span
+            v-for="i in count"
+            :key="i"
+            class="cash-bundle"
+            :class="{
+                'has-image': !imageFailed,
+                'is-lifted': lifted && i === count,
+            }"
+            :style="position(i - 1)"
+        >
+            <img
+                v-if="!imageFailed"
+                :src="cashCounterImages.pile"
+                alt=""
+                draggable="false"
+                @error="imageFailed = true"
+            />
+        </span>
     </span>
 </template>

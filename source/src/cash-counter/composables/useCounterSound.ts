@@ -92,10 +92,22 @@ export function useCounterSound() {
         paper(0.032, 0.065, 800)
     }
 
-    function feed() {
-        if (!motor || performance.now() - lastFeed < 95) return
+    function feed(intervalMs = 95) {
+        // AudioContext.resume() can finish after counting has started.
+        if (!motor) start()
+
+        if (
+            !motor ||
+            performance.now() - lastFeed < Math.max(35, intervalMs)
+        ) return
+
         lastFeed = performance.now()
-        paper(0.018 + Math.random() * 0.009, 0.035, 1050 + Math.random() * 500)
+
+        paper(
+            0.018 + Math.random() * 0.009,
+            0.035,
+            1050 + Math.random() * 500,
+        )
     }
 
     function stop() {

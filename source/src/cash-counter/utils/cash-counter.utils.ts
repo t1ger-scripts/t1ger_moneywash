@@ -1,13 +1,25 @@
-export const stackThresholds = [
-    3_000, 10_000, 15_000, 25_000, 35_000, 50_000, 65_000, 80_000,
-    100_000, 150_000, 250_000, 400_000, 600_000, 1_000_000, 5_000_000,
-    Infinity,
-]
-export function stackCount(amount: number): number {
-    return amount <= 0
-        ? 0
-        : stackThresholds.findIndex((limit) => amount <= limit) + 1
+export const cashCounterImages = {
+    pile: `${import.meta.env.BASE_URL}images/cash-counter/pile.png`,
+    bill: `${import.meta.env.BASE_URL}images/cash-counter/bill.png`,
 }
+
 export function validAmount(amount: number, available: number): boolean {
     return Number.isSafeInteger(amount) && amount > 0 && amount <= available
+}
+
+export function splitCash(amount: number, stackCount: number): number[] {
+    if (!Number.isSafeInteger(amount) || amount <= 0) return []
+
+    const configured = Number.isFinite(stackCount)
+        ? Math.floor(stackCount)
+        : 1
+
+    const count = Math.min(amount, Math.max(1, Math.min(20, configured)))
+    const base = Math.floor(amount / count)
+    const remainder = amount % count
+
+    return Array.from(
+        { length: count },
+        (_, index) => base + (index < remainder ? 1 : 0),
+    )
 }

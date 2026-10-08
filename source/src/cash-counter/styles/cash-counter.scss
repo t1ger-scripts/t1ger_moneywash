@@ -8,26 +8,6 @@
     padding: 24px;
     background: rgb(3 7 5 / 62%);
     font-family: 'Inter Variable', Arial, sans-serif;
-
-    .counter-demo {
-        width: min(900px, 95vw);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 12px;
-        margin-bottom: 8px;
-        background: #242823;
-        color: #bbc3b3;
-        border-radius: 6px;
-        font-size: 11px;
-
-        select {
-            background: #1b2218;
-            color: #ddd;
-            padding: 5px;
-            margin-left: 8px;
-        }
-    }
 }
 
 .cash-counter {
@@ -866,6 +846,242 @@
         .counter-footer {
             padding: 10px 15px 17px;
             gap: 6px;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cash-counter .is-running .counter-moving-note {
+        animation: none;
+        top: 15px;
+    }
+}
+
+/* Individual cash-pile interaction. */
+.cash-counter {
+    /*
+     * Explicit counter typography and focus styling prevent the portal's
+     * theme colors and heading rules from changing this interface.
+     */
+    font-family: 'Inter Variable', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    letter-spacing: normal;
+
+    h1,
+    h2,
+    h3,
+    p {
+        margin: 0;
+        letter-spacing: normal;
+    }
+
+    button,
+    input {
+        font-family: inherit;
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+        box-shadow: none;
+        outline: 2px solid #dac493;
+        outline-offset: 3px;
+    }
+
+    ::selection {
+        background: #dac493;
+        color: #191d1c;
+    }
+
+    .counter-machine {
+        position: relative;
+    }
+
+    .counter-desk {
+        grid-template-columns: 1fr 1.8fr 1fr;
+    }
+
+    /* Identical tray dimensions and pile origins on both sides. */
+    .counter-cash-tray,
+    .counter-tray {
+        width: 205px;
+        height: 253px;
+        padding-bottom: 0;
+    }
+
+    .counter-pile {
+        position: absolute;
+        inset: 0;
+        width: 180px;
+        height: 253px;
+        margin: 0 auto;
+        filter: none;
+    }
+
+    .counter-pile > .cash-stacks,
+    .counter-tray > .cash-stacks {
+        position: absolute;
+        left: 50%;
+        bottom: 15px;
+        width: 180px;
+        height: 238px;
+        transform: translateX(-50%);
+        transform-origin: center bottom;
+    }
+
+    .cash-bundle {
+        width: 86px;
+        height: 40px;
+        transition: opacity 100ms ease;
+    }
+
+    .cash-bundle.is-lifted,
+    .counter-collected-pile.is-lifted {
+        opacity: 0;
+    }
+
+    .cash-bundle.has-image {
+        width: 94px;
+        height: 48px;
+        border: 0;
+        border-radius: 0;
+        background: none;
+        box-shadow: none;
+        filter: drop-shadow(2px 5px 3px #0007);
+
+        &::before,
+        &::after {
+            display: none;
+        }
+
+        img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+            user-select: none;
+        }
+    }
+
+    .counter-collected-pile {
+        position: absolute;
+        z-index: 4;
+        left: 50%;
+        bottom: 12px;
+        width: 132px;
+        height: 65px;
+        padding: 0;
+        border: 0;
+        background: none;
+        transform: translateX(-50%);
+        cursor: grab;
+        touch-action: none;
+        filter: drop-shadow(0 3px 5px #0008);
+
+        .cash-stacks {
+            width: 100%;
+            height: 65px;
+        }
+
+        .cash-bundle {
+            left: 19px;
+            bottom: 10px;
+            transform: rotate(-3deg);
+        }
+
+        &:hover,
+        &:focus-visible {
+            filter: drop-shadow(0 0 5px #d1b976aa);
+        }
+
+        &:focus-visible {
+            border-radius: 5px;
+        }
+    }
+
+    .counter-moving-note.has-image {
+        background: none;
+
+        img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            user-select: none;
+        }
+    }
+
+    .is-running .counter-moving-note {
+        animation-duration: var(--bill-duration, 67ms);
+    }
+
+    .counter-output.is-over .counter-tray {
+        filter: drop-shadow(0 0 9px #d1b976aa);
+    }
+
+    .counter-source,
+    .counter-output {
+        position: relative;
+    }
+
+    .counter-output > small {
+        position: absolute;
+        top: calc(100% + 9px);
+        left: 0;
+        right: 0;
+        margin: 0;
+        white-space: nowrap;
+    }
+
+    /* Reserve action space throughout the entire interaction. */
+    .counter-final-actions {
+        min-height: 38px;
+    }
+
+    .counter-confirm,
+    .counter-recount {
+        transition:
+            opacity 120ms ease,
+            background 120ms ease;
+    }
+
+    .counter-confirm:disabled,
+    .counter-recount:disabled {
+        opacity: 0.35;
+        cursor: default;
+    }
+
+    .counter-pile:disabled {
+        cursor: default;
+    }
+
+    .counter-ghost .cash-bundle.has-image {
+        width: 110px;
+        height: 54px;
+    }
+}
+
+@media (max-width: 600px) {
+    .cash-counter {
+        .counter-desk {
+            grid-template-columns: 1fr 1.5fr;
+        }
+
+        .counter-pile {
+            width: 180px;
+            max-width: none;
+            margin: 0 auto;
+            transform: none;
+        }
+
+        .counter-pile > .cash-stacks,
+        .counter-tray > .cash-stacks {
+            transform: translateX(-50%) scale(0.76);
+        }
+
+        .counter-output {
+            margin-bottom: 24px;
         }
     }
 }

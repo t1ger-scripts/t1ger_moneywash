@@ -278,6 +278,17 @@
         }
     },
     "cashCounter": {
+        "loadPile": "Load {amount}",
+        "releasePile": "Release to count",
+        "nextPile": "Load next pile",
+        "collectPile": "Move {amount} to the right tray",
+        "collectReady": "Collect counted pile",
+        "releaseRight": "Release onto tray",
+        "countingPile": "Counting pile {current}/{total}",
+        "collectedPiles": "{current}/{total} collected",
+        "waitingForServer": "Finishing batch…",
+        "readyToConfirm": "Ready to confirm",
+        "confirmAmount": "Confirm {amount}",
         "injectTitle": "Inject cash",
         "withdrawTitle": "Withdraw cash",
         "available": "Available cash",

@@ -37,20 +37,36 @@ local function GetCashCounterBatchDuration(amount, settings)
 end
 
 local function failure(reason, data) return { success = false, reason = reason, data = data } end
+
 local function locks(row) return { ("business:%d"):format(row.businessId), "owner:" .. row.identifier } end
+
 function HasPendingCashCounter(businessId) return ByBusiness[businessId] ~= nil end
+
 function IsCashCounterSaveBlocked(businessId)
     local row = ByBusiness[businessId]
     return row ~= nil and row.applied == true
 end
+
 local function publicBatch(row)
     if not row then return nil end
+
     local timeLeft = math.max(0, row.deadline - GetGameTimer())
     local status = row.state
-    if status == "counting" and timeLeft == 0 then status = "ready" end
-    return { id = row.id, amount = row.amount, durationMs = row.durationMs,
-        remainingMs = status == "counting" and timeLeft or 0, status = status }
+
+    if status == "counting" and timeLeft == 0 then
+        status = "ready"
+    end
+
+    return {
+        id = row.id,
+        amount = row.amount,
+        durationMs = row.durationMs,
+        remainingMs = status == "counting" and timeLeft or 0,
+        status = status,
+        settings = row.settings,
+    }
 end
+
 local function playerBusiness(src, businessId)
     if not IsBusinessStoreReady() then return nil, "not_ready" end
     local identifier = _API.Player.GetIdentifier(src)
@@ -65,27 +81,35 @@ local function playerBusiness(src, businessId)
     end
     return business
 end
+
 local function localization()
     local name = (Config.BusinessPortal or {}).Locale or GetConvar("ox:locale", "en")
     if type(name) ~= "string" or not name:match("^[%w_-]+$") then name = "en" end
     local raw = LoadResourceFile(Resource, "locales/" .. name .. ".json")
-    if not raw then name = "en"; raw = LoadResourceFile(Resource, "locales/en.json") end
+    if not raw then
+        name = "en"; raw = LoadResourceFile(Resource, "locales/en.json")
+    end
     local ok, messages = pcall(json.decode, raw or "{}")
     return name, ok and messages or {}
 end
+
 local function onlineSource(identifier)
     for _, player in ipairs(_API.GetOnlinePlayers()) do
         if player.identifier == identifier then return player.source end
     end
 end
+
 local function statusData(src, row)
     return { available = GetDirtyMoney(src), batch = publicBatch(row) }
 end
+
 local function clearPreview(src, row)
     if row.state == "settling" or row.state == "review" or row.working then return false end
     if Pending[row.identifier] == row then Pending[row.identifier] = nil end
     local session = Sessions[src]
-    if session and session.batchId == row.id then session.batchId = nil; session.result = nil end
+    if session and session.batchId == row.id then
+        session.batchId = nil; session.result = nil
+    end
     return true
 end
 
@@ -97,13 +121,21 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, b
     local row = Pending[business.identifier]
     Sessions[src] = { identifier = business.identifier, businessId = businessId, batchId = row and row.id }
     local localeName, messages = localization()
-    return { success = true, data = {
-        businessId = businessId, operation = "inject", available = GetDirtyMoney(src),
-        currency = Config.Currency, locale = localeName, messages = messages,
-        titleKey = "cashCounter.injectTitle", successKey = "cashCounter.injected",
-        settings = GetCashCounterSettings(),
-        batch = publicBatch(row),
-    } }
+    return {
+        success = true,
+        data = {
+            businessId = businessId,
+            operation = "inject",
+            available = GetDirtyMoney(src),
+            currency = Config.Currency,
+            locale = localeName,
+            messages = messages,
+            titleKey = "cashCounter.injectTitle",
+            successKey = "cashCounter.injected",
+            settings = GetCashCounterSettings(),
+            batch = publicBatch(row),
+        }
+    }
 end)
 
 lib.callback.register("t1ger_moneywash:server:cashCounter:start", function(src, amount)
@@ -128,8 +160,16 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:start", function(src, 
     nextBatchId = nextBatchId + 1
     local settings = GetCashCounterSettings()
     local duration = GetCashCounterBatchDuration(amount, settings)
-    local row = { id = nextBatchId, identifier = session.identifier, businessId = business.id,
-        amount = amount, durationMs = duration, deadline = GetGameTimer() + duration, state = "counting" }
+    local row = {
+        id = nextBatchId,
+        identifier = session.identifier,
+        businessId = business.id,
+        amount = amount,
+        durationMs = duration,
+        deadline = GetGameTimer() + duration,
+        state = "counting",
+        settings = settings,
+    }
     Pending[row.identifier], session.batchId = row, row.id
     return { success = true, data = statusData(src, row) }
 end)
@@ -162,7 +202,9 @@ local function settle(row)
     end
     if not row.applied then
         local fields, result = BuildCashInjection(business, row.amount)
-        if not fields then row.working = false; return end
+        if not fields then
+            row.working = false; return
+        end
         row.result, row.applied = result, true
         UpdateBusinessFields(row.businessId, fields)
     end
@@ -199,7 +241,9 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:confirm", function(src
     if row.state ~= "counting" or GetGameTimer() < row.deadline then return failure("count_not_ready") end
     if row.working then return failure("operation_in_progress") end
     local business, reason = playerBusiness(src, row.businessId)
-    if not business then clearPreview(src, row); return failure(reason, statusData(src)) end
+    if not business then
+        clearPreview(src, row); return failure(reason, statusData(src))
+    end
     if not AcquireCashCounterOwnershipLocks(locks(row)) then return failure("operation_in_progress") end
     ByBusiness[row.businessId], row.working = row, true
     -- A previous autosave may yield. Revalidate identity, ownership, distance and

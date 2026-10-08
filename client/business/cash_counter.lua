@@ -137,6 +137,7 @@ serverRequest = function(name, ...)
                 durationMs = duration,
                 remainingMs = duration,
                 status = "counting",
+                settings = testCounter.settings,
             }
             testCounter.batch = batch
             testCounter.deadline = GetGameTimer() + duration
