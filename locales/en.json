@@ -278,6 +278,9 @@
         }
     },
     "cashCounter": {
+        "dragToFinish": "Drag cash down to finish",
+        "putCashAway": "Put cash away",
+        "releaseToFinish": "Release to finish",
         "toCount": "To count",
         "countedLabel": "Counted",
         "batchLabel": "Batch",

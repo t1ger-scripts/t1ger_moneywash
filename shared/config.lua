@@ -154,7 +154,7 @@ Config.Reputation = {
 Config.CashCounter = {
     -- Number of piles used to represent the selected amount.
     -- Whole number between 1 and 20.
-    StackCount = 10,
+    StackCount = 3,
 
     -- Time spent counting EACH pile, in milliseconds.
     StackDurationMs = 2000,

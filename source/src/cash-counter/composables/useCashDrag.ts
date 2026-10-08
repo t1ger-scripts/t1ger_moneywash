@@ -3,8 +3,9 @@ import { ref, type Ref } from 'vue'
 export function useCashDrag(
     root: Ref<HTMLElement | null>,
     enabled: () => boolean,
-    submit: () => void | Promise<void>,
+    submit: () => void | boolean | Promise<void | boolean>,
     targetSelector = '[data-cash-feeder]',
+    sourceSelector = '.cash-bundle',
 ) {
     const dragging = ref(false)
     const animating = ref(false)
@@ -119,7 +120,11 @@ export function useCashDrag(
                 !enabled()
             ) return
 
-            await submit()
+            const result = await submit()
+
+            if (result === false && version === generation) {
+                await animateTo(origin)
+            }
         } finally {
             if (version === generation) cancel()
         }
@@ -157,7 +162,7 @@ export function useCashDrag(
         ) return
 
         const element = event.target instanceof Element
-            ? event.target.closest('.cash-bundle')
+            ? event.target.closest(sourceSelector)
             : null
 
         if (!element) return
@@ -190,9 +195,9 @@ export function useCashDrag(
     async function transfer(element: HTMLElement) {
         if (!enabled() || dragging.value) return
 
-        const pile = element.matches('.cash-bundle')
+        const pile = element.matches(sourceSelector)
             ? element
-            : element.querySelector('.cash-bundle:last-child')
+            : element.querySelector(sourceSelector)
 
         if (!pile) return
 

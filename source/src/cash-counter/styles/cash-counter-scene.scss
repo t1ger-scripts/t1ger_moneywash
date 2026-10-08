@@ -388,54 +388,6 @@
         left: 80%;
     }
 
-    /*
-     * Reserved location beneath the right receipt.
-     * Appearing buttons never move the scene.
-     */
-    .scene-confirmation {
-        position: absolute;
-        z-index: 50;
-        left: 77%;
-        top: 90%;
-        width: 20%;
-        height: 6%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .counter-tray-confirm {
-        width: 100%;
-        min-height: 0;
-        padding:
-            calc(var(--scene-unit) * 0.55)
-            calc(var(--scene-unit) * 0.7);
-        border: 1px solid #bca77f;
-        border-radius: 3px;
-        background: linear-gradient(#ddceaf, #bda57b);
-        color: #30271d;
-        box-shadow:
-            inset 0 1px 0 #fff3,
-            1px 4px 6px #0006;
-        font-family: 'Courier New', monospace;
-        font-size: clamp(
-            9px,
-            calc(var(--scene-unit) * 0.85),
-            18px
-        );
-        font-weight: 700;
-
-        &:hover:not(:disabled) {
-            background: linear-gradient(#eddfc2, #cdb78e);
-        }
-
-        &.is-complete {
-            border-color: #899568;
-            background: linear-gradient(#3d452d, #293020);
-            color: #dce5c4;
-        }
-    }
-
     .counter-ghost {
         z-index: 100;
         width: 9.46%;

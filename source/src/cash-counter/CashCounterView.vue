@@ -15,6 +15,7 @@ import { useCashDrag } from './composables/useCashDrag'
 import { useCounterSound } from './composables/useCounterSound'
 import { cashCounterImages, trayPilePosition, validAmount } from './utils/cash-counter.utils'
 import type { CashPile } from './cash-counter.types'
+import CashPaper from './components/CashPaper.vue'
 import './styles/cash-counter.scss'
 import './styles/cash-counter-scene.scss'
 import './styles/cash-counter-paper.scss'
@@ -33,6 +34,8 @@ const foregroundParts = [
 ] as const
 
 const selectedPileId = ref<number | null>(null)
+
+const finalPileHovered = ref(false)
 
 const leftPiles = computed<CashPile[]>(() =>
     store.piles
@@ -94,6 +97,106 @@ const collectDrag = useCashDrag(
     collectPile,
     '[data-cash-output]',
 )
+
+const finalDrag = useCashDrag(
+    root,
+    () =>
+        store.canConfirm &&
+        !feedDrag.dragging.value &&
+        !collectDrag.dragging.value,
+    async () => {
+        await store.confirm()
+
+        return (
+            store.batch?.status === 'complete' ||
+            store.batch?.status === 'settling'
+        )
+    },
+    '[data-cash-finish]',
+    '[data-cash-final-pile]',
+)
+
+const finalPileGeometry = computed(() => {
+    const count = Math.max(1, rightPiles.value.length)
+    const rise = Math.min(
+        4.8,
+        48 / Math.max(1, count - 1),
+    )
+
+    return {
+        rise,
+        height: 27.85 + (count - 1) * rise,
+    }
+})
+
+const finalPileStyle = computed(() => ({
+    height: `${finalPileGeometry.value.height}%`,
+}))
+
+const finalGhostStyle = computed(() => ({
+    left: `${finalDrag.x.value}px`,
+    top: `${finalDrag.y.value}px`,
+
+    // The tray's cash region is 37.23% of the scene height.
+    height: `${finalPileGeometry.value.height * 0.3723}%`,
+}))
+
+function finalBundleStyle(slot: number) {
+    const { rise, height } = finalPileGeometry.value
+
+    return {
+        bottom: `${slot * rise / height * 100}%`,
+        height: `${27.85 / height * 100}%`,
+        zIndex: slot + 1,
+    }
+}
+
+function pickFinalPile(event: PointerEvent) {
+    sound.prime()
+    finalDrag.down(event)
+}
+
+function keyboardFinish() {
+    const pile = root.value?.querySelector<HTMLElement>(
+        '[data-cash-final-pile]',
+    )
+
+    if (!pile) return
+
+    sound.prime()
+    void finalDrag.transfer(pile)
+}
+
+const finalHint = computed(() => {
+    if (complete.value) return t('cashCounter.complete')
+
+    if (store.submitting || settling.value) {
+        return t('cashCounter.confirming')
+    }
+
+    if (!store.canConfirm && store.allCollected) {
+        return t('cashCounter.waitingForServer')
+    }
+
+    if (finalDrag.over.value) {
+        return t(
+            'cashCounter.releaseToFinish',
+            'Release to finish',
+        )
+    }
+
+    if (!finalDrag.dragging.value) {
+        return t(
+            'cashCounter.dragToFinish',
+            'Drag cash down to finish',
+        )
+    }
+
+    return t(
+        'cashCounter.putCashAway',
+        'Put cash away',
+    )
+})
 
 const activeDrag = computed(() =>
     collectDrag.dragging.value ? collectDrag : feedDrag,
@@ -273,6 +376,7 @@ watch(complete, (value) => {
     sound.deposited()
     feedDrag.cancel()
     collectDrag.cancel()
+    finalDrag.cancel()
 
     const session = store.payload
     const batchId = store.batch?.id
@@ -291,11 +395,16 @@ watch(complete, (value) => {
 function escape(event: KeyboardEvent) {
     if (
         event.key === 'Escape' &&
-        (feedDrag.dragging.value || collectDrag.dragging.value)
+        (
+            feedDrag.dragging.value ||
+            collectDrag.dragging.value ||
+            finalDrag.dragging.value
+        )
     ) {
         event.preventDefault()
         feedDrag.cancel()
         collectDrag.cancel()
+        finalDrag.cancel()
     }
 }
 
@@ -338,6 +447,7 @@ onUnmounted(() => {
     clearTimeout(closeTimer)
     feedDrag.cancel()
     collectDrag.cancel()
+    finalDrag.cancel()
     sound.dispose()
     document.removeEventListener('keydown', escape)
 })
@@ -402,6 +512,12 @@ onUnmounted(() => {
                     'is-target': collectDrag.dragging.value,
                     'is-over': collectDrag.over.value,
                     'is-complete': complete,
+                    'is-final-lifted':
+                        finalDrag.dragging.value || settling || complete,
+                    'is-final-hovered':
+                        finalPileHovered &&
+                        store.canConfirm &&
+                        !finalDrag.dragging.value,
                 }">
                     <div class="counter-tray" data-cash-output>
                         <CashStacks :items="rightPiles" :total-slots="rightPiles.length" :format="format" />
@@ -409,6 +525,19 @@ onUnmounted(() => {
                         <span class="cash-stacks counter-stack-target" aria-hidden="true">
                             <span data-cash-landing :style="landingStyle" />
                         </span>
+
+                        <div v-if="store.allCollected" class="counter-final-pile-region">
+                            <button class="counter-final-pile" type="button" data-cash-final-pile
+                                :style="finalPileStyle" :disabled="!store.canConfirm" :aria-label="t(
+                                    'cashCounter.dragToFinish',
+                                    'Drag cash down to finish',
+                                )" @pointerdown="pickFinalPile" @pointermove="finalDrag.move" @pointerup="finalDrag.up"
+                                @pointerenter="finalPileHovered = true" @pointerleave="finalPileHovered = false"
+                                @focus="finalPileHovered = true" @blur="finalPileHovered = false"
+                                @pointercancel="finalDrag.cancel" @keydown.enter.prevent="keyboardFinish"
+                                @keydown.space.prevent="keyboardFinish">
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -425,24 +554,29 @@ onUnmounted(() => {
                 {{ t('cashCounter.countedLabel') }}
             </span>
 
-            <div class="scene-confirmation">
-                <button v-if="complete" class="counter-tray-confirm is-complete" type="button" disabled>
-                    {{ t('cashCounter.complete') }}
-                </button>
+            <div class="counter-finish-zone" :class="{
+                'is-visible':
+                    store.allCollected ||
+                    finalDrag.dragging.value ||
+                    settling ||
+                    complete,
+                'is-over': finalDrag.over.value,
+                'is-pending': store.submitting || settling,
+                'is-complete': complete,
+            }" data-cash-finish aria-hidden="true">
+                <span class="counter-finish-arrow">↓</span>
+                <span>{{ finalHint }}</span>
+            </div>
 
-                <button v-else-if="store.allCollected || settling" class="counter-tray-confirm" type="button"
-                    :disabled="!store.canConfirm" @click="store.confirm">
-                    {{
-                        store.submitting || settling
-                            ? t('cashCounter.confirming')
-                            : t('cashCounter.confirmAmount', {
-                                amount: format(
-                                    store.batch?.amount ??
-                                    store.amount
-                                ),
-                            })
-                    }}
-                </button>
+            <div v-if="finalDrag.dragging.value" class="counter-final-ghost" :style="finalGhostStyle"
+                aria-hidden="true">
+                <span v-for="pile in rightPiles" :key="pile.id" class="counter-final-ghost-bundle"
+                    :style="finalBundleStyle(pile.slot)">
+                    <CashPaper banded />
+                </span>
+                <span class="counter-final-amount">
+                    {{ format(store.batch?.amount ?? store.amount) }}
+                </span>
             </div>
 
             <div v-if="
