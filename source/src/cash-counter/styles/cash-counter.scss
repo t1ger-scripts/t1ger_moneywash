@@ -2,32 +2,17 @@
     position: fixed;
     inset: 0;
     z-index: 100;
-    display: grid;
-    place-items: center;
-    padding: 20px;
-    background: rgb(5 7 6 / 66%);
     font-family: 'Inter Variable', Arial, sans-serif;
 }
 
 .cash-counter {
     --counter-cream: #dcccad;
-    --counter-muted: #a49f91;
 
-    position: relative;
-    width: min(1080px, 96vw);
-    max-height: 94vh;
-    overflow: auto;
-    border: 1px solid #65645a;
-    border-radius: 12px;
-    background: #151715;
     color: #e6e1d5;
     font-family: 'Inter Variable', Arial, sans-serif;
     font-size: 13px;
     line-height: 1.4;
     letter-spacing: normal;
-    box-shadow: 0 24px 80px #0009;
-    scrollbar-width: thin;
-    scrollbar-color: #686653 #151715;
 
     *,
     *::before,
@@ -43,27 +28,22 @@
         letter-spacing: normal;
     }
 
-    button,
-    input {
-        font: inherit;
-        color: inherit;
-    }
-
     button {
         padding: 0;
         border: 0;
+        font: inherit;
+        color: inherit;
         cursor: pointer;
-    }
 
-    button:disabled {
-        cursor: default;
-    }
+        &:disabled {
+            cursor: default;
+        }
 
-    button:focus-visible,
-    input:focus-visible {
-        outline: 2px solid var(--counter-cream);
-        outline-offset: 3px;
-        box-shadow: none;
+        &:focus-visible {
+            outline: 2px solid var(--counter-cream);
+            outline-offset: 3px;
+            box-shadow: none;
+        }
     }
 
     img {
@@ -78,62 +58,13 @@
         color: #151715;
     }
 
-    .counter-error {
-        padding: 10px 22px;
-        background: #35251d;
-        color: #eac1a5;
-        font-size: 11px;
-        line-height: 1.4;
-    }
-
-    /* A quiet counting mat beneath the rendered objects. */
-    .counter-desk {
-        position: relative;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 2.1fr) minmax(0, 1fr);
-        align-items: end;
-        gap: 18px;
-        padding: 24px 26px 43px;
-        background:
-            radial-gradient(
-                ellipse at 50% 5%,
-                #79735b22,
-                transparent 65%
-            ),
-            repeating-linear-gradient(
-                36deg,
-                #ffffff02 0,
-                #ffffff02 1px,
-                transparent 1px,
-                transparent 4px
-            ),
-            #252723;
-        box-shadow: inset 0 -14px 28px #0003;
-    }
-
-    /* Shared tray geometry. */
-    .counter-source,
-    .counter-output {
-        position: relative;
-        min-width: 0;
-        padding-bottom: 14px;
-    }
-
     .counter-cash-tray,
-    .counter-tray {
-        position: relative;
-        width: 100%;
-        aspect-ratio: 1.25;
+    .counter-tray,
+    .counter-machine {
         isolation: isolate;
-        filter: drop-shadow(0 12px 8px #0009);
     }
 
     .counter-pile {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        background: none;
         pointer-events: none;
         touch-action: none;
     }
@@ -150,23 +81,10 @@
     .cash-bundle {
         position: absolute;
         display: block;
-        width: 38%;
-        height: 21%;
         padding: 0;
         border: 0;
         background: none;
-        transform: rotate(var(--pile-turn, 0deg));
-        filter: drop-shadow(1px 3px 2px #0008);
         pointer-events: none;
-        transition:
-            transform 140ms ease,
-            filter 140ms ease;
-
-        img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
 
         &.is-lifted {
             opacity: 0;
@@ -178,7 +96,6 @@
         inset: 0;
         width: 100%;
         height: 100%;
-        transform: none;
     }
 
     .counter-pile .cash-bundle:not(:disabled) {
@@ -188,12 +105,6 @@
 
         &:hover,
         &:focus-visible {
-            z-index: 50 !important;
-            transform: translateY(-4px) rotate(var(--pile-turn, 0deg));
-            filter:
-                brightness(1.08)
-                drop-shadow(0 5px 4px #0008);
-
             .counter-pile-value {
                 opacity: 1;
                 transform: translate(-50%, 0);
@@ -211,18 +122,15 @@
         cursor: default;
     }
 
-    /* Completed piles show their value without becoming draggable. */
-    .counter-tray > .cash-stacks:not(.counter-stack-target) .cash-bundle {
+    .counter-tray
+        > .cash-stacks:not(.counter-stack-target)
+        .cash-bundle {
         pointer-events: auto;
         cursor: default;
 
-        &:hover {
-            z-index: var(--pile-order) !important;
-
-            .counter-pile-value {
-                opacity: 1;
-                transform: translate(-50%, 0);
-            }
+        &:hover .counter-pile-value {
+            opacity: 1;
+            transform: translate(-50%, 0);
         }
     }
 
@@ -252,54 +160,13 @@
 
     .counter-stack-target > span {
         position: absolute;
-        width: 38%;
-        height: 21%;
         border: 1px dashed transparent;
-        border-radius: 3px;
-        transform: rotate(var(--pile-turn, 0deg));
         pointer-events: none;
-    }
-
-    .counter-output.is-target .counter-stack-target > span {
-        border-color: #d7c49366;
-        background: #d7c4930a;
-    }
-
-    .counter-output.is-over .counter-stack-target > span {
-        border-color: #e3d2a5aa;
-        background: #d7c49318;
-    }
-
-    .counter-output.is-target .counter-tray {
-        filter:
-            drop-shadow(0 12px 8px #0009)
-            drop-shadow(0 0 4px #d7c49355);
-    }
-
-    .counter-output.is-over .counter-tray {
-        filter:
-            drop-shadow(0 12px 8px #0009)
-            drop-shadow(0 0 7px #d7c49399);
-    }
-
-    /* Rendered machine: all overlay coordinates are percentages. */
-    .counter-machine {
-        position: relative;
-        width: 100%;
-        max-width: 480px;
-        aspect-ratio: 1;
-        margin: 0 auto;
-        isolation: isolate;
-        filter: drop-shadow(0 16px 11px #0009);
     }
 
     .counter-feeder {
         position: absolute;
         z-index: 7;
-        left: 28%;
-        top: 4%;
-        width: 44%;
-        height: 20%;
         display: grid;
         place-items: center;
         border: 1px solid transparent;
@@ -316,11 +183,8 @@
 
     .counter-feeder-label {
         max-width: 90%;
-        padding: 5px 7px;
         border-radius: 3px;
-        background: #10130cbb;
         color: #c7c1ab;
-        font-size: 8px;
         line-height: 1.3;
         text-align: center;
         letter-spacing: 0.4px;
@@ -331,10 +195,6 @@
     .counter-collected-pile {
         position: absolute;
         z-index: 3;
-        left: 28%;
-        top: 63%;
-        width: 44%;
-        height: 22%;
         background: none;
         pointer-events: none;
         touch-action: none;
@@ -343,7 +203,6 @@
             pointer-events: auto;
             cursor: grab;
             touch-action: none;
-            animation: counter-collect-glow 1.8s ease-in-out infinite;
         }
 
         &.is-lifted {
@@ -363,26 +222,17 @@
     .counter-display {
         position: absolute;
         z-index: 6;
-        left: 27.5%;
-        top: 29.2%;
-        width: 36.5%;
-        height: 9%;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 2px;
         overflow: hidden;
-        padding: 2px;
-        color: #bdcc91;
         text-align: center;
-        text-shadow: 0 0 5px #a5c27833;
         pointer-events: none;
 
         strong {
             max-width: 100%;
             font-family: 'Courier New', monospace;
-            font-size: clamp(12px, 2vw, 25px);
             font-weight: 700;
             line-height: 1;
             font-variant-numeric: tabular-nums;
@@ -392,150 +242,40 @@
         small {
             max-width: 100%;
             overflow: hidden;
-            font-size: 7px;
             line-height: 1.2;
-            letter-spacing: 0.6px;
             text-overflow: ellipsis;
             text-transform: uppercase;
             white-space: nowrap;
         }
     }
 
-    .counter-machine.is-complete .counter-display {
-        color: #dcebb8;
-        text-shadow: 0 0 8px #b7d88066;
-    }
-
-    .counter-ghost {
+    .counter-ghost,
+    .counter-final-ghost {
         position: absolute;
         z-index: 100;
-        width: 110px;
-        height: 54px;
         transform: translate(-50%, -50%);
-        filter: drop-shadow(7px 10px 6px #0009);
+        filter: drop-shadow(5px 9px 5px #0008);
         pointer-events: none;
-
-        > span:last-child {
-            position: absolute;
-            top: calc(100% + 7px);
-            left: 50%;
-            width: max-content;
-            min-width: 90px;
-            padding: 5px 8px;
-            border: 1px solid #827860;
-            border-radius: 4px;
-            background: #13170fed;
-            color: #e2d1aa;
-            font-size: 11px;
-            text-align: center;
-            transform: translateX(-50%);
-        }
-    }
-}
-
-@keyframes counter-collect-glow {
-    0%,
-    100% {
-        filter: drop-shadow(0 3px 3px #0008);
     }
 
-    50% {
-        filter: drop-shadow(0 0 4px #d7c49377);
-    }
-}
-
-@media (max-height: 760px) and (min-width: 701px) {
-    .cash-counter {
-        width: min(920px, 96vw);
-
-        .counter-desk {
-            padding-top: 12px;
-            padding-bottom: 32px;
-        }
-
-        .counter-machine {
-            max-width: 350px;
-        }
-    }
-}
-
-@media (max-width: 700px) {
-    .cash-counter-overlay {
-        padding: 8px;
-    }
-
-    .cash-counter {
-        width: 98vw;
-
-        .counter-desk {
-            gap: 6px;
-            padding: 20px 8px 34px;
-            grid-template-columns: 1fr 2.2fr 1fr;
-        }
-
-        .counter-feeder-label {
-            font-size: 6px;
-            padding: 3px;
-        }
-
-        .counter-display small {
-            font-size: 5px;
-        }
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .cash-counter .counter-collected-pile .cash-bundle {
-        animation: none;
-    }
-}
-
-.cash-counter {
-    /*
-     * Reserve action space beneath both trays so the right-hand
-     * confirmation does not change the machine or tray positions.
-     */
-    .counter-source,
-    .counter-output {
-        padding-bottom: 58px;
-    }
-
-    .counter-output.is-ready:not(.is-complete) .counter-tray {
-        filter:
-            drop-shadow(0 12px 8px #0009)
-            drop-shadow(0 0 5px #d7c49355);
-    }
-
-    .counter-output.is-complete {
-        .counter-tray > .cash-stacks:not(.counter-stack-target) {
-            animation: counter-cash-cleared 450ms ease-in 100ms both;
-            pointer-events: none;
-
-            .cash-bundle {
-                pointer-events: none;
-            }
-        }
-    }
-}
-
-@keyframes counter-cash-cleared {
-    from {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    to {
-        opacity: 0;
-        transform: translateY(-12px);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .cash-counter
-        .counter-output.is-complete
-        .counter-tray
-        > .cash-stacks:not(.counter-stack-target) {
-        animation-duration: 1ms;
-        animation-delay: 0ms;
+    .counter-drag-amount {
+        position: absolute;
+        z-index: 100;
+        top: calc(100% + 7px);
+        left: 50%;
+        width: max-content;
+        min-width: 90px;
+        padding: 5px 8px;
+        border: 1px solid #827860;
+        border-radius: 4px;
+        background: #13170fed;
+        color: #e2d1aa;
+        font-size: 11px;
+        line-height: 1.4;
+        font-variant-numeric: tabular-nums;
+        text-align: center;
+        white-space: nowrap;
+        transform: translateX(-50%);
+        pointer-events: none;
     }
 }

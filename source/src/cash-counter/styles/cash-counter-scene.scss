@@ -209,12 +209,6 @@
         width: 100%;
         height: 100%;
         aspect-ratio: auto;
-
-        /*
-         * The scene already contains the tray and its shadow.
-         * Old tray glow filters must not affect the cash layer.
-         */
-        filter: none !important;
     }
 
     /*
@@ -233,24 +227,6 @@
 
     .counter-output .counter-tray > .cash-stacks {
         left: 7%;
-    }
-
-    .counter-pile .cash-bundle,
-    .counter-tray .cash-bundle {
-        filter:
-            sepia(0.1)
-            brightness(0.92)
-            drop-shadow(2px 4px 2px #0008);
-    }
-
-    .counter-pile .cash-bundle:not(:disabled) {
-        &:hover,
-        &:focus-visible {
-            filter:
-                sepia(0.08)
-                brightness(1.02)
-                drop-shadow(3px 7px 4px #0008);
-        }
     }
 
     .counter-stack-target > span {
@@ -299,25 +275,6 @@
             calc(var(--scene-unit) * 0.65),
             12px
         );
-    }
-
-    /*
-     * Same apparent bundle size as the side trays:
-     * approximately 9.46% of the complete scene width.
-     */
-    .counter-collected-pile {
-        left: 37.55%;
-        top: 70%;
-        width: 24.9%;
-        height: 10.87%;
-
-        .cash-bundle {
-            animation: none;
-            filter:
-                sepia(0.1)
-                brightness(0.92)
-                drop-shadow(2px 4px 2px #0008);
-        }
     }
 
     .counter-display {
@@ -386,14 +343,5 @@
 
     .scene-plaque--right {
         left: 80%;
-    }
-
-    .counter-ghost {
-        z-index: 100;
-        width: 9.46%;
-        height: 7.83%;
-        filter:
-            sepia(0.08)
-            drop-shadow(5px 9px 5px #0008);
     }
 }

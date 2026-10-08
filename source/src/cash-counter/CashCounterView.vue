@@ -13,7 +13,12 @@ import CounterMachine from './components/CounterMachine.vue'
 import { useCashCounterStore } from './stores/cash-counter.store'
 import { useCashDrag } from './composables/useCashDrag'
 import { useCounterSound } from './composables/useCounterSound'
-import { cashCounterImages, trayPilePosition, validAmount } from './utils/cash-counter.utils'
+import {
+    cashCounterImages,
+    cashPileGeometry,
+    trayPilePosition,
+    validAmount,
+} from './utils/cash-counter.utils'
 import type { CashPile } from './cash-counter.types'
 import CashPaper from './components/CashPaper.vue'
 import './styles/cash-counter.scss'
@@ -116,18 +121,9 @@ const finalDrag = useCashDrag(
     '[data-cash-final-pile]',
 )
 
-const finalPileGeometry = computed(() => {
-    const count = Math.max(1, rightPiles.value.length)
-    const rise = Math.min(
-        4.8,
-        48 / Math.max(1, count - 1),
-    )
-
-    return {
-        rise,
-        height: 27.85 + (count - 1) * rise,
-    }
-})
+const finalPileGeometry = computed(() =>
+    cashPileGeometry(rightPiles.value.length),
+)
 
 const finalPileStyle = computed(() => ({
     height: `${finalPileGeometry.value.height}%`,
@@ -179,22 +175,13 @@ const finalHint = computed(() => {
     }
 
     if (finalDrag.over.value) {
-        return t(
-            'cashCounter.releaseToFinish',
-            'Release to finish',
-        )
-    }
-
-    if (!finalDrag.dragging.value) {
-        return t(
-            'cashCounter.dragToFinish',
-            'Drag cash down to finish',
-        )
+        return t('cashCounter.releaseToFinish')
     }
 
     return t(
-        'cashCounter.putCashAway',
-        'Put cash away',
+        finalDrag.dragging.value
+            ? 'cashCounter.putCashAway'
+            : 'cashCounter.dragToFinish',
     )
 })
 
@@ -273,7 +260,7 @@ const status = computed(() => {
     if (store.allCollected) {
         return t(
             store.canConfirm
-                ? 'cashCounter.readyToConfirm'
+                ? 'cashCounter.dragToFinish'
                 : 'cashCounter.waitingForServer',
         )
     }
@@ -508,10 +495,8 @@ onUnmounted(() => {
                     @collect-cancel="collectDrag.cancel" @collect="keyboardCollect" />
 
                 <div class="counter-output" :class="{
-                    'is-ready': store.allCollected,
                     'is-target': collectDrag.dragging.value,
                     'is-over': collectDrag.over.value,
-                    'is-complete': complete,
                     'is-final-lifted':
                         finalDrag.dragging.value || settling || complete,
                     'is-final-hovered':
@@ -528,10 +513,9 @@ onUnmounted(() => {
 
                         <div v-if="store.allCollected" class="counter-final-pile-region">
                             <button class="counter-final-pile" type="button" data-cash-final-pile
-                                :style="finalPileStyle" :disabled="!store.canConfirm" :aria-label="t(
-                                    'cashCounter.dragToFinish',
-                                    'Drag cash down to finish',
-                                )" @pointerdown="pickFinalPile" @pointermove="finalDrag.move" @pointerup="finalDrag.up"
+                                :style="finalPileStyle" :disabled="!store.canConfirm"
+                                :aria-label="t('cashCounter.dragToFinish')" @pointerdown="pickFinalPile"
+                                @pointermove="finalDrag.move" @pointerup="finalDrag.up"
                                 @pointerenter="finalPileHovered = true" @pointerleave="finalPileHovered = false"
                                 @focus="finalPileHovered = true" @blur="finalPileHovered = false"
                                 @pointercancel="finalDrag.cancel" @keydown.enter.prevent="keyboardFinish"
@@ -574,7 +558,7 @@ onUnmounted(() => {
                     :style="finalBundleStyle(pile.slot)">
                     <CashPaper banded />
                 </span>
-                <span class="counter-final-amount">
+                <span class="counter-drag-amount">
                     {{ format(store.batch?.amount ?? store.amount) }}
                 </span>
             </div>
@@ -587,7 +571,9 @@ onUnmounted(() => {
                 top: `${activeDrag.y.value}px`,
             }">
                 <CashStacks compact />
-                <span>{{ format(dragAmount) }}</span>
+                <span class="counter-drag-amount">
+                    {{ format(dragAmount) }}
+                </span>
             </div>
         </section>
     </div>

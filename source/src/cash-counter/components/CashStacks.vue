@@ -10,7 +10,6 @@ const props = withDefaults(
         items?: CashPile[]
         totalSlots?: number
         compact?: boolean
-        lifted?: boolean
         liftedId?: number | null
         interactive?: boolean
         disabled?: boolean
@@ -20,7 +19,6 @@ const props = withDefaults(
         items: () => [],
         totalSlots: 10,
         compact: false,
-        lifted: false,
         liftedId: null,
         interactive: false,
         disabled: false,
@@ -54,7 +52,7 @@ function formatAmount(amount: number) {
     }">
         <component :is="interactive ? 'button' : 'span'" v-for="pile in items" :key="pile.id" class="cash-bundle"
             :class="{
-                'is-lifted': lifted || liftedId === pile.id,
+                'is-lifted': liftedId === pile.id,
             }" :style="compact
                 ? undefined
                 : trayPilePosition(pile.slot, totalSlots)" :type="interactive ? 'button' : undefined"

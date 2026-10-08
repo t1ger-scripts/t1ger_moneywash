@@ -41,10 +41,7 @@ export function splitCash(
     )
 }
 
-export function trayPilePosition(
-    slot: number,
-    totalSlots: number,
-) {
+export function cashPileGeometry(totalSlots: number) {
     const count = Math.max(1, totalSlots)
     const rise = Math.min(
         4.8,
@@ -52,9 +49,20 @@ export function trayPilePosition(
     )
 
     return {
+        rise,
+        height: 27.85 + (count - 1) * rise,
+    }
+}
+
+export function trayPilePosition(
+    slot: number,
+    totalSlots: number,
+) {
+    const { rise } = cashPileGeometry(totalSlots)
+
+    return {
         left: '16.425%',
         bottom: `${18 + slot * rise}%`,
-        '--pile-turn': '0deg',
         '--pile-order': slot + 1,
         zIndex: slot + 1,
     }

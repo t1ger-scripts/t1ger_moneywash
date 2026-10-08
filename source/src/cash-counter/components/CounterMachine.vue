@@ -141,7 +141,6 @@ function noteStyle(index: number, position: number) {
     <div
         class="counter-machine"
         :class="{
-            'is-running': running,
             'is-complete': complete,
         }"
     >

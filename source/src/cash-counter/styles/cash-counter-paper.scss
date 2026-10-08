@@ -3,16 +3,7 @@
      * Shared cash artwork.
      * Each sheet has the same perspective and proportions.
      */
-    .cash-paper {
-        position: absolute;
-        inset: 0;
-        display: block;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        isolation: isolate;
-    }
-
+    .cash-paper,
     .cash-paper-part {
         position: absolute;
         inset: 0;
@@ -20,6 +11,10 @@
         width: 100%;
         height: 100%;
         pointer-events: none;
+    }
+
+    .cash-paper {
+        isolation: isolate;
     }
 
     .cash-paper-part--face {
@@ -161,7 +156,6 @@
         height: 14.4%;
 
         .cash-bundle {
-            animation: none;
             filter: drop-shadow(0 3px 2px #0007);
         }
 
@@ -176,22 +170,13 @@
     .counter-ghost {
         width: 16.72%;
         height: 10.368%;
-        filter: drop-shadow(5px 9px 5px #0008);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .cash-counter.cash-counter--scene {
-        .counter-moving-note {
-            visibility: hidden;
-        }
     }
 }
 
 .cash-counter.cash-counter--scene {
     .counter-source .counter-pile .cash-bundle,
     .counter-output .counter-tray > .cash-stacks .cash-bundle {
-        left: 16.425% !important;
+        left: 16.425%;
         transform: none;
         transform-origin: center bottom;
         filter: drop-shadow(0 3px 2px #0006);
@@ -204,20 +189,11 @@
     .counter-source .counter-pile .cash-bundle:not(:disabled) {
         &:hover,
         &:focus-visible {
-            z-index: var(--pile-order) !important;
+            z-index: var(--pile-order);
             transform: none;
             filter:
                 brightness(1.07)
                 drop-shadow(0 3px 2px #0007);
-        }
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .cash-counter.cash-counter--scene {
-        .counter-source .counter-pile .cash-bundle,
-        .counter-output .counter-tray > .cash-stacks .cash-bundle {
-            transition: none;
         }
     }
 }
@@ -340,17 +316,8 @@
         line-height: 1;
     }
 
-    /*
-     * Exact visible pile footprint:
-     * 30% tray × 83% region × 67.15% bundle.
-     */
     .counter-final-ghost {
-        position: absolute;
-        z-index: 100;
         width: 16.72035%;
-        transform: translate(-50%, -50%);
-        filter: drop-shadow(5px 9px 5px #0008);
-        pointer-events: none;
     }
 
     .counter-final-ghost-bundle {
@@ -359,14 +326,6 @@
         display: block;
         width: 100%;
         pointer-events: none;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .cash-counter.cash-counter--scene {
-        .counter-finish-zone {
-            transition: none;
-        }
     }
 }
 
@@ -379,25 +338,20 @@
             brightness(1.08)
             drop-shadow(0 3px 2px #0006);
     }
+}
 
-    .counter-final-amount {
-        position: absolute;
-        z-index: 100;
-        top: calc(100% + 7px);
-        left: 50%;
-        width: max-content;
-        min-width: 90px;
-        padding: 5px 8px;
-        border: 1px solid #827860;
-        border-radius: 4px;
-        background: #13170fed;
-        color: #e2d1aa;
-        font-size: 11px;
-        line-height: 1.4;
-        font-variant-numeric: tabular-nums;
-        text-align: center;
-        white-space: nowrap;
-        transform: translateX(-50%);
-        pointer-events: none;
+@media (prefers-reduced-motion: reduce) {
+    .cash-counter.cash-counter--scene {
+        .counter-moving-note {
+            visibility: hidden;
+        }
+
+        .counter-source .counter-pile .cash-bundle,
+        .counter-output .counter-tray > .cash-stacks .cash-bundle,
+        .counter-finish-zone,
+        .counter-feeder,
+        .counter-pile-value {
+            transition: none;
+        }
     }
 }
