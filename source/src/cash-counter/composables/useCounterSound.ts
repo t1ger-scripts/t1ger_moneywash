@@ -124,6 +124,44 @@ export function useCounterSound() {
         paper(0.028, 0.045, 1000)
     }
 
+    function thump(frequency: number, volume: number) {
+        if (!context || context.state !== 'running') return
+
+        const oscillator = context.createOscillator()
+        const gain = context.createGain()
+        const at = context.currentTime
+
+        oscillator.type = 'sine'
+        oscillator.frequency.setValueAtTime(frequency, at)
+        oscillator.frequency.exponentialRampToValueAtTime(
+            frequency * 0.45,
+            at + 0.065,
+        )
+
+        gain.gain.setValueAtTime(volume, at)
+        gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.08)
+
+        oscillator.connect(gain).connect(context.destination)
+
+        oscillator.onended = () => {
+            oscillator.disconnect()
+            gain.disconnect()
+        }
+
+        oscillator.start(at)
+        oscillator.stop(at + 0.085)
+    }
+
+    function loaded() {
+        paper(0.025, 0.055, 1200)
+        thump(145, 0.025)
+    }
+
+    function placed() {
+        paper(0.035, 0.09, 650)
+        thump(95, 0.04)
+    }
+
     function dispose() {
         stop()
         if (context) void context.close()
@@ -131,5 +169,15 @@ export function useCounterSound() {
         noise = null
     }
 
-    return { prime, start, feed, stop, counted, deposited, dispose }
+    return {
+        prime,
+        start,
+        feed,
+        stop,
+        counted,
+        deposited,
+        loaded,
+        placed,
+        dispose,
+    }
 }

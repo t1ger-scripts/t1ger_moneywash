@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import {
+    computed,
+    nextTick,
+    onMounted,
+    onUnmounted,
+    ref,
+    watch,
+} from 'vue'
 import { useI18n } from 'vue-i18n'
 import { X } from '@lucide/vue'
 import CashStacks from './components/CashStacks.vue'
@@ -28,17 +35,16 @@ const complete = computed(() => store.batch?.status === 'complete')
 const settling = computed(() => store.batch?.status === 'settling')
 const reviewing = computed(() => store.batch?.status === 'review')
 
-function loadPile() {
+async function loadPile() {
     sound.prime()
-    void store.loadPile()
+    await store.loadPile()
+
+    if (store.running) sound.loaded()
 }
 
 function collectPile() {
     sound.prime()
-    if (!store.canCollect) return
-
-    store.collectPile()
-    sound.deposited()
+    if (store.canCollect) store.collectPile()
 }
 
 const feedDrag = useCashDrag(
@@ -57,6 +63,40 @@ const collectDrag = useCashDrag(
 const activeDrag = computed(() =>
     collectDrag.dragging.value ? collectDrag : feedDrag,
 )
+
+const landingStyle = computed(() => {
+    const index = store.collected
+
+    return {
+        '--x': `${9 + (index % 2) * 77}px`,
+        '--y': `${16 + Math.floor(index / 2) * 19}px`,
+        '--turn': `${index % 2 ? 4 : -5}deg`,
+    }
+})
+
+function keyboardLoad() {
+    sound.prime()
+
+    if (feedDrag.dragging.value || collectDrag.dragging.value) return
+
+    const pile = root.value?.querySelector<HTMLElement>(
+        '.counter-pile .cash-bundle:last-child',
+    )
+
+    if (pile) void feedDrag.transfer(pile)
+}
+
+function keyboardCollect() {
+    sound.prime()
+
+    if (feedDrag.dragging.value || collectDrag.dragging.value) return
+
+    const pile = root.value?.querySelector<HTMLElement>(
+        '[data-cash-collect]',
+    )
+
+    if (pile) void collectDrag.transfer(pile)
+}
 
 const status = computed(() => {
     if (complete.value) return t('cashCounter.complete')
@@ -86,7 +126,7 @@ const status = computed(() => {
 
 const feederLabel = computed(() => {
     if (feedDrag.over.value) return t('cashCounter.releasePile')
-    if (complete.value) return t('cashCounter.deposited')
+    if (complete.value) return t('cashCounter.complete')
     if (settling.value) return t('cashCounter.confirming')
     if (store.running) return t('cashCounter.counting')
     if (store.canCollect) return t('cashCounter.collectReady')
@@ -100,7 +140,7 @@ const feederLabel = computed(() => {
 })
 
 const displayState = computed(() => {
-    if (complete.value) return t('cashCounter.deposited')
+    if (complete.value) return t('cashCounter.complete')
     if (settling.value) return t('cashCounter.confirming')
     if (store.running) return t('cashCounter.counting')
     if (store.canCollect) return t('cashCounter.collectReady')
@@ -136,14 +176,62 @@ watch(() => store.running, (running) => {
     else sound.stop()
 })
 
-watch(() => store.phase, (phase, previous) => {
+watch(() => store.phase, async (phase, previous) => {
     if (previous === 'counting' && phase !== 'counting') {
         sound.counted()
     }
+
+    if (
+        phase !== 'collect' ||
+        !store.settings?.autoMoveToRight
+    ) return
+
+    const session = store.payload
+
+    await nextTick()
+
+    if (
+        session !== store.payload ||
+        !store.canCollect ||
+        collectDrag.dragging.value
+    ) return
+
+    const pile = root.value?.querySelector<HTMLElement>(
+        '[data-cash-collect]',
+    )
+
+    if (pile) await collectDrag.transfer(pile)
 })
 
+watch(() => store.collected, (count, previous) => {
+    if (count > previous && !complete.value) {
+        sound.placed()
+    }
+})
+
+let closeTimer = 0
+
 watch(complete, (value) => {
-    if (value) sound.deposited()
+    clearTimeout(closeTimer)
+
+    if (!value) return
+
+    sound.deposited()
+    feedDrag.cancel()
+    collectDrag.cancel()
+
+    const session = store.payload
+    const batchId = store.batch?.id
+
+    closeTimer = window.setTimeout(() => {
+        if (
+            store.payload === session &&
+            store.batch?.id === batchId &&
+            store.batch?.status === 'complete'
+        ) {
+            void store.close()
+        }
+    }, 1200)
 })
 
 async function recount() {
@@ -202,6 +290,7 @@ onMounted(() => {
 onUnmounted(() => {
     cancelAnimationFrame(animation)
     clearInterval(poll)
+    clearTimeout(closeTimer)
     feedDrag.cancel()
     collectDrag.cancel()
     sound.dispose()
@@ -211,14 +300,8 @@ onUnmounted(() => {
 
 <template>
     <div class="cash-counter-overlay">
-        <section
-            ref="root"
-            class="cash-counter"
-            :style="textures"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="cash-counter-title"
-        >
+        <section ref="root" class="cash-counter" :style="textures" role="dialog" aria-modal="true"
+            aria-labelledby="cash-counter-title">
             <header class="counter-header">
                 <h1 id="cash-counter-title">
                     {{
@@ -236,12 +319,7 @@ onUnmounted(() => {
 
                 <span class="counter-status">{{ status }}</span>
 
-                <button
-                    class="counter-close"
-                    type="button"
-                    :aria-label="t('common.close')"
-                    @click="store.close"
-                >
+                <button class="counter-close" type="button" :aria-label="t('common.close')" @click="store.close">
                     <X :size="16" />
                 </button>
             </header>
@@ -253,56 +331,36 @@ onUnmounted(() => {
             <div class="counter-desk">
                 <div class="counter-source">
                     <div class="counter-cash-tray">
-                        <button
-                            class="counter-pile"
-                            type="button"
-                            :disabled="!store.canLoad"
-                            :aria-label="t('cashCounter.loadPile', {
-                                amount: format(store.activeAmount),
-                            })"
-                            @pointerdown="feedDrag.down"
-                            @pointermove="feedDrag.move"
-                            @pointerup="feedDrag.up"
-                            @pointercancel="feedDrag.cancel"
-                            @keydown.enter.prevent="loadPile"
-                            @keydown.space.prevent="loadPile"
-                        >
-                            <CashStacks
-                                :count="store.leftCount"
-                                :lifted="feedDrag.dragging.value"
-                            />
+                        <button class="counter-pile" type="button" :disabled="!store.canLoad" :aria-label="t('cashCounter.loadPile', {
+                            amount: format(store.activeAmount),
+                        })" @pointerdown="sound.prime(); feedDrag.down($event)" @pointermove="feedDrag.move"
+                            @pointerup="feedDrag.up" @pointercancel="feedDrag.cancel"
+                            @keydown.enter.prevent="keyboardLoad" @keydown.space.prevent="keyboardLoad">
+                            <CashStacks :count="store.leftCount" :lifted="feedDrag.dragging.value" />
                         </button>
                     </div>
                 </div>
 
-                <CounterMachine
-                    :value="format(store.countedAmount)"
-                    :display-state="displayState"
-                    :feeder-label="feederLabel"
-                    :running="store.running"
-                    :over="feedDrag.over.value"
-                    :duration-ms="store.settings?.stackDurationMs ?? 800"
-                    :collectable="store.canCollect"
+                <CounterMachine :value="format(store.countedAmount)" :display-state="displayState"
+                    :feeder-label="feederLabel" :running="store.running" :over="feedDrag.over.value"
+                    :duration-ms="store.settings?.stackDurationMs ?? 800" :collectable="store.canCollect"
                     :collect-label="t('cashCounter.collectPile', {
                         amount: format(store.activeAmount),
-                    })"
-                    :lifted="collectDrag.dragging.value"
-                    @collect-down="collectDrag.down"
-                    @collect-move="collectDrag.move"
-                    @collect-up="collectDrag.up"
-                    @collect-cancel="collectDrag.cancel"
-                    @collect="collectPile"
-                />
+                    })" :lifted="collectDrag.dragging.value" :progress="store.progress" :complete="complete"
+                    @collect-down="sound.prime(); collectDrag.down($event)" @collect-move="collectDrag.move"
+                    @collect-up="collectDrag.up" @collect-cancel="collectDrag.cancel" @collect="keyboardCollect" />
 
-                <div
-                    class="counter-output"
-                    :class="{
-                        'is-ready': store.allCollected,
-                        'is-over': collectDrag.over.value,
-                    }"
-                >
+                <div class="counter-output" :class="{
+                    'is-ready': store.allCollected,
+                    'is-target': collectDrag.dragging.value,
+                    'is-over': collectDrag.over.value,
+                }">
                     <div class="counter-tray" data-cash-output>
                         <CashStacks :count="store.collected" />
+
+                        <span class="cash-stacks counter-stack-target" aria-hidden="true">
+                            <span data-cash-landing :style="landingStyle" />
+                        </span>
                     </div>
 
                     <small>
@@ -319,29 +377,15 @@ onUnmounted(() => {
             </div>
 
             <div class="counter-bottom">
-                <CounterAmountSelector
-                    v-model="store.amount"
-                    :available="store.available"
-                    :disabled="store.busy"
-                    :format="format"
-                />
+                <CounterAmountSelector v-model="store.amount" :available="store.available" :disabled="store.busy"
+                    :format="format" />
 
                 <div class="counter-final-actions">
-                    <button
-                        type="button"
-                        class="counter-recount"
-                        :disabled="!store.canConfirm"
-                        @click="recount"
-                    >
+                    <button type="button" class="counter-recount" :disabled="!store.canConfirm" @click="recount">
                         {{ t('cashCounter.recount') }}
                     </button>
 
-                    <button
-                        type="button"
-                        class="counter-confirm"
-                        :disabled="!store.canConfirm"
-                        @click="store.confirm"
-                    >
+                    <button type="button" class="counter-confirm" :disabled="!store.canConfirm" @click="store.confirm">
                         {{
                             t('cashCounter.confirmAmount', {
                                 amount: format(
@@ -353,14 +397,10 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <div
-                v-if="feedDrag.dragging.value || collectDrag.dragging.value"
-                class="counter-ghost"
-                :style="{
-                    left: `${activeDrag.x.value}px`,
-                    top: `${activeDrag.y.value}px`,
-                }"
-            >
+            <div v-if="feedDrag.dragging.value || collectDrag.dragging.value" class="counter-ghost" :style="{
+                left: `${activeDrag.x.value}px`,
+                top: `${activeDrag.y.value}px`,
+            }">
                 <CashStacks compact />
                 <span>{{ format(store.activeAmount) }}</span>
             </div>

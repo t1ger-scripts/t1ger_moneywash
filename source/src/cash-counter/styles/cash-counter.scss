@@ -1092,3 +1092,212 @@
         top: 15px;
     }
 }
+
+/* Cash handling polish. */
+.cash-counter {
+    /*
+     * Only the next visible pile accepts pointer input.
+     * Keyboard users can still focus the original button.
+     */
+    .counter-pile {
+        pointer-events: none;
+    }
+
+    .counter-pile:not(:disabled) .cash-bundle:last-child {
+        pointer-events: auto;
+        cursor: grab;
+        touch-action: none;
+    }
+
+    .counter-pile:not(:disabled) .cash-bundle:last-child:hover {
+        filter:
+            brightness(1.08)
+            drop-shadow(0 0 4px #d1b97688);
+    }
+
+    .counter-pile:focus-visible {
+        outline: none;
+    }
+
+    .counter-pile:focus-visible .cash-bundle:last-child {
+        outline: 1px solid #dac493;
+        outline-offset: 4px;
+        border-radius: 3px;
+    }
+
+    /* The marker has geometry but no visible content. */
+    .counter-stack-target {
+        pointer-events: none;
+
+        > span {
+            position: absolute;
+            left: var(--x);
+            bottom: var(--y);
+            width: 94px;
+            height: 48px;
+            transform: rotate(var(--turn));
+        }
+    }
+
+    /* Show cash entering the feeder while its pile shrinks. */
+    .counter-feeder-label {
+        position: relative;
+        z-index: 2;
+        transition: opacity 120ms ease;
+    }
+
+    .counter-feeder.has-cash .counter-feeder-label {
+        opacity: 0;
+    }
+
+    .counter-input-cash {
+        position: absolute;
+        left: 50%;
+        bottom: 8px;
+        width: 132px;
+        height: 60px;
+        pointer-events: none;
+        transform:
+            translateX(-50%)
+            scaleY(calc(1 - var(--pile-progress)));
+        transform-origin: center bottom;
+        opacity: calc(1 - var(--pile-progress) * 0.7);
+
+        .cash-stacks {
+            width: 132px;
+            height: 60px;
+        }
+
+        .cash-bundle {
+            left: 19px;
+            bottom: 5px;
+            transform: rotate(-3deg);
+        }
+    }
+
+    /* The machine output grows as the same pile is counted. */
+    .counter-output-cash {
+        width: 100%;
+        height: 65px;
+        transform: scaleY(calc(0.12 + var(--pile-progress) * 0.88));
+        transform-origin: center bottom;
+        opacity: calc(0.3 + var(--pile-progress) * 0.7);
+    }
+
+    .counter-collected-pile {
+        pointer-events: none;
+    }
+
+    .counter-collected-pile:not(:disabled) .cash-bundle {
+        pointer-events: auto;
+        cursor: grab;
+        touch-action: none;
+    }
+
+    .counter-collected-pile.is-collectable {
+        animation: counter-collect-ready 1.6s ease-in-out infinite;
+    }
+
+    .counter-collected-pile.is-lifted {
+        opacity: 0;
+        animation: none;
+    }
+
+    .counter-output.is-target .counter-tray::before {
+        border-color: #a69a78;
+        box-shadow:
+            inset 0 5px 10px #080e0b,
+            0 0 12px #c5b58333,
+            0 13px 13px #0009;
+    }
+
+    .counter-output.is-over .counter-tray::before {
+        border-color: #e2cc98;
+        box-shadow:
+            inset 0 5px 10px #080e0b,
+            0 0 15px #dac49366,
+            0 13px 13px #0009;
+    }
+
+    /* Newly collected piles settle gently onto their final position. */
+    .counter-tray > .cash-stacks:not(.counter-stack-target) > .cash-bundle {
+        animation: counter-pile-settle 180ms ease-out both;
+    }
+
+    /*
+     * Center the actual cash image under the pointer.
+     * The value label no longer changes the ghost's center.
+     */
+    .counter-ghost {
+        width: 110px;
+        height: 54px;
+        transform: translate(-50%, -50%);
+
+        .cash-stacks {
+            width: 110px;
+            height: 54px;
+        }
+
+        .cash-bundle,
+        .cash-bundle.has-image {
+            inset: 0;
+            width: 110px;
+            height: 54px;
+            transform: none;
+        }
+
+        > span:last-child {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 50%;
+            min-width: 100%;
+            width: max-content;
+            transform: translateX(-50%);
+        }
+    }
+
+    .counter-machine.is-complete .counter-display {
+        animation: counter-success 400ms ease-out both;
+    }
+}
+
+@keyframes counter-collect-ready {
+    0%,
+    100% {
+        filter: drop-shadow(0 3px 5px #0008);
+    }
+
+    50% {
+        filter: drop-shadow(0 0 5px #d1b97688);
+    }
+}
+
+@keyframes counter-pile-settle {
+    from {
+        transform: translateY(-4px) rotate(var(--turn, 0deg));
+    }
+
+    to {
+        transform: translateY(0) rotate(var(--turn, 0deg));
+    }
+}
+
+@keyframes counter-success {
+    from {
+        filter: brightness(1.35);
+    }
+
+    to {
+        filter: brightness(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cash-counter {
+        .counter-collected-pile.is-collectable,
+        .counter-tray > .cash-stacks > .cash-bundle,
+        .counter-machine.is-complete .counter-display {
+            animation: none;
+        }
+    }
+}

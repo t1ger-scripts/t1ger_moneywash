@@ -260,10 +260,6 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
         if (progress.value < 1) return
 
         phase.value = 'collect'
-
-        if (settings.value.autoMoveToRight) {
-            collectPile()
-        }
     }
 
     async function confirm() {
