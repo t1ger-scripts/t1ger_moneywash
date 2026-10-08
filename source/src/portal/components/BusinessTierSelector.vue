@@ -2,21 +2,21 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import type { BusinessTier } from '@/portal/marketplace.js'
-import { useMarketplaceStore } from '@/portal/stores/marketplace.store.js'
+import type { BusinessTier } from '@/portal/portal.model.js'
+import { usePortalStore } from '@/portal/stores/portal.store.js'
 import { formatNumber } from '@/portal/utils/formatters.js'
 
 import BusinessTypeIcon from './BusinessTypeIcon.vue'
 
-const marketplaceStore = useMarketplaceStore()
+const portalStore = usePortalStore()
 const { locale, t } = useI18n()
 
-const tiers = computed(() => marketplaceStore.tiers)
+const tiers = computed(() => portalStore.tiers)
 
 function isTierAccessible(tier: BusinessTier): boolean {
     if (tier.isUnlocked) return true
 
-    return marketplaceStore.locations.some(
+    return portalStore.locations.some(
         (location) =>
             location.businessType === tier.businessType
             && location.ownership === 'ownedByPlayer',
@@ -24,13 +24,13 @@ function isTierAccessible(tier: BusinessTier): boolean {
 }
 
 function isTierSelected(tier: BusinessTier): boolean {
-    return marketplaceStore.selectedTierNumber === tier.tierNumber
+    return portalStore.selectedTierNumber === tier.tierNumber
 }
 
 function selectTier(tier: BusinessTier): void {
     if (!isTierAccessible(tier)) return
 
-    marketplaceStore.selectTier(tier.tierNumber)
+    portalStore.selectTier(tier.tierNumber)
 }
 
 function createTierLabel(tier: BusinessTier): string {

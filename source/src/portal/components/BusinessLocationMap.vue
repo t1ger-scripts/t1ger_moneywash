@@ -4,8 +4,8 @@ import { LocateFixed, Minus, Plus, RotateCcw, TriangleAlert } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import L from 'leaflet'
 
-import type { BusinessLocation } from '@/portal/marketplace.js'
-import { useMarketplaceStore } from '@/portal/stores/marketplace.store.js'
+import type { BusinessLocation } from '@/portal/portal.model.js'
+import { usePortalStore } from '@/portal/stores/portal.store.js'
 
 import BusinessTypeIcon from './BusinessTypeIcon.vue'
 
@@ -16,7 +16,7 @@ const SELECTED_LOCATION_ZOOM = 5
 const OVERVIEW_ZOOM_OFFSET = 0.20
 
 const { t } = useI18n()
-const marketplaceStore = useMarketplaceStore()
+const portalStore = usePortalStore()
 
 const mapElement = ref<HTMLDivElement | null>(null)
 const isLoading = ref(true)
@@ -127,9 +127,9 @@ function renderMarkers() {
     markerLayer.clearLayers()
     clearRenderedIcons()
 
-    for (const location of marketplaceStore.selectedTierLocations) {
+    for (const location of portalStore.selectedTierLocations) {
         const isSelected =
-            marketplaceStore.selectedLocationId === location.id
+            portalStore.selectedLocationId === location.id
 
         const marker = L.marker(getLocationCoordinates(location), {
             icon: createMarkerIcon(location, isSelected),
@@ -138,7 +138,7 @@ function renderMarkers() {
         })
 
         marker.on('click', () => {
-            marketplaceStore.selectLocation(location.id)
+            portalStore.selectLocation(location.id)
         })
 
         marker.addTo(markerLayer)
@@ -146,12 +146,12 @@ function renderMarkers() {
 }
 
 function focusSelectedLocation(animated = true) {
-    if (!map || !marketplaceStore.selectedLocation) {
+    if (!map || !portalStore.selectedLocation) {
         return
     }
 
     map.flyTo(
-        getLocationCoordinates(marketplaceStore.selectedLocation),
+        getLocationCoordinates(portalStore.selectedLocation),
         SELECTED_LOCATION_ZOOM,
         {
             animate: animated,
@@ -335,7 +335,7 @@ onMounted(async () => {
 
     updateMinimumZoom()
 
-    if (marketplaceStore.selectedLocation) {
+    if (portalStore.selectedLocation) {
         focusSelectedLocation(false)
     } else {
         showEntireMap(false)
@@ -349,11 +349,11 @@ onMounted(async () => {
 })
 
 watch(
-    () => marketplaceStore.selectedTierLocations,
+    () => portalStore.selectedTierLocations,
     () => {
         renderMarkers()
 
-        if (marketplaceStore.selectedLocation) {
+        if (portalStore.selectedLocation) {
             focusSelectedLocation(false)
         } else {
             showEntireMap()
@@ -365,7 +365,7 @@ watch(
 )
 
 watch(
-    () => marketplaceStore.selectedLocationId,
+    () => portalStore.selectedLocationId,
     (selectedLocationId) => {
         renderMarkers()
 

@@ -1,11 +1,21 @@
 <script setup lang="ts">
-import MarketplaceView from './MarketplaceView.vue'
+import BusinessTierSelector from './components/BusinessTierSelector.vue'
+import MarketplaceHeader from './components/MarketplaceHeader.vue'
+import MarketplaceWorkspace from './components/MarketplaceWorkspace.vue'
 </script>
+
 <template>
     <div class="portal-root">
-        <div class="portal-root__window"><MarketplaceView /></div>
+        <div class="portal-root__window">
+            <main class="marketplace-view">
+                <MarketplaceHeader />
+                <BusinessTierSelector />
+                <MarketplaceWorkspace />
+            </main>
+        </div>
     </div>
 </template>
+
 <style scoped lang="scss">
 .portal-root {
     display: grid;
@@ -32,5 +42,14 @@ import MarketplaceView from './MarketplaceView.vue'
         background: var(--color-background);
         box-shadow: var(--shadow-modal);
     }
+}
+
+.marketplace-view {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    background: var(--color-background);
 }
 </style>

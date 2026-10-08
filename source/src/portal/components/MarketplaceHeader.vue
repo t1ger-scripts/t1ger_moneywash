@@ -12,21 +12,21 @@ import { useI18n } from 'vue-i18n'
 import AppIconButton from '@/portal/components/ui/AppIconButton.vue'
 import AppProgressBar from '@/portal/components/ui/AppProgressBar.vue'
 import { usePortalActions } from '@/portal/composables/usePortalActions'
-import { useMarketplaceStore } from '@/portal/stores/marketplace.store'
+import { usePortalStore } from '@/portal/stores/portal.store'
 import { formatCurrency, formatNumber } from '@/portal/utils/formatters'
 
-const marketplaceStore = useMarketplaceStore()
+const portalStore = usePortalStore()
 const { requestPortalClose } = usePortalActions()
 const { locale, t } = useI18n()
 
-const profile = computed(() => marketplaceStore.profile)
+const profile = computed(() => portalStore.profile)
 
 const formattedBankBalance = computed(() => {
     if (!profile.value) return ''
 
     return formatCurrency(
         profile.value.bankBalance,
-        marketplaceStore.currencySymbol,
+        portalStore.currencySymbol,
         locale.value,
     )
 })

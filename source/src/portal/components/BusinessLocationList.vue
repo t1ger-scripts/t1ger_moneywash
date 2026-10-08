@@ -6,22 +6,22 @@ import { useI18n } from 'vue-i18n'
 import AppBadge from '@/portal/components/ui/AppBadge.vue'
 import AppSearchInput from '@/portal/components/ui/AppSearchInput.vue'
 import AppSurface from '@/portal/components/ui/AppSurface.vue'
-import { useMarketplaceStore } from '@/portal/stores/marketplace.store.js'
+import { usePortalStore } from '@/portal/stores/portal.store.js'
 import { formatNumber } from '@/portal/utils/formatters.js'
 
 import BusinessLocationListItem from './BusinessLocationListItem.vue'
 
-const marketplaceStore = useMarketplaceStore()
+const portalStore = usePortalStore()
 const { locale, t } = useI18n()
 
 const locationListElement = ref<HTMLDivElement | null>(null)
 
 const selectedTier = computed(
-    () => marketplaceStore.selectedTier,
+    () => portalStore.selectedTier,
 )
 
 const locations = computed(
-    () => marketplaceStore.filteredLocations,
+    () => portalStore.filteredLocations,
 )
 
 const availabilitySummary = computed(() => {
@@ -41,7 +41,7 @@ const availabilitySummary = computed(() => {
 })
 
 const emptyStateTranslation = computed(() => {
-    if (marketplaceStore.selectedTierLocations.length === 0) {
+    if (portalStore.selectedTierLocations.length === 0) {
         return 'portal.businessList.noLocations'
     }
 
@@ -52,7 +52,7 @@ async function scrollSelectedLocationIntoView(
     locationId: string,
 ): Promise<void> {
     if (!locations.value.some((location) => location.id === locationId)) {
-        marketplaceStore.setSearchQuery('')
+        portalStore.setSearchQuery('')
     }
 
     await nextTick()
@@ -79,7 +79,7 @@ async function scrollSelectedLocationIntoView(
 }
 
 watch(
-    () => marketplaceStore.selectedLocationId,
+    () => portalStore.selectedLocationId,
     (locationId) => {
         if (!locationId) {
             return
@@ -94,11 +94,11 @@ watch(
 )
 
 function selectLocation(locationId: string): void {
-    marketplaceStore.selectLocation(locationId)
+    portalStore.selectLocation(locationId)
 }
 
 function updateSearchQuery(value: string): void {
-    marketplaceStore.setSearchQuery(value)
+    portalStore.setSearchQuery(value)
 }
 </script>
 
@@ -121,19 +121,19 @@ function updateSearchQuery(value: string): void {
                 </span>
             </div>
 
-            <AppSearchInput :model-value="marketplaceStore.searchQuery" :label="t('portal.businessList.searchLabel')"
+            <AppSearchInput :model-value="portalStore.searchQuery" :label="t('portal.businessList.searchLabel')"
                 :placeholder="t('portal.businessList.searchPlaceholder')"
                 :clear-label="t('portal.businessList.clearSearch')" @update:model-value="updateSearchQuery" />
         </header>
 
         <div v-if="locations.length > 0" ref="locationListElement" class="business-list__locations app-scrollbar">
             <BusinessLocationListItem v-for="location in locations" :key="location.id" :location="location"
-                :currency-symbol="marketplaceStore.currencySymbol" :selected="marketplaceStore.selectedLocationId === location.id
+                :currency-symbol="portalStore.currencySymbol" :selected="portalStore.selectedLocationId === location.id
                     " @select="selectLocation" />
         </div>
 
         <div v-else class="business-list__empty">
-            <SearchX v-if="marketplaceStore.searchQuery" :size="30" aria-hidden="true" />
+            <SearchX v-if="portalStore.searchQuery" :size="30" aria-hidden="true" />
 
             <Building2 v-else :size="30" aria-hidden="true" />
 

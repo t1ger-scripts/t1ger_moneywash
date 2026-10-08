@@ -1,17 +1,17 @@
 import { onMounted, onUnmounted } from 'vue'
 
-import { createMarketplaceSnapshot } from '@/portal/marketplace'
+import { createMarketplaceSnapshot } from '@/portal/portal.model'
 import { installLocaleMessages } from '@/integrations/localization/i18n'
 import { onNuiMessage } from '@/integrations/nui/nuiClient'
 import { NUI_MESSAGES } from '@/integrations/nui/nuiEvents'
 import type { PortalBootstrapPayload } from '@/integrations/nui/nui.types'
 import { applyTheme } from '@/portal/theme/applyTheme'
-import { useMarketplaceStore } from '@/portal/stores/marketplace.store'
 import { usePortalStore } from '@/portal/stores/portal.store'
+import { useUiStore } from '@/shared/stores/ui.store'
 
 export function usePortalLifecycle(): void {
-    const marketplaceStore = useMarketplaceStore()
     const portalStore = usePortalStore()
+    const ui = useUiStore()
 
     const unsubscribeFunctions: Array<() => void> = []
 
@@ -27,12 +27,12 @@ export function usePortalLifecycle(): void {
         applyTheme(payload.settings.theme)
 
         if (resetInteractionState) {
-            marketplaceStore.resetInteractionState()
+            portalStore.resetInteractionState()
         }
 
-        marketplaceStore.replaceSnapshot(createMarketplaceSnapshot(payload))
+        portalStore.replaceSnapshot(createMarketplaceSnapshot(payload))
 
-        if (resetInteractionState) portalStore.show()
+        if (resetInteractionState) ui.open('marketplace')
     }
 
     function openPortal(payload: PortalBootstrapPayload): void {
@@ -44,8 +44,8 @@ export function usePortalLifecycle(): void {
     }
 
     function closePortal(): void {
-        portalStore.hide()
-        marketplaceStore.resetInteractionState()
+        ui.close('marketplace')
+        portalStore.resetInteractionState()
     }
 
     onMounted(() => {

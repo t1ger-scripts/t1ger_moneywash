@@ -6,17 +6,17 @@ import { useI18n } from 'vue-i18n'
 import { usePortalActions } from '@/portal/composables/usePortalActions'
 import AppButton from '@/portal/components/ui/AppButton.vue'
 import AppModal from '@/portal/components/ui/AppModal.vue'
-import { useMarketplaceStore } from '@/portal/stores/marketplace.store'
+import { usePortalStore } from '@/portal/stores/portal.store'
 import { formatCurrency } from '@/portal/utils/formatters'
 
-const marketplaceStore = useMarketplaceStore()
+const portalStore = usePortalStore()
 const { requestBusinessPurchase } = usePortalActions()
 const { locale, t } = useI18n()
 
 const errorMessage = ref('')
 
 const location = computed(
-    () => marketplaceStore.purchaseDialogLocation,
+    () => portalStore.purchaseDialogLocation,
 )
 
 const formattedPrice = computed(() => {
@@ -24,7 +24,7 @@ const formattedPrice = computed(() => {
 
     return formatCurrency(
         location.value.price,
-        marketplaceStore.currencySymbol,
+        portalStore.currencySymbol,
         locale.value,
     )
 })
@@ -36,21 +36,21 @@ const modalTitle = computed(() =>
 )
 
 watch(
-    () => marketplaceStore.purchaseDialogLocationId,
+    () => portalStore.purchaseDialogLocationId,
     () => {
         errorMessage.value = ''
     },
 )
 
 function closeDialog(): void {
-    marketplaceStore.closePurchaseDialog()
+    portalStore.closePurchaseDialog()
 }
 
 async function confirmPurchase(): Promise<void> {
     const selectedLocation = location.value
     if (!selectedLocation) return
 
-    if (!marketplaceStore.beginPurchase(selectedLocation.id)) {
+    if (!portalStore.beginPurchase(selectedLocation.id)) {
         return
     }
 
@@ -70,17 +70,17 @@ async function confirmPurchase(): Promise<void> {
             )
         }
     } finally {
-        marketplaceStore.finishPurchase()
+        portalStore.finishPurchase()
     }
 
     if (purchaseSucceeded) {
-        marketplaceStore.closePurchaseDialog()
+        portalStore.closePurchaseDialog()
     }
 }
 </script>
 
 <template>
-    <AppModal :open="marketplaceStore.isPurchaseDialogOpen" :title="modalTitle"
+    <AppModal :open="portalStore.isPurchaseDialogOpen" :title="modalTitle"
         :eyebrow="t('portal.purchaseDialog.eyebrow')" :close-label="t('common.close')" @close="closeDialog">
         <div v-if="location" class="purchase-dialog">
             <div class="purchase-dialog__icon">
@@ -110,11 +110,11 @@ async function confirmPurchase(): Promise<void> {
         </div>
 
         <template #footer>
-            <AppButton variant="secondary" :disabled="marketplaceStore.isPurchasePending" @click="closeDialog">
+            <AppButton variant="secondary" :disabled="portalStore.isPurchasePending" @click="closeDialog">
                 {{ t('common.cancel') }}
             </AppButton>
 
-            <AppButton :loading="marketplaceStore.isPurchasePending" @click="confirmPurchase">
+            <AppButton :loading="portalStore.isPurchasePending" @click="confirmPurchase">
                 <ShoppingCart :size="18" aria-hidden="true" />
                 {{ t('portal.purchaseDialog.confirm') }}
             </AppButton>

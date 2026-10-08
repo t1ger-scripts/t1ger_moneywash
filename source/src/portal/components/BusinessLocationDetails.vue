@@ -14,8 +14,8 @@ import { usePortalActions } from '@/portal/composables/usePortalActions.js'
 import AppBadge from '@/portal/components/ui/AppBadge.vue'
 import AppButton from '@/portal/components/ui/AppButton.vue'
 import AppSurface from '@/portal/components/ui/AppSurface.vue'
-import type { PurchaseBlockReason } from '@/portal/stores/marketplace.store.js'
-import { useMarketplaceStore } from '@/portal/stores/marketplace.store.js'
+import type { PurchaseBlockReason } from '@/portal/stores/portal.store.js'
+import { usePortalStore } from '@/portal/stores/portal.store.js'
 import {
     formatCurrency,
     formatNumber,
@@ -23,18 +23,18 @@ import {
 
 import BusinessTypeIcon from './BusinessTypeIcon.vue'
 
-const marketplaceStore = useMarketplaceStore()
+const portalStore = usePortalStore()
 const { requestBusinessWaypoint } = usePortalActions()
 const { locale, t } = useI18n()
 
 const imageFailed = ref(false)
 
 const selectedLocation = computed(
-    () => marketplaceStore.selectedLocation,
+    () => portalStore.selectedLocation,
 )
 
 const selectedTier = computed(
-    () => marketplaceStore.selectedTier,
+    () => portalStore.selectedTier,
 )
 
 const imageSource = computed(() => {
@@ -74,7 +74,7 @@ const formattedPrice = computed(() => {
 
     return formatCurrency(
         location.price,
-        marketplaceStore.currencySymbol,
+        portalStore.currencySymbol,
         locale.value,
     )
 })
@@ -85,7 +85,7 @@ const formattedRevenue = computed(() => {
 
     return formatCurrency(
         tier.projectedRevenue,
-        marketplaceStore.currencySymbol,
+        portalStore.currencySymbol,
         locale.value,
     )
 })
@@ -98,7 +98,7 @@ const purchaseBlockReason = computed(
             return null
         }
 
-        return marketplaceStore.getPurchaseBlockReason(location)
+        return portalStore.getPurchaseBlockReason(location)
     },
 )
 
@@ -139,7 +139,7 @@ function openPurchaseDialog(): void {
     const location = selectedLocation.value
     if (!location) return
 
-    marketplaceStore.openPurchaseDialog(location.id)
+    portalStore.openPurchaseDialog(location.id)
 }
 
 async function setWaypoint(): Promise<void> {

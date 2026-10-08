@@ -1,4 +1,4 @@
-import type { BusinessLocation } from '@/portal/marketplace'
+import type { BusinessLocation } from '@/portal/portal.model'
 import {
     isFiveMEnvironment,
     postNui,
@@ -9,16 +9,16 @@ import type {
     PurchaseBusinessRequest,
     SetBusinessWaypointRequest,
 } from '@/integrations/nui/nui.types'
-import { useMarketplaceStore } from '@/portal/stores/marketplace.store'
 import { usePortalStore } from '@/portal/stores/portal.store'
+import { useUiStore } from '@/shared/stores/ui.store'
 
 export function usePortalActions() {
-    const marketplaceStore = useMarketplaceStore()
     const portalStore = usePortalStore()
+    const ui = useUiStore()
 
     async function requestPortalClose(): Promise<void> {
-        portalStore.hide()
-        marketplaceStore.resetInteractionState()
+        ui.close('marketplace')
+        portalStore.resetInteractionState()
 
         if (!isFiveMEnvironment()) return
 
