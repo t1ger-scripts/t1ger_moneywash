@@ -8,22 +8,6 @@ Config.Currency = "$" -- currency symbol used in menus and notifications
 -- (e.g. the business transfer picker); false = always use their game name
 Config.UseCharacterNames = true
 
---- Defines how dirty (unlaundered) money is represented on your server.
---- Supports account-based dirty money (e.g. black_money) or item-based
---- (stacked or metadata, e.g. markedbills). No logic files need changing.
-Config.DirtyMoney = {
-    useItem = true,          -- false = use an account balance instead of an item
-    account = "black_money", -- account type when useItem = false
-
-    item = {
-        name = "markedbills", -- dirty cash item name
-        metadata = false,     -- true if item uses metadata (e.g. qbcore markedbills)
-        metadataTemplate = function(amount)
-            return { worth = amount }
-        end,
-    },
-}
-
 --- Police interaction settings
 Config.Police = {
     Jobs                  = { "police", "sheriff" }, -- jobs that can access police interactions

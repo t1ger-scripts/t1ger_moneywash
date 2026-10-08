@@ -397,6 +397,160 @@ function _API.Player.SetMoney(src, amount, account)
     end
 end
 
+--- Sums the player's stacks of a given item, reading both conventions per
+--- stack: a per-unit `worth` from metadata, or a flat $1/unit value when
+--- there's no metadata - so a stack that's been customized into a flat item
+--- still gets counted correctly, with no config needed to say which.
+--- @param player table The resolved framework player object.
+--- @param item string The item name to sum.
+--- @return number total
+local function SumItemWorth(player, item)
+    local total = 0
+    for _, data in pairs(player.PlayerData.items or {}) do
+        if data and data.name == item then
+            local worth = (data.info and type(data.info.worth) == "number") and data.info.worth or 1
+            total = total + (worth * (data.amount or 1))
+        end
+    end
+    return total
+end
+
+--- Consumes stacks of a given item largest-first. A stack valued at $1/unit
+--- (the flat convention) is partially removed in exact units; a metadata
+--- stack worth more than $1/unit is removed whole and the leftover is
+--- re-added as a new stack. Verifies the net total dropped by exactly
+--- `amount` before returning.
+--- @param src number
+--- @param player table The resolved framework player object.
+--- @param item string The item name to remove.
+--- @param amount number
+--- @return boolean success
+local function RemoveItemByWorth(src, player, item, amount)
+    local stacks = {}
+    for slot, data in pairs(player.PlayerData.items or {}) do
+        if data and data.name == item then
+            local worth = (data.info and type(data.info.worth) == "number") and data.info.worth or 1
+            stacks[#stacks + 1] = { slot = slot, count = data.amount or 1, worth = worth }
+        end
+    end
+
+    table.sort(stacks, function(a, b)
+        return (a.worth * a.count) > (b.worth * b.count)
+    end)
+
+    local before = 0
+    for _, stack in ipairs(stacks) do before = before + (stack.worth * stack.count) end
+    if before < amount then return false end
+
+    local remaining = amount
+
+    for _, stack in ipairs(stacks) do
+        if remaining <= 0 then break end
+        local stackValue = stack.worth * stack.count
+
+        if stackValue <= remaining then
+            _API.Player.RemoveItem(src, item, stack.count, nil, stack.slot)
+            remaining = remaining - stackValue
+        elseif stack.worth == 1 then
+            local units = math.min(stack.count, remaining)
+            _API.Player.RemoveItem(src, item, units, nil, stack.slot)
+            remaining = remaining - units
+        else
+            _API.Player.RemoveItem(src, item, stack.count, nil, stack.slot)
+            _API.Player.AddItem(src, item, 1, { worth = stackValue - remaining })
+            remaining = 0
+        end
+    end
+
+    return SumItemWorth(player, item) == before - amount
+end
+
+--- Retrieves the player's dirty (unlaundered) money balance.
+--- ESX: the native black_money account.
+--- QBCore: sums markedbills stacks.
+--- Qbox: flat black_money item via ox_inventory, or markedbills stacks as fallback.
+--- @param src number Player's source ID.
+--- @return number Returns the player's dirty money balance or 0 if unavailable.
+function _API.Player.GetDirtyMoney(src)
+    local player = _API.Player.GetFromId(src)
+    if not player then
+        return error(("[_API.Player.GetDirtyMoney] Invalid player from provided src: %s"):format(tostring(src)))
+    end
+    if Framework == "esx" then
+        return _API.Player.GetMoney(src, "black_money")
+    elseif Framework == "qbcore" then
+        return SumItemWorth(player, "markedbills")
+    elseif Framework == "qbox" then
+        if GetResourceState("ox_inventory") == "started" then
+            return _API.Player.GetItemCount(src, "black_money")
+        else
+            return SumItemWorth(player, "markedbills")
+        end
+    else
+        return error(("[_API.Player.GetDirtyMoney] Unsupported framework detected (Framework: %s)"):format(tostring(Framework)))
+    end
+end
+
+--- Checks whether the player holds at least the given amount of dirty money.
+--- @param src number
+--- @param amount number
+--- @return boolean hasEnough
+function _API.Player.HasDirtyMoney(src, amount)
+    if type(amount) ~= "number" or amount <= 0 then return false end
+    return _API.Player.GetDirtyMoney(src) >= amount
+end
+
+--- Adds dirty money to the player's balance.
+--- @param src number Player's source ID.
+--- @param amount number Amount to add.
+function _API.Player.AddDirtyMoney(src, amount)
+    if not amount or type(amount) ~= "number" or amount <= 0 then return end
+    local player = _API.Player.GetFromId(src)
+    if not player then return end
+    if Framework == "esx" then
+        _API.Player.AddMoney(src, amount, "black_money")
+    elseif Framework == "qbcore" then
+        _API.Player.AddItem(src, "markedbills", 1, { worth = amount })
+    elseif Framework == "qbox" then
+        if GetResourceState("ox_inventory") == "started" then
+            _API.Player.AddItem(src, "black_money", amount)
+        else
+            _API.Player.AddItem(src, "markedbills", 1, { worth = amount })
+        end
+    else
+        return error(("[_API.Player.AddDirtyMoney] Unsupported framework detected (Framework: %s)"):format(tostring(Framework)))
+    end
+end
+
+--- Removes dirty money from the player's balance.
+--- @param src number Player's source ID.
+--- @param amount number Amount to remove.
+--- @return boolean success
+function _API.Player.RemoveDirtyMoney(src, amount)
+    if type(amount) ~= "number" or amount <= 0 then return false end
+    local player = _API.Player.GetFromId(src)
+    if not player then return false end
+    if Framework == "esx" then
+        local before = _API.Player.GetDirtyMoney(src)
+        if before < amount then return false end
+        _API.Player.RemoveMoney(src, amount, "black_money")
+        return _API.Player.GetDirtyMoney(src) == before - amount
+    elseif Framework == "qbcore" then
+        return RemoveItemByWorth(src, player, "markedbills", amount)
+    elseif Framework == "qbox" then
+        if GetResourceState("ox_inventory") == "started" then
+            local before = _API.Player.GetItemCount(src, "black_money")
+            if before < amount then return false end
+            _API.Player.RemoveItem(src, "black_money", amount)
+            return _API.Player.GetItemCount(src, "black_money") == before - amount
+        else
+            return RemoveItemByWorth(src, player, "markedbills", amount)
+        end
+    else
+        return error(("[_API.Player.RemoveDirtyMoney] Unsupported framework detected (Framework: %s)"):format(tostring(Framework)))
+    end
+end
+
 --- Function to return quantity of an item in the player data inventory
 --- @param src integer Player's source ID.
 --- @param item string The item to check/return quantity of
