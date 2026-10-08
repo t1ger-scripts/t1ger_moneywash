@@ -9,7 +9,7 @@ const PortalView = defineAsyncComponent(
 )
 
 const CashCounterView = defineAsyncComponent(
-    () => import('@/features/cash-counter/CashCounterView.vue'),
+    () => import('@/cash-counter/CashCounterView.vue'),
 )
 
 const ui = useUiStore()

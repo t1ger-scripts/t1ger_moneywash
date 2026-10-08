@@ -1,4 +1,4 @@
-import { useCashCounterStore } from './cash-counter.store'
+import { useCashCounterStore } from './stores/cash-counter.store'
 const messages = {
     common: {
         close: 'Close',
@@ -66,5 +66,10 @@ export function openCounterDemo(available = 10000000) {
         messages,
         titleKey: 'cashCounter.injectTitle',
         successKey: 'cashCounter.injected',
+        settings: {
+            stackCount: 10,
+            stackDurationMs: 800,
+            autoMoveToRight: false,
+        },
     })
 }

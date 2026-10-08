@@ -5,8 +5,12 @@ import { installLocaleMessages } from '@/integrations/i18n'
 import { isFiveMEnvironment, postNui } from '@/integrations/nui'
 import { NUI_CALLBACKS } from '@/integrations/nui'
 import type { NuiResponse } from '@/integrations/nui'
-import type { CashCounterPayload, CounterBatch, CounterStatus } from './cash-counter.types'
-import { validAmount } from './cash-counter.utils'
+import type {
+    CashCounterPayload,
+    CounterBatch,
+    CounterStatus,
+} from '../cash-counter.types'
+import { validAmount } from '../utils/cash-counter.utils'
 
 export const useCashCounterStore = defineStore('cash-counter', () => {
     const ui = useUiStore()
@@ -48,7 +52,9 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
         try {
             let response: NuiResponse<CounterStatus>
             if (!isFiveMEnvironment()) {
-                const durationMs = 4000
+                const settings = payload.value.settings
+                const pileCount = Math.min(settings.stackCount, amount.value)
+                const durationMs = pileCount * settings.stackDurationMs
                 demoEnd = performance.now() + durationMs
                 response = { success: true, data: {
                     available: available.value,

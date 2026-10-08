@@ -3,6 +3,39 @@ local Pending, ByBusiness, Sessions = {}, {}, {}
 local nextBatchId = 0
 local Resource = GetCurrentResourceName()
 
+local function cashCounterInteger(value, fallback, minimum, maximum)
+    local number = tonumber(value)
+
+    if not number or number ~= number
+        or number == math.huge or number == -math.huge then
+        number = fallback
+    end
+
+    return math.max(minimum, math.min(maximum, math.floor(number)))
+end
+
+local function GetCashCounterSettings()
+    local config = Config.CashCounter or {}
+
+    return {
+        stackCount = cashCounterInteger(
+            config.StackCount, 10, 1, 20
+        ),
+        stackDurationMs = cashCounterInteger(
+            config.StackDurationMs, 800, 100, 60000
+        ),
+        autoMoveToRight = config.AutoMoveToRight == true,
+    }
+end
+
+local function GetCashCounterBatchDuration(amount, settings)
+    settings = settings or GetCashCounterSettings()
+
+    local pileCount = math.min(settings.stackCount, amount)
+
+    return pileCount * settings.stackDurationMs
+end
+
 local function failure(reason, data) return { success = false, reason = reason, data = data } end
 local function locks(row) return { ("business:%d"):format(row.businessId), "owner:" .. row.identifier } end
 function HasPendingCashCounter(businessId) return ByBusiness[businessId] ~= nil end
@@ -68,6 +101,7 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, b
         businessId = businessId, operation = "inject", available = GetDirtyMoney(src),
         currency = Config.Currency, locale = localeName, messages = messages,
         titleKey = "cashCounter.injectTitle", successKey = "cashCounter.injected",
+        settings = GetCashCounterSettings(),
         batch = publicBatch(row),
     } }
 end)
@@ -92,7 +126,8 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:start", function(src, 
     -- Early balance check is for feedback; confirm always checks again.
     if not HasDirtyMoney(src, amount) then return failure("insufficient_dirty_cash") end
     nextBatchId = nextBatchId + 1
-    local duration = math.max(1000, math.floor(Config.CashCounter.DurationMs or 4000))
+    local settings = GetCashCounterSettings()
+    local duration = GetCashCounterBatchDuration(amount, settings)
     local row = { id = nextBatchId, identifier = session.identifier, businessId = business.id,
         amount = amount, durationMs = duration, deadline = GetGameTimer() + duration, state = "counting" }
     Pending[row.identifier], session.batchId = row, row.id

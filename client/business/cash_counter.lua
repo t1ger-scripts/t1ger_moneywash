@@ -1,4 +1,38 @@
 local opening = false
+
+local function cashCounterInteger(value, fallback, minimum, maximum)
+    local number = tonumber(value)
+
+    if not number or number ~= number
+        or number == math.huge or number == -math.huge then
+        number = fallback
+    end
+
+    return math.max(minimum, math.min(maximum, math.floor(number)))
+end
+
+local function GetCashCounterSettings()
+    local config = Config.CashCounter or {}
+
+    return {
+        stackCount = cashCounterInteger(
+            config.StackCount, 10, 1, 20
+        ),
+        stackDurationMs = cashCounterInteger(
+            config.StackDurationMs, 800, 100, 60000
+        ),
+        autoMoveToRight = config.AutoMoveToRight == true,
+    }
+end
+
+local function GetCashCounterBatchDuration(amount, settings)
+    settings = settings or GetCashCounterSettings()
+
+    local pileCount = math.min(settings.stackCount, amount)
+
+    return pileCount * settings.stackDurationMs
+end
+
 local function serverRequest(name, ...)
     local ok, response = pcall(lib.callback.await, "t1ger_moneywash:server:cashCounter:" .. name, false, ...)
     if not ok or type(response) ~= "table" then return { success = false, reason = "request_failed" } end
@@ -95,7 +129,7 @@ serverRequest = function(name, ...)
         end
 
         if not batch then
-            local duration = math.max(1000, math.floor(Config.CashCounter.DurationMs or 4000))
+            local duration = GetCashCounterBatchDuration(amount, testCounter.settings)
             testCounter.nextId = testCounter.nextId + 1
             batch = {
                 id = testCounter.nextId,
@@ -161,7 +195,11 @@ RegisterCommand("testcashcounter", function(_, args)
     messages.cashCounter.injected = "Test complete: {amount} counted. No cash was moved."
     messages.cashCounter.deposited = "TEST COMPLETE"
 
-    testCounter = { available = balance, nextId = 0 }
+    testCounter = {
+        available = balance,
+        nextId = 0,
+        settings = GetCashCounterSettings(),
+    }
 
     ShowMoneywashUi("cash-counter", "t1ger_moneywash:cashCounter:open", {
         businessId = 0,
@@ -172,5 +210,6 @@ RegisterCommand("testcashcounter", function(_, args)
         messages = messages,
         titleKey = "cashCounter.injectTitle",
         successKey = "cashCounter.injected",
+        settings = testCounter.settings,
     })
 end, false)

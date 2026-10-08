@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { stackCount } from '../cash-counter.utils'
+import { stackCount } from '../utils/cash-counter.utils'
 const props = withDefaults(
     defineProps<{ amount: number; compact?: boolean; stacks?: number }>(),
     { compact: false },

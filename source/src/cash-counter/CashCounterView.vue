@@ -5,13 +5,13 @@ import { X } from '@lucide/vue'
 import CashStacks from './components/CashStacks.vue'
 import CounterMachine from './components/CounterMachine.vue'
 import CounterAmountSelector from './components/CounterAmountSelector.vue'
-import { useCashCounterStore } from './cash-counter.store'
-import { useCashDrag } from './composables/useCashDrag'
-import { useCounterSound } from './composables/useCounterSound'
-import { stackCount, validAmount } from './cash-counter.utils'
-import { createCashTextures } from './cash-counter.textures'
+import { useCashCounterStore } from './stores/cash-counter.store'
+import { useCashDrag } from './composables/useCashDrag.js'
+import { useCounterSound } from './composables/useCounterSound.js'
+import { stackCount, validAmount } from './utils/cash-counter.utils'
+import { createCashTextures } from './utils/cash-counter.textures'
 import { isFiveMEnvironment } from '@/integrations/nui'
-import './cash-counter.scss'
+import './styles/cash-counter.scss'
 const store = useCashCounterStore()
 const { t, te } = useI18n()
 const root = ref<HTMLElement | null>(null)
@@ -106,7 +106,7 @@ async function refresh() {
 }
 async function changeDemo() {
     if (!import.meta.env.DEV) return
-    const { openCounterDemo } = await import('./cash-counter.demo')
+    const { openCounterDemo } = await import('./cash-counter.demo.js')
     openCounterDemo(demoBalance.value)
 }
 function escape(event: KeyboardEvent) {

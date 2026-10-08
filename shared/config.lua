@@ -150,10 +150,22 @@ Config.Reputation = {
         { threshold = 100, color = "#16a34a" },
     },
 }
--- Cash counter presentation duration is server-authoritative. MaxAmount is a safety
--- ceiling, not the demo balance; the available amount always comes from the player.
+
 Config.CashCounter = {
-    DurationMs = 4000,
+    -- Number of piles used to represent the selected amount.
+    -- Whole number between 1 and 20.
+    StackCount = 10,
+
+    -- Time spent counting EACH pile, in milliseconds.
+    StackDurationMs = 800,
+
+    -- Automatically place a finished pile on the right tray.
+    -- Loading the next pile remains manual.
+    AutoMoveToRight = false,
+
+    -- Maximum permitted amount for one batch.
     MaxAmount = 1000000000,
+
+    -- Maximum distance from the business handler.
     InteractionDistance = 5.0,
 }

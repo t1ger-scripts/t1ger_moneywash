@@ -2,8 +2,8 @@ import { onMounted, onUnmounted } from 'vue'
 import { usePortalLifecycle } from '@/portal/composables/usePortalLifecycle'
 import { usePortalActions } from '@/portal/composables/usePortalActions'
 import { useUiStore } from '@/shared/stores/ui.store'
-import { useCashCounterStore } from '@/features/cash-counter/cash-counter.store'
-import type { CashCounterPayload } from '@/features/cash-counter/cash-counter.types'
+import { useCashCounterStore } from '@/cash-counter/stores/cash-counter.store'
+import type { CashCounterPayload } from '@/cash-counter/cash-counter.types'
 import {
     isFiveMEnvironment,
     onNuiMessage,
@@ -41,7 +41,7 @@ export function useUiLifecycle() {
                 'cash-counter'
         ) {
             const { openCounterDemo } =
-                await import('@/features/cash-counter/cash-counter.demo')
+                await import('@/cash-counter/cash-counter.demo')
             openCounterDemo()
         }
     })
