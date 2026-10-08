@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import { defineStore } from 'pinia'
-import { useUiStore } from './ui.store'
+import { useUiStore } from '@/shared/stores/ui.store'
 // Compatibility facade for existing marketplace components.
 export const usePortalStore = defineStore('portal', () => {
     const ui = useUiStore()

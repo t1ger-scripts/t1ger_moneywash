@@ -3,11 +3,11 @@ import { computed, ref, watch } from 'vue'
 import { Building2, ShoppingCart } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
-import { usePortalActions } from '@/composables/usePortalActions'
-import AppButton from '@/design-system/components/AppButton.vue'
-import AppModal from '@/design-system/components/AppModal.vue'
-import { useMarketplaceStore } from '@/stores/marketplace.store'
-import { formatCurrency } from '@/utils/formatters'
+import { usePortalActions } from '@/portal/composables/usePortalActions'
+import AppButton from '@/portal/components/ui/AppButton.vue'
+import AppModal from '@/portal/components/ui/AppModal.vue'
+import { useMarketplaceStore } from '@/portal/stores/marketplace.store'
+import { formatCurrency } from '@/portal/utils/formatters'
 
 const marketplaceStore = useMarketplaceStore()
 const { requestBusinessPurchase } = usePortalActions()

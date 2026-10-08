@@ -2,9 +2,9 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import type { BusinessTier } from '@/domain/marketplace'
-import { useMarketplaceStore } from '@/stores/marketplace.store'
-import { formatNumber } from '@/utils/formatters'
+import type { BusinessTier } from '@/portal/marketplace.js'
+import { useMarketplaceStore } from '@/portal/stores/marketplace.store.js'
+import { formatNumber } from '@/portal/utils/formatters.js'
 
 import BusinessTypeIcon from './BusinessTypeIcon.vue'
 

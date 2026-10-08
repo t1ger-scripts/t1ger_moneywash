@@ -5,7 +5,7 @@ import type {
     BusinessLocation,
     BusinessTier,
     MarketplaceSnapshot,
-} from '@/domain/marketplace'
+} from '@/portal/marketplace'
 
 export type PurchaseBlockReason =
     | 'alreadyOwnsBusiness'

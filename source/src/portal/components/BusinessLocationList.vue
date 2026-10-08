@@ -3,11 +3,11 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { Building2, SearchX } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
-import AppBadge from '@/design-system/components/AppBadge.vue'
-import AppSearchInput from '@/design-system/components/AppSearchInput.vue'
-import AppSurface from '@/design-system/components/AppSurface.vue'
-import { useMarketplaceStore } from '@/stores/marketplace.store'
-import { formatNumber } from '@/utils/formatters'
+import AppBadge from '@/portal/components/ui/AppBadge.vue'
+import AppSearchInput from '@/portal/components/ui/AppSearchInput.vue'
+import AppSurface from '@/portal/components/ui/AppSurface.vue'
+import { useMarketplaceStore } from '@/portal/stores/marketplace.store.js'
+import { formatNumber } from '@/portal/utils/formatters.js'
 
 import BusinessLocationListItem from './BusinessLocationListItem.vue'
 
@@ -88,6 +88,7 @@ watch(
         void scrollSelectedLocationIntoView(locationId)
     },
     {
+        immediate: true,
         flush: 'post',
     },
 )

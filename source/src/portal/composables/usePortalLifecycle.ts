@@ -1,13 +1,13 @@
 import { onMounted, onUnmounted } from 'vue'
 
-import { createMarketplaceSnapshot } from '@/domain/marketplace'
+import { createMarketplaceSnapshot } from '@/portal/marketplace'
 import { installLocaleMessages } from '@/integrations/localization/i18n'
 import { onNuiMessage } from '@/integrations/nui/nuiClient'
 import { NUI_MESSAGES } from '@/integrations/nui/nuiEvents'
 import type { PortalBootstrapPayload } from '@/integrations/nui/nui.types'
-import { applyTheme } from '@/integrations/theme/applyTheme'
-import { useMarketplaceStore } from '@/stores/marketplace.store'
-import { usePortalStore } from '@/stores/portal.store'
+import { applyTheme } from '@/portal/theme/applyTheme'
+import { useMarketplaceStore } from '@/portal/stores/marketplace.store'
+import { usePortalStore } from '@/portal/stores/portal.store'
 
 export function usePortalLifecycle(): void {
     const marketplaceStore = useMarketplaceStore()

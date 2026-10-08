@@ -1,5 +1,5 @@
 import type { LocaleMessages } from '@/integrations/localization/localization.types'
-import type { PortalThemeConfig } from '@/integrations/theme/theme.types'
+import type { PortalThemeConfig } from '@/portal/theme/theme.types'
 
 export interface PortalCoordinates {
     x: number

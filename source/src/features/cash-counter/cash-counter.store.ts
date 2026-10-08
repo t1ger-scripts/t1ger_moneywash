@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { useUiStore } from '@/stores/ui.store'
+import { useUiStore } from '@/shared/stores/ui.store'
 import { installLocaleMessages } from '@/integrations/localization/i18n'
 import { isFiveMEnvironment, postNui } from '@/integrations/nui/nuiClient'
 import { NUI_CALLBACKS } from '@/integrations/nui/nuiEvents'

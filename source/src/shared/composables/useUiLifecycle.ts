@@ -1,7 +1,7 @@
 import { onMounted, onUnmounted } from 'vue'
-import { usePortalLifecycle } from './usePortalLifecycle'
-import { usePortalActions } from './usePortalActions'
-import { useUiStore } from '@/stores/ui.store'
+import { usePortalLifecycle } from '@/portal/composables/usePortalLifecycle'
+import { usePortalActions } from '@/portal/composables/usePortalActions'
+import { useUiStore } from '@/shared/stores/ui.store'
 import { useCashCounterStore } from '@/features/cash-counter/cash-counter.store'
 import type { CashCounterPayload } from '@/features/cash-counter/cash-counter.types'
 import {

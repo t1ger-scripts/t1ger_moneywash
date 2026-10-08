@@ -3,9 +3,9 @@ import { computed, ref, watch } from 'vue'
 import { Building2 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
-import AppBadge from '@/design-system/components/AppBadge.vue'
-import type { BusinessLocation } from '@/domain/marketplace'
-import { formatCurrency } from '@/utils/formatters'
+import AppBadge from '@/portal/components/ui/AppBadge.vue'
+import type { BusinessLocation } from '@/portal/marketplace'
+import { formatCurrency } from '@/portal/utils/formatters'
 
 const props = defineProps<{
     location: BusinessLocation

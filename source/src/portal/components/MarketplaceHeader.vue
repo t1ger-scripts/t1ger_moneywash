@@ -9,11 +9,11 @@ import {
 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
-import AppIconButton from '@/design-system/components/AppIconButton.vue'
-import AppProgressBar from '@/design-system/components/AppProgressBar.vue'
-import { usePortalActions } from '@/composables/usePortalActions'
-import { useMarketplaceStore } from '@/stores/marketplace.store'
-import { formatCurrency, formatNumber } from '@/utils/formatters'
+import AppIconButton from '@/portal/components/ui/AppIconButton.vue'
+import AppProgressBar from '@/portal/components/ui/AppProgressBar.vue'
+import { usePortalActions } from '@/portal/composables/usePortalActions'
+import { useMarketplaceStore } from '@/portal/stores/marketplace.store'
+import { formatCurrency, formatNumber } from '@/portal/utils/formatters'
 
 const marketplaceStore = useMarketplaceStore()
 const { requestPortalClose } = usePortalActions()

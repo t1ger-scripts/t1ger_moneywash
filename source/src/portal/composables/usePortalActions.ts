@@ -1,4 +1,4 @@
-import type { BusinessLocation } from '@/domain/marketplace'
+import type { BusinessLocation } from '@/portal/marketplace'
 import {
     isFiveMEnvironment,
     postNui,
@@ -9,8 +9,8 @@ import type {
     PurchaseBusinessRequest,
     SetBusinessWaypointRequest,
 } from '@/integrations/nui/nui.types'
-import { useMarketplaceStore } from '@/stores/marketplace.store'
-import { usePortalStore } from '@/stores/portal.store'
+import { useMarketplaceStore } from '@/portal/stores/marketplace.store'
+import { usePortalStore } from '@/portal/stores/portal.store'
 
 export function usePortalActions() {
     const marketplaceStore = useMarketplaceStore()

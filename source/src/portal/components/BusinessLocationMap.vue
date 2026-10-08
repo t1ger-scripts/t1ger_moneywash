@@ -4,8 +4,8 @@ import { LocateFixed, Minus, Plus, RotateCcw, TriangleAlert } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import L from 'leaflet'
 
-import type { BusinessLocation } from '@/domain/marketplace'
-import { useMarketplaceStore } from '@/stores/marketplace.store'
+import type { BusinessLocation } from '@/portal/marketplace.js'
+import { useMarketplaceStore } from '@/portal/stores/marketplace.store.js'
 
 import BusinessTypeIcon from './BusinessTypeIcon.vue'
 

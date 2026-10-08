@@ -1,13 +1,16 @@
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 
 import '@fontsource-variable/inter'
 import 'leaflet/dist/leaflet.css'
-import '@/design-system/styles/main.scss'
+import '@/portal/styles/portal.scss'
 
 import App from '@/App.vue'
-import { installApplication } from '@/app/bootstrap'
+import { i18n } from '@/integrations/localization/i18n'
 
 const app = createApp(App)
 
-installApplication(app)
+app.use(createPinia())
+app.use(i18n)
+
 app.mount('#app')
