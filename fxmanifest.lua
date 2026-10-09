@@ -40,6 +40,7 @@ client_scripts {
     'client/ui.lua',
     'client/business/portal.lua',
     'client/business/cash_counter.lua',
+    'client/business/bank_deposit.lua',
     'client/business/main.lua',
     'client/business/menu.lua',
     'client/business/stock.lua',

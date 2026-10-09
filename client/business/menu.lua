@@ -521,13 +521,13 @@ function ConfirmAbandonBusiness(businessId)
 end
 
 --- ============================================================================
---- POLICE BANK TELLER MENU
+--- POLICE ATM MENU
 --- ============================================================================
 
---- Called by the bank teller target when a police officer interacts
---- @param bankCoords vector4
-function OpenPoliceTellerMenu(bankCoords)
-    local deposits = lib.callback.await("t1ger_moneywash:server:getFlaggedDeposits", false, bankCoords)
+--- Called by the ATM target when an officer interacts. The server decides which
+--- flagged deposits are at this ATM, based on the officer's position.
+function OpenPoliceATMMenu()
+    local deposits = lib.callback.await("t1ger_moneywash:server:getFlaggedDeposits", false)
 
     if not deposits or #deposits == 0 then
         _API.ShowNotification(locale("menu.police.no_flagged_deposits"), "inform", {})
@@ -537,39 +537,34 @@ function OpenPoliceTellerMenu(bankCoords)
     local options = {}
 
     for _, deposit in ipairs(deposits) do
-        local timeRemaining = math.max(0, deposit.clearsAt - os.time())
-        local minutes = math.floor(timeRemaining / 60)
-        local seconds = timeRemaining % 60
+        local minutes = math.floor(deposit.remainingSeconds / 60)
+        local seconds = deposit.remainingSeconds % 60
 
         options[#options + 1] = {
-            title    = string.format(locale("menu.police.deposit_entry"),
-                FormatMoney(deposit.totalAmount)),
+            title    = string.format(locale("menu.police.deposit_entry"), FormatMoney(deposit.amount)),
             icon     = "fa-solid fa-money-bill",
             metadata = {
-                {
-                    label = locale("menu.police.clears_in"),
-                    value = string.format("%dm %ds", minutes, seconds)
-                },
+                { label = locale("menu.police.clears_in"), value = string.format("%dm %ds", minutes, seconds) },
             },
             onSelect = function()
-                ConfirmConfiscateDeposit(deposit.identifier, deposit.totalAmount)
+                ConfirmConfiscateDeposit(deposit.ref, deposit.amount)
             end,
         }
     end
 
     lib.registerContext({
-        id      = "moneywash:police:teller",
+        id      = "moneywash:police:atm",
         title   = locale("menu.police.teller_title"),
         options = options,
     })
 
-    lib.showContext("moneywash:police:teller")
+    lib.showContext("moneywash:police:atm")
 end
 
 --- Confiscation confirmation for police
---- @param targetIdentifier string
+--- @param ref number Deposit reference from the server
 --- @param amount number
-function ConfirmConfiscateDeposit(targetIdentifier, amount)
+function ConfirmConfiscateDeposit(ref, amount)
     local confirmed = lib.alertDialog({
         header   = locale("menu.police.confiscate_title"),
         content  = string.format(locale("menu.police.confiscate_body"), FormatMoney(amount)),
@@ -579,11 +574,11 @@ function ConfirmConfiscateDeposit(targetIdentifier, amount)
 
     if confirmed ~= "confirm" then return end
 
-    local result = lib.callback.await("t1ger_moneywash:server:confiscateDeposit", false, targetIdentifier)
+    local result = lib.callback.await("t1ger_moneywash:server:confiscateDeposit", false, ref)
 
-    if result.success then
+    if result and result.success then
         _API.ShowNotification(locale("menu.police.confiscate_success"), "success", {})
     else
-        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error", {})
+        _API.ShowNotification(locale("notification.error_" .. ((result and result.reason) or "unknown")), "error", {})
     end
 end

@@ -90,6 +90,12 @@ Config.BankDeposit = {
         "prop_fleeca_atm",
     },
 
+    SubmitDuration = 5000, -- ms the "depositing" progress bar takes at the ATM
+    Animation      = { dict = "amb@prop_human_atm@male@idle_a", clip = "idle_a" },
+
+    TargetIcon       = "fa-solid fa-credit-card",
+    PoliceTargetIcon = "fa-solid fa-magnifying-glass-dollar",
+
     -- % chance a deposit is flagged, by business suspicion label at the moment of submit
     FlagChance = {
         Low      = 0,

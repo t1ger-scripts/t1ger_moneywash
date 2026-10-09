@@ -6,7 +6,9 @@
         "load_stock": "Load Stock",
         "unload_stock": "Unload Stock",
         "deliver_stock": "Deliver Stock",
-        "bank_teller": "Bank Teller"
+        "atm_deposit": "Deposit cash",
+        "atm_cancel": "Cancel deposit",
+        "atm_review": "Review flagged deposits"
     },
     "menu": {
         "handler": {
@@ -68,7 +70,9 @@
         "deposit": {
             "title": "Bank Deposit",
             "amount_label": "Amount to deposit (available: %s)",
-            "exposed_desc": "Exposed: %s | Covered: %s\n\nExposed funds are drawn first."
+            "exposed_desc": "Exposed: %s | Covered: %s\n\nExposed funds are drawn first.",
+            "cancel_title": "Cancel Deposit",
+            "cancel_body": "Cancel the deposit and return the cash to your Safe?"
         },
         "review": {
             "title": "Review Books",
@@ -101,7 +105,7 @@
             "teller_title": "Flagged Deposits",
             "deposit_entry": "Pending Deposit — %s",
             "clears_in": "Clears in",
-            "no_flagged_deposits": "No flagged deposits at this teller",
+            "no_flagged_deposits": "No flagged deposits at this ATM",
             "confiscate_title": "Confiscate Deposit",
             "confiscate_body": "Confiscate pending deposit of %s?\n\nThe full amount will be seized.",
             "confiscate_success": "Deposit confiscated successfully"
@@ -126,6 +130,7 @@
         "deposit_cleared": "Bank deposit cleared: %s paid into your bank (%s tax).",
         "deposit_refunded": "Bank deposit cancelled. %s returned to your Safe.",
         "deposit_confiscated": "Police confiscated your pending bank deposit.",
+        "deposit_head_to_atm": "Take the cash to any ATM within %d minutes",
         "error_invalid_player": "Invalid player",
         "error_invalid_type": "Invalid business type",
         "error_invalid_state": "This action isn't available right now",
@@ -168,7 +173,8 @@
     },
     "progress": {
         "laundering": "Laundering money...",
-        "delivering_stock": "Delivering stock..."
+        "delivering_stock": "Delivering stock...",
+        "atm_deposit": "Depositing cash..."
     },
     "textui": {
         "pickup_box": "[E] Pick up stock",

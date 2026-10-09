@@ -184,8 +184,14 @@ local function statusData(src, row)
     local identifier = _API.Player.GetIdentifier(src)
 
     if identifier and (not row or identifier == row.identifier) then
-        if row and row.operation == "withdraw" then
-            local business = GetBusiness(row.businessId)
+        -- Before the first pile is loaded there is no batch yet, so fall back
+        -- to the UI session to know which operation this is.
+        local session = Sessions[src]
+        local operation = (row and row.operation) or (session and session.operation)
+        local businessId = (row and row.businessId) or (session and session.businessId)
+
+        if operation == "withdraw" then
+            local business = businessId and GetBusiness(businessId)
             available = business and (business.safeCovered + business.safeExposed) or 0
         else
             available = _API.Player.GetDirtyMoney(src)
