@@ -14,8 +14,6 @@ CREATE TABLE IF NOT EXISTS `moneywash_reputation` (
 );
 
 -- Business ownership and live state
--- Note: cycle tracking (totalLaundered) resets globally on each server cycle tick
--- cycle_started_at is NOT stored here - it lives in server memory only
 CREATE TABLE IF NOT EXISTS `moneywash_businesses` (
     `id`                INT(11)      NOT NULL AUTO_INCREMENT,
     `identifier`        VARCHAR(100) NOT NULL,               -- owner player identifier
@@ -28,7 +26,7 @@ CREATE TABLE IF NOT EXISTS `moneywash_businesses` (
     `safe_covered`      BIGINT(20)   NOT NULL DEFAULT 0,      -- clean covered funds in Safe
     `safe_exposed`      BIGINT(20)   NOT NULL DEFAULT 0,      -- clean exposed funds in Safe
     `suspicion`         FLOAT        NOT NULL DEFAULT 0,      -- current suspicion value (0-100)
-    `total_laundered`   BIGINT(20)   NOT NULL DEFAULT 0,      -- gross amount laundered this cycle (resets each cycle)
+    `total_laundered`   BIGINT(20)   NOT NULL DEFAULT 0,      -- gross amount ever laundered
     `last_laundered_at` BIGINT(20)   NOT NULL DEFAULT 0,      -- unix timestamp of last launder action (for decay inactivity check)
     `purchased_at`      BIGINT(20)   NOT NULL DEFAULT 0,      -- unix timestamp of purchase
     PRIMARY KEY (`id`),

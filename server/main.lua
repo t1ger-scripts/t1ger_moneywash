@@ -85,20 +85,13 @@ end, true)
 
 --- -------------------------------------------------------------------------
 --- SUSPICION DECAY TICK
---- Runs per business every real minute
---- Only decays after configured inactivity period with no launder actions
+--- Runs per business every real minute. Decay is constant: it does not
+--- depend on recent laundering. The gain formula vs. the decay rate defines
+--- the "safe laundering rate" per cycle.
 --- -------------------------------------------------------------------------
 local function ApplySuspicionDecay(business)
     if business.suspicion <= 0 then return end
 
-    local now = os.time()
-    local cycleDurationSeconds = Config.Business.CycleDuration * 60
-    local inactivitySeconds = Config.Suspicion.Decay.InactivityPeriod * cycleDurationSeconds
-    local timeSinceLastLaunder = now - business.lastLaunderedAt
-
-    if timeSinceLastLaunder < inactivitySeconds then return end
-
-    -- Determine if owner is online
     local isOnline = false
     for _, player in ipairs(_API.GetOnlinePlayers()) do
         if player.identifier == business.identifier then
@@ -107,15 +100,12 @@ local function ApplySuspicionDecay(business)
         end
     end
 
-    local decayPerCycle = isOnline
-        and Config.Suspicion.Decay.OnlinePointsPerCycle
-        or Config.Suspicion.Decay.OfflinePointsPerCycle
+    local decayPerCycle = isOnline and Config.Suspicion.Decay.OnlinePointsPerCycle or Config.Suspicion.Decay.OfflinePointsPerCycle
 
     -- Convert per-cycle to per-tick (tick = 1 real minute, cycle = CycleDuration minutes)
     local decayPerTick = decayPerCycle / Config.Business.CycleDuration
-    local newSuspicion = math.max(0, business.suspicion - decayPerTick)
 
-    UpdateBusiness(business.id, "suspicion", newSuspicion)
+    UpdateBusiness(business.id, "suspicion", math.max(0, business.suspicion - decayPerTick))
 end
 
 
@@ -337,7 +327,7 @@ function SaveBusiness(id, force)
         MySQL.update.await,
         "UPDATE moneywash_businesses SET " ..
         "stock = ?, safe_covered = ?, safe_exposed = ?, suspicion = ?, " ..
-        "total_laundered = ?, last_laundered_at = ? " ..
+        "total_laundered = ? " ..
         "WHERE id = ? AND identifier = ?",
         {
             business.stock,
@@ -345,7 +335,6 @@ function SaveBusiness(id, force)
             business.safeExposed,
             business.suspicion,
             business.totalLaundered,
-            business.lastLaunderedAt,
             business.id,
             identifier,
         }

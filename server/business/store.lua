@@ -104,7 +104,6 @@ function AddToStore(id, data)
         safeExposed     = data.safe_exposed or 0,
         suspicion       = data.suspicion or 0,
         totalLaundered  = data.total_laundered or 0,
-        lastLaunderedAt = data.last_laundered_at or 0,
         purchasedAt     = data.purchased_at or os.time(),
     }
 end

@@ -45,14 +45,13 @@ Config.Suspicion = {
 
     -- -------------------------------------------------------------------------
     -- DECAY
-    -- Decay begins after one full cycle of inactivity (no launder actions).
-    -- Any launder action restarts the inactivity clock.
-    -- Stock orders and bank deposits do not count as activity.
+    -- Constant decay, always running. Whatever a business launders per cycle
+    -- that gains less than this is effectively "safe" long-term.
+    -- With full stock, safe rate ~= sqrt(decay / 25) of the cycle allowance.
     -- -------------------------------------------------------------------------
     Decay = {
-        InactivityPeriod     = 1,  -- full cycles of inactivity before decay begins
-        OnlinePointsPerCycle = 15, -- suspicion removed per cycle while owner is online
-        OfflinePointsPerCycle = 5, -- suspicion removed per cycle while owner is offline
+        OnlinePointsPerCycle  = 5, -- suspicion removed per cycle while owner is online
+        OfflinePointsPerCycle = 2, -- suspicion removed per cycle while owner is offline
     },
 
     -- -------------------------------------------------------------------------

@@ -131,9 +131,8 @@ function BuyBusiness(src, businessType, locationId)
         MySQL.insert.await,
         "INSERT INTO moneywash_businesses " ..
         "(identifier, business_type, location_id, location_x, location_y, location_z, " ..
-        "stock, safe_covered, safe_exposed, suspicion, total_laundered, " ..
-        "last_laundered_at, purchased_at) " ..
-        "VALUES (?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, 0, ?)",
+        "stock, safe_covered, safe_exposed, suspicion, total_laundered, purchased_at) " ..
+        "VALUES (?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, ?)",
         {
             identifier,
             businessType,
@@ -168,7 +167,6 @@ function BuyBusiness(src, businessType, locationId)
         safe_exposed      = 0,
         suspicion         = 0,
         total_laundered   = 0,
-        last_laundered_at = 0,
         purchased_at      = now,
     })
 
@@ -615,7 +613,6 @@ function BuildCashInjection(business, amount)
         safeExposed = business.safeExposed + exposed,
         suspicion = suspicion,
         totalLaundered = business.totalLaundered + amount,
-        lastLaunderedAt = os.time(),
     }, {
         oldLabel = GetSuspicionLabel(business.suspicion),
         newLabel = GetSuspicionLabel(suspicion),
@@ -713,8 +710,7 @@ function AdminAddBusiness(identifier, businessType, locationId)
         MySQL.insert.await,
         "INSERT INTO moneywash_businesses " ..
         "(identifier, business_type, location_id, location_x, location_y, location_z, " ..
-        "stock, safe_covered, safe_exposed, suspicion, total_laundered, " ..
-        "last_laundered_at, purchased_at) " ..
+        "stock, safe_covered, safe_exposed, suspicion, total_laundered, purchased_at) " ..
         "VALUES (?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, 0, ?)",
         {
             identifier,
@@ -748,7 +744,6 @@ function AdminAddBusiness(identifier, businessType, locationId)
         safe_exposed      = 0,
         suspicion         = 0,
         total_laundered   = 0,
-        last_laundered_at = 0,
         purchased_at      = now,
     })
 
