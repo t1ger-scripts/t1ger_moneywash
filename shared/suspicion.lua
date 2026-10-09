@@ -6,15 +6,19 @@ Config.Suspicion = {
     -- The script derives all raw formula values internally.
     -- -------------------------------------------------------------------------
 
-    -- How many full expectedRevenue launder actions with full stock
-    -- before reaching Critical suspicion (75).
-    -- Lower = riskier, Higher = more forgiving
-    CyclesUntilCritical = 3,
+    -- How many cycles of laundering a FULL allowance (expectedRevenue) with
+    -- full stock it takes to reach Critical (75), ignoring decay.
+    -- Gain per such cycle = 75 / this value (15 -> 5 points per cycle).
+    -- Higher = more forgiving.
+    CyclesUntilCritical = 15,
 
-    -- Percentage suspicion reduction when business has full stock coverage
-    FullStockReduction = 50,
+    -- How much full stock coverage reduces that gain, in percent.
+    -- Higher = stock is more important. 80 means a fully stocked launder
+    -- builds only 20% of the suspicion an unstocked one does (before the penalty).
+    -- Keep below 100.
+    FullStockReduction = 80,
 
-    -- Percentage suspicion increase when business has no stock at all
+    -- How much a business with NO stock at all gains extra, in percent.
     NoStockPenalty = 50,
 
     -- -------------------------------------------------------------------------
