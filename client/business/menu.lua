@@ -319,16 +319,8 @@ function StartLaunderFlow(businessId)
 
     local amount = tonumber(input[1])
 
-    if not amount
-        or amount ~= amount
-        or amount % 1 ~= 0
-        or amount < 1
-        or amount > maximum then
-        _API.ShowNotification(
-            locale("cashCounter.errors.invalid_amount"),
-            "error",
-            {}
-        )
+    if not amount or amount ~= amount or amount % 1 ~= 0 or amount < 1 or amount > maximum then
+        _API.ShowNotification(locale("cashCounter.errors.invalid_amount"), "error", {})
         return
     end
 
@@ -416,8 +408,7 @@ function OpenBankDepositDialog(businessId, status)
         {
             type        = "number",
             label       = string.format(locale("menu.deposit.amount_label"), FormatMoney(totalSafe)),
-            description = string.format(locale("menu.deposit.exposed_desc"),
-                FormatMoney(status.safeExposed), FormatMoney(status.safeCovered)),
+            description = string.format(locale("menu.deposit.exposed_desc"), FormatMoney(status.safeExposed), FormatMoney(status.safeCovered)),
             min         = 1,
             max         = totalSafe,
             required    = true,
@@ -449,11 +440,7 @@ function OpenReviewBooksMenu(businessId, receipts)
     local options = {}
     for _, receipt in ipairs(receipts) do
         options[#options + 1] = {
-            label = string.format("%s — %s units — %s",
-                os.date("%d/%m %H:%M", receipt.created_at),
-                receipt.units,
-                FormatMoney(receipt.total_amount)
-            ),
+            label = string.format("%s — %s units — %s", os.date("%d/%m %H:%M", receipt.created_at), receipt.units, FormatMoney(receipt.total_amount)),
             value = receipt.id,
         }
     end
@@ -472,10 +459,7 @@ function OpenReviewBooksMenu(businessId, receipts)
     local selectedIds = selected[1]
 
     -- Fetch live effectiveness estimate from server
-    local estimate = lib.callback.await(
-        "t1ger_moneywash:server:estimateReviewEffectiveness", false,
-        businessId, selectedIds
-    )
+    local estimate = lib.callback.await("t1ger_moneywash:server:estimateReviewEffectiveness", false, businessId, selectedIds)
 
     if not estimate then
         _API.ShowNotification(locale("menu.review.estimate_failed"), "error", {})
@@ -485,8 +469,7 @@ function OpenReviewBooksMenu(businessId, receipts)
     -- Show effectiveness and confirm
     local confirmed = lib.alertDialog({
         header   = locale("menu.review.confirm_title"),
-        content  = string.format(locale("menu.review.confirm_body"),
-            estimate.label, estimate.reduction),
+        content  = string.format(locale("menu.review.confirm_body"), estimate.label, estimate.reduction),
         centered = true,
         cancel   = true,
     })
