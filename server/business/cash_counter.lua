@@ -1,8 +1,44 @@
 -- Timed cash-counter preview. No money moves until the player confirms.
+
+---@class CashCounterSettings
+---@field stackCount integer Piles per batch (1-20)
+---@field stackDurationMs integer Counting time per pile in ms (100-60000)
+---@field autoMoveToRight boolean
+
+---@class CashCounterRow A batch, from preview through settlement
+---@field id integer
+---@field identifier string Owner identifier
+---@field businessId integer
+---@field amount integer Dirty cash being laundered
+---@field durationMs integer
+---@field deadline integer GetGameTimer() value when counting finishes
+---@field state "counting"|"settling"|"review"|"complete"
+---@field settings CashCounterSettings
+---@field working? boolean True while a confirm or settle is running
+---@field applied? boolean True once the injection was applied to the business in memory
+---@field result? table Label change info from BuildCashInjection
+---@field nextRetry? integer GetGameTimer() value before which settlement isn't retried
+
+---@class CashCounterSession Per-player UI session, created by "open"
+---@field identifier string
+---@field businessId integer
+---@field amount integer Amount approved at "open"
+---@field batchId? integer
+---@field result? CashCounterRow Finished batch, kept so the UI can read its final status
+
+---@type table<string, CashCounterRow> Unfinished batches by owner identifier
+---@type table<integer, CashCounterRow> Batches reserved by confirm, by business id
+---@type table<integer, CashCounterSession> UI sessions by player source
 local Pending, ByBusiness, Sessions = {}, {}, {}
 local nextBatchId = 0
 local Resource = GetCurrentResourceName()
 
+--- Converts a value to an integer clamped to a range; non-numeric, NaN and infinite values use `fallback`.
+---@param value any
+---@param fallback number
+---@param minimum integer
+---@param maximum integer
+---@return integer
 local function cashCounterInteger(value, fallback, minimum, maximum)
     local number = tonumber(value)
 
@@ -14,6 +50,8 @@ local function cashCounterInteger(value, fallback, minimum, maximum)
     return math.max(minimum, math.min(maximum, math.floor(number)))
 end
 
+--- Reads Config.CashCounter into sanitized, range-limited settings.
+---@return CashCounterSettings
 local function GetCashCounterSettings()
     local config = Config.CashCounter or {}
 
@@ -28,6 +66,10 @@ local function GetCashCounterSettings()
     }
 end
 
+--- Total counting time for a batch: piles (capped by the amount) times time per pile.
+---@param amount integer
+---@param settings? CashCounterSettings Defaults to the current config settings
+---@return integer durationMs
 local function GetCashCounterBatchDuration(amount, settings)
     settings = settings or GetCashCounterSettings()
 
@@ -36,17 +78,39 @@ local function GetCashCounterBatchDuration(amount, settings)
     return pileCount * settings.stackDurationMs
 end
 
-local function failure(reason, data) return { success = false, reason = reason, data = data } end
+--- Builds a failed callback response.
+---@param reason string Error key, matches `cashCounter.errors.<reason>` in the locales
+---@param data? table Optional status data for the UI
+---@return { success: false, reason: string, data: table? }
+local function failure(reason, data)
+    return { success = false, reason = reason, data = data }
+end
 
-local function locks(row) return { ("business:%d"):format(row.businessId), "owner:" .. row.identifier } end
+--- Ownership lock keys that keep a business and its owner fixed while a batch is reserved.
+---@param row CashCounterRow
+---@return string[]
+local function locks(row)
+    return { ("business:%d"):format(row.businessId), "owner:" .. row.identifier }
+end
 
-function HasPendingCashCounter(businessId) return ByBusiness[businessId] ~= nil end
+--- True while a batch is reserved for the business (from confirm until settlement completes).
+---@param businessId integer
+---@return boolean
+function HasPendingCashCounter(businessId)
+    return ByBusiness[businessId] ~= nil
+end
 
+--- True once a batch has been applied to the business but not yet saved, so autosave must not run.
+---@param businessId integer
+---@return boolean
 function IsCashCounterSaveBlocked(businessId)
     local row = ByBusiness[businessId]
     return row ~= nil and row.applied == true
 end
 
+--- Client-safe view of a batch. A "counting" batch reads as "ready" once its deadline has passed.
+---@param row? CashCounterRow
+---@return { id: integer, amount: integer, durationMs: integer, remainingMs: integer, status: string, settings: CashCounterSettings }?
 local function publicBatch(row)
     if not row then return nil end
 
@@ -67,6 +131,12 @@ local function publicBatch(row)
     }
 end
 
+--- Validates that the player may use the counter at this business: store ready, owns it,
+--- it is open, and the player is near its handler.
+---@param src integer Player source
+---@param businessId integer
+---@return table? business
+---@return string? reason not_ready, invalid_player, not_found, not_owner, business_closed or too_far
 local function playerBusiness(src, businessId)
     if not IsBusinessStoreReady() then return nil, "not_ready" end
     local identifier = _API.Player.GetIdentifier(src)
@@ -82,6 +152,9 @@ local function playerBusiness(src, businessId)
     return business
 end
 
+--- Loads the locale file for the UI (Config.BusinessPortal.Locale or ox:locale), falling back to "en".
+---@return string localeName
+---@return table messages
 local function localization()
     local name = (Config.BusinessPortal or {}).Locale or GetConvar("ox:locale", "en")
     if type(name) ~= "string" or not name:match("^[%w_-]+$") then name = "en" end
@@ -93,12 +166,20 @@ local function localization()
     return name, ok and messages or {}
 end
 
+--- Finds the server id of an online player by identifier.
+---@param identifier string
+---@return integer? source Nil if the player is offline
 local function onlineSource(identifier)
     for _, player in ipairs(_API.GetOnlinePlayers()) do
         if player.identifier == identifier then return player.source end
     end
 end
 
+--- Status payload for the UI: the player's dirty cash and the batch's public state.
+--- `available` stays 0 if the player doesn't own the batch.
+---@param src integer Player source
+---@param row? CashCounterRow
+---@return { available: number, batch: table? }
 local function statusData(src, row)
     local available = 0
     local identifier = _API.Player.GetIdentifier(src)
@@ -113,6 +194,11 @@ local function statusData(src, row)
     }
 end
 
+--- Discards an unconfirmed preview and detaches it from the player's session.
+--- Refuses (returns false) while the batch is settling, under review, or working.
+---@param src integer Player source
+---@param row CashCounterRow
+---@return boolean cleared
 local function clearPreview(src, row)
     if row.state == "settling" or row.state == "review" or row.working then return false end
     if Pending[row.identifier] == row then Pending[row.identifier] = nil end
@@ -123,6 +209,12 @@ local function clearPreview(src, row)
     return true
 end
 
+--- Callback: validates the request and starts a UI session. Returns the data the counter UI needs.
+--- Only the "inject" operation is supported. The balance check here is early feedback only.
+---@param src integer
+---@param businessId integer
+---@param operation string
+---@param amount integer
 lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, businessId, operation, amount)
     if operation ~= "inject" then
         return failure("unsupported_operation")
@@ -135,22 +227,14 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, b
         return failure(reason)
     end
 
-    if type(amount) ~= "number"
-        or amount ~= amount
-        or amount <= 0
-        or amount > Config.CashCounter.MaxAmount
-        or amount % 1 ~= 0 then
+    if type(amount) ~= "number" or amount ~= amount or amount <= 0 or amount > Config.CashCounter.MaxAmount or amount % 1 ~= 0 then
         return failure("invalid_amount")
     end
 
     local pending = Pending[business.identifier]
 
     if pending then
-        return failure(
-            pending.state == "review"
-            and "manual_review"
-            or "operation_in_progress"
-        )
+        return failure(pending.state == "review" and "manual_review" or "operation_in_progress")
     end
 
     -- Initial feedback only. Confirmation checks again.
@@ -183,31 +267,54 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, b
     }
 end)
 
+--- Callback: starts the timed count. The amount must match the one approved at "open".
+--- Calling it again for the same session returns the running batch's status.
+---@param src integer
+---@param amount integer
 lib.callback.register("t1ger_moneywash:server:cashCounter:start", function(src, amount)
     local session = Sessions[src]
-    if not session or _API.Player.GetIdentifier(src) ~= session.identifier then return failure("invalid_player") end
+    
+    if not session or _API.Player.GetIdentifier(src) ~= session.identifier then
+        return failure("invalid_player")
+    end
+    
     if session.batchId then
         local row = session.result or Pending[session.identifier]
+
         if row and row.id == session.batchId then
             return { success = true, data = statusData(src, row) }
         end
+
         return failure("operation_in_progress")
     end
+    
     local business, reason = playerBusiness(src, session.businessId)
-    if not business then return failure(reason) end
-    if type(amount) ~= "number" or amount ~= amount or amount <= 0
-        or amount > Config.CashCounter.MaxAmount or amount % 1 ~= 0 then
+    
+    if not business then
+        return failure(reason)
+    end
+    
+    if type(amount) ~= "number" or amount ~= amount or amount <= 0 or amount > Config.CashCounter.MaxAmount or amount % 1 ~= 0 then
         return failure("invalid_amount")
     end
+
     if amount ~= session.amount then
         return failure("invalid_amount")
     end
-    if Pending[session.identifier] then return failure("operation_in_progress") end
+
+    if Pending[session.identifier] then
+        return failure("operation_in_progress")
+    end
+
     -- Early balance check is for feedback; confirm always checks again.
-    if not _API.Player.HasDirtyMoney(src, amount) then return failure("insufficient_dirty_cash") end
+    if not _API.Player.HasDirtyMoney(src, amount) then
+        return failure("insufficient_dirty_cash")
+    end
+
     nextBatchId = nextBatchId + 1
     local settings = GetCashCounterSettings()
     local duration = GetCashCounterBatchDuration(amount, settings)
+
     local row = {
         id = nextBatchId,
         identifier = session.identifier,
@@ -218,49 +325,75 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:start", function(src, 
         state = "counting",
         settings = settings,
     }
+
     Pending[row.identifier], session.batchId = row, row.id
+
     return { success = true, data = statusData(src, row) }
 end)
 
+--- Callback: current dirty cash and batch state for the player's session.
+---@param src integer
 lib.callback.register("t1ger_moneywash:server:cashCounter:status", function(src)
     local session = Sessions[src]
-    if not session or _API.Player.GetIdentifier(src) ~= session.identifier then return failure("invalid_player") end
-    return { success = true, data = statusData(src, session.result or Pending[session.identifier]) }
+
+    if not session or _API.Player.GetIdentifier(src) ~= session.identifier then
+        return failure("invalid_player")
+    end
+
+    return {success = true, data = statusData(src, session.result or Pending[session.identifier])}
 end)
 
--- A settled batch remains locked if saving fails; retry without applying twice.
+--- Applies a debited batch to its business and saves it, then finishes it: unlocks,
+--- publishes the side effects and hands the result to the owner's sessions.
+--- Safe to retry: the injection is applied once (`row.applied`) and only the save repeats.
+---@param row CashCounterRow
 local function settle(row)
     if row.working or row.state ~= "settling" then return end
     row.working = true
-    while IsBusinessSaveInProgress(row.businessId) do Wait(20) end
+    
+    while IsBusinessSaveInProgress(row.businessId) do
+        Wait(20)
+    end
+    
     local business = GetBusiness(row.businessId)
     if not business or business.identifier ~= row.identifier then
         row.working = false
         print(("[MoneyWash] Cash batch %d cannot settle: business owner changed."):format(row.id))
         return
     end
+
     if not row.applied then
         local fields, result = BuildCashInjection(business, row.amount)
         if not fields then
-            row.working = false; return
+            row.working = false
+            return
         end
         row.result, row.applied = result, true
         UpdateBusinessFields(row.businessId, fields)
     end
+
     if not SaveBusiness(row.businessId, true) then
         row.nextRetry, row.working = GetGameTimer() + 1000, false
         return
     end
+
     row.state = "complete"
     Pending[row.identifier], ByBusiness[row.businessId] = nil, nil
     ReleaseCashCounterOwnershipLocks(locks(row))
+
     for _, session in pairs(Sessions) do
         if session.identifier == row.identifier and session.batchId == row.id then session.result = row end
     end
+
     PublishCashInjection(onlineSource(row.identifier), row.identifier, row.businessId, row.amount, row.result)
     row.working = false
 end
 
+--- Aborts a confirm before any cash was taken: releases the reservation and locks,
+--- returns the batch to "counting" and clears the preview.
+---@param src integer Player source
+---@param row CashCounterRow
+---@param reason string Error key returned to the client
 local function resetFailedConfirm(src, row, reason)
     ByBusiness[row.businessId] = nil
     ReleaseCashCounterOwnershipLocks(locks(row))
@@ -273,29 +406,51 @@ local function resetFailedConfirm(src, row, reason)
     return failure(reason, statusData(src))
 end
 
+--- Callback: confirms a finished count. Revalidates everything, takes the dirty cash,
+--- then settles the batch. If the debit can't be verified the batch goes to "review"
+--- (manual_review) instead of being retried.
+---@param src integer
+---@param batchId integer
 lib.callback.register("t1ger_moneywash:server:cashCounter:confirm", function(src, batchId)
     local session = Sessions[src]
-    if not session or _API.Player.GetIdentifier(src) ~= session.identifier then return failure("invalid_player") end
+    if not session or _API.Player.GetIdentifier(src) ~= session.identifier then
+        return failure("invalid_player")
+    end
+
     local row = session.result or Pending[session.identifier]
-    if not row or row.id ~= batchId or session.batchId ~= batchId then return failure("invalid_batch") end
+    if not row or row.id ~= batchId or session.batchId ~= batchId then
+        return failure("invalid_batch")
+    end
+
     if row.state == "complete" or row.state == "settling" then
         return { success = true, data = statusData(src, row) }
     end
+
     if row.state ~= "counting" or GetGameTimer() < row.deadline then return failure("count_not_ready") end
+
     if row.working then return failure("operation_in_progress") end
+
     local business, reason = playerBusiness(src, row.businessId)
     if not business then
         clearPreview(src, row); return failure(reason, statusData(src))
     end
-    if not AcquireCashCounterOwnershipLocks(locks(row)) then return failure("operation_in_progress") end
+
+    if not AcquireCashCounterOwnershipLocks(locks(row)) then
+        return failure("operation_in_progress")
+    end
     ByBusiness[row.businessId], row.working = row, true
+
     -- A previous autosave may yield. Revalidate identity, ownership, distance and
     -- inventory after it completes and immediately before touching money.
-    while IsBusinessSaveInProgress(row.businessId) do Wait(20) end
+    while IsBusinessSaveInProgress(row.businessId) do
+        Wait(20)
+    end
+
     business, reason = playerBusiness(src, row.businessId)
     if not business or _API.Player.GetIdentifier(src) ~= row.identifier then
         return resetFailedConfirm(src, row, reason or "invalid_player")
     end
+
     if not GetTierByType(business.type) then
         return resetFailedConfirm(src, row, "invalid_business_config")
     end
@@ -314,15 +469,21 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:confirm", function(src
         end
         return resetFailedConfirm(src, row, "request_failed")
     end
+
     row.state, row.working = "settling", false
+
     local saved, err = pcall(settle, row)
     if not saved then
         row.nextRetry, row.working = GetGameTimer() + 1000, false
         print("[MoneyWash] Cash batch settlement retry: " .. tostring(err))
     end
+    
     return { success = true, data = statusData(src, row) }
 end)
 
+--- Callback: ends the player's UI session and discards an unconfirmed preview.
+--- Batches that are settling or under review are kept.
+---@param src integer
 lib.callback.register("t1ger_moneywash:server:cashCounter:cancel", function(src)
     local session = Sessions[src]
     if not session or _API.Player.GetIdentifier(src) ~= session.identifier then return failure("invalid_player") end
@@ -332,6 +493,7 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:cancel", function(src)
     return { success = true }
 end)
 
+-- Retries settlement for batches whose save failed (every 250 ms, honoring `nextRetry`).
 CreateThread(function()
     while true do
         Wait(250)
@@ -349,6 +511,7 @@ CreateThread(function()
     end
 end)
 
+-- Drops the player's session and any unconfirmed preview when they disconnect.
 AddEventHandler("playerDropped", function()
     local src = source
     local session = Sessions[src]
