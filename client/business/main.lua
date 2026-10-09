@@ -60,16 +60,6 @@ local function SpawnHandlerNPC(businessId, businessData)
             end,
         },
         {
-            name        = ("t1ger_moneywash:handler:raid:%d"):format(businessId),
-            icon        = Config.Police.RaidTargetIcon or "fa-solid fa-shield-halved",
-            label       = locale("target.raid_business"),
-            distance    = Config.Police.RaidTargetDistance or 2.0,
-            canInteract = CanPoliceRaidBusiness,
-            onSelect    = function()
-                TriggerRaidAction(businessId)
-            end,
-        },
-        {
             name        = ("t1ger_moneywash:handler:deliverstock:%d"):format(businessId),
             icon        = Config.Business.StockMission.Icons.DeliverTarget,
             label       = locale("target.deliver_stock"),
@@ -95,7 +85,6 @@ local function DespawnHandlerNPC(businessId)
         _API.Target.RemoveLocalEntity(HandlerNPCs[businessId], {
             names = {
                 ("t1ger_moneywash:handler:%d"):format(businessId),
-                ("t1ger_moneywash:handler:raid:%d"):format(businessId),
             }
         })
         DeletePed(HandlerNPCs[businessId])
@@ -176,16 +165,16 @@ RegisterNetEvent("t1ger_moneywash:client:businessAbandoned", function(businessId
     DespawnHandlerNPC(businessId)
 end)
 
---- Business permanently seized by police/admin - remove Handler NPC
-RegisterNetEvent("t1ger_moneywash:client:businessSeized", function(businessId)
+--- Business permanently removed by admin - remove Handler NPC
+RegisterNetEvent("t1ger_moneywash:client:businessRemoved", function(businessId)
     OwnedBusinesses[businessId] = nil
     DespawnHandlerNPC(businessId)
-    _API.ShowNotification(locale("notification.business_seized"), "error", {})
+    _API.ShowNotification(locale("notification.business_removed"), "error", {})
 end)
 
---- Business raided - notify player
-RegisterNetEvent("t1ger_moneywash:client:businessRaided", function(businessId, seizedAmount)
-    _API.ShowNotification(string.format(locale("notification.business_raided"), FormatMoney(seizedAmount)), "error", {})
+--- Money laundered into the Safe - notify player
+RegisterNetEvent("t1ger_moneywash:client:moneyLaundered", function(amount, covered, exposed)
+    _API.ShowNotification(string.format(locale("notification.money_laundered"), FormatMoney(amount), FormatMoney(covered), FormatMoney(exposed)), "success", {})
 end)
 
 --- Suspicion label changed - notify player if enabled
@@ -194,41 +183,6 @@ RegisterNetEvent("t1ger_moneywash:client:suspicionLabelChanged", function(newLab
         _API.ShowNotification(string.format(locale("notification.suspicion_changed"), newLabel.name), "inform", {})
     end
 end)
-
---- Bank deposit cleared - notify player
-RegisterNetEvent("t1ger_moneywash:client:depositCleared", function(amount)
-    _API.ShowNotification(string.format(locale("notification.deposit_cleared"), FormatMoney(amount)), "success", {})
-end)
-
---- Bank deposit confiscated by police
-RegisterNetEvent("t1ger_moneywash:client:depositConfiscated", function(amount)
-    _API.ShowNotification(string.format(locale("notification.deposit_confiscated"), FormatMoney(amount)), "error", {})
-end)
-
---- Pending deposit synced on login (player had a deposit in progress)
-RegisterNetEvent("t1ger_moneywash:client:pendingDepositSync", function(depositData)
-    -- Store locally so missions.lua can reference it
-    ActivePendingDeposit = depositData
-    if Config.Debug then
-        print(("[MoneyWash] Pending deposit synced: $%d clears at %d"):format(
-            depositData.totalAmount, depositData.clearsAt))
-    end
-end)
-
---- -------------------------------------------------------------------------
---- RAID ACTION (police)
---- -------------------------------------------------------------------------
-
---- Initiates a raid on a business via police target interaction
---- @param businessId number
-function TriggerRaidAction(businessId)
-    local result = lib.callback.await("t1ger_moneywash:server:raidBusiness", false, businessId)
-    if not result.success then
-        _API.ShowNotification(locale("notification.raid_failed_" .. (result.reason or "unknown")), "error")
-        return
-    end
-    _API.ShowNotification(locale("notification.raid_executed"), "success", {})
-end
 
 --- -------------------------------------------------------------------------
 --- EXPORTS

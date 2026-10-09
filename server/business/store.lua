@@ -103,7 +103,8 @@ function AddToStore(id, data)
         safeCovered     = data.safe_covered or 0,
         safeExposed     = data.safe_exposed or 0,
         suspicion       = data.suspicion or 0,
-        totalLaundered  = data.total_laundered or 0,
+        totalLaundered  = data.total_laundered or 0, -- lifetime, persisted
+        cycleLaundered  = 0,                         -- this cycle only, memory only
         purchasedAt     = data.purchased_at or os.time(),
     }
 end

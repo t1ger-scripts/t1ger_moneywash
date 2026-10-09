@@ -46,7 +46,7 @@ lib.callback.register("t1ger_moneywash:server:getBusinessStatus", function(sourc
         suspicion       = Config.Suspicion.ShowExactValue and business.suspicion or nil,
         suspicionLabel  = label.name,
         suspicionColor  = label.color,
-        totalLaundered  = business.totalLaundered,
+        cycleLaundered  = business.cycleLaundered,
         expectedRevenue = tier and tier.expectedRevenue or 0,
         unitPrice       = GetUnitPrice(business.type),
         minOrder        = GetMinOrder(business.type),

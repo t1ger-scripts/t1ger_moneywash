@@ -36,8 +36,8 @@ end
 function CalculateSuspicionGain(business, amount, tier)
     local expectedRevenue    = tier.expectedRevenue
 
-    local progressBefore     = business.totalLaundered / expectedRevenue
-    local progressAfter      = (business.totalLaundered + amount) / expectedRevenue
+    local progressBefore     = business.cycleLaundered / expectedRevenue
+    local progressAfter      = (business.cycleLaundered + amount) / expectedRevenue
 
     -- Derive BaseMultiplier from CyclesUntilCritical
     -- At full expectedRevenue with full stock, gain per cycle = 75 / CyclesUntilCritical

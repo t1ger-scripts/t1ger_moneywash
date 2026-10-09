@@ -667,7 +667,7 @@ function AdminRemoveBusiness(businessType, locationId)
     for _, player in ipairs(_API.GetOnlinePlayers()) do
         if player.identifier == identifier then
             TriggerClientEvent(
-                "t1ger_moneywash:client:businessSeized",
+                "t1ger_moneywash:client:businessRemoved",
                 player.source,
                 businessId
             )

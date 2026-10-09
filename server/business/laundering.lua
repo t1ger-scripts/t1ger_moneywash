@@ -11,7 +11,7 @@
 --- @param tier table
 --- @return number coveredAmount, number exposedAmount
 local function CalculateCoveredExposed(business, amount, tier)
-    local remaining = math.max(0, tier.expectedRevenue - business.totalLaundered)
+    local remaining = math.max(0, tier.expectedRevenue - business.cycleLaundered)
     local withinRevenue = math.min(amount, remaining)
     local overRevenue = amount - withinRevenue
 
@@ -39,6 +39,7 @@ function BuildCashInjection(business, amount)
         safeExposed = business.safeExposed + exposed,
         suspicion = suspicion,
         totalLaundered = business.totalLaundered + amount,
+        cycleLaundered = business.cycleLaundered + amount,
     }, {
         oldLabel = GetSuspicionLabel(business.suspicion),
         newLabel = GetSuspicionLabel(suspicion),
@@ -53,6 +54,10 @@ function PublishCashInjection(src, identifier, businessId, amount, result)
     if not business then return end
 
     OnMoneyLaundered(identifier, businessId, business.type, amount, result.covered, result.exposed)
+    
+    if src then
+        TriggerClientEvent("t1ger_moneywash:client:moneyLaundered", src, amount, result.covered, result.exposed)
+    end
 
     if Config.Reputation.Enable and Config.Reputation.Rewards.launder.enable then
         local points = Config.Reputation.Rewards.launder.points

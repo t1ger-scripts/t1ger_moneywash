@@ -30,7 +30,7 @@ function OpenHandlerMenu(businessId)
         { label = locale("menu.handler.total_cash"), value = FormatMoney(status.safeCovered + status.safeExposed) },
         { label = locale("menu.handler.stock"),      value = status.stock .. " " .. locale("menu.handler.units") },
         suspicionEntry,
-        { label = locale("menu.handler.cycle_progress"), value = FormatMoney(status.totalLaundered) .. " / " .. FormatMoney(status.expectedRevenue) },
+        { label = locale("menu.handler.cycle_progress"), value = FormatMoney(status.cycleLaundered) .. " / " .. FormatMoney(status.expectedRevenue) },
     }
 
     -- Safe submenu
@@ -124,7 +124,7 @@ function OpenStockMenu(businessId)
     local capacity = math.floor(unitsPerCycle * stockCfg.maxCapacityCycles)
     local storagePercent = capacity > 0 and math.floor((status.stock / capacity) * 100) or 0
 
-    local remaining = math.max(0, status.expectedRevenue - status.totalLaundered)
+    local remaining = math.max(0, status.expectedRevenue - status.cycleLaundered)
     local stockNeeded = math.ceil(remaining / stockCfg.LaunderDollarsPerUnit)
     local capReached = stockNeeded <= 0
     local coverage = capReached and 100

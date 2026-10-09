@@ -12,7 +12,7 @@ function GetCurrentCycle()
 end
 
 --- Checks whether the cycle has completed and, if so, rolls it over.
---- Resets totalLaundered for ALL businesses simultaneously.
+--- Resets cycleLaundered for ALL businesses simultaneously.
 function CheckGlobalCycle()
     local cycleDurationSeconds = Config.Business.CycleDuration * 60
     local now = os.time()
@@ -22,11 +22,11 @@ function CheckGlobalCycle()
         CurrentCycle   = CurrentCycle + 1
 
         for id in pairs(GetAllBusinesses()) do
-            UpdateBusiness(id, "totalLaundered", 0)
+            UpdateBusiness(id, "cycleLaundered", 0)
         end
 
         if Config.Debug then
-            print(("[MoneyWash] Cycle %d started — totalLaundered reset for all businesses"):format(CurrentCycle))
+            print(("[MoneyWash] Cycle %d started — cycleLaundered reset for all businesses"):format(CurrentCycle))
         end
     end
 end

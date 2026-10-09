@@ -1,6 +1,6 @@
 -- Revenue cycle duration in real minutes
 -- One cycle = one in-game day (48 real minutes by default)
--- totalLaundered resets at the start of each new cycle
+-- cycleLaundered (memory only) resets at the start of each new cycle
 -- Suspicion, stock, safe balances and receipts persist through cycle changes
 Config.Business = {
 

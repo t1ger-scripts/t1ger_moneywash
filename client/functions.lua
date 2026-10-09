@@ -47,24 +47,6 @@ function CanInteractWithHandlerNPC(entity)
     return true
 end
 
---- Returns whether a police player can raid a Handler NPC
---- @param entity number
---- @return boolean
-function CanPoliceRaidBusiness(entity)
-    if not IsPoliceJobWithGrade(Config.Police.RaidMinGrade) then return false end
-    if not IsEntityValid(entity) or GetEntityType(entity) == 0 then return false end
-    return true
-end
-
---- Returns whether a police player can review deposits at a bank teller
---- @param entity number
---- @return boolean
-function CanPoliceReviewDeposits(entity)
-    if not IsPoliceJobWithGrade(Config.Police.DepositReviewMinGrade) then return false end
-    if not IsEntityValid(entity) or GetEntityType(entity) == 0 then return false end
-    return true
-end
-
 --- -------------------------------------------------------------------------
 --- BLIPS
 --- -------------------------------------------------------------------------
