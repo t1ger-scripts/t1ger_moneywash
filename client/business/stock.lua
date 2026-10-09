@@ -552,6 +552,11 @@ RegisterCommand(Config.Business.StockMission.CancelCommand, function()
     CancelStockMission()
 end, false)
 
+AddEventHandler("onResourceStop", function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    ResetStockMission()
+end)
+
 CreateThread(function()
     while not _Target do Wait(100) end
     RegisterVehicleTargets()
