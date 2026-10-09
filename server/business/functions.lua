@@ -40,6 +40,7 @@ end
 
 -- Shared with the counter to exclude transfers/removal while a batch is reserved.
 function AcquireCashCounterOwnershipLocks(keys) return TryAcquireOwnershipLocks(keys) end
+
 function ReleaseCashCounterOwnershipLocks(keys) ReleaseOwnershipLocks(keys) end
 
 --- Returns whether a player meets the reputation requirement for a given tier
@@ -87,10 +88,7 @@ function BuyBusiness(src, businessType, locationId)
         return false, "invalid_location"
     end
 
-    local lockKeys = {
-        ("owner:%s"):format(identifier),
-        ("location:%s:%d"):format(businessType, locationId),
-    }
+    local lockKeys = { ("owner:%s"):format(identifier), ("location:%s:%d"):format(businessType, locationId) }
 
     if not TryAcquireOwnershipLocks(lockKeys) then
         return false, "operation_in_progress"
@@ -150,24 +148,22 @@ function BuyBusiness(src, businessType, locationId)
         ReleaseOwnershipLocks(lockKeys)
 
         if Config.Debug then
-            print(("[MoneyWash] Purchase database error: %s"):format(
-                tostring(id)
-            ))
+            print(("[MoneyWash] Purchase database error: %s"):format(tostring(id)))
         end
 
         return false, "database_error"
     end
 
     AddToStore(id, {
-        identifier        = identifier,
-        business_type     = businessType,
-        location_id       = locationId,
-        stock             = 0,
-        safe_covered      = 0,
-        safe_exposed      = 0,
-        suspicion         = 0,
-        total_laundered   = 0,
-        purchased_at      = now,
+        identifier      = identifier,
+        business_type   = businessType,
+        location_id     = locationId,
+        stock           = 0,
+        safe_covered    = 0,
+        safe_exposed    = 0,
+        suspicion       = 0,
+        total_laundered = 0,
+        purchased_at    = now,
     })
 
     -- The database and in-memory store are now synchronized.
@@ -178,20 +174,14 @@ function BuyBusiness(src, businessType, locationId)
         Config.Reputation.Rewards.businessPurchase.enable
     then
         local previouslyOwned = MySQL.scalar.await(
-            "SELECT COUNT(*) FROM moneywash_businesses " ..
-            "WHERE identifier = ? AND business_type = ? AND id != ?",
-            {
+            "SELECT COUNT(*) FROM moneywash_businesses WHERE identifier = ? AND business_type = ? AND id != ?", {
                 identifier,
                 businessType,
                 id,
-            }
-        )
+            })
 
         if (previouslyOwned or 0) == 0 then
-            AddReputationPoints(
-                src,
-                Config.Reputation.Rewards.businessPurchase.points
-            )
+            AddReputationPoints(src, Config.Reputation.Rewards.businessPurchase.points)
         end
     end
 
@@ -200,12 +190,7 @@ function BuyBusiness(src, businessType, locationId)
     OnBusinessPurchased(identifier, businessType, locationId, price)
 
     if Config.Debug then
-        print(("[MoneyWash] %s purchased %s #%d for $%d"):format(
-            identifier,
-            businessType,
-            locationId,
-            price
-        ))
+        print(("[MoneyWash] %s purchased %s #%d for $%d"):format(identifier, businessType, locationId, price))
     end
 
     return true, "success"
@@ -279,11 +264,8 @@ function TransferBusiness(src, targetSrc, businessId)
         return false, "target_too_far"
     end
 
-    local lockKeys = {
-        ("business:%d"):format(businessId),
-        ("owner:%s"):format(identifier),
-        ("owner:%s"):format(targetIdentifier),
-    }
+    local lockKeys = { ("business:%d"):format(businessId), ("owner:%s"):format(identifier), ("owner:%s"):format(
+        targetIdentifier) }
 
     if not TryAcquireOwnershipLocks(lockKeys) then
         return false, "operation_in_progress"
@@ -351,11 +333,7 @@ function TransferBusiness(src, targetSrc, businessId)
     end
 
     local updateSucceeded, affectedRows = pcall(
-        MySQL.update.await,
-        "UPDATE moneywash_businesses " ..
-        "SET identifier = ? " ..
-        "WHERE id = ? AND identifier = ?",
-        {
+        MySQL.update.await, "UPDATE moneywash_businesses SET identifier = ? WHERE id = ? AND identifier = ?", {
             targetIdentifier,
             businessId,
             identifier,
@@ -366,9 +344,7 @@ function TransferBusiness(src, targetSrc, businessId)
         ReleaseOwnershipLocks(lockKeys)
 
         if Config.Debug then
-            print(("[MoneyWash] Transfer database error: %s"):format(
-                tostring(affectedRows)
-            ))
+            print(("[MoneyWash] Transfer database error: %s"):format(tostring(affectedRows)))
         end
 
         return false, "database_error"
@@ -377,22 +353,15 @@ function TransferBusiness(src, targetSrc, businessId)
     UpdateBusiness(businessId, "identifier", targetIdentifier)
     ReleaseOwnershipLocks(lockKeys)
 
-    TriggerClientEvent(
-        "t1ger_moneywash:client:businessTransferred",
-        src,
-        businessId
-    )
+    TriggerClientEvent("t1ger_moneywash:client:businessTransferred", src, businessId)
 
-    TriggerClientEvent("t1ger_moneywash:client:businessReceived", targetSrc, businessId, business.type, business.locationId)
+    TriggerClientEvent("t1ger_moneywash:client:businessReceived", targetSrc, businessId, business.type,
+        business.locationId)
 
     OnBusinessTransferred(identifier, targetIdentifier, businessId, business.type, business.locationId)
 
     if Config.Debug then
-        print(("[MoneyWash] Business %d transferred: %s -> %s"):format(
-            businessId,
-            identifier,
-            targetIdentifier
-        ))
+        print(("[MoneyWash] Business %d transferred: %s -> %s"):format(businessId, identifier, targetIdentifier))
     end
 
     return true, "success"
@@ -476,8 +445,7 @@ function AbandonBusiness(src, businessId)
                 values = { businessId },
             },
             {
-                query = "DELETE FROM moneywash_businesses " ..
-                    "WHERE id = ? AND identifier = ?",
+                query = "DELETE FROM moneywash_businesses WHERE id = ? AND identifier = ?",
                 values = {
                     businessId,
                     identifier,
@@ -490,9 +458,7 @@ function AbandonBusiness(src, businessId)
         ReleaseOwnershipLocks(lockKeys)
 
         if Config.Debug then
-            print(("[MoneyWash] Abandon database error: %s"):format(
-                tostring(transactionSucceeded)
-            ))
+            print(("[MoneyWash] Abandon database error: %s"):format(tostring(transactionSucceeded)))
         end
 
         return false, "database_error"
@@ -507,10 +473,7 @@ function AbandonBusiness(src, businessId)
     OnBusinessAbandoned(identifier, businessId, business.type, business.locationId)
 
     if Config.Debug then
-        print(("[MoneyWash] Business %d abandoned by %s"):format(
-            businessId,
-            identifier
-        ))
+        print(("[MoneyWash] Business %d abandoned by %s"):format(businessId, identifier))
     end
 
     return true, "success"
@@ -627,7 +590,7 @@ function PublishCashInjection(src, identifier, businessId, amount, result)
     if not business then return end
 
     OnMoneyLaundered(identifier, businessId, business.type, amount, result.covered, result.exposed)
-    
+
     if Config.Reputation.Enable and Config.Reputation.Rewards.launder.enable then
         local points = Config.Reputation.Rewards.launder.points
         if src and IsReputationReady(src) then
@@ -736,15 +699,15 @@ function AdminAddBusiness(identifier, businessType, locationId)
     end
 
     AddToStore(id, {
-        identifier        = identifier,
-        business_type     = businessType,
-        location_id       = locationId,
-        stock             = 0,
-        safe_covered      = 0,
-        safe_exposed      = 0,
-        suspicion         = 0,
-        total_laundered   = 0,
-        purchased_at      = now,
+        identifier      = identifier,
+        business_type   = businessType,
+        location_id     = locationId,
+        stock           = 0,
+        safe_covered    = 0,
+        safe_exposed    = 0,
+        suspicion       = 0,
+        total_laundered = 0,
+        purchased_at    = now,
     })
 
     ReleaseOwnershipLocks(lockKeys)

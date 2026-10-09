@@ -1,7 +1,7 @@
 --- ============================================================================
 --- Server Main
---- Player lifecycle, global cycle tick, suspicion decay, deposit processing,
---- raid queue processing, autosave and shutdown handlers.
+--- Player lifecycle, global cycle tick, suspicion decay, 
+--- autosave and shutdown handlers.
 --- ============================================================================
 
 --- Global cycle tracking - starts on server start, never persisted to DB
@@ -17,9 +17,6 @@ RegisterNetEvent("t1ger_moneywash:server:playerLoaded", function()
 
     -- Load reputation
     LoadReputation(src)
-
-    -- Load any pending bank deposit
-    LoadPendingDeposit(src)
 
     -- Sync owned businesses to client
     local identifier = _API.Player.GetIdentifier(src)
@@ -100,7 +97,8 @@ local function ApplySuspicionDecay(business)
         end
     end
 
-    local decayPerCycle = isOnline and Config.Suspicion.Decay.OnlinePointsPerCycle or Config.Suspicion.Decay.OfflinePointsPerCycle
+    local decayPerCycle = isOnline and Config.Suspicion.Decay.OnlinePointsPerCycle or
+    Config.Suspicion.Decay.OfflinePointsPerCycle
 
     -- Convert per-cycle to per-tick (tick = 1 real minute, cycle = CycleDuration minutes)
     local decayPerTick = decayPerCycle / Config.Business.CycleDuration
@@ -285,8 +283,6 @@ CreateThread(function()
         Wait(60000)
 
         CheckGlobalCycle()
-        ProcessDeposits()
-        ProcessRaidQueue()
 
         for _, business in pairs(GetAllBusinesses()) do
             ApplySuspicionDecay(business)
