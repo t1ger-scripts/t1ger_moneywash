@@ -363,25 +363,30 @@ end
 --- @param status table
 function OpenBankDepositDialog(businessId, status)
     local totalSafe = status.safeCovered + status.safeExposed
+    local maximum = math.min(totalSafe, Config.CashCounter.MaxAmount)
 
     local input = lib.inputDialog(locale("menu.deposit.title"), {
         {
             type        = "number",
-            label       = string.format(locale("menu.deposit.amount_label"), FormatMoney(totalSafe)),
+            label       = string.format(locale("menu.deposit.amount_label"), FormatMoney(maximum)),
             description = string.format(locale("menu.deposit.exposed_desc"), FormatMoney(status.safeExposed), FormatMoney(status.safeCovered)),
             min         = 1,
-            max         = totalSafe,
+            max         = maximum,
+            precision   = 0,
             required    = true,
         },
     })
 
     if not input or not input[1] then return end
 
-    local amount = math.floor(tonumber(input[1]) or 0)
-    if amount <= 0 or amount > totalSafe then return end
+    local amount = tonumber(input[1])
+    if not amount or amount ~= amount or amount % 1 ~= 0 or amount < 1 or amount > maximum then
+        _API.ShowNotification(locale("cashCounter.errors.invalid_amount"), "error", {})
+        return
+    end
 
-    -- Trigger deposit mission flow in missions.lua
-    StartDepositMission(businessId, amount)
+    -- Money leaves the Safe only when the cash counter completes
+    OpenCashCounter(businessId, amount, "withdraw")
 end
 
 --- ============================================================================

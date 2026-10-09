@@ -184,7 +184,12 @@ local function statusData(src, row)
     local identifier = _API.Player.GetIdentifier(src)
 
     if identifier and (not row or identifier == row.identifier) then
-        available = _API.Player.GetDirtyMoney(src)
+        if row and row.operation == "withdraw" then
+            local business = GetBusiness(row.businessId)
+            available = business and (business.safeCovered + business.safeExposed) or 0
+        else
+            available = _API.Player.GetDirtyMoney(src)
+        end
     end
 
     return {
@@ -215,7 +220,7 @@ end
 ---@param operation string
 ---@param amount integer
 lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, businessId, operation, amount)
-    if operation ~= "inject" then
+    if operation ~= "inject" and operation ~= "withdraw" then
         return failure("unsupported_operation")
     end
 
@@ -237,14 +242,23 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, b
     end
 
     -- Initial feedback only. Confirmation checks again.
-    if not _API.Player.HasDirtyMoney(src, amount) then
-        return failure("insufficient_dirty_cash")
+    local available
+    if operation == "inject" then
+        if not _API.Player.HasDirtyMoney(src, amount) then
+            return failure("insufficient_dirty_cash")
+        end
+        available = _API.Player.GetDirtyMoney(src)
+    else
+        local denied = CanStartBankDeposit(business, amount)
+        if denied then return failure(denied) end
+        available = business.safeCovered + business.safeExposed
     end
 
     Sessions[src] = {
         identifier = business.identifier,
         businessId = businessId,
         amount = amount,
+        operation = operation,
     }
 
     local localeName, messages = localization()
@@ -253,14 +267,14 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, b
         success = true,
         data = {
             businessId = businessId,
-            operation = "inject",
+            operation = operation,
             amount = amount,
-            available = _API.Player.GetDirtyMoney(src),
+            available = available,
             currency = Config.Currency,
             locale = localeName,
             messages = messages,
-            titleKey = "cashCounter.injectTitle",
-            successKey = "cashCounter.injected",
+            titleKey = operation == "inject" and "cashCounter.injectTitle" or "cashCounter.withdrawTitle",
+            successKey = operation == "inject" and "cashCounter.injected" or "cashCounter.withdrawn",
             settings = GetCashCounterSettings(),
         },
     }
@@ -306,7 +320,10 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:start", function(src, 
     end
 
     -- Early balance check is for feedback; confirm always checks again.
-    if not _API.Player.HasDirtyMoney(src, amount) then
+    if session.operation == "withdraw" then
+        local denied = CanStartBankDeposit(business, amount)
+        if denied then return failure(denied) end
+    elseif not _API.Player.HasDirtyMoney(src, amount) then
         return failure("insufficient_dirty_cash")
     end
 
@@ -319,6 +336,7 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:start", function(src, 
         identifier = session.identifier,
         businessId = business.id,
         amount = amount,
+        operation = session.operation,
         durationMs = duration,
         deadline = GetGameTimer() + duration,
         state = "counting",
@@ -361,14 +379,28 @@ local function settle(row)
         return
     end
 
-    if not row.applied then
-        local fields, result = BuildCashInjection(business, row.amount)
-        if not fields then
-            row.working = false
+    if row.operation == "withdraw" then
+        -- The Safe was already reduced in memory at confirm. Persist the Safe and
+        -- the deposit row in one transaction so a crash can't lose or duplicate money.
+        if not PersistBankDepositStart(row.businessId, row.identifier, row.deposit) then
+            row.nextRetry, row.working = GetGameTimer() + 1000, false
             return
         end
-        row.result, row.applied = result, true
-        UpdateBusinessFields(row.businessId, fields)
+    else
+        if not row.applied then
+            local fields, result = BuildCashInjection(business, row.amount)
+            if not fields then
+                row.working = false
+                return
+            end
+            row.result, row.applied = result, true
+            UpdateBusinessFields(row.businessId, fields)
+        end
+
+        if not SaveBusiness(row.businessId, true) then
+            row.nextRetry, row.working = GetGameTimer() + 1000, false
+            return
+        end
     end
 
     if not SaveBusiness(row.businessId, true) then
@@ -384,7 +416,11 @@ local function settle(row)
         if session.identifier == row.identifier and session.batchId == row.id then session.result = row end
     end
 
-    PublishCashInjection(onlineSource(row.identifier), row.identifier, row.businessId, row.amount, row.result)
+    if row.operation == "withdraw" then
+        PublishBankDepositStarted(onlineSource(row.identifier), row.identifier, row.businessId, row.deposit)
+    else
+        PublishCashInjection(onlineSource(row.identifier), row.identifier, row.businessId, row.amount, row.result)
+    end
     row.working = false
 end
 
@@ -454,19 +490,31 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:confirm", function(src
         return resetFailedConfirm(src, row, "invalid_business_config")
     end
 
-    if not _API.Player.HasDirtyMoney(src, row.amount) then
-        return resetFailedConfirm(src, row, "insufficient_dirty_cash")
-    end
-
-    local before = _API.Player.GetDirtyMoney(src)
-    local ok, removed = pcall(_API.Player.RemoveDirtyMoney, src, row.amount)
-    if not ok or not removed then
-        if _API.Player.GetDirtyMoney(src) < before then
-            row.state, row.working = "review", false
-            print(("[MoneyWash] Cash batch %d: debit uncertain; administrator review required."):format(row.id))
-            return failure("manual_review", statusData(src, row))
+    if row.operation == "withdraw" then
+        -- Money leaves the Safe only now, after the count finished. There is no Wait
+        -- between this check and the in-memory removal, so it cannot race.
+        local denied = CanStartBankDeposit(business, row.amount)
+        if denied then
+            return resetFailedConfirm(src, row, denied)
         end
-        return resetFailedConfirm(src, row, "request_failed")
+
+        row.deposit = ApplyBankDepositWithdrawal(business, row.amount)
+        row.applied = true -- blocks autosave until the transaction is written
+    else
+        if not _API.Player.HasDirtyMoney(src, row.amount) then
+            return resetFailedConfirm(src, row, "insufficient_dirty_cash")
+        end
+
+        local before = _API.Player.GetDirtyMoney(src)
+        local ok, removed = pcall(_API.Player.RemoveDirtyMoney, src, row.amount)
+        if not ok or not removed then
+            if _API.Player.GetDirtyMoney(src) < before then
+                row.state, row.working = "review", false
+                print(("[MoneyWash] Cash batch %d: debit uncertain; administrator review required."):format(row.id))
+                return failure("manual_review", statusData(src, row))
+            end
+            return resetFailedConfirm(src, row, "request_failed")
+        end
     end
 
     row.state, row.working = "settling", false

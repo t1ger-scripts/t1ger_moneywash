@@ -72,27 +72,17 @@ Config.BusinessPortal = {
 }
 
 --- Bank deposit settings
---- Flow: Safe -> go to any ATM -> submit -> wait ->
---- the money (minus tax) lands in the owner's personal bank account.
---- Confiscated deposits simply disappear.
+-- Flow: Safe -> cash counter -> go to any ATM -> submit -> wait -> personal bank
 Config.BankDeposit = {
-    -- Real minutes between submitting the deposit at the teller and the money
-    -- arriving in the owner's personal bank account.
-    ProcessingTime = 10,
+    ProcessingTime   = 10,  -- real minutes for a submitted deposit to clear into personal bank
+    MissionTimeout   = 15,  -- real minutes to reach an ATM after the cash counter finishes
+    InteractDistance = 2.0, -- how close the player must be to the ATM
 
-    -- Real minutes the owner has to reach the bank after starting a deposit.
-    -- When it runs out, the money returns to the Safe.
-    MissionTimeout = 15,
-
-    -- Tax in percent, taken once when Safe money converts into real bank
-    -- money. Set to 0 to disable.
+    -- The only guaranteed fee in the laundering pipeline - paid once, when a Safe
+    -- balance converts into real bank money. Set to 0 to disable.
     Tax = 20,
 
-    -- Interaction distance for the ATM targets (owner deposit and police review).
-    InteractDistance = 2.0,
-
-    -- ATM prop models that act as the deposit point. A deposit can be
-    -- submitted at any of them.
+    -- ATM models the owner deposits at and police inspect
     Models = {
         "prop_atm_01",
         "prop_atm_02",
@@ -100,8 +90,7 @@ Config.BankDeposit = {
         "prop_fleeca_atm",
     },
 
-    -- % chance a deposit is flagged, based on the business's suspicion label
-    -- at the moment the owner submits at the teller.
+    -- % chance a deposit is flagged, by business suspicion label at the moment of submit
     FlagChance = {
         Low      = 0,
         Moderate = 15,

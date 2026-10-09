@@ -271,6 +271,7 @@
         "counting": "Counting",
         "confirming": "Confirming transaction…",
         "injected": "{amount} injected into your business.",
+        "withdrawn": "{amount} taken out of the Safe. Take it to an ATM.",
         "empty": "No cash available.",
         "awaiting": "AWAITING CASH",
         "batchComplete": "BATCH COMPLETE",
@@ -288,7 +289,9 @@
             "unsupported_operation": "This cash operation is not available.",
             "count_not_ready": "Wait for the machine to finish counting.",
             "invalid_batch": "This count has expired. Start a new count.",
-            "invalid_business_config": "This business is not configured correctly. Contact an administrator."
+            "invalid_business_config": "This business is not configured correctly. Contact an administrator.",
+            "insufficient_safe_cash": "The Safe no longer holds that amount.",
+            "deposit_pending": "You already have a bank deposit in progress."
         }
     }
 }
