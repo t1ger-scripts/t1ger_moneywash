@@ -71,8 +71,6 @@ Config.Suspicion = {
     -- Raid history escalation - tracked per location regardless of ownership changes
     RaidHistory = {
         WindowDays           = 14, -- rolling window in real days
-        TempCloseAfterRaids  = 3,  -- raids within window before temporary closure
-        TempCloseDuration    = 24, -- real hours the business stays closed
         SeizeAfterRaids      = 5,  -- raids within window before permanent seizure
     },
 

@@ -65,6 +65,24 @@ local function CheckGlobalCycle()
     end
 end
 
+--- Testing/admin: rolls the global cycle over immediately, bypassing the
+--- normal CycleDuration wait. Reuses CheckGlobalCycle's own logic by
+--- backdating CycleStartedAt instead of duplicating the reset code.
+local function ForceGlobalCycle()
+    CycleStartedAt = os.time() - (Config.Business.CycleDuration * 60)
+    CheckGlobalCycle()
+end
+
+RegisterCommand("moneywash:forcecycle", function(src, args)
+    local isConsole = (src == 0)
+    if not isConsole and not _API.Player.IsAdmin(src) then return end
+
+    ForceGlobalCycle()
+
+    local msg = ("Cycle forced — now on cycle %d"):format(CurrentCycle)
+    if isConsole then print(msg) else _API.SendNotification(src, msg, "success") end
+end, true)
+
 --- -------------------------------------------------------------------------
 --- SUSPICION DECAY TICK
 --- Runs per business every real minute
@@ -100,55 +118,7 @@ local function ApplySuspicionDecay(business)
     UpdateBusiness(business.id, "suspicion", newSuspicion)
 end
 
---- -------------------------------------------------------------------------
---- CLOSURE CHECK
---- Reopens temporarily closed businesses when the closure period ends
---- -------------------------------------------------------------------------
-local function CheckClosure(business)
-    if not business.isClosed then return end
-    if not business.closedUntil then return end
-    if os.time() < business.closedUntil then return end
 
-    UpdateBusinessFields(business.id, { isClosed = false, closedUntil = nil })
-    MySQL.update("UPDATE moneywash_businesses SET is_closed = 0, closed_until = NULL WHERE id = ?", { business.id })
-
-    for _, player in ipairs(_API.GetOnlinePlayers()) do
-        if player.identifier == business.identifier then
-            _API.SendNotification(player.source, locale("notification.business_reopened"), "inform")
-            break
-        end
-    end
-end
-
---- -------------------------------------------------------------------------
---- DEPOSIT PROCESSING TICK
---- Checks every minute for deposits that have cleared their processing timer
---- -------------------------------------------------------------------------
-local function ProcessDeposits()
-    local now = os.time()
-    -- Query DB for all deposits that have cleared
-    local cleared = MySQL.query.await(
-        "SELECT identifier FROM moneywash_deposits WHERE clears_at <= ?", { now })
-
-    if not cleared then return end
-
-    for _, row in ipairs(cleared) do
-        CompleteBankDeposit(row.identifier)
-    end
-end
-
---- -------------------------------------------------------------------------
---- RAID QUEUE TICK
---- Checks every minute for queued raids that should now fire
---- -------------------------------------------------------------------------
-local function ProcessRaidQueue()
-    local now = os.time()
-    for businessId, raidsAt in pairs(GetQueuedRaids()) do
-        if now >= raidsAt then
-            ExecuteRaid(businessId, nil)
-        end
-    end
-end
 
 local BUSINESS_LOCATION_COORDINATE_TOLERANCE = 0.25
 
@@ -330,7 +300,6 @@ CreateThread(function()
 
         for _, business in pairs(GetAllBusinesses()) do
             ApplySuspicionDecay(business)
-            CheckClosure(business)
         end
     end
 end)
@@ -368,7 +337,7 @@ function SaveBusiness(id, force)
         MySQL.update.await,
         "UPDATE moneywash_businesses SET " ..
         "stock = ?, safe_covered = ?, safe_exposed = ?, suspicion = ?, " ..
-        "total_laundered = ?, last_laundered_at = ?, is_closed = ?, closed_until = ? " ..
+        "total_laundered = ?, last_laundered_at = ? " ..
         "WHERE id = ? AND identifier = ?",
         {
             business.stock,
@@ -377,8 +346,6 @@ function SaveBusiness(id, force)
             business.suspicion,
             business.totalLaundered,
             business.lastLaunderedAt,
-            business.isClosed and 1 or 0,
-            business.closedUntil,
             business.id,
             identifier,
         }

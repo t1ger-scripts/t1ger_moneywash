@@ -136,7 +136,7 @@ end
 ---@param src integer Player source
 ---@param businessId integer
 ---@return table? business
----@return string? reason not_ready, invalid_player, not_found, not_owner, business_closed or too_far
+---@return string? reason not_ready, invalid_player, not_found, not_owner or too_far
 local function playerBusiness(src, businessId)
     if not IsBusinessStoreReady() then return nil, "not_ready" end
     local identifier = _API.Player.GetIdentifier(src)
@@ -144,7 +144,6 @@ local function playerBusiness(src, businessId)
     local business = GetBusiness(businessId)
     if not business then return nil, "not_found" end
     if business.identifier ~= identifier then return nil, "not_owner" end
-    if business.isClosed then return nil, "business_closed" end
     local location = GetLocationConfig(business.type, business.locationId)
     if not location or not IsPlayerNearCoords(src, location.coords, Config.CashCounter.InteractionDistance) then
         return nil, "too_far"

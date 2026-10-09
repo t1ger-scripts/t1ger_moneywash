@@ -21,7 +21,6 @@
             "units": "units",
             "suspicion": "Suspicion",
             "cycle_progress": "Cycle Progress",
-            "closed_reason": "Business is temporarily closed",
             "no_safe_balance": "No funds in Safe",
             "launder": "Launder Money",
             "order_stock": "Order Stock",
@@ -109,7 +108,6 @@
         }
     },
     "notification": {
-        "business_reopened": "Your business has reopened after temporary closure",
         "business_seized": "Your business has been permanently seized",
         "business_raided": "Your business was raided — %s seized",
         "suspicion_changed": "Business suspicion level: %s",
@@ -142,7 +140,6 @@
         "error_active_stock_mission": "Complete or cancel the active stock order before changing ownership",
         "error_pending_business_deposit": "Wait for the pending bank deposit to complete before changing ownership",
         "error_raid_pending": "Ownership cannot be changed while an enforcement action is pending",
-        "error_business_closed": "Your business is temporarily closed",
         "error_insufficient_dirty_cash": "You're not carrying enough dirty cash",
         "error_invalid_amount": "Invalid amount",
         "error_order_already_active": "You already have an active stock order",
@@ -309,7 +306,6 @@
         "errors": {
             "invalid_amount": "Choose a whole amount within your available balance.",
             "insufficient_dirty_cash": "You no longer have enough dirty cash. The transaction was cancelled.",
-            "business_closed": "This business is closed.",
             "not_owner": "You no longer own this business.",
             "too_far": "Return to your business handler.",
             "operation_in_progress": "Another operation is already in progress.",

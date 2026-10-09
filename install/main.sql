@@ -30,8 +30,6 @@ CREATE TABLE IF NOT EXISTS `moneywash_businesses` (
     `suspicion`         FLOAT        NOT NULL DEFAULT 0,      -- current suspicion value (0-100)
     `total_laundered`   BIGINT(20)   NOT NULL DEFAULT 0,      -- gross amount laundered this cycle (resets each cycle)
     `last_laundered_at` BIGINT(20)   NOT NULL DEFAULT 0,      -- unix timestamp of last launder action (for decay inactivity check)
-    `is_closed`         TINYINT(1)   NOT NULL DEFAULT 0,      -- 1 = temporarily closed after raid escalation
-    `closed_until`      BIGINT(20)            DEFAULT NULL,   -- unix timestamp closure ends
     `purchased_at`      BIGINT(20)   NOT NULL DEFAULT 0,      -- unix timestamp of purchase
     PRIMARY KEY (`id`),
     UNIQUE KEY `owner` (`identifier`),                          -- one business per player

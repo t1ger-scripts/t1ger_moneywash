@@ -14,7 +14,6 @@ function OpenHandlerMenu(businessId)
         return
     end
 
-    local isClosed = status.isClosed
     local menuIcons = Config.Business.MenuIcons or {}
 
     -- Overview row - a single hover-metadata row showing totals only.
@@ -34,28 +33,9 @@ function OpenHandlerMenu(businessId)
         { label = locale("menu.handler.cycle_progress"), value = FormatMoney(status.totalLaundered) .. " / " .. FormatMoney(status.expectedRevenue) },
     }
 
-    -- Launder Money
-    local launderDisabled = isClosed
-    local launderDesc = isClosed
-        and locale("menu.handler.closed_reason")
-        or locale("menu.handler.launder_desc")
-
-    -- Stock submenu
-    local stockDisabled = isClosed
-    local stockDesc = isClosed
-        and locale("menu.handler.closed_reason")
-        or locale("menu.handler.stock_desc")
-
     -- Safe submenu
-    local safeDisabled = isClosed or (status.safeCovered + status.safeExposed) <= 0
-    local safeDesc
-    if isClosed then
-        safeDesc = locale("menu.handler.closed_reason")
-    elseif (status.safeCovered + status.safeExposed) <= 0 then
-        safeDesc = locale("menu.handler.no_safe_balance")
-    else
-        safeDesc = locale("menu.handler.safe_desc")
-    end
+    local safeDisabled = (status.safeCovered + status.safeExposed) <= 0
+    local safeDesc = safeDisabled and locale("menu.handler.no_safe_balance") or locale("menu.handler.safe_desc")
 
     -- Review Books
     local receipts = lib.callback.await("t1ger_moneywash:server:getBusinessReceipts", false, businessId)
@@ -77,8 +57,7 @@ function OpenHandlerMenu(businessId)
             {
                 title       = locale("menu.handler.launder"),
                 icon        = menuIcons.launder or "fa-solid fa-money-bill-wave",
-                description = launderDesc,
-                disabled    = launderDisabled,
+                description = locale("menu.handler.launder_desc"),
                 onSelect    = function()
                     StartLaunderFlow(businessId)
                 end,
@@ -86,8 +65,7 @@ function OpenHandlerMenu(businessId)
             {
                 title       = locale("menu.handler.stock"),
                 icon        = menuIcons.stock or "fa-solid fa-boxes-stacked",
-                description = stockDesc,
-                disabled    = stockDisabled,
+                description = locale("menu.handler.stock_desc"),
                 onSelect    = function()
                     OpenStockMenu(businessId)
                 end,
@@ -163,13 +141,10 @@ function OpenStockMenu(businessId)
         coverageColor = "green"
     end
 
-    local isClosed = status.isClosed
     local missionActive = IsStockMissionActive()
-    local stockDisabled = isClosed or missionActive
+    local stockDisabled = missionActive
     local stockDesc
-    if isClosed then
-        stockDesc = locale("menu.handler.closed_reason")
-    elseif missionActive then
+    if missionActive then
         stockDesc = string.format(locale("menu.handler.order_in_progress"), Config.Business.StockMission.CancelCommand)
     else
         stockDesc = locale("menu.handler.order_stock_desc")
@@ -240,13 +215,9 @@ function OpenSafeMenu(businessId)
     end
 
     local menuIcons = Config.Business.MenuIcons or {}
-    local isClosed = status.isClosed
-
-    local depositDisabled = isClosed or (status.safeCovered + status.safeExposed) <= 0
+    local depositDisabled = (status.safeCovered + status.safeExposed) <= 0
     local depositDesc
-    if isClosed then
-        depositDesc = locale("menu.handler.closed_reason")
-    elseif (status.safeCovered + status.safeExposed) <= 0 then
+    if depositDisabled then
         depositDesc = locale("menu.handler.no_safe_balance")
     else
         depositDesc = locale("menu.handler.bank_deposit_desc")

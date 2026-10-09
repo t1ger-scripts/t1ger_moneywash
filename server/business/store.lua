@@ -105,8 +105,6 @@ function AddToStore(id, data)
         suspicion       = data.suspicion or 0,
         totalLaundered  = data.total_laundered or 0,
         lastLaunderedAt = data.last_laundered_at or 0,
-        isClosed        = (data.is_closed == 1 or data.is_closed == true),
-        closedUntil     = data.closed_until or nil,
         purchasedAt     = data.purchased_at or os.time(),
     }
 end
