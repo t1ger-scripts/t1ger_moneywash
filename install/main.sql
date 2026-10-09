@@ -44,31 +44,3 @@ CREATE TABLE IF NOT EXISTS `moneywash_receipts` (
     PRIMARY KEY (`id`),
     KEY `business_id` (`business_id`)
 );
-
--- Raid history per location (independent of ownership changes)
-CREATE TABLE IF NOT EXISTS `moneywash_raid_history` (
-    `id`            INT(11)     NOT NULL AUTO_INCREMENT,
-    `business_type` VARCHAR(50) NOT NULL,                -- business type key
-    `location_id`   INT(11)     NOT NULL,                -- location id
-    `location_x`    DECIMAL(12,6) NOT NULL,              -- location snapshot at raid time
-    `location_y`    DECIMAL(12,6) NOT NULL,
-    `location_z`    DECIMAL(12,6) NOT NULL,
-    `raided_at`     BIGINT(20)  NOT NULL,                -- unix timestamp of raid
-    PRIMARY KEY (`id`),
-    KEY `location` (`business_type`, `location_id`)
-);
-
--- Pending bank deposits
-CREATE TABLE IF NOT EXISTS `moneywash_deposits` (
-    `id`             INT(11)      NOT NULL AUTO_INCREMENT,
-    `identifier`     VARCHAR(100) NOT NULL,              -- player identifier
-    `business_id`    INT(11)      NOT NULL,              -- source business
-    `total_amount`   BIGINT(20)   NOT NULL,              -- total deposit amount
-    `covered_amount` BIGINT(20)   NOT NULL DEFAULT 0,    -- covered portion of this deposit
-    `exposed_amount` BIGINT(20)   NOT NULL DEFAULT 0,    -- exposed portion of this deposit
-    `flagged`        TINYINT(1)   NOT NULL DEFAULT 0,    -- 1 = flagged for police review
-    `initiated_at`   BIGINT(20)   NOT NULL,              -- unix timestamp deposit started
-    `clears_at`      BIGINT(20)   NOT NULL,              -- unix timestamp deposit clears
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `identifier` (`identifier`)               -- one pending deposit per player at a time
-);
