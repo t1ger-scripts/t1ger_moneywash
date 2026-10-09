@@ -396,6 +396,19 @@ function OnPlayerDroppedStockCleanup(src)
     end
 end
 
+--- Refunds every active shipment when the resource stops (script restart or
+--- server shutdown). Missions only exist in memory, so without this the
+--- money the player already paid would be lost. Full refund, no penalty.
+AddEventHandler("onResourceStop", function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+
+    for src, mission in pairs(ActiveStockMissions) do
+        _API.Player.AddMoney(src, mission.cost, "bank")
+        ReleasePickupLocation(mission)
+        ActiveStockMissions[src] = nil
+    end
+end)
+
 --- Returns a player's active stock mission, if one exists.
 --- @param src number
 --- @return table|nil
