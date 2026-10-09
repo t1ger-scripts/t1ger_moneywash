@@ -21,7 +21,7 @@ function OpenHandlerMenu(businessId)
     local suspicionEntry = { label = locale("menu.handler.suspicion"), value = status.suspicionLabel }
 
     if Config.Suspicion.ShowExactValue and status.suspicion then
-        suspicionEntry.value = ("%s (%d)"):format(status.suspicionLabel, status.suspicion)
+        suspicionEntry.value = ("%s (%d)"):format(status.suspicionLabel, math.floor(status.suspicion))
         suspicionEntry.progress = status.suspicion
         suspicionEntry.colorScheme = status.suspicionColor
     end
@@ -36,13 +36,6 @@ function OpenHandlerMenu(businessId)
     -- Safe submenu
     local safeDisabled = (status.safeCovered + status.safeExposed) <= 0
     local safeDesc = safeDisabled and locale("menu.handler.no_safe_balance") or locale("menu.handler.safe_desc")
-
-    -- Review Books
-    local receipts = lib.callback.await("t1ger_moneywash:server:getBusinessReceipts", false, businessId)
-    local receiptCount = receipts and #receipts or 0
-    local reviewMeta = {
-        { label = locale("menu.handler.review_receipts"), value = receiptCount },
-    }
 
     lib.registerContext({
         id      = "moneywash:handler:main",
@@ -77,15 +70,6 @@ function OpenHandlerMenu(businessId)
                 disabled    = safeDisabled,
                 onSelect    = function()
                     OpenSafeMenu(businessId)
-                end,
-            },
-            {
-                title       = locale("menu.handler.review_books"),
-                icon        = menuIcons.reviewBooks or "fa-solid fa-book",
-                description = locale("menu.handler.review_books_desc"),
-                metadata    = reviewMeta,
-                onSelect    = function()
-                    OpenReviewBooksMenu(businessId, receipts)
                 end,
             },
             {
@@ -393,62 +377,6 @@ function OpenBankDepositDialog(businessId, status)
 
     -- Trigger deposit mission flow in missions.lua
     StartDepositMission(businessId, amount)
-end
-
---- ============================================================================
---- REVIEW BOOKS MENU
---- ============================================================================
-
---- @param businessId number
---- @param receipts table available receipts from server
-function OpenReviewBooksMenu(businessId, receipts)
-    if not receipts or #receipts == 0 then
-        _API.ShowNotification(locale("menu.review.no_receipts"), "error", {})
-        return
-    end
-
-    -- Build multi-select options from available receipts
-    local options = {}
-    for _, receipt in ipairs(receipts) do
-        options[#options + 1] = {
-            label = string.format("%s — %s units — %s", os.date("%d/%m %H:%M", receipt.created_at), receipt.units, FormatMoney(receipt.total_amount)),
-            value = receipt.id,
-        }
-    end
-
-    local selected = lib.inputDialog(locale("menu.review.title"), {
-        {
-            type     = "multi-select",
-            label    = locale("menu.review.select_label"),
-            options  = options,
-            required = true,
-        },
-    })
-
-    if not selected or not selected[1] or #selected[1] == 0 then return end
-
-    local selectedIds = selected[1]
-
-    -- Fetch live effectiveness estimate from server
-    local estimate = lib.callback.await("t1ger_moneywash:server:estimateReviewEffectiveness", false, businessId, selectedIds)
-
-    if not estimate then
-        _API.ShowNotification(locale("menu.review.estimate_failed"), "error", {})
-        return
-    end
-
-    -- Show effectiveness and confirm
-    local confirmed = lib.alertDialog({
-        header   = locale("menu.review.confirm_title"),
-        content  = string.format(locale("menu.review.confirm_body"), estimate.label, estimate.reduction),
-        centered = true,
-        cancel   = true,
-    })
-
-    if confirmed ~= "confirm" then return end
-
-    -- Trigger review flow in missions.lua
-    StartReviewMission(businessId, selectedIds)
 end
 
 --- ============================================================================
