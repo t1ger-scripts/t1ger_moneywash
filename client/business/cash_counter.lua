@@ -1,45 +1,27 @@
-local opening = false
-local confirming = false
+local opening = false    -- true while the counter is opening or closing; blocks re-entry
+local confirming = false -- true while a confirm request is in flight; blocks double confirms
 
-local function cashCounterInteger(value, fallback, minimum, maximum)
-    local number = tonumber(value)
+---@class CashCounterResponse
+---@field success boolean
+---@field reason? string Error key, matches `cashCounter.errors.<reason>` in the locales
+---@field data? table Payload returned by the server on success
 
-    if not number or number ~= number
-        or number == math.huge or number == -math.huge then
-        number = fallback
-    end
-
-    return math.max(minimum, math.min(maximum, math.floor(number)))
-end
-
-local function GetCashCounterSettings()
-    local config = Config.CashCounter or {}
-
-    return {
-        stackCount = cashCounterInteger(
-            config.StackCount, 10, 1, 20
-        ),
-        stackDurationMs = cashCounterInteger(
-            config.StackDurationMs, 800, 100, 60000
-        ),
-        autoMoveToRight = config.AutoMoveToRight == true,
-    }
-end
-
-local function GetCashCounterBatchDuration(amount, settings)
-    settings = settings or GetCashCounterSettings()
-
-    local pileCount = math.min(settings.stackCount, amount)
-
-    return pileCount * settings.stackDurationMs
-end
-
+--- Calls a `t1ger_moneywash:server:cashCounter:<name>` server callback.
+--- Never throws: a failed call or a non-table reply becomes `request_failed`.
+---@param name string Callback suffix: "open", "start", "status", "confirm" or "cancel"
+---@param ... any Arguments forwarded to the server callback
+---@return CashCounterResponse
 local function serverRequest(name, ...)
     local ok, response = pcall(lib.callback.await, "t1ger_moneywash:server:cashCounter:" .. name, false, ...)
-    if not ok or type(response) ~= "table" then return { success = false, reason = "request_failed" } end
+    if not ok or type(response) ~= "table" then
+        return { success = false, reason = "request_failed" }
+    end
     return response
 end
 
+--- Shows a cash counter error notification.
+--- Falls back to the `request_failed` message when the reason has no locale entry.
+---@param reason? string Error key, defaults to "request_failed"
 local function ShowCashCounterError(reason)
     local key = "cashCounter.errors." .. (reason or "request_failed")
     local message = locale(key)
@@ -51,16 +33,18 @@ local function ShowCashCounterError(reason)
     _API.ShowNotification(message, "error", {})
 end
 
+--- Opens the cash counter UI after the server validates the request.
+--- The client-side amount check is only for early feedback; the server re-checks everything.
+---@param businessId number
+---@param amount number Whole dirty cash amount, from 1 to Config.CashCounter.MaxAmount
+---@param operation? string Cash operation, defaults to "inject"
+---@return boolean opened False if the UI is busy, the amount is invalid, or the server refused
 function OpenCashCounter(businessId, amount, operation)
     if opening or confirming then return false end
 
     amount = tonumber(amount)
 
-    if not amount
-        or amount ~= amount
-        or amount % 1 ~= 0
-        or amount < 1
-        or amount > Config.CashCounter.MaxAmount then
+    if not amount or amount ~= amount or amount % 1 ~= 0 or amount < 1 or amount > Config.CashCounter.MaxAmount then
         ShowCashCounterError("invalid_amount")
         return false
     end
@@ -71,12 +55,7 @@ function OpenCashCounter(businessId, amount, operation)
 
     opening = true
 
-    local response = serverRequest(
-        "open",
-        businessId,
-        operation or "inject",
-        amount
-    )
+    local response = serverRequest("open", businessId, operation or "inject", amount)
 
     if not response.success or not response.data then
         opening = false
@@ -85,37 +64,36 @@ function OpenCashCounter(businessId, amount, operation)
         return false
     end
 
-    ShowMoneywashUi(
-        "cash-counter",
-        "t1ger_moneywash:cashCounter:open",
-        response.data
-    )
+    ShowMoneywashUi("cash-counter", "t1ger_moneywash:cashCounter:open", response.data)
 
     opening = false
     return true
 end
-
 exports("OpenCashCounter", OpenCashCounter)
 
+--- NUI: the player started counting a batch. Forwards the amount to the server.
+---@param data { amount: number }
+---@param cb fun(response: CashCounterResponse)
 RegisterNUICallback("t1ger_moneywash:cashCounter:start", function(data, cb)
     if GetMoneywashUiScreen() ~= "cash-counter" or type(data) ~= "table" then
-        cb({ success = false, reason = "ui_closed" }); return
+        cb({ success = false, reason = "ui_closed" })
+        return
     end
     cb(serverRequest("start", data.amount))
 end)
 
+--- NUI: the player confirmed a finished batch. The server takes the dirty cash and
+--- settles it into the business. The UI closes whether or not the server accepts it.
+---@param data { batchId: number }
+---@param cb fun(response: CashCounterResponse)
 RegisterNUICallback("t1ger_moneywash:cashCounter:confirm", function(data, cb)
-    if GetMoneywashUiScreen() ~= "cash-counter"
-        or type(data) ~= "table" then
+    if GetMoneywashUiScreen() ~= "cash-counter" or type(data) ~= "table" then
         cb({ success = false, reason = "ui_closed" })
         return
     end
 
     if confirming then
-        cb({
-            success = false,
-            reason = "operation_in_progress",
-        })
+        cb({success = false, reason = "operation_in_progress"})
         return
     end
 
@@ -123,11 +101,7 @@ RegisterNUICallback("t1ger_moneywash:cashCounter:confirm", function(data, cb)
 
     local response = serverRequest("confirm", data.batchId)
 
-    -- Close both the Vue screen and FiveM focus regardless
-    -- of whether confirmation succeeded or was rejected.
-    SendNUIMessage({
-        action = "t1ger_moneywash:cashCounter:close",
-    })
+    SendNUIMessage({action = "t1ger_moneywash:cashCounter:close"})
 
     CloseMoneywashUi("cash-counter")
 
@@ -137,170 +111,31 @@ RegisterNUICallback("t1ger_moneywash:cashCounter:confirm", function(data, cb)
         ShowCashCounterError(response.reason)
     end
 
-    -- Clears ordinary previews and the UI session.
-    -- The server preserves settling/review transactions.
     serverRequest("cancel")
 
     confirming = false
 end)
 
+--- NUI: the UI asks for the current dirty cash balance and batch state.
+---@param _ table Unused
+---@param cb fun(response: CashCounterResponse)
 RegisterNUICallback("t1ger_moneywash:cashCounter:status", function(_, cb)
     if GetMoneywashUiScreen() ~= "cash-counter" then
-        cb({ success = false, reason = "ui_closed" }); return
+        cb({ success = false, reason = "ui_closed" })
+        return
     end
     cb(serverRequest("status"))
 end)
 
+--- NUI: the player closed the counter without confirming. Cancels the server preview.
+--- `opening` stays true meanwhile so the counter can't be reopened mid-close.
+---@param _ table Unused
+---@param cb fun(response: { success: boolean })
 RegisterNUICallback("t1ger_moneywash:cashCounter:close", function(_, cb)
     opening = true
-
-    SendNUIMessage({
-        action = "t1ger_moneywash:cashCounter:close",
-    })
-
+    SendNUIMessage({action = "t1ger_moneywash:cashCounter:close",})
     CloseMoneywashUi("cash-counter")
-
     cb({ success = true })
-
     serverRequest("cancel")
-
     opening = false
 end)
-
--- Local preview command. No server callback, inventory, or business safe is changed.
-local testCounter
-local realServerRequest = serverRequest
-
-serverRequest = function(name, ...)
-    if name == "open" then
-        testCounter = nil
-        return realServerRequest(name, ...)
-    end
-
-    if not testCounter then
-        return realServerRequest(name, ...)
-    end
-
-    if name == "cancel" then
-        testCounter = nil
-        return { success = true }
-    end
-
-    local batch = testCounter.batch
-    if batch and batch.status == "counting" then
-        batch.remainingMs = math.max(0, testCounter.deadline - GetGameTimer())
-        if batch.remainingMs == 0 then batch.status = "ready" end
-    end
-
-    local value = ...
-    if name == "start" then
-        local amount = value
-        if type(amount) ~= "number" or amount % 1 ~= 0
-            or amount < 1 or amount > testCounter.available
-            or amount > Config.CashCounter.MaxAmount then
-            return { success = false, reason = "invalid_amount" }
-        end
-
-        if not batch then
-            local duration = GetCashCounterBatchDuration(amount, testCounter.settings)
-            testCounter.nextId = testCounter.nextId + 1
-            batch = {
-                id = testCounter.nextId,
-                amount = amount,
-                durationMs = duration,
-                remainingMs = duration,
-                status = "counting",
-                settings = testCounter.settings,
-            }
-            testCounter.batch = batch
-            testCounter.deadline = GetGameTimer() + duration
-        end
-
-    elseif name == "confirm" then
-        if not batch or batch.id ~= value then
-            return { success = false, reason = "invalid_batch" }
-        end
-        if batch.status ~= "ready" then
-            return { success = false, reason = "count_not_ready" }
-        end
-
-        testCounter.available = testCounter.available - batch.amount
-        batch.status = "complete"
-        batch.remainingMs = 0
-    end
-
-    return {
-        success = true,
-        data = {
-            available = testCounter.available,
-            batch = testCounter.batch,
-        },
-    }
-end
-
-RegisterCommand("testcashcounter", function(_, args)
-    local amount = tonumber(args[1])
-
-    if not amount
-        or amount ~= amount
-        or amount % 1 ~= 0
-        or amount < 1
-        or amount > Config.CashCounter.MaxAmount then
-        print("[MoneyWash] Usage: /testcashcounter 100000")
-        return
-    end
-
-    if opening
-        or confirming
-        or not BeginMoneywashUi("cash-counter") then
-        print("[MoneyWash] Close the current UI before testing the cash counter.")
-        return
-    end
-
-    opening = true
-
-    local raw = LoadResourceFile(
-        GetCurrentResourceName(),
-        "locales/en.json"
-    )
-
-    local ok, messages = pcall(json.decode, raw or "{}")
-
-    if not ok
-        or type(messages) ~= "table"
-        or type(messages.cashCounter) ~= "table" then
-        opening = false
-        CloseMoneywashUi("cash-counter")
-        print("[MoneyWash] Could not load locales/en.json.")
-        return
-    end
-
-    messages.cashCounter.injectTitle = "Inject cash (test)"
-
-    local settings = GetCashCounterSettings()
-
-    testCounter = {
-        available = amount,
-        nextId = 0,
-        settings = settings,
-    }
-
-    ShowMoneywashUi(
-        "cash-counter",
-        "t1ger_moneywash:cashCounter:open",
-        {
-            businessId = 0,
-            operation = "inject",
-            amount = amount,
-            available = amount,
-            currency = Config.Currency,
-            locale = "en",
-            messages = messages,
-            titleKey = "cashCounter.injectTitle",
-            successKey = "cashCounter.injected",
-            settings = settings,
-        }
-    )
-
-    opening = false
-end, false)
