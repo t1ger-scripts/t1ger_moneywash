@@ -53,43 +53,4 @@ Config.Suspicion = {
         OnlinePointsPerCycle  = 5, -- suspicion removed per cycle while owner is online
         OfflinePointsPerCycle = 2, -- suspicion removed per cycle while owner is offline
     },
-
-    -- -------------------------------------------------------------------------
-    -- RAIDS
-    -- -------------------------------------------------------------------------
-
-    -- Suspicion value after a raid resolves
-    -- Not zero (would allow raids as a free reset)
-    -- Not 100 (would trap business in permanent raid cycle)
-    PostRaidReset = 50,
-
-    -- Real minutes between suspicion crossing 100 and police dispatch firing
-    -- Gives an attentive owner a reaction window
-    RaidDelay = 3,
-
-    -- Raid history escalation - tracked per location regardless of ownership changes
-    RaidHistory = {
-        WindowDays           = 14, -- rolling window in real days
-        SeizeAfterRaids      = 5,  -- raids within window before permanent seizure
-    },
-
-    -- -------------------------------------------------------------------------
-    -- ACCOUNTANT RECORDS REVIEW
-    -- The only active suspicion reduction method currently available.
-    -- Once per revenue cycle per business.
-    -- -------------------------------------------------------------------------
-    AccountantReview = {
-        MinReduction  = 5,  -- minimum suspicion points removed per review
-        MaxReduction  = 30, -- maximum suspicion points removed per review
-        Cooldown      = 1,  -- revenue cycles before review can be used again
-
-        -- Police notification chance during review (lower than launder actions
-        -- since this is a legitimate business activity)
-        NotificationChance = {
-            Low      = 0,
-            Moderate = 5,
-            High     = 20,
-            Critical = 50,
-        },
-    },
 }

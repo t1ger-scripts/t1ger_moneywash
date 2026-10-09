@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `moneywash_businesses` (
     UNIQUE KEY `business_location` (`business_type`, `location_id`) -- one owner per location
 );
 
--- Stock purchase receipts (deleted when consumed in accountant review)
+-- Stock purchase receipts
 CREATE TABLE IF NOT EXISTS `moneywash_receipts` (
     `id`           INT(11)    NOT NULL AUTO_INCREMENT,
     `business_id`  INT(11)    NOT NULL,                  -- references moneywash_businesses.id

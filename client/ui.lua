@@ -29,6 +29,7 @@ RegisterNUICallback("t1ger_moneywash:ui:ready", function(_, cb)
     cb({ success = true })
     if activeScreen and pendingMessage then SendNUIMessage(pendingMessage) end
 end)
+
 AddEventHandler("onResourceStop", function(resource)
     if resource == GetCurrentResourceName() and activeScreen then SetNuiFocus(false, false) end
 end)

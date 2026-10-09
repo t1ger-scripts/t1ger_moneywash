@@ -89,8 +89,6 @@ files {
 
     'shared/business_locations.lua',
     'shared/stock_mission.lua',
-    'shared/banklocations.lua',
-    'shared/accountantoffices.lua',
 }
 
 ox_libs {
