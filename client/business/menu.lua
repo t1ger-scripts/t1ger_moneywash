@@ -126,10 +126,13 @@ function OpenStockMenu(businessId)
     end
 
     local missionActive = IsStockMissionActive()
-    local stockDisabled = missionActive
+    local stockFull = status.stock >= capacity
+    local stockDisabled = missionActive or stockFull
     local stockDesc
     if missionActive then
         stockDesc = string.format(locale("menu.handler.order_in_progress"), Config.Business.StockMission.CancelCommand)
+    elseif stockFull then
+        stockDesc = locale("menu.handler.stock_full_desc")
     else
         stockDesc = locale("menu.handler.order_stock_desc")
     end
@@ -304,8 +307,10 @@ function OpenStockOrderDialog(businessId, status)
         return OpenStockMenu(businessId)
     end
 
-    local minOrder = status.minOrder
-    local maxOrder = status.maxOrder
+    local stockCfg = Config.Business.Stock
+    local capacity = math.floor((status.expectedRevenue / stockCfg.LaunderDollarsPerUnit) * stockCfg.maxCapacityCycles)
+    local maxOrder = math.min(status.maxOrder, capacity - status.stock)
+    local minOrder = math.min(status.minOrder, maxOrder)
     local unitPrice = status.unitPrice
 
     local input = lib.inputDialog(locale("menu.stock.title"), {

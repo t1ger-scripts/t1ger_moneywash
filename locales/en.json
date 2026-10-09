@@ -43,6 +43,7 @@
             "cycle_cap_reached": "Cycle Cap Reached",
             "cycle_cap_reached_desc": "You've laundered your full cycle capacity. Further laundering this cycle is fully exposed - no stock coverage, still uses up stock, and at risk if raided.",
             "order_stock_desc": "Restock inventory to keep the business running",
+            "stock_full_desc": "Your storage is full",
             "order_in_progress": "You have an active order - use /%s to cancel it",
             "safe_desc": "View your Safe balance and make a deposit",
             "view_safe": "Safe Balance",
