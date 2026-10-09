@@ -72,7 +72,7 @@ end
 function RollPoliceNotification(business, notificationChances)
     local label = GetSuspicionLabel(business.suspicion)
     local chances = notificationChances or Config.Suspicion.NotificationChance
-    local chance = chances[label.name] or 0
+    local chance = (business.suspicion >= 100 and chances.Max) or chances[label.name] or 0
 
     if chance <= 0 then return end
 
@@ -80,6 +80,6 @@ function RollPoliceNotification(business, notificationChances)
     if roll <= chance then
         local location = GetLocationConfig(business.type, business.locationId)
         local coords = location and location.coords or nil
-        SendPoliceNotification(business, label.name, coords)
+        SendPoliceNotification(business, business.suspicion >= 100 and "Max" or label.name, coords)
     end
 end

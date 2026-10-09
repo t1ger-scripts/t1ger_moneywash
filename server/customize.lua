@@ -5,13 +5,14 @@
 --- Sends a police notification for suspicious laundering activity
 --- Replace with your own dispatch system (ps-dispatch, cd_dispatch, etc.)
 --- @param business table
---- @param suspicionLabel string "Moderate" | "High" | "Critical"
+--- @param suspicionLabel string "Moderate" | "High" | "Critical" | "Max" (suspicion at 100)
 --- @param coords vector4|nil
 function SendPoliceNotification(business, suspicionLabel, coords)
     local messages = {
         Moderate = ("Unusual financial activity reported near %s"):format(business.type),
         High     = ("Suspicious business activity flagged at %s"):format(business.type),
         Critical = ("High-risk laundering activity detected at %s"):format(business.type),
+        Max      = ("Laundering operation at %s is fully exposed - ready for a raid"):format(business.type),
     }
 
     local message = messages[suspicionLabel] or messages.Moderate

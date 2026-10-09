@@ -109,7 +109,7 @@
     "notification": {
         "business_removed": "Your business has been permanently removed",
         "money_laundered": "%s laundered into your Safe (%s covered, %s exposed)",
-        "suspicion_changed": "Business suspicion level: %s",
+        "suspicion_changed": "Business suspicion has risen to %s",
         "no_permission": "You don't have permission to do this",
         "mission_already_active": "You already have an active mission",
         "stock_order_placed": "Stock order placed. GPS waypoint set to pickup location.",

@@ -71,7 +71,7 @@ function PublishCashInjection(src, identifier, businessId, amount, result)
 
     RollPoliceNotification(business)
 
-    if src and Config.Suspicion.NotifyOnLabelChange and result.oldLabel.name ~= result.newLabel.name then
+    if src and Config.Suspicion.NotifyOnLabelChange and result.newLabel.threshold > result.oldLabel.threshold then
         TriggerClientEvent("t1ger_moneywash:client:suspicionLabelChanged", src, result.newLabel)
     end
 end

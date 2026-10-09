@@ -31,16 +31,22 @@ Config.Suspicion = {
     -- Default: false (label only)
     ShowExactValue = true,
 
+    -- Warn the owner when a launder pushes the business into a higher label
+    -- (e.g. Low -> Moderate). Downward changes from decay never notify.
+    NotifyOnLabelChange = true,
+
     -- -------------------------------------------------------------------------
     -- POLICE NOTIFICATION
     -- One hidden roll per launder action using resulting suspicion label.
     -- Player is never informed of the outcome.
+    -- Max applies only when suspicion has reached 100 (guaranteed by default).
     -- -------------------------------------------------------------------------
     NotificationChance = {
         Low      = 0,  -- no roll at Low suspicion
         Moderate = 10, -- % chance police are notified
         High     = 35,
         Critical = 75,
+        Max      = 100, -- suspicion at 100
     },
 
     -- -------------------------------------------------------------------------
