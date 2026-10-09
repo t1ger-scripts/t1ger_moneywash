@@ -60,12 +60,17 @@ server_scripts {
     'server/hooks.lua',
 
     'server/business/store.lua',
-    'server/business/functions.lua',
+    'server/business/persistence.lua',
+    'server/business/cycle.lua',
+    'server/business/suspicion.lua',
+    'server/business/ownership.lua',
+    'server/business/laundering.lua',
     'server/business/stock.lua',
-    'server/business/main.lua',
+    'server/business/callbacks.lua',
+    'server/business/commands.lua',
     'server/business/portal.lua',
     'server/business/cash_counter.lua',
-    
+
     'server/main.lua',
 }
 

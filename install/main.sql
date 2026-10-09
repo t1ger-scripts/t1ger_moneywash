@@ -27,7 +27,6 @@ CREATE TABLE IF NOT EXISTS `moneywash_businesses` (
     `safe_exposed`      BIGINT(20)   NOT NULL DEFAULT 0,      -- clean exposed funds in Safe
     `suspicion`         FLOAT        NOT NULL DEFAULT 0,      -- current suspicion value (0-100)
     `total_laundered`   BIGINT(20)   NOT NULL DEFAULT 0,      -- gross amount ever laundered
-    `last_laundered_at` BIGINT(20)   NOT NULL DEFAULT 0,      -- unix timestamp of last launder action (for decay inactivity check)
     `purchased_at`      BIGINT(20)   NOT NULL DEFAULT 0,      -- unix timestamp of purchase
     PRIMARY KEY (`id`),
     UNIQUE KEY `owner` (`identifier`),                          -- one business per player
