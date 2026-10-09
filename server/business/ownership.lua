@@ -302,6 +302,11 @@ function TransferBusiness(src, targetSrc, businessId)
         return false, "active_stock_mission"
     end
 
+    if HasBusinessDeposit(businessId) then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "pending_business_deposit"
+    end
+
     if PlayerOwnsBusiness(targetIdentifier) then
         ReleaseOwnershipLocks(lockKeys)
         return false, "target_owns_business"
@@ -410,6 +415,11 @@ function AbandonBusiness(src, businessId)
     if stockMission and stockMission.businessId == businessId then
         ReleaseOwnershipLocks(lockKeys)
         return false, "active_stock_mission"
+    end
+
+    if HasBusinessDeposit(businessId) then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "pending_business_deposit"
     end
 
     local transactionExecuted, transactionSucceeded = pcall(
@@ -620,6 +630,11 @@ function AdminRemoveBusiness(businessType, locationId)
     if not business or business.id ~= businessId then
         ReleaseOwnershipLocks(lockKeys)
         return false, "not_owned"
+    end
+
+    if HasBusinessDeposit(businessId) then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "pending_business_deposit"
     end
 
     local transactionExecuted, transactionSucceeded = pcall(

@@ -16,6 +16,7 @@ RegisterNetEvent("t1ger_moneywash:server:playerLoaded", function()
     local identifier = _API.Player.GetIdentifier(src)
     local businesses = GetPlayerBusinesses(identifier)
     TriggerClientEvent("t1ger_moneywash:client:syncBusinesses", src, businesses)
+    TriggerClientEvent("t1ger_moneywash:client:bankDepositSync", src, GetBankDepositPublic(identifier))
 
     if Config.Debug then
         print(("[MoneyWash] Player %d loaded | %d businesses synced"):format(src, #businesses))
@@ -39,10 +40,13 @@ end)
 CreateThread(function()
     if not LoadBusinesses() then return end
 
+    LoadBankDeposits()
+
     while true do
         Wait(60000)
 
         CheckGlobalCycle()
+        ProcessBankDeposits()
 
         for _, business in pairs(GetAllBusinesses()) do
             ApplySuspicionDecay(business)

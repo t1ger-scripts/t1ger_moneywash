@@ -122,6 +122,10 @@
         "stock_unloaded": "Stock unloaded",
         "stock_damaged": "Cargo damaged! -%d%% (%d units remaining)",
         "stock_cannot_enter_vehicle": "You can't get in a vehicle while carrying the box. Load it onto the vehicle instead.",
+        "deposit_submitted": "Deposit submitted. It will clear in %d minutes.",
+        "deposit_cleared": "Bank deposit cleared: %s paid into your bank (%s tax).",
+        "deposit_refunded": "Bank deposit cancelled. %s returned to your Safe.",
+        "deposit_confiscated": "Police confiscated your pending bank deposit.",
         "error_invalid_player": "Invalid player",
         "error_invalid_type": "Invalid business type",
         "error_invalid_state": "This action isn't available right now",
@@ -155,6 +159,11 @@
         "error_no_receipts_selected": "No receipts selected",
         "error_not_flagged": "This deposit is not flagged",
         "error_no_pending_deposit": "No pending deposit found",
+        "error_invalid_atm": "That's not a valid ATM",
+        "error_atm_too_far": "You're too far from the ATM",
+        "error_pending_business_deposit": "Finish your pending bank deposit first",
+        "error_deposit_pending": "You already have a bank deposit in progress",
+        "error_insufficient_safe_cash": "The Safe no longer holds that amount",
         "error_unknown": "Something went wrong"
     },
     "progress": {

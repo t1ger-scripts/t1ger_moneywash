@@ -31,3 +31,22 @@ function SendPoliceNotification(business, suspicionLabel, coords)
     end
 end
 
+--- Sends a police notification for a flagged ATM deposit
+--- @param identifier string depositor (not shown)
+--- @param amount number gross amount
+--- @param coords vector3 ATM location
+function SendDepositFlagNotification(identifier, amount, coords)
+    local message = ("Suspicious ATM deposit of %s%d flagged"):format(Config.Currency, amount)
+
+    for _, player in ipairs(_API.GetOnlinePlayers()) do
+        local job = player.job
+        if job then
+            for _, policeJob in ipairs(Config.Police.Jobs) do
+                if job.name == policeJob then
+                    _API.SendNotification(player.source, message, "inform")
+                    break
+                end
+            end
+        end
+    end
+end

@@ -47,15 +47,17 @@ CREATE TABLE IF NOT EXISTS `moneywash_receipts` (
 
 -- Bank deposits
 CREATE TABLE IF NOT EXISTS `moneywash_deposits` (
-    `identifier`  VARCHAR(100)      NOT NULL,                 -- owner player identifier
-    `business_id` INT(11)           NOT NULL,                 -- the business the money came from
-    `amount`      BIGINT(20)        NOT NULL,                 -- gross amount taken from the Safe
-    `x`           DECIMAL(12,6)     DEFAULT NULL,    -- where it was submitted (set at the ATM)
-    `y`           DECIMAL(12,6)     DEFAULT NULL,
-    `z`           DECIMAL(12,6)     DEFAULT NULL,
-    `state`       VARCHAR(16)       NOT NULL DEFAULT 'enroute', -- 'enroute' | 'processing'
-    `flagged`     TINYINT(1)        NOT NULL DEFAULT 0,       -- 1 = police were alerted
-    `clears_at`   BIGINT(20)        DEFAULT NULL,    -- unix timestamp the deposit clears (processing only)
-    `created_at`  BIGINT(20)        NOT NULL DEFAULT 0,       -- unix timestamp the deposit was started
+    `identifier`  VARCHAR(100)    NOT NULL,                             -- owner player identifier
+    `business_id` INT(11)         NOT NULL,                             -- the business the money came from
+    `amount`      BIGINT(20)      NOT NULL,                             -- gross amount taken from the Safe
+    `covered`     INT             NOT NULL DEFAULT 0 AFTER `amount`,
+    `exposed`     INT             NOT NULL DEFAULT 0 AFTER `covered`;
+    `x`           DECIMAL(12,6)   DEFAULT NULL,                         -- where it was submitted (set at the ATM)
+    `y`           DECIMAL(12,6)   DEFAULT NULL,
+    `z`           DECIMAL(12,6)   DEFAULT NULL,
+    `state`       VARCHAR(16)     NOT NULL DEFAULT 'enroute',           -- 'enroute' | 'processing'
+    `flagged`     TINYINT(1)      NOT NULL DEFAULT 0,                   -- 1 = police were alerted
+    `clears_at`   BIGINT(20)      DEFAULT NULL,                         -- unix timestamp the deposit clears (processing only)
+    `created_at`  BIGINT(20)      NOT NULL DEFAULT 0,                   -- unix timestamp the deposit was started
     PRIMARY KEY (`identifier`)
 );

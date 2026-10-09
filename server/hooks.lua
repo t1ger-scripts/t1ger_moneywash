@@ -51,3 +51,11 @@ end
 --- @param exposedAmount number portion that landed as exposed (raid-seizable)
 function OnMoneyLaundered(identifier, businessId, businessType, amount, coveredAmount, exposedAmount)
 end
+
+--- Called when a bank deposit clears into the owner's personal bank.
+--- @param identifier string business owner
+--- @param businessId number
+--- @param gross number amount taken from the Safe
+--- @param net number amount paid into the bank after tax
+function OnBankDepositCompleted(identifier, businessId, gross, net)
+end
