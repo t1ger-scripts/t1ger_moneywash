@@ -120,6 +120,7 @@
         "stock_cancelled": "Stock order cancelled",
         "stock_unloaded": "Stock unloaded",
         "stock_damaged": "Cargo damaged! -%d%% (%d units remaining)",
+        "stock_cannot_enter_vehicle": "You can't get in a vehicle while carrying the box. Load it onto the vehicle instead.",
         "error_invalid_player": "Invalid player",
         "error_invalid_type": "Invalid business type",
         "error_invalid_state": "This action isn't available right now",

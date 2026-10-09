@@ -208,6 +208,15 @@ CreateThread(function()
         if stockMission and (stockMission.state == "carried" or stockMission.state == "loaded") then
             DrawStockDamageMeter()
         end
+
+        -- Carrying the box by hand: no getting into vehicles. The only way to
+        -- use a vehicle is to load the box onto it with the vehicle target.
+        if stockMission and stockMission.state == "carried" then
+            DisableControlAction(0, 23, true) -- INPUT_ENTER (F / controller Y)
+            if IsDisabledControlJustPressed(0, 23) then
+                _API.ShowNotification(locale("notification.stock_cannot_enter_vehicle"), "error")
+            end
+        end
     end
 end)
 
