@@ -415,6 +415,8 @@ lib.callback.register("t1ger_moneywash:server:confiscateDeposit", function(src, 
 
             Deposits[d.identifier] = nil
 
+            OnBankDepositConfiscated(_API.Player.GetIdentifier(src), d.identifier, d.businessId, d.amount)
+
             local owner = onlineSource(d.identifier)
             if owner then
                 TriggerClientEvent("t1ger_moneywash:client:bankDepositEnded", owner)

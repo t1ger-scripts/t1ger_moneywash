@@ -59,3 +59,12 @@ end
 --- @param net number amount paid into the bank after tax
 function OnBankDepositCompleted(identifier, businessId, gross, net)
 end
+
+--- Called when police confiscate a flagged bank deposit. The money is gone;
+--- this is only a notification point (e.g. reward the officer, log to Discord).
+--- @param officerIdentifier string
+--- @param ownerIdentifier string the player who made the deposit
+--- @param businessId number
+--- @param amount number gross amount that was seized
+function OnBankDepositConfiscated(officerIdentifier, ownerIdentifier, businessId, amount)
+end
