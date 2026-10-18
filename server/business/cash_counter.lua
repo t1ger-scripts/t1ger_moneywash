@@ -546,10 +546,12 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:cancel", function(src)
     return { success = true }
 end)
 
--- Retries settlement for batches whose save failed (every 250 ms, honoring `nextRetry`).
+-- Retries settlement for batches whose save failed (honoring `nextRetry`).
+-- Sleeps longer while nothing is pending.
 CreateThread(function()
     while true do
-        Wait(250)
+        Wait(next(Pending) and 250 or 1000)
+
         for _, row in pairs(Pending) do
             if row.state == "settling" and not row.working
                 and GetGameTimer() >= (row.nextRetry or 0) then

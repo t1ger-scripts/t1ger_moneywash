@@ -199,23 +199,25 @@ local function DrawStockDamageMeter()
 end
 
 --- Single persistent render loop, for the resource's whole lifetime - no
---- new thread per mission. Draws only while a mission genuinely holds
---- cargo the player could see damage on.
+--- new thread per mission. Runs every frame only while a mission holds cargo;
+--- otherwise it sleeps, so it costs nothing at idle.
 CreateThread(function()
     while true do
-        Wait(0)
-
         if stockMission and (stockMission.state == "carried" or stockMission.state == "loaded") then
-            DrawStockDamageMeter()
-        end
+            Wait(0)
 
-        -- Carrying the box by hand: no getting into vehicles. The only way to
-        -- use a vehicle is to load the box onto it with the vehicle target.
-        if stockMission and stockMission.state == "carried" then
-            DisableControlAction(0, 23, true) -- INPUT_ENTER (F / controller Y)
-            if IsDisabledControlJustPressed(0, 23) then
-                _API.ShowNotification(locale("notification.stock_cannot_enter_vehicle"), "error")
+            DrawStockDamageMeter()
+
+            -- Carrying the box by hand: no getting into vehicles. The only way to
+            -- use a vehicle is to load the box onto it with the vehicle target.
+            if stockMission.state == "carried" then
+                DisableControlAction(0, 23, true) -- INPUT_ENTER (F / controller Y)
+                if IsDisabledControlJustPressed(0, 23) then
+                    _API.ShowNotification(locale("notification.stock_cannot_enter_vehicle"), "error")
+                end
             end
+        else
+            Wait(1000)
         end
     end
 end)
