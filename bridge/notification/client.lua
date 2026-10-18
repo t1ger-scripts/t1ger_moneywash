@@ -43,7 +43,7 @@ end
 function _API.ShowNotification(text, type, data)
     -- Validate and convert the notification type for the respective framework.
     local notificationType = ValidateNotifyType(type)
-    local duration = data and data.duration or 3000 -- Default duration: 4000ms
+    local duration = data and data.duration or 5000 -- Default duration: 5000ms
 
     if Bridge.Notification == "ox_lib" then
         -- Display notification using ox_lib.

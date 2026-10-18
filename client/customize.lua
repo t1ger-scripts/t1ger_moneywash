@@ -57,7 +57,7 @@ function ShowPoliceAlert(alertType, coords, data)
 
     local location = coords and GetLocationName(coords) or locale("notification.unknown_location")
 
-    _API.ShowNotification(string.format(locale("notification.police_alert." .. alertType), subject, location), "inform", {})
+    _API.ShowNotification(string.format(locale("notification.police_alert." .. alertType), subject, location), "inform", { duration = Config.Police.AlertNotifyDuration or 10000 })
 
     if not coords then return end
 

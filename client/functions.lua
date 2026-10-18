@@ -41,7 +41,7 @@ end
 --- @param entity number
 --- @return boolean
 function CanInteractWithHandlerNPC(entity)
-    if IsPoliceJob() then return false end
+    if IsPoliceJob() and not Config.Debug then return false end
     if not IsEntityValid(entity) or GetEntityType(entity) == 0 then return false end
     if IsPedInAnyVehicle(PlayerPedId(), false) then return false end
     return true

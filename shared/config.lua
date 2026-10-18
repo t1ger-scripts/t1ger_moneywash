@@ -17,6 +17,8 @@ Config.Police = {
     RaidTargetIcon        = "fa-solid fa-shield-halved",
     RaidTargetDistance    = 2.0,
 
+    AlertNotifyDuration = 10000, -- ms the police alert notification stays on screen
+    
     -- Police alerts. Every alert type can be switched off with Enable = false.
     -- Notification texts are in locales/en.json (notification.police_alert.<type>).
     Alerts = {
