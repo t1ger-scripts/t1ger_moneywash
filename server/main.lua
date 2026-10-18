@@ -18,6 +18,12 @@ RegisterNetEvent("t1ger_moneywash:server:playerLoaded", function()
     TriggerClientEvent("t1ger_moneywash:client:syncBusinesses", src, businesses)
     TriggerClientEvent("t1ger_moneywash:client:bankDepositSync", src, GetBankDepositPublic(identifier))
 
+    -- Tell the owner if their unfinished deposit was returned to the Safe by a restart
+    local refunded = ConsumeStartupRefund(identifier)
+    if refunded then
+        _API.SendNotification(src, string.format(locale("notification.deposit_refunded"), Config.Currency .. refunded), "inform")
+    end
+
     if Config.Debug then
         print(("[MoneyWash] Player %d loaded | %d businesses synced"):format(src, #businesses))
     end

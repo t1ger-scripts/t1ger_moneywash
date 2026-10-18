@@ -7,6 +7,9 @@
 ---@type table<string, table> Pending deposits by owner identifier
 local Deposits = {}
 
+---@type table<string, number> Owners whose enroute deposit was returned to the Safe at startup, by identifier. Consumed on their next playerLoaded.
+local RefundedAtStartup = {}
+
 --- ATM model hashes (normalised to unsigned so client and server hashes compare equal)
 local atmModels = {}
 for _, name in ipairs(Config.BankDeposit.Models) do
@@ -289,11 +292,25 @@ function LoadBankDeposits()
         if d.state == "enroute" then enroute[#enroute + 1] = d end
     end
 
-    for _, d in ipairs(enroute) do refundDeposit(d, true) end
+    -- Refunds are silent at startup (the framework bridge isn't ready yet).
+    -- The owner is told on their next playerLoaded, see ConsumeStartupRefund.
+    for _, d in ipairs(enroute) do
+        local amount = d.amount
+        if refundDeposit(d, true) then RefundedAtStartup[d.identifier] = amount end
+    end
 
     if Config.Debug then
         print(("[MoneyWash] Loaded %d bank deposit(s), %d returned to Safe"):format(#rows, #enroute))
     end
+end
+
+--- Returns the amount refunded to this owner at startup (once), or nil.
+---@param identifier string
+---@return number|nil amount
+function ConsumeStartupRefund(identifier)
+    local amount = RefundedAtStartup[identifier]
+    RefundedAtStartup[identifier] = nil
+    return amount
 end
 
 --- -------------------------------------------------------------------------
