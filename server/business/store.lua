@@ -162,6 +162,22 @@ function GetLocationConfig(businessType, locationId)
     return locations[businessType][locationId]
 end
 
+--- Readable business name for players, e.g. "Gas Station (Ron)".
+--- Falls back to the raw type if the tier or brand isn't configured.
+--- @param business table
+--- @return string
+function GetBusinessLabel(business)
+    local tier = GetTierByType(business.type)
+    local label = tier and tier.label or business.type
+
+    local location = GetLocationConfig(business.type, business.locationId)
+    if location and location.brand then
+        label = ("%s (%s)"):format(label, location.brand)
+    end
+
+    return label
+end
+
 --- Returns the suspicion label table for a given suspicion value
 --- @param value number 0-100
 --- @return table {name, color}
