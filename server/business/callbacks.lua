@@ -47,6 +47,10 @@ lib.callback.register("t1ger_moneywash:server:getBusinessStatus", function(sourc
         suspicionLabel  = label.name,
         suspicionColor  = label.color,
         cycleLaundered  = business.cycleLaundered,
+        deposit         = (function()
+            local deposit = GetBankDepositPublic(identifier)
+            return deposit and deposit.businessId == businessId and deposit or nil
+        end)(),
         expectedRevenue = tier and tier.expectedRevenue or 0,
         unitPrice       = GetUnitPrice(business.type),
         minOrder        = GetMinOrder(business.type),

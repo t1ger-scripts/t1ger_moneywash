@@ -50,6 +50,8 @@
             "safe_desc": "View your Safe balance and make a deposit",
             "view_safe": "Safe Balance",
             "bank_deposit_desc": "Move your Safe balance into your bank account",
+            "deposit_enroute": "In progress: take %s to any ATM (%s left)",
+            "deposit_processing": "Processing: %s clears in %s",
             "review_books_desc": "Submit receipts to reduce suspicion"
         },
         "launder": {
