@@ -170,8 +170,6 @@
         "error_no_active_mission": "No active mission found",
         "error_insufficient_safe_balance": "Not enough funds in the Safe",
         "error_no_receipts_selected": "No receipts selected",
-        "error_not_flagged": "This deposit is not flagged",
-        "error_no_pending_deposit": "No pending deposit found",
         "error_invalid_atm": "That's not a valid ATM",
         "error_atm_too_far": "You're too far from the ATM",
         "error_pending_business_deposit": "Finish your pending bank deposit first",
