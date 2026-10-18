@@ -16,6 +16,16 @@ Config.Police = {
 
     RaidTargetIcon        = "fa-solid fa-shield-halved",
     RaidTargetDistance    = 2.0,
+
+    -- Police alerts. Every alert type can be switched off with Enable = false.
+    -- Notification texts are in locales/en.json (notification.police_alert.<type>).
+    Alerts = {
+        Moderate = { Enable = true, BlipName = "Unusual activity",         BlipSprite = 108, BlipColour = 5,  BlipScale = 0.9, BlipFlash = false, BlipDuration = 30 },
+        High     = { Enable = true, BlipName = "Suspicious business",      BlipSprite = 108, BlipColour = 47, BlipScale = 1.0, BlipFlash = false, BlipDuration = 30 },
+        Critical = { Enable = true, BlipName = "High-risk laundering",     BlipSprite = 108, BlipColour = 1,  BlipScale = 1.0, BlipFlash = true,  BlipDuration = 30 },
+        Max      = { Enable = true, BlipName = "Exposed laundering",       BlipSprite = 108, BlipColour = 1,  BlipScale = 1.2, BlipFlash = true,  BlipDuration = 30 },
+        Deposit  = { Enable = true, BlipName = "Flagged ATM deposit",      BlipSprite = 108, BlipColour = 1,  BlipScale = 1.0, BlipFlash = true,  BlipDuration = 30 },
+    },
 }
 
 Config.BusinessPortal = {

@@ -351,7 +351,7 @@ lib.callback.register("t1ger_moneywash:server:submitBankDeposit", function(src, 
     d.x, d.y, d.z, d.clearsAt = x, y, z, clearsAt
 
     if flagged then
-        SendDepositFlagNotification(identifier, d.amount, vector3(x, y, z))
+        SendPoliceNotification("Deposit", vector3(x, y, z), { amount = d.amount })
     end
 
     _API.SendNotification(src,

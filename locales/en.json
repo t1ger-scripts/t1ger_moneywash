@@ -131,6 +131,14 @@
         "deposit_refunded": "Bank deposit cancelled. %s returned to your Safe.",
         "deposit_confiscated": "Police confiscated your pending bank deposit.",
         "deposit_head_to_atm": "Take the cash to any ATM within %d minutes",
+        "unknown_location": "an unknown location",
+        "police_alert": {
+            "Moderate": "Unusual financial activity reported at %s near %s",
+            "High": "Suspicious business activity flagged at %s near %s",
+            "Critical": "High-risk laundering activity detected at %s near %s",
+            "Max": "Laundering operation at %s is fully exposed, near %s",
+            "Deposit": "Suspicious ATM deposit of %s flagged near %s"
+        },
         "error_invalid_player": "Invalid player",
         "error_invalid_type": "Invalid business type",
         "error_invalid_state": "This action isn't available right now",

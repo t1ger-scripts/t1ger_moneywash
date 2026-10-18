@@ -184,6 +184,11 @@ RegisterNetEvent("t1ger_moneywash:client:suspicionLabelChanged", function(newLab
     end
 end)
 
+--- Police alert (suspicion pings and flagged deposits)
+RegisterNetEvent("t1ger_moneywash:client:policeAlert", function(alertType, coords, data)
+    ShowPoliceAlert(alertType, coords, data)
+end)
+
 --- -------------------------------------------------------------------------
 --- EXPORTS
 --- -------------------------------------------------------------------------
