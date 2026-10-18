@@ -149,7 +149,8 @@ end
 
 --- Puts an enroute deposit back into the Safe and deletes the row (one transaction).
 ---@return boolean refunded
-local function refundDeposit(d)
+--- `silent` skips the owner notification (used at startup, before the framework is ready).
+local function refundDeposit(d, silent)
     if d.busy or d.state ~= "enroute" or Deposits[d.identifier] ~= d then return false end
     d.busy = true
 
@@ -193,7 +194,7 @@ local function refundDeposit(d)
 
     Deposits[d.identifier] = nil
 
-    local src = onlineSource(d.identifier)
+    local src = not silent and onlineSource(d.identifier)
     if src then
         TriggerClientEvent("t1ger_moneywash:client:bankDepositEnded", src)
         _API.SendNotification(src,
@@ -255,9 +256,7 @@ local function payDeposit(d)
 
     if src then
         TriggerClientEvent("t1ger_moneywash:client:bankDepositEnded", src)
-        _API.SendNotification(src,
-            string.format(locale("notification.deposit_cleared"), Config.Currency .. net, Config.Currency .. (d.amount - net)),
-            "success")
+        _API.SendNotification(src, string.format(locale("notification.deposit_cleared"), Config.Currency .. net, Config.Currency .. (d.amount - net)), "success")
     end
 end
 
@@ -290,7 +289,7 @@ function LoadBankDeposits()
         if d.state == "enroute" then enroute[#enroute + 1] = d end
     end
 
-    for _, d in ipairs(enroute) do refundDeposit(d) end
+    for _, d in ipairs(enroute) do refundDeposit(d, true) end
 
     if Config.Debug then
         print(("[MoneyWash] Loaded %d bank deposit(s), %d returned to Safe"):format(#rows, #enroute))

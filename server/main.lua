@@ -40,7 +40,10 @@ end)
 CreateThread(function()
     if not LoadBusinesses() then return end
 
-    LoadBankDeposits()
+    local loaded, err = pcall(LoadBankDeposits)
+    if not loaded then
+        print(("[MoneyWash] Bank deposit startup recovery failed: %s"):format(tostring(err)))
+    end
 
     while true do
         Wait(60000)
