@@ -337,7 +337,7 @@ function CompleteStockDelivery(src)
         AddReputationPoints(src, Config.Reputation.Rewards.stockDelivery.points)
     end
 
-    OnStockOrderCompleted(business.identifier, mission.businessId, business.type, mission.units, deliveredUnits, mission.cost)
+    RunHook("OnStockOrderCompleted", business.identifier, mission.businessId, business.type, mission.units, deliveredUnits, mission.cost)
 
     if Config.Debug then
         print(("[MoneyWash] Stock delivered: business %d | ordered %d | delivered %d units"):format(

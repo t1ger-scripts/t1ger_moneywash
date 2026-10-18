@@ -252,7 +252,7 @@ local function payDeposit(d)
 
     local src = onlineSource(d.identifier)
     awardReputation(src, d.identifier)
-    OnBankDepositCompleted(d.identifier, d.businessId, d.amount, net)
+    RunHook("OnBankDepositCompleted", d.identifier, d.businessId, d.amount, net)
 
     if src then
         TriggerClientEvent("t1ger_moneywash:client:bankDepositEnded", src)
@@ -420,7 +420,7 @@ lib.callback.register("t1ger_moneywash:server:confiscateDeposit", function(src, 
 
             Deposits[d.identifier] = nil
 
-            OnBankDepositConfiscated(_API.Player.GetIdentifier(src), d.identifier, d.businessId, d.amount)
+            RunHook("OnBankDepositConfiscated", _API.Player.GetIdentifier(src), d.identifier, d.businessId, d.amount)
 
             local owner = onlineSource(d.identifier)
             if owner then

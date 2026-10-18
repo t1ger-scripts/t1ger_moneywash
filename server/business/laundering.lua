@@ -53,7 +53,7 @@ function PublishCashInjection(src, identifier, businessId, amount, result)
     local business = GetBusiness(businessId)
     if not business then return end
 
-    OnMoneyLaundered(identifier, businessId, business.type, amount, result.covered, result.exposed)
+    RunHook("OnMoneyLaundered", identifier, businessId, business.type, amount, result.covered, result.exposed)
     
     if src then
         TriggerClientEvent("t1ger_moneywash:client:moneyLaundered", src, amount, result.covered, result.exposed)

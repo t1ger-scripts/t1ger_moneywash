@@ -33,3 +33,17 @@ function IsPlayerNearCoords(src, target, maxDistance)
 
     return dist <= (maxDistance or 5.0)
 end
+
+--- Runs a hook from server/hooks.lua safely. A broken hook (server-owner code)
+--- prints an error but never interrupts the script's own flow.
+--- @param name string Global hook function name, e.g. "OnBankDepositCompleted"
+--- @param ... any Hook arguments
+function RunHook(name, ...)
+    local hook = _G[name]
+    if type(hook) ~= "function" then return end
+
+    local ok, err = pcall(hook, ...)
+    if not ok then
+        print(("^1[MoneyWash] Hook %s failed: %s^7"):format(name, tostring(err)))
+    end
+end

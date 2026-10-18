@@ -186,7 +186,7 @@ function BuyBusiness(src, businessType, locationId)
 
     TriggerClientEvent("t1ger_moneywash:client:businessPurchased", src, id, businessType, locationId)
 
-    OnBusinessPurchased(identifier, businessType, locationId, price)
+    RunHook("OnBusinessPurchased", identifier, businessType, locationId, price)
 
     if Config.Debug then
         print(("[MoneyWash] %s purchased %s #%d for $%d"):format(identifier, businessType, locationId, price))
@@ -350,7 +350,7 @@ function TransferBusiness(src, targetSrc, businessId)
     TriggerClientEvent("t1ger_moneywash:client:businessReceived", targetSrc, businessId, business.type,
         business.locationId)
 
-    OnBusinessTransferred(identifier, targetIdentifier, businessId, business.type, business.locationId)
+    RunHook("OnBusinessTransferred", identifier, targetIdentifier, businessId, business.type, business.locationId)
 
     if Config.Debug then
         print(("[MoneyWash] Business %d transferred: %s -> %s"):format(businessId, identifier, targetIdentifier))
@@ -454,7 +454,7 @@ function AbandonBusiness(src, businessId)
 
     TriggerClientEvent("t1ger_moneywash:client:businessAbandoned", src, businessId)
 
-    OnBusinessAbandoned(identifier, businessId, business.type, business.locationId)
+    RunHook("OnBusinessAbandoned", identifier, businessId, business.type, business.locationId)
 
     if Config.Debug then
         print(("[MoneyWash] Business %d abandoned by %s"):format(businessId, identifier))
