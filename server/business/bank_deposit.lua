@@ -387,10 +387,21 @@ lib.callback.register("t1ger_moneywash:server:getFlaggedDeposits", function(src)
     local list = {}
     for _, d in pairs(Deposits) do
         if d.state == "processing" and d.flagged and officerNearDeposit(src, d) then
+            -- Business label, e.g. "Gas Station (Ron)"
+            local business = GetBusiness(d.businessId)
+            local tier = business and GetTierByType(business.type)
+            local location = business and GetLocationConfig(business.type, business.locationId)
+            local businessLabel = tier and tier.label or nil
+            if businessLabel and location and location.brand then
+                businessLabel = ("%s (%s)"):format(businessLabel, location.brand)
+            end
+
             list[#list + 1] = {
                 ref              = d.businessId,
                 amount           = d.amount,
                 remainingSeconds = remainingSeconds(d),
+                name             = _API.GetCharacterNameByIdentifier(d.identifier), -- name only, never the identifier
+                business         = businessLabel,
             }
         end
     end

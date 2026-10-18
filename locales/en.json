@@ -104,12 +104,15 @@
             "success": "Business abandoned"
         },
         "police": {
-            "teller_title": "Flagged Deposits",
+            "atm_title": "Flagged Deposits",
             "deposit_entry": "Pending Deposit — %s",
             "clears_in": "Clears in",
             "no_flagged_deposits": "No flagged deposits at this ATM",
             "confiscate_title": "Confiscate Deposit",
-            "confiscate_body": "Confiscate pending deposit of %s?\n\nThe full amount will be seized.",
+            "depositor": "Depositor",
+            "business": "Business",
+            "unknown": "Unknown",
+            "confiscate_body": "- **Depositor:** %s\n- **Business:** %s\n- **Amount:** %s\n- **Clears in:** %s\n\nThe full amount is seized and removed from the economy. The owner is notified. This cannot be undone.",
             "confiscate_success": "Deposit confiscated successfully"
         }
     },

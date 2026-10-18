@@ -538,6 +538,14 @@ end
 --- POLICE ATM MENU
 --- ============================================================================
 
+--- Formats seconds as "Xm Ys".
+--- @param seconds number
+--- @return string
+local function FormatPoliceDuration(seconds)
+    seconds = math.max(0, math.floor(seconds or 0))
+    return string.format("%dm %ds", math.floor(seconds / 60), seconds % 60)
+end
+
 --- Called by the ATM target when an officer interacts. The server decides which
 --- flagged deposits are at this ATM, based on the officer's position.
 function OpenPoliceATMMenu()
@@ -551,24 +559,26 @@ function OpenPoliceATMMenu()
     local options = {}
 
     for _, deposit in ipairs(deposits) do
-        local minutes = math.floor(deposit.remainingSeconds / 60)
-        local seconds = deposit.remainingSeconds % 60
+        local depositor = deposit.name or locale("menu.police.unknown")
+        local business = deposit.business or locale("menu.police.unknown")
 
         options[#options + 1] = {
             title    = string.format(locale("menu.police.deposit_entry"), FormatMoney(deposit.amount)),
             icon     = "fa-solid fa-money-bill",
             metadata = {
-                { label = locale("menu.police.clears_in"), value = string.format("%dm %ds", minutes, seconds) },
+                { label = locale("menu.police.depositor"), value = depositor },
+                { label = locale("menu.police.business"),  value = business },
+                { label = locale("menu.police.clears_in"), value = FormatPoliceDuration(deposit.remainingSeconds) },
             },
             onSelect = function()
-                ConfirmConfiscateDeposit(deposit.ref, deposit.amount)
+                ConfirmConfiscateDeposit(deposit)
             end,
         }
     end
 
     lib.registerContext({
         id      = "moneywash:police:atm",
-        title   = locale("menu.police.teller_title"),
+        title   = locale("menu.police.atm_title"),
         options = options,
     })
 
@@ -576,19 +586,23 @@ function OpenPoliceATMMenu()
 end
 
 --- Confiscation confirmation for police
---- @param ref number Deposit reference from the server
---- @param amount number
-function ConfirmConfiscateDeposit(ref, amount)
+--- @param deposit table Entry from getFlaggedDeposits
+function ConfirmConfiscateDeposit(deposit)
     local confirmed = lib.alertDialog({
         header   = locale("menu.police.confiscate_title"),
-        content  = string.format(locale("menu.police.confiscate_body"), FormatMoney(amount)),
+        content  = string.format(
+            locale("menu.police.confiscate_body"),
+            deposit.name or locale("menu.police.unknown"),
+            deposit.business or locale("menu.police.unknown"),
+            FormatMoney(deposit.amount),
+            FormatPoliceDuration(deposit.remainingSeconds)),
         centered = true,
         cancel   = true,
     })
 
     if confirmed ~= "confirm" then return end
 
-    local result = lib.callback.await("t1ger_moneywash:server:confiscateDeposit", false, ref)
+    local result = lib.callback.await("t1ger_moneywash:server:confiscateDeposit", false, deposit.ref)
 
     if result and result.success then
         _API.ShowNotification(locale("menu.police.confiscate_success"), "success", {})
