@@ -16,6 +16,7 @@ RegisterNetEvent("t1ger_moneywash:server:playerLoaded", function()
     local identifier = _API.Player.GetIdentifier(src)
     local businesses = GetPlayerBusinesses(identifier)
     TriggerClientEvent("t1ger_moneywash:client:syncBusinesses", src, businesses)
+    BroadcastBusinessLocations(src)
     TriggerClientEvent("t1ger_moneywash:client:bankDepositSync", src, GetBankDepositPublic(identifier))
 
     -- Tell the owner if their unfinished deposit was returned to the Safe by a restart

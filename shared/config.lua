@@ -117,6 +117,25 @@ Config.BankDeposit = {
     },
 }
 
+Config.CashCounter = {
+    -- Number of piles used to represent the selected amount.
+    -- Whole number between 1 and 20.
+    StackCount = 3,
+
+    -- Time spent counting EACH pile, in milliseconds.
+    StackDurationMs = 1000,
+
+    -- Automatically place a finished pile on the right tray.
+    -- Loading the next pile remains manual.
+    AutoMoveToRight = false,
+
+    -- Maximum permitted amount for one batch.
+    MaxAmount = 10000000,
+
+    -- Maximum distance from the business handler.
+    InteractionDistance = 5.0,
+}
+
 --- Reputation system
 Config.Reputation = {
     Enable           = true,
@@ -161,23 +180,4 @@ Config.Reputation = {
         { threshold = 80,  color = "#22c55e" },
         { threshold = 100, color = "#16a34a" },
     },
-}
-
-Config.CashCounter = {
-    -- Number of piles used to represent the selected amount.
-    -- Whole number between 1 and 20.
-    StackCount = 3,
-
-    -- Time spent counting EACH pile, in milliseconds.
-    StackDurationMs = 1000,
-
-    -- Automatically place a finished pile on the right tray.
-    -- Loading the next pile remains manual.
-    AutoMoveToRight = false,
-
-    -- Maximum permitted amount for one batch.
-    MaxAmount = 10000000,
-
-    -- Maximum distance from the business handler.
-    InteractionDistance = 5.0,
 }

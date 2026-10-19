@@ -185,6 +185,7 @@ function BuyBusiness(src, businessType, locationId)
     end
 
     TriggerClientEvent("t1ger_moneywash:client:businessPurchased", src, id, businessType, locationId)
+    BroadcastBusinessLocations()
 
     RunHook("OnBusinessPurchased", identifier, businessType, locationId, price)
 
@@ -264,7 +265,7 @@ function TransferBusiness(src, targetSrc, businessId)
     end
 
     local lockKeys = { ("business:%d"):format(businessId), ("owner:%s"):format(identifier), ("owner:%s"):format(
-        targetIdentifier) }
+    targetIdentifier) }
 
     if not TryAcquireOwnershipLocks(lockKeys) then
         return false, "operation_in_progress"
@@ -387,10 +388,7 @@ function AbandonBusiness(src, businessId)
     local lockKeys = {
         ("business:%d"):format(businessId),
         ("owner:%s"):format(identifier),
-        ("location:%s:%d"):format(
-            business.type,
-            business.locationId
-        ),
+        ("location:%s:%d"):format(business.type, business.locationId),
     }
 
     if not TryAcquireOwnershipLocks(lockKeys) then
@@ -453,6 +451,7 @@ function AbandonBusiness(src, businessId)
     ReleaseOwnershipLocks(lockKeys)
 
     TriggerClientEvent("t1ger_moneywash:client:businessAbandoned", src, businessId)
+    BroadcastBusinessLocations()
 
     RunHook("OnBusinessAbandoned", identifier, businessId, business.type, business.locationId)
 
@@ -543,9 +542,7 @@ function AdminAddBusiness(identifier, businessType, locationId)
         ReleaseOwnershipLocks(lockKeys)
 
         if Config.Debug then
-            print(("[MoneyWash] Admin add database error: %s"):format(
-                tostring(id)
-            ))
+            print(("[MoneyWash] Admin add database error: %s"):format(tostring(id)))
         end
 
         return false, "database_error"
@@ -567,24 +564,15 @@ function AdminAddBusiness(identifier, businessType, locationId)
 
     for _, player in ipairs(_API.GetOnlinePlayers()) do
         if player.identifier == identifier then
-            TriggerClientEvent(
-                "t1ger_moneywash:client:businessPurchased",
-                player.source,
-                id,
-                businessType,
-                locationId
-            )
-
+            TriggerClientEvent("t1ger_moneywash:client:businessPurchased", player.source, id, businessType, locationId)
             break
         end
     end
 
+    BroadcastBusinessLocations()
+
     if Config.Debug then
-        print(("[MoneyWash] Admin added %s #%d to %s"):format(
-            businessType,
-            locationId,
-            identifier
-        ))
+        print(("[MoneyWash] Admin added %s #%d to %s"):format(businessType, locationId, identifier))
     end
 
     return true, "success"
@@ -640,14 +628,8 @@ function AdminRemoveBusiness(businessType, locationId)
     local transactionExecuted, transactionSucceeded = pcall(
         MySQL.transaction.await,
         {
-            {
-                query = "DELETE FROM moneywash_receipts WHERE business_id = ?",
-                values = { businessId },
-            },
-            {
-                query = "DELETE FROM moneywash_businesses WHERE id = ?",
-                values = { businessId },
-            },
+            { query = "DELETE FROM moneywash_receipts WHERE business_id = ?", values = { businessId } },
+            { query = "DELETE FROM moneywash_businesses WHERE id = ?",        values = { businessId } },
         }
     )
 
@@ -655,9 +637,7 @@ function AdminRemoveBusiness(businessType, locationId)
         ReleaseOwnershipLocks(lockKeys)
 
         if Config.Debug then
-            print(("[MoneyWash] Admin remove database error: %s"):format(
-                tostring(transactionSucceeded)
-            ))
+            print(("[MoneyWash] Admin remove database error: %s"):format(tostring(transactionSucceeded)))
         end
 
         return false, "database_error"
@@ -681,21 +661,16 @@ function AdminRemoveBusiness(businessType, locationId)
 
     for _, player in ipairs(_API.GetOnlinePlayers()) do
         if player.identifier == identifier then
-            TriggerClientEvent(
-                "t1ger_moneywash:client:businessRemoved",
-                player.source,
-                businessId
-            )
+            TriggerClientEvent("t1ger_moneywash:client:businessRemoved", player.source, businessId)
 
             break
         end
     end
 
+    BroadcastBusinessLocations()
+
     if Config.Debug then
-        print(("[MoneyWash] Admin removed %s #%d"):format(
-            businessType,
-            locationId
-        ))
+        print(("[MoneyWash] Admin removed %s #%d"):format(businessType, locationId))
     end
 
     return true, "success"

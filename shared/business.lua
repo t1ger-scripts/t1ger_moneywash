@@ -14,6 +14,7 @@ Config.Business = {
     -- Handler NPC interaction target
     HandlerTargetIcon     = "fa-solid fa-briefcase",
     HandlerTargetDistance = 2.0,
+    HandlerSpawnDistance  = 50.0, -- the Handler NPC is shown to a player within this distance
 
     -- Handler NPC map blip
     HandlerBlipSprite     = 375,

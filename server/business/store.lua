@@ -115,6 +115,23 @@ function RemoveFromStore(id)
     Businesses[id] = nil
 end
 
+--- Public list of every owned location, for client-side NPC spawning.
+--- Never includes the owner.
+--- @return table[] { id, type, locationId }
+function GetPublicBusinessLocations()
+    local list = {}
+    for _, business in pairs(Businesses) do
+        list[#list + 1] = { id = business.id, type = business.type, locationId = business.locationId }
+    end
+    return list
+end
+
+--- Sends the public location list to one player, or to everyone.
+--- @param target number|nil player source (nil = all players)
+function BroadcastBusinessLocations(target)
+    TriggerClientEvent("t1ger_moneywash:client:syncLocations", target or -1, GetPublicBusinessLocations())
+end
+
 --- Updates a single field on a business in memory only
 --- Use SaveBusiness() in server/main.lua to persist to DB
 --- @param id number

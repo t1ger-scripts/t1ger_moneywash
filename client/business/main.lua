@@ -1,66 +1,80 @@
 --- ============================================================================
 --- Business Client Main
---- Handler NPC spawning, target registration and blip management per owned
---- business. Listens for server sync events to keep local state current.
+--- Handler NPCs are shown to every player near an owned business (local peds,
+--- spawned by distance). Map blips and the menu stay owner-only. The server
+--- sends the public list of owned locations; owner-specific events keep the
+--- player's own businesses current.
 --- ============================================================================
 
---- Local registry of spawned Handler NPCs and blips
---- keyed by business id
-local HandlerNPCs = {} -- { [businessId] = pedHandle }
-local HandlerBlips = {} -- { [businessId] = blipHandle }
+local BusinessLocations = require("shared/business_locations")
 
---- Local copy of player's owned businesses synced from server
+local HandlerNPCs   = {} -- { [businessId] = pedHandle }, only while the player is near
+local HandlerPoints = {} -- { [businessId] = { data, point } } spawn/despawn by distance
+local HandlerBlips  = {} -- { [businessId] = blipHandle }, owner only
+
+--- The player's own businesses, synced from the server
 local OwnedBusinesses = {} -- { [businessId] = businessData }
+
+--- -------------------------------------------------------------------------
+--- HELPERS
+--- -------------------------------------------------------------------------
+
+local function GetTier(businessType)
+    for _, tier in pairs(Config.Business.Tiers) do
+        if tier.type == businessType then return tier end
+    end
+end
+
+local function GetLocation(data)
+    local group = BusinessLocations[data.type]
+    return group and group[data.locationId]
+end
+
+local function HandlerTargetName(businessId)
+    return ("t1ger_moneywash:handler:%d"):format(businessId)
+end
+
+local function DeliverTargetName(businessId)
+    return ("t1ger_moneywash:handler:deliverstock:%d"):format(businessId)
+end
 
 --- -------------------------------------------------------------------------
 --- NPC MANAGEMENT
 --- -------------------------------------------------------------------------
 
---- Spawns a Handler NPC for a given business and registers targets
---- @param businessId number
---- @param businessData table
-local function SpawnHandlerNPC(businessId, businessData)
+--- Spawns a Handler NPC for a business and registers its targets
+--- @param data table { id, type, locationId }
+local function SpawnHandlerNPC(data)
+    local businessId = data.id
     if HandlerNPCs[businessId] and DoesEntityExist(HandlerNPCs[businessId]) then return end
 
-    local tier = nil
-    for _, t in pairs(Config.Business.Tiers) do
-        if t.type == businessData.type then tier = t break end
-    end
-    if not tier then return end
+    local tier = GetTier(data.type)
+    local location = GetLocation(data)
+    if not tier or not location then return end
 
-    local locations = require("shared/business_locations")
-    local location = locations[businessData.type] and locations[businessData.type][businessData.locationId]
-    if not location then return end
-
-    -- Spawn NPC using shared helper
     local ped = SpawnStaticPed(tier.npc, location.coords, Config.Business.HandlerScenario)
     HandlerNPCs[businessId] = ped
 
-    -- Create blip
-    HandlerBlips[businessId] = CreateMapBlip(
-        location.coords,
-        Config.Business.HandlerBlipSprite or 375,
-        Config.Business.HandlerBlipDisplay or 4,
-        Config.Business.HandlerBlipScale or 0.7,
-        Config.Business.HandlerBlipColor or 2,
-        ("%s — %s"):format(tier.label, location.brand or tier.label)
-    )
-
-    -- Register owner target options
     while not _Target do Wait(100) end
+
+    -- Despawned while we were waiting
+    if HandlerNPCs[businessId] ~= ped then return end
+
     _API.Target.AddLocalEntity(ped, {
         {
-            name        = ("t1ger_moneywash:handler:%d"):format(businessId),
+            name        = HandlerTargetName(businessId),
             icon        = Config.Business.HandlerTargetIcon or "fa-solid fa-briefcase",
             label       = locale("target.handler_npc"),
             distance    = Config.Business.HandlerTargetDistance or 2.0,
-            canInteract = CanInteractWithHandlerNPC,
+            canInteract = function(entity)
+                return OwnedBusinesses[businessId] ~= nil and CanInteractWithHandlerNPC(entity)
+            end,
             onSelect    = function()
                 OpenHandlerMenu(businessId)
             end,
         },
         {
-            name        = ("t1ger_moneywash:handler:deliverstock:%d"):format(businessId),
+            name        = DeliverTargetName(businessId),
             icon        = Config.Business.StockMission.Icons.DeliverTarget,
             label       = locale("target.deliver_stock"),
             distance    = Config.Business.StockMission.PickupTargetDistance,
@@ -74,42 +88,111 @@ local function SpawnHandlerNPC(businessId, businessData)
     })
 
     if Config.Debug then
-        print(("[MoneyWash] Handler NPC spawned for business %d (%s)"):format(businessId, businessData.type))
+        print(("[MoneyWash] Handler NPC spawned for business %d (%s)"):format(businessId, data.type))
     end
 end
 
---- Removes a Handler NPC and its blip for a given business
+--- Removes a Handler NPC and its targets
 --- @param businessId number
 local function DespawnHandlerNPC(businessId)
-    if HandlerNPCs[businessId] then
-        _API.Target.RemoveLocalEntity(HandlerNPCs[businessId], {
-            names = {
-                ("t1ger_moneywash:handler:%d"):format(businessId),
-            }
-        })
-        DeletePed(HandlerNPCs[businessId])
-        HandlerNPCs[businessId] = nil
-    end
+    local ped = HandlerNPCs[businessId]
+    if not ped then return end
 
-    RemoveMapBlip(HandlerBlips[businessId])
-    HandlerBlips[businessId] = nil
+    HandlerNPCs[businessId] = nil
+
+    _API.Target.RemoveLocalEntity(ped, {
+        names = { HandlerTargetName(businessId), DeliverTargetName(businessId) }
+    })
+    DeletePed(ped)
 
     if Config.Debug then
         print(("[MoneyWash] Handler NPC despawned for business %d"):format(businessId))
     end
 end
 
---- Spawns Handler NPCs for all owned businesses
-local function SpawnAllHandlerNPCs()
-    for businessId, businessData in pairs(OwnedBusinesses) do
-        SpawnHandlerNPC(businessId, businessData)
-    end
+--- Starts watching a location: the NPC exists only while the player is nearby.
+--- (Distances are checked by the single watcher loop below.)
+--- @param data table { id, type, locationId }
+local function AddHandlerPoint(data)
+    local location = GetLocation(data)
+    if not location then return end
+
+    HandlerPoints[data.id] = {
+        data   = data,
+        coords = vec3(location.coords.x, location.coords.y, location.coords.z),
+        near   = false,
+    }
 end
 
---- Despawns all Handler NPCs and clears local registry
-local function DespawnAllHandlerNPCs()
-    for businessId in pairs(HandlerNPCs) do
-        DespawnHandlerNPC(businessId)
+--- Stops watching a location and removes its NPC
+--- @param businessId number
+local function RemoveHandlerPoint(businessId)
+    local entry = HandlerPoints[businessId]
+    if entry then
+        entry.near = false
+        HandlerPoints[businessId] = nil
+    end
+    DespawnHandlerNPC(businessId)
+end
+
+--- One loop for all locations. Checks twice a second, never per frame.
+--- A small margin on the way out stops the NPC flickering at the edge.
+CreateThread(function()
+    local margin = 5.0
+
+    while true do
+        local playerCoords = GetEntityCoords(PlayerPedId())
+        local range = Config.Business.HandlerSpawnDistance or 50.0
+
+        for businessId, entry in pairs(HandlerPoints) do
+            local distance = #(playerCoords - entry.coords)
+            local isNear = distance <= (entry.near and (range + margin) or range)
+
+            if isNear and not entry.near then
+                entry.near = true
+                CreateThread(function()
+                    SpawnHandlerNPC(entry.data)
+                    -- Player left while the ped was still spawning
+                    if not entry.near then DespawnHandlerNPC(businessId) end
+                end)
+            elseif not isNear and entry.near then
+                entry.near = false
+                DespawnHandlerNPC(businessId)
+            end
+        end
+
+        Wait(1000)
+    end
+end)
+
+--- -------------------------------------------------------------------------
+--- BLIPS (owner only)
+--- -------------------------------------------------------------------------
+
+local function RefreshHandlerBlips()
+    for businessId, blip in pairs(HandlerBlips) do
+        if not OwnedBusinesses[businessId] then
+            RemoveMapBlip(blip)
+            HandlerBlips[businessId] = nil
+        end
+    end
+
+    for businessId, data in pairs(OwnedBusinesses) do
+        if not HandlerBlips[businessId] then
+            local tier = GetTier(data.type)
+            local location = GetLocation(data)
+
+            if tier and location then
+                HandlerBlips[businessId] = CreateMapBlip(
+                    location.coords,
+                    Config.Business.HandlerBlipSprite or 375,
+                    Config.Business.HandlerBlipDisplay or 4,
+                    Config.Business.HandlerBlipScale or 0.7,
+                    Config.Business.HandlerBlipColor or 2,
+                    ("%s — %s"):format(tier.label, location.brand or tier.label)
+                )
+            end
+        end
     end
 end
 
@@ -117,58 +200,74 @@ end
 --- SERVER SYNC EVENTS
 --- -------------------------------------------------------------------------
 
---- Initial sync of all owned businesses on player load
+--- Public list of every owned location (no owners). Drives NPC spawning for everyone.
+RegisterNetEvent("t1ger_moneywash:client:syncLocations", function(list)
+    local incoming = {}
+    for _, data in ipairs(list) do incoming[data.id] = data end
+
+    -- Remove locations that are gone or changed
+    for businessId, entry in pairs(HandlerPoints) do
+        local data = incoming[businessId]
+        if not data or data.type ~= entry.data.type or data.locationId ~= entry.data.locationId then
+            RemoveHandlerPoint(businessId)
+        end
+    end
+
+    -- Add new ones
+    for businessId, data in pairs(incoming) do
+        if not HandlerPoints[businessId] then
+            AddHandlerPoint(data)
+        end
+    end
+
+    if Config.Debug then
+        print(("[MoneyWash] Synced %d business locations (all owners)"):format(#list))
+    end
+end)
+
+--- Initial sync of the player's own businesses on load
 RegisterNetEvent("t1ger_moneywash:client:syncBusinesses", function(businesses)
-    DespawnAllHandlerNPCs()
     OwnedBusinesses = {}
 
     for _, business in ipairs(businesses) do
         OwnedBusinesses[business.id] = business
     end
 
-    SpawnAllHandlerNPCs()
+    RefreshHandlerBlips()
 
     if Config.Debug then
-        print(("[MoneyWash] Synced %d owned businesses"):format(#businesses))
+        print(("[MoneyWash] Synced %d of your own businesses"):format(#businesses))
     end
 end)
 
---- Business purchased - spawn its Handler NPC
+--- Business purchased
 RegisterNetEvent("t1ger_moneywash:client:businessPurchased", function(businessId, businessType, locationId)
-    OwnedBusinesses[businessId] = {
-        id         = businessId,
-        type       = businessType,
-        locationId = locationId,
-    }
-    SpawnHandlerNPC(businessId, OwnedBusinesses[businessId])
+    OwnedBusinesses[businessId] = { id = businessId, type = businessType, locationId = locationId }
+    RefreshHandlerBlips()
 end)
 
---- Business transferred away - remove Handler NPC
+--- Business transferred away
 RegisterNetEvent("t1ger_moneywash:client:businessTransferred", function(businessId)
     OwnedBusinesses[businessId] = nil
-    DespawnHandlerNPC(businessId)
+    RefreshHandlerBlips()
 end)
 
---- Business received from transfer - spawn Handler NPC
+--- Business received from transfer
 RegisterNetEvent("t1ger_moneywash:client:businessReceived", function(businessId, businessType, locationId)
-    OwnedBusinesses[businessId] = {
-        id         = businessId,
-        type       = businessType,
-        locationId = locationId,
-    }
-    SpawnHandlerNPC(businessId, OwnedBusinesses[businessId])
+    OwnedBusinesses[businessId] = { id = businessId, type = businessType, locationId = locationId }
+    RefreshHandlerBlips()
 end)
 
---- Business abandoned - remove Handler NPC
+--- Business abandoned
 RegisterNetEvent("t1ger_moneywash:client:businessAbandoned", function(businessId)
     OwnedBusinesses[businessId] = nil
-    DespawnHandlerNPC(businessId)
+    RefreshHandlerBlips()
 end)
 
---- Business permanently removed by admin - remove Handler NPC
+--- Business permanently removed by admin
 RegisterNetEvent("t1ger_moneywash:client:businessRemoved", function(businessId)
     OwnedBusinesses[businessId] = nil
-    DespawnHandlerNPC(businessId)
+    RefreshHandlerBlips()
     _API.ShowNotification(locale("notification.business_removed"), "error", {})
 end)
 
@@ -187,6 +286,23 @@ end)
 --- Police alert (suspicion pings and flagged deposits)
 RegisterNetEvent("t1ger_moneywash:client:policeAlert", function(alertType, coords, data)
     ShowPoliceAlert(alertType, coords, data)
+end)
+
+--- -------------------------------------------------------------------------
+--- CLEANUP
+--- -------------------------------------------------------------------------
+
+AddEventHandler("onResourceStop", function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+
+    for businessId in pairs(HandlerPoints) do
+        RemoveHandlerPoint(businessId)
+    end
+
+    for businessId, blip in pairs(HandlerBlips) do
+        RemoveMapBlip(blip)
+        HandlerBlips[businessId] = nil
+    end
 end)
 
 --- -------------------------------------------------------------------------
