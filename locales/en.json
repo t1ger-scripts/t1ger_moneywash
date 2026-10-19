@@ -72,7 +72,7 @@
         "deposit": {
             "title": "Bank Deposit",
             "amount_label": "Amount to deposit (available: %s)",
-            "exposed_desc": "Exposed: %s | Covered: %s\n\nExposed funds are drawn first.",
+            "exposed_desc": "Exposed: %s | Covered: %s \n\n Exposed funds are drawn first.",
             "cancel_title": "Cancel Deposit",
             "cancel_body": "Cancel the deposit and return the cash to your Safe?"
         },

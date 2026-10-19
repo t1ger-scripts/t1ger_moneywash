@@ -11,11 +11,22 @@ Config.UseCharacterNames = true
 --- Police interaction settings
 Config.Police = {
     Jobs                  = { "police", "sheriff" }, -- jobs that can access police interactions
-    RaidMinGrade          = 0,                       -- minimum grade required to raid a business
     DepositReviewMinGrade = 2,                       -- minimum grade required to review flagged bank deposits
 
-    RaidTargetIcon        = "fa-solid fa-shield-halved",
-    RaidTargetDistance    = 2.0,
+    --- Manual business raids (police target on the business handler NPC)
+    Raid = {
+        Enable   = true,
+        MinGrade = 1,  -- minimum police grade required to raid a business
+        Target   = { icon = "fa-solid fa-shield-halved", distance = 2.0 },
+        Duration = 30, -- seconds the officer must stay at the business (progress bar)
+        Cooldown = 60, -- real minutes before the same business can be raided again (resets on restart)
+
+        -- What happens to the business suspicion after a raid that seized money.
+        -- Never applied when the raid finds nothing, and never raises suspicion.
+        --   Mode = "set"    -> suspicion drops to Value, only if it is currently higher
+        --   Mode = "reduce" -> suspicion is reduced by Value percent of its current value
+        SuspicionAfter = { Mode = "set", Value = 50 },
+    },
 
     AlertNotifyDuration = 10000, -- ms the police alert notification stays on screen
     
@@ -155,6 +166,7 @@ Config.Reputation = {
         bankDeposit      = { enable = true, points = 5 },  -- when a deposit clears into personal bank
         accountantReview = { enable = true, points = 15 }, -- per completed records review
         businessPurchase = { enable = true, points = 50 }, -- once per business type, first purchase only
+        raidSurvived     = { enable = true, points = 10 }, -- owner is raided and nothing is seized
     },
 
     -- Titles are purely cosmetic - the script checks points only
