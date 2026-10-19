@@ -46,6 +46,14 @@ export function useUiLifecycle() {
 
         window.addEventListener('keydown', keydown)
 
+        if (import.meta.env.DEV && !isFiveMEnvironment()) {
+            const params = new URLSearchParams(window.location.search)
+
+            if (params.get('preview') === 'raid') {
+                ui.open('raid')
+            }
+        }
+
         if (isFiveMEnvironment()) {
             try {
                 await postNui(NUI_CALLBACKS.uiReady)

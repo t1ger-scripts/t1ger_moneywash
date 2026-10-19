@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-export type UiScreen = 'marketplace' | 'cash-counter' | null
+
+export type UiScreen = 'marketplace' | 'cash-counter' | 'raid' | null
+
 export const useUiStore = defineStore('ui', () => {
     const activeScreen = ref<UiScreen>(null)
     function open(screen: Exclude<UiScreen, null>) {

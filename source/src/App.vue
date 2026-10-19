@@ -12,6 +12,10 @@ const CashCounterView = defineAsyncComponent(
     () => import('@/cash-counter/CashCounterView.vue'),
 )
 
+const RaidView = defineAsyncComponent(
+    () => import('@/raid/RaidView.vue'),
+)
+
 const ui = useUiStore()
 
 useUiLifecycle()
@@ -21,4 +25,6 @@ useUiLifecycle()
     <PortalView v-if="ui.activeScreen === 'marketplace'" />
 
     <CashCounterView v-else-if="ui.activeScreen === 'cash-counter'" />
+
+    <RaidView v-else-if="ui.activeScreen === 'raid'" />
 </template>
