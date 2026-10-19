@@ -18,11 +18,11 @@ Config.Police = {
         Enable   = true,
         MinGrade = 1,  -- minimum police grade required to raid a business
         Target   = { icon = "fa-solid fa-shield-halved", distance = 2.0 },
-        Duration = 30, -- seconds the officer must stay at the business (progress bar)
-        Cooldown = 60, -- real minutes before the same business can be raided again (resets on restart)
+        StackCount = 10, -- cash piles shown in the Safe during a raid (1 to 20)
+        MaxTime    = 5,  -- real minutes before an unfinished raid is cancelled automatically
+        Cooldown   = 60, -- real minutes before the same business can be raided again (resets on restart)
 
-        -- What happens to the business suspicion after a raid that seized money.
-        -- Never applied when the raid finds nothing, and never raises suspicion.
+        -- What happens to the business suspicion after a finished raid. Never raises suspicion.
         --   Mode = "set"    -> suspicion drops to Value, only if it is currently higher
         --   Mode = "reduce" -> suspicion is reduced by Value percent of its current value
         SuspicionAfter = { Mode = "set", Value = 50 },
@@ -166,7 +166,6 @@ Config.Reputation = {
         bankDeposit      = { enable = true, points = 5 },  -- when a deposit clears into personal bank
         accountantReview = { enable = true, points = 15 }, -- per completed records review
         businessPurchase = { enable = true, points = 50 }, -- once per business type, first purchase only
-        raidSurvived     = { enable = true, points = 10 }, -- owner is raided and nothing is seized
     },
 
     -- Titles are purely cosmetic - the script checks points only
