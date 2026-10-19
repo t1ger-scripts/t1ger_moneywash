@@ -11,14 +11,9 @@ import { useI18n } from 'vue-i18n'
 import CashStacks from './components/CashStacks.vue'
 import CounterMachine from './components/CounterMachine.vue'
 import { useCashCounterStore } from './stores/cash-counter.store'
-import { useCashDrag } from './composables/useCashDrag'
+import { useSceneDrag } from '@/shared/composables/useSceneDrag'
 import { useCounterSound } from './composables/useCounterSound'
-import {
-    cashCounterImages,
-    cashPileGeometry,
-    trayPilePosition,
-    validAmount,
-} from './utils/cash-counter.utils'
+import { cashCounterImages, cashPileGeometry, trayPilePosition, validAmount } from './utils/cash-counter.utils'
 import type { CashPile } from './cash-counter.types'
 import CashPaper from './components/CashPaper.vue'
 import './styles/cash-counter.scss'
@@ -90,20 +85,20 @@ function collectPile() {
     if (store.canCollect) store.collectPile()
 }
 
-const feedDrag = useCashDrag(
+const feedDrag = useSceneDrag(
     root,
     () => store.canLoad,
     loadPile,
 )
 
-const collectDrag = useCashDrag(
+const collectDrag = useSceneDrag(
     root,
     () => store.canCollect,
     collectPile,
     '[data-cash-output]',
 )
 
-const finalDrag = useCashDrag(
+const finalDrag = useSceneDrag(
     root,
     () =>
         store.canConfirm &&

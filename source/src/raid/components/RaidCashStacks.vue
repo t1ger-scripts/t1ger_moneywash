@@ -8,7 +8,7 @@ import {
 
 const props = defineProps<{
     piles: number[]
-    packedIds: number[]
+    unavailableIds: number[]
     selectedId: number | null
     dragging: boolean
 }>()
@@ -21,7 +21,7 @@ const emit = defineEmits<{
 const visiblePiles = computed(() =>
     createSafePileLayout(
         props.piles.length,
-        props.packedIds,
+        props.unavailableIds,
     ),
 )
 </script>

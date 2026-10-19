@@ -48,7 +48,7 @@ useRaidFinish()
 
             <RaidCashStacks
                 :piles="store.piles"
-                :packed-ids="unavailableIds"
+                :unavailable-ids="unavailableIds"
                 :selected-id="selectedPileId"
                 :dragging="drag.dragging.value"
                 @pick="pickPile"

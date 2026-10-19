@@ -7,16 +7,16 @@ export const raidImages = {
 
 export function createSafePileLayout(
     total: number,
-    packedIds: number[],
+    unavailableIds: number[],
 ) {
     const columns = Math.min(2, total)
-    const packed = new Set(packedIds)
+    const unavailable = new Set(unavailableIds)
     const columnHeights = [0, 0]
 
     const layout = []
 
     for (let id = 0; id < total; id++) {
-        if (packed.has(id)) continue
+        if (unavailable.has(id)) continue
 
         const column = id % columns
         const layer = columnHeights[column]++

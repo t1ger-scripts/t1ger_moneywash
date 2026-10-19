@@ -1,1 +1,0 @@
-export { useSceneDrag as useCashDrag } from '@/shared/composables/useSceneDrag'

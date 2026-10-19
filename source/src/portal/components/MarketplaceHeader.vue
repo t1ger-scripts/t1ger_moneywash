@@ -138,7 +138,7 @@ const formattedInvestorScore = computed(() => {
                         </strong>
                     </div>
 
-                    <AppProgressBar :value="profile.investorProgress.percentage" :max="100"
+                    <AppProgressBar :value="profile.investorProgress.percentage" :maximum="100"
                         :label="t('portal.header.investorScoreProgress')" />
                 </div>
             </div>
