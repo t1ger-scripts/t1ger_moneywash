@@ -236,7 +236,12 @@ RegisterNetEvent("t1ger_moneywash:client:syncBusinesses", function(businesses)
     RefreshHandlerBlips()
 
     if Config.Debug then
-        print(("[MoneyWash] Synced %d of your own businesses"):format(#businesses))
+        local own = businesses[1]
+        if own then
+            print(("[MoneyWash] Your business: #%s (%s, location %s)"):format(own.id, own.type, own.locationId))
+        else
+            print("[MoneyWash] You do not own a business")
+        end
     end
 end)
 
