@@ -1,0 +1,145 @@
+.raid-scene {
+    .raid-bag-handle {
+        position: absolute;
+        z-index: 28;
+        left: 60%;
+        top: 31%;
+        width: 35%;
+        height: 49%;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: #efe6d4;
+        cursor: grab;
+        touch-action: none;
+
+        > span {
+            position: absolute;
+            left: 20%;
+            bottom: 6%;
+            width: 60%;
+            padding: 0.6em;
+            border: 1px solid #dfc89955;
+            background: #1d1714d9;
+            font-size: clamp(10px, 0.7vw, 14px);
+            letter-spacing: 0.12em;
+        }
+
+        &:focus-visible {
+            outline: 2px solid #e6c57c;
+            outline-offset: 4px;
+        }
+    }
+
+    .raid-collection-target {
+        position: absolute;
+        z-index: 30;
+        left: 57%;
+        bottom: 4%;
+        width: 35%;
+        height: 9%;
+        display: grid;
+        place-items: center;
+        border: 1px dashed #dfc89970;
+        background: #171613b0;
+        color: #efe6d4;
+        font-size: clamp(10px, 0.7vw, 14px);
+        letter-spacing: 0.15em;
+        pointer-events: none;
+    }
+
+    .raid-collection-target--over {
+        border-color: #f7e5b7;
+        background: #8c794ccc;
+    }
+
+    .raid-bag-ghost {
+        position: absolute;
+        z-index: 60;
+        width: 26%;
+        height: 52%;
+        background-size: 286% 122%;
+        background-position: 93% 55%;
+        clip-path: polygon(
+            7% 4%,
+            50% 0,
+            94% 7%,
+            100% 93%,
+            80% 100%,
+            0 93%
+        );
+        transform: translate(-50%, -50%) rotate(-4deg);
+        pointer-events: none;
+
+        > span {
+            position: absolute;
+            left: 10%;
+            right: 10%;
+            top: 36%;
+            padding: 1em;
+            background: #d5bc8e;
+            color: #392d1c;
+            font-size: clamp(10px, 0.8vw, 16px);
+            text-align: center;
+        }
+
+        strong {
+            display: block;
+            margin-top: 0.5em;
+            font-family: monospace;
+        }
+    }
+
+    .raid-completion {
+        position: absolute;
+        inset: 0;
+        z-index: 70;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        background: #0b1419ed;
+        color: #efe6d4;
+        text-align: center;
+
+        > strong {
+            font-size: clamp(24px, 2.5vw, 42px);
+            font-weight: 500;
+        }
+
+        > p {
+            color: #e5d6b6;
+            font-size: clamp(12px, 1.1vw, 20px);
+        }
+    }
+
+    .raid-completion-icon {
+        width: 2em;
+        height: 2em;
+        display: grid;
+        place-items: center;
+        border: 1px solid #c7b683;
+        border-radius: 50%;
+        color: #ddcea5;
+        font-size: clamp(24px, 2.5vw, 42px);
+    }
+
+    .raid-restart {
+        margin-top: 1rem;
+        padding: 0.75em 1.2em;
+        border: 1px solid #c7b68380;
+        background: #c7b68315;
+        color: #efe6d4;
+        font-size: clamp(12px, 0.9vw, 16px);
+
+        &:hover {
+            background: #c7b68330;
+        }
+
+        &:focus-visible {
+            outline: 2px solid #e6c57c;
+            outline-offset: 4px;
+        }
+    }
+}
