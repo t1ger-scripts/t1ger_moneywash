@@ -1,41 +1,50 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import {
     raidImages,
     safePilePosition,
+    formatRaidMoney,
 } from '../utils/raid.utils'
 
-const props = withDefaults(
-    defineProps<{
-        count?: number
-    }>(),
-    {
-        count: 10,
-    },
-)
+defineProps<{
+    piles: number[]
+    packedIds: number[]
+    selectedId: number | null
+    dragging: boolean
+}>()
 
-const pileCount = computed(() => {
-    const count = Number.isFinite(props.count)
-        ? Math.floor(props.count)
-        : 10
-
-    return Math.max(1, Math.min(20, count))
-})
+const emit = defineEmits<{
+    pick: [event: PointerEvent, id: number]
+    transfer: [event: KeyboardEvent, id: number]
+}>()
 </script>
 
 <template>
-    <div class="raid-cash-stacks" aria-hidden="true">
-        <span
-            v-for="index in pileCount"
-            :key="index"
-            class="raid-cash-bundle"
-            :style="safePilePosition(index - 1, pileCount)"
-        >
-            <img
-                :src="raidImages.bundle"
-                alt=""
-                draggable="false"
-            />
-        </span>
+    <div class="raid-cash-stacks">
+        <template v-for="(amount, id) in piles" :key="id">
+            <button
+                v-if="!packedIds.includes(id)"
+                class="raid-cash-bundle"
+                data-raid-cash
+                :style="safePilePosition(id, piles.length)"
+                :class="{
+                    'raid-cash-bundle--held':
+                        dragging && selectedId === id,
+                }"
+                :aria-label="`Bag ${formatRaidMoney(amount)}`"
+                @pointerdown="emit('pick', $event, id)"
+                @keydown.enter.prevent="emit('transfer', $event, id)"
+                @keydown.space.prevent="emit('transfer', $event, id)"
+            >
+                <img
+                    :src="raidImages.bundle"
+                    alt=""
+                    draggable="false"
+                />
+
+                <span class="raid-cash-amount">
+                    {{ formatRaidMoney(amount) }}
+                </span>
+            </button>
+        </template>
     </div>
 </template>

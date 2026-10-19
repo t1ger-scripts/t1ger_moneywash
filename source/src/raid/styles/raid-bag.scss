@@ -1,0 +1,91 @@
+.raid-scene {
+    .raid-bag-mouth {
+        position: absolute;
+        z-index: 15;
+        left: 63%;
+        top: 17%;
+        width: 29%;
+        height: 12%;
+        border: 1px dashed transparent;
+        border-radius: 50%;
+        pointer-events: none;
+        transition:
+            border-color 150ms ease,
+            box-shadow 150ms ease;
+    }
+
+    .raid-bag-mouth--active {
+        border-color: #e8d7a450;
+    }
+
+    .raid-bag-mouth--over {
+        border-color: #e8d7a4cc;
+        box-shadow:
+            0 0 28px #edcb6f55,
+            inset 0 0 26px #edcb6f33;
+    }
+
+    .raid-bag-cash {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        border-radius: inherit;
+
+        img {
+            position: absolute;
+            width: 34%;
+            height: auto;
+            pointer-events: none;
+            filter: brightness(0.68);
+        }
+    }
+
+    .raid-bag-hint {
+        position: absolute;
+        inset: 20% 0 auto;
+        color: #efe6d4;
+        font-size: clamp(9px, 0.7vw, 14px);
+        letter-spacing: 0.15em;
+        text-align: center;
+        text-shadow: 0 2px 4px #000;
+    }
+
+    .raid-evidence-label {
+        position: absolute;
+        z-index: 20;
+        left: 69%;
+        top: 47%;
+        width: 17%;
+        height: 15%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4em;
+        color: #302718;
+        font-size: clamp(10px, 1vw, 18px);
+        transform: rotate(5deg);
+        pointer-events: none;
+
+        > span {
+            font-size: 0.65em;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+        }
+
+        > strong {
+            font-family: monospace;
+            font-size: 1.55em;
+        }
+
+        > small {
+            font-size: 0.6em;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .raid-scene .raid-bag-mouth {
+        transition: none;
+    }
+}

@@ -22,3 +22,31 @@ export function safePilePosition(index: number, total: number) {
         zIndex: index + 1,
     }
 }
+
+export function splitRaidCash(
+    amount: number,
+    stackCount: number,
+): number[] {
+    if (!Number.isSafeInteger(amount) || amount <= 0) return []
+
+    const configured = Number.isFinite(stackCount)
+        ? Math.floor(stackCount)
+        : 10
+
+    const count = Math.min(
+        amount,
+        Math.max(1, Math.min(20, configured)),
+    )
+
+    const base = Math.floor(amount / count)
+    const remainder = amount % count
+
+    return Array.from(
+        { length: count },
+        (_, index) => base + (index < remainder ? 1 : 0),
+    )
+}
+
+export function formatRaidMoney(amount: number): string {
+    return `$${amount.toLocaleString('en-US')}`
+}

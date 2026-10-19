@@ -11,7 +11,14 @@
         display: block;
         width: 8.3%;
         height: 9%;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: grab;
+        touch-action: none;
+        pointer-events: auto;
         filter: drop-shadow(0 6px 3px #0009);
+        transition: filter 150ms ease;
 
         img {
             display: block;
@@ -21,5 +28,54 @@
             pointer-events: none;
             user-select: none;
         }
+
+        &:hover,
+        &:focus-visible {
+            filter:
+                brightness(1.2)
+                drop-shadow(0 0 5px #e6c57c80);
+
+            .raid-cash-amount {
+                opacity: 1;
+            }
+        }
+
+        &:focus-visible {
+            outline: 2px solid #e6c57c;
+            outline-offset: 3px;
+        }
+    }
+
+    .raid-cash-bundle--held {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .raid-cash-amount {
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        padding: 0.3em 0.6em;
+        border-radius: 3px;
+        background: #080c10e6;
+        color: #efe6d4;
+        font-size: clamp(10px, 0.7vw, 14px);
+        white-space: nowrap;
+        opacity: 0;
+        transform: translateX(-50%);
+        pointer-events: none;
+    }
+
+    .raid-cash-ghost {
+        z-index: 50;
+        pointer-events: none;
+        transform: translate(-50%, -50%) rotate(-6deg);
+        filter: drop-shadow(0 15px 8px #0009);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .raid-scene .raid-cash-bundle {
+        transition: none;
     }
 }
