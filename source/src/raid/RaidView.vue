@@ -1,8 +1,7 @@
 <script setup lang="ts">
+import RaidCashStacks from './components/RaidCashStacks.vue'
+import { raidImages } from './utils/raid.utils'
 import './styles/raid.scss'
-
-const sceneImage =
-    `${import.meta.env.BASE_URL}images/raid/raid-scene.webp`
 </script>
 
 <template>
@@ -15,10 +14,12 @@ const sceneImage =
         >
             <img
                 class="raid-scene-image"
-                :src="sceneImage"
+                :src="raidImages.scene"
                 alt="Open business safe and evidence bag"
                 draggable="false"
             />
+
+            <RaidCashStacks :count="10" />
         </section>
     </div>
 </template>
