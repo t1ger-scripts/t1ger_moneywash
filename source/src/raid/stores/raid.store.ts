@@ -7,7 +7,6 @@ export const useRaidStore = defineStore('raid', () => {
     const stackCount = ref(10)
     const packedIds = ref<number[]>([])
     const sealed = ref(false)
-    const collected = ref(false)
 
     const piles = computed(() =>
         splitRaidCash(amount.value, stackCount.value),
@@ -31,6 +30,7 @@ export const useRaidStore = defineStore('raid', () => {
 
     function packPile(id: number): boolean {
         if (
+            sealed.value ||
             !Number.isInteger(id) ||
             id < 0 ||
             id >= piles.value.length ||
@@ -50,20 +50,9 @@ export const useRaidStore = defineStore('raid', () => {
         return true
     }
 
-    function collectBag(): boolean {
-        if (!allPacked.value || !sealed.value || collected.value) {
-            return false
-        }
-
-        collected.value = true
-
-        return true
-    }
-
     function reset() {
         packedIds.value = []
         sealed.value = false
-        collected.value = false
     }
 
     return {
@@ -75,10 +64,8 @@ export const useRaidStore = defineStore('raid', () => {
         remainingAmount,
         allPacked,
         sealed,
-        collected,
         packPile,
         sealBag,
-        collectBag,
         reset,
     }
 })

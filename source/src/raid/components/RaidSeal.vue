@@ -32,7 +32,7 @@ const {
                 : `${progress * 100}%`,
         }"
         :disabled="sealed"
-        aria-label="Seal evidence bag. Drag from left to right or press Enter."
+        aria-label="Slide from left to right to secure the evidence. Alternatively, press Enter."
         @pointerdown="down"
         @pointermove="move"
         @pointerup="up"
@@ -41,7 +41,11 @@ const {
         @keydown.space.prevent="finish"
     >
         <span class="raid-seal-text">
-            {{ sealed ? 'EVIDENCE · DO NOT OPEN' : 'SLIDE TO SEAL →' }}
+            {{
+                sealed
+                    ? 'EVIDENCE SECURED'
+                    : 'EVIDENCE · SLIDE TO SECURE'
+            }}
         </span>
 
         <span

@@ -1,11 +1,6 @@
 <script setup lang="ts">
-
 import RaidSeal from './RaidSeal.vue'
-import { raidImages, formatRaidMoney } from '../utils/raid.utils'
-
-const emit = defineEmits<{
-    seal: []
-}>()
+import { formatRaidMoney } from '../utils/raid.utils'
 
 defineProps<{
     packedIds: number[]
@@ -17,14 +12,27 @@ defineProps<{
     sealed: boolean
 }>()
 
+const emit = defineEmits<{
+    seal: []
+}>()
 </script>
 
 <template>
-    <div class="raid-bag-mouth" data-raid-mouth :class="{
-        'raid-bag-mouth--active': dragging,
-        'raid-bag-mouth--over': over,
-    }">
-        <svg class="raid-bag-outline" viewBox="0 0 1000 400" preserveAspectRatio="none" aria-hidden="true">
+    <div
+        v-if="!allPacked"
+        class="raid-bag-mouth"
+        data-raid-mouth
+        :class="{
+            'raid-bag-mouth--active': dragging,
+            'raid-bag-mouth--over': over,
+        }"
+    >
+        <svg
+            class="raid-bag-outline"
+            viewBox="0 0 1000 400"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+        >
             <path
                 data-raid-drop-shape
                 d="
@@ -51,16 +59,17 @@ defineProps<{
         <strong>{{ formatRaidMoney(packedAmount) }}</strong>
 
         <small>
-            {{ packedIds.length }} / {{ pileCount }} bundles secured
+            {{
+                sealed
+                    ? 'Evidence secured'
+                    : `${packedIds.length} / ${pileCount} bundles secured`
+            }}
         </small>
     </div>
 
-    <template v-if="allPacked">
-        <div class="raid-bag-fold" :style="{
-            backgroundImage:
-                `linear-gradient(175deg, #a47e4d22, #bc996533), url(${raidImages.scene})`,
-        }" aria-hidden="true"></div>
-
-        <RaidSeal :sealed="sealed" @complete="emit('seal')" />
-    </template>
+    <RaidSeal
+        v-if="allPacked"
+        :sealed="sealed"
+        @complete="emit('seal')"
+    />
 </template>

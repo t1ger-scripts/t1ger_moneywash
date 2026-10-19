@@ -2,11 +2,9 @@
 import { ref } from 'vue'
 import RaidCashStacks from './components/RaidCashStacks.vue'
 import RaidEvidenceBag from './components/RaidEvidenceBag.vue'
-import RaidCollection from './components/RaidCollection.vue'
-import RaidCompletion from './components/RaidCompletion.vue'
-import { useRaidCollect } from './composables/useRaidCollect'
 import { useRaidStore } from './stores/raid.store'
 import { useRaidDrag } from './composables/useRaidDrag'
+import { useRaidFinish } from './composables/useRaidFinish'
 import { raidImages } from './utils/raid.utils'
 import './styles/raid.scss'
 
@@ -23,11 +21,7 @@ const {
     keyboardPack,
 } = useRaidDrag(root)
 
-const {
-    collectDrag,
-    keyboardCollect,
-} = useRaidCollect(root)
-
+useRaidFinish()
 </script>
 
 <template>
@@ -38,9 +32,9 @@ const {
             role="dialog"
             aria-modal="true"
             aria-label="Police evidence collection"
-            @pointermove="drag.move($event); collectDrag.move($event)"
-            @pointerup="drag.up($event); collectDrag.up($event)"
-            @pointercancel="drag.cancel(); collectDrag.cancel()"
+            @pointermove="drag.move"
+            @pointerup="drag.up"
+            @pointercancel="drag.cancel"
         >
             <img
                 class="raid-scene-image"
@@ -87,23 +81,6 @@ const {
                     />
                 </span>
             </div>
-
-            <RaidCollection
-                v-if="store.sealed && !store.collected"
-                :amount="store.packedAmount"
-                :dragging="collectDrag.dragging.value"
-                :over="collectDrag.over.value"
-                :x="collectDrag.x.value"
-                :y="collectDrag.y.value"
-                @pick="collectDrag.down"
-                @transfer="keyboardCollect"
-            />
-
-            <RaidCompletion
-                v-if="store.collected"
-                :amount="store.packedAmount"
-                @restart="store.reset"
-            />
         </section>
     </div>
 </template>
