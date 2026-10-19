@@ -77,11 +77,13 @@ const {
                 }"
                 aria-hidden="true"
             >
-                <img
-                    :src="raidImages.bundle"
-                    alt=""
-                    draggable="false"
-                />
+                <span class="raid-cash-art">
+                    <img
+                        :src="raidImages.bundle"
+                        alt=""
+                        draggable="false"
+                    />
+                </span>
             </div>
 
             <RaidCollection

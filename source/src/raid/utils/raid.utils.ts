@@ -5,22 +5,41 @@ export const raidImages = {
     bundle: `${imageRoot}cash-counter/cash-bundle.png`,
 } as const
 
-export function safePilePosition(index: number, total: number) {
-    const columns = 3
-    const rows = Math.ceil(total / columns)
-    const rowSpacing = Math.min(
-        8,
-        30 / Math.max(1, rows - 1),
-    )
+export function createSafePileLayout(
+    total: number,
+    packedIds: number[],
+) {
+    const columns = Math.min(2, total)
+    const packed = new Set(packedIds)
+    const columnHeights = [0, 0]
 
-    const rotations = [-5, 3, -2]
+    const layout = []
 
-    return {
-        left: `${25 + (index % columns) * 7.1}%`,
-        top: `${18 + Math.floor(index / columns) * rowSpacing}%`,
-        transform: `rotate(${rotations[index % columns]}deg)`,
-        zIndex: index + 1,
+    for (let id = 0; id < total; id++) {
+        if (packed.has(id)) continue
+
+        const column = id % columns
+        const layer = columnHeights[column]++
+
+        const columnOffset =
+            column - (columns - 1) / 2
+
+        const rotation = column === 0 ? -1 : 0.8
+
+        layout.push({
+            id,
+            style: {
+                left: `${36.5 + columnOffset * 10.6}%`,
+                bottom: `${44.8 + layer * 1.1}%`,
+                transform:
+                    `translateX(-50%) rotate(${rotation}deg)`,
+                zIndex: layer + 1,
+                '--cash-brightness': '0.95',
+            },
+        })
     }
+
+    return layout
 }
 
 export function splitRaidCash(
