@@ -1,4 +1,8 @@
+
 .raid-scene {
+
+    --raid-cash-height: 6.8%;
+
     .raid-cash-stacks {
         position: absolute;
         inset: 0;
@@ -9,8 +13,8 @@
     .raid-cash-bundle {
         position: absolute;
         display: block;
-        width: 10.5%;
-        height: 7.0%;
+        width: 10.2%;
+        height: var(--raid-cash-height);
         padding: 0;
         border: 0;
         background: transparent;
@@ -69,10 +73,7 @@
 
     .raid-cash-amount {
         position: absolute;
-        z-index: 2;
-        left: 50%;
-        bottom: 100%;
-        margin-bottom: 0.35em;
+        z-index: 100;
         padding: 0.3em 0.6em;
         border-radius: 3px;
         background: #080c10e6;
@@ -82,6 +83,11 @@
         opacity: 0;
         transform: translateX(-50%);
         pointer-events: none;
+    }
+
+    .raid-cash-bundle:hover + .raid-cash-amount,
+    .raid-cash-bundle:focus-visible + .raid-cash-amount {
+        opacity: 1;
     }
 
     .raid-cash-ghost {

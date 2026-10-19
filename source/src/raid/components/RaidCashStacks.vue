@@ -28,32 +28,41 @@ const visiblePiles = computed(() =>
 
 <template>
     <div class="raid-cash-stacks">
-        <button
-            v-for="pile in visiblePiles"
-            :key="pile.id"
-            class="raid-cash-bundle"
-            data-raid-cash
-            :style="pile.style"
-            :class="{
-                'raid-cash-bundle--held':
-                    dragging && selectedId === pile.id,
-            }"
-            :aria-label="`Bag ${formatRaidMoney(piles[pile.id])}`"
-            @pointerdown="emit('pick', $event, pile.id)"
-            @keydown.enter.prevent="emit('transfer', $event, pile.id)"
-            @keydown.space.prevent="emit('transfer', $event, pile.id)"
-        >
-            <span class="raid-cash-art" aria-hidden="true">
-                <img
-                    :src="raidImages.bundle"
-                    alt=""
-                    draggable="false"
-                />
-            </span>
+        <template v-for="pile in visiblePiles" :key="pile.id">
+            <button
+                class="raid-cash-bundle"
+                data-raid-cash
+                :style="pile.style"
+                :class="{
+                    'raid-cash-bundle--held':
+                        dragging && selectedId === pile.id,
+                }"
+                :aria-label="`Bag ${formatRaidMoney(piles[pile.id])}`"
+                @pointerdown="emit('pick', $event, pile.id)"
+                @keydown.enter.prevent="emit('transfer', $event, pile.id)"
+                @keydown.space.prevent="emit('transfer', $event, pile.id)"
+            >
+                <span class="raid-cash-art" aria-hidden="true">
+                    <img
+                        :src="raidImages.bundle"
+                        alt=""
+                        draggable="false"
+                    />
+                </span>
+            </button>
 
-            <span class="raid-cash-amount">
+            <span
+                v-if="!dragging"
+                class="raid-cash-amount"
+                :style="{
+                    left: pile.style.left,
+                    bottom:
+                        `calc(${pile.style.bottom} + var(--raid-cash-height) + 0.4%)`,
+                }"
+                aria-hidden="true"
+            >
                 {{ formatRaidMoney(piles[pile.id]) }}
             </span>
-        </button>
+        </template>
     </div>
 </template>
