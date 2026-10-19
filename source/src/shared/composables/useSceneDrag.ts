@@ -6,6 +6,7 @@ export function useSceneDrag(
     submit: () => void | boolean | Promise<void | boolean>,
     targetSelector = '[data-cash-feeder]',
     sourceSelector = '.cash-bundle',
+    hitTest?: (event: PointerEvent, target: Element) => boolean,
 ) {
     const dragging = ref(false)
     const animating = ref(false)
@@ -142,16 +143,17 @@ export function useSceneDrag(
         x.value = event.clientX - container.left + root.value.scrollLeft
         y.value = event.clientY - container.top + root.value.scrollTop
 
-        const target = root.value
-            .querySelector(targetSelector)
-            ?.getBoundingClientRect()
+        const targetElement = root.value.querySelector(targetSelector)
+        const bounds = targetElement?.getBoundingClientRect()
 
         over.value =
-            !!target &&
-            event.clientX >= target.left &&
-            event.clientX <= target.right &&
-            event.clientY >= target.top &&
-            event.clientY <= target.bottom
+            !!targetElement &&
+            !!bounds &&
+            event.clientX >= bounds.left &&
+            event.clientX <= bounds.right &&
+            event.clientY >= bounds.top &&
+            event.clientY <= bounds.bottom &&
+            (hitTest ? hitTest(event, targetElement) : true)
     }
 
     function down(event: PointerEvent) {

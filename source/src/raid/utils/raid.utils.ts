@@ -69,3 +69,23 @@ export function splitRaidCash(
 export function formatRaidMoney(amount: number): string {
     return `$${amount.toLocaleString('en-US')}`
 }
+
+export function isRaidBagDropPoint(
+    event: PointerEvent,
+    target: Element,
+): boolean {
+    const shape = target.querySelector<SVGPathElement>(
+        '[data-raid-drop-shape]',
+    )
+
+    const matrix = shape?.getScreenCTM()
+
+    if (!shape || !matrix) return false
+
+    const point = new DOMPoint(
+        event.clientX,
+        event.clientY,
+    ).matrixTransform(matrix.inverse())
+
+    return shape.isPointInFill(point)
+}

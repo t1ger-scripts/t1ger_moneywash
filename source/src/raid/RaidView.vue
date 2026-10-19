@@ -17,6 +17,7 @@ store.reset()
 
 const {
     drag,
+    depositing,
     selectedPileId,
     pickPile,
     keyboardPack,
@@ -61,8 +62,8 @@ const {
                 :packed-ids="store.packedIds"
                 :packed-amount="store.packedAmount"
                 :pile-count="store.piles.length"
-                :dragging="drag.dragging.value"
-                :over="drag.over.value"
+                :dragging="drag.dragging.value && !depositing"
+                :over="drag.over.value && !depositing"
                 :all-packed="store.allPacked"
                 :sealed="store.sealed"
                 @seal="store.sealBag"
@@ -71,6 +72,7 @@ const {
             <div
                 v-if="drag.dragging.value"
                 class="raid-cash-bundle raid-cash-ghost"
+                data-raid-drag-preview
                 :style="{
                     left: `${drag.x.value}px`,
                     top: `${drag.y.value}px`,

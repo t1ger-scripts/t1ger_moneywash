@@ -39,21 +39,6 @@
         fill: #edcb6f12;
     }
 
-    .raid-bag-cash {
-        position: absolute;
-        inset: 23% 10% 23% 7%;
-        overflow: hidden;
-        border-radius: 50%;
-
-        img {
-            position: absolute;
-            width: 34%;
-            height: auto;
-            pointer-events: none;
-            filter: brightness(0.68);
-        }
-    }
-
     .raid-bag-hint {
         position: absolute;
         inset: 45% 0 auto;

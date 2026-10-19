@@ -17,13 +17,6 @@ defineProps<{
     sealed: boolean
 }>()
 
-function packedPilePosition(index: number) {
-    return {
-        left: `${10 + (index % 3) * 21}%`,
-        bottom: `${Math.floor(index / 3) * 12 - 4}%`,
-        transform: `rotate(${index % 2 ? 7 : -7}deg)`,
-    }
-}
 </script>
 
 <template>
@@ -32,20 +25,20 @@ function packedPilePosition(index: number) {
         'raid-bag-mouth--over': over,
     }">
         <svg class="raid-bag-outline" viewBox="0 0 1000 400" preserveAspectRatio="none" aria-hidden="true">
-            <path d="
-                M 12 135
-                C 55 60, 220 5, 390 10
-                C 650 5, 890 65, 980 185
-                C 1020 255, 830 375, 590 388
-                C 350 405, 95 305, 12 170
-                Q 2 150, 12 135
-                Z
-            " vector-effect="non-scaling-stroke" />
+            <path
+                data-raid-drop-shape
+                d="
+                    M 14 140
+                    C 55 60, 220 5, 390 10
+                    C 650 5, 890 65, 978 185
+                    C 1005 225, 830 310, 590 318
+                    C 350 330, 95 263, 14 172
+                    Q 4 150, 14 140
+                    Z
+                "
+                vector-effect="non-scaling-stroke"
+            />
         </svg>
-        <div class="raid-bag-cash" aria-hidden="true">
-            <img v-for="(id, index) in packedIds" :key="id" :src="raidImages.bundle" :style="packedPilePosition(index)"
-                alt="" draggable="false" />
-        </div>
 
         <span v-if="dragging" class="raid-bag-hint">
             {{ over ? 'RELEASE TO BAG' : 'DROP CASH HERE' }}
