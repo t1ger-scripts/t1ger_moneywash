@@ -4,7 +4,7 @@ import { splitRaidCash } from '../utils/raid.utils'
 
 export const useRaidStore = defineStore('raid', () => {
     const amount = ref(125000)
-    const stackCount = ref(10)
+    const stackCount = ref(3)
     const packedIds = ref<number[]>([])
     const sealed = ref(false)
 

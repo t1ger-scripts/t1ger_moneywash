@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import RaidCashStacks from './components/RaidCashStacks.vue'
 import RaidEvidenceBag from './components/RaidEvidenceBag.vue'
+import RaidDeposit from './components/RaidDeposit.vue'
 import { useRaidStore } from './stores/raid.store'
 import { useRaidDrag } from './composables/useRaidDrag'
 import { useRaidFinish } from './composables/useRaidFinish'
@@ -15,10 +16,12 @@ store.reset()
 
 const {
     drag,
-    depositing,
+    deposits,
+    unavailableIds,
     selectedPileId,
     pickPile,
     keyboardPack,
+    finishDeposit,
 } = useRaidDrag(root)
 
 useRaidFinish()
@@ -45,7 +48,7 @@ useRaidFinish()
 
             <RaidCashStacks
                 :piles="store.piles"
-                :packed-ids="store.packedIds"
+                :packed-ids="unavailableIds"
                 :selected-id="selectedPileId"
                 :dragging="drag.dragging.value"
                 @pick="pickPile"
@@ -56,17 +59,23 @@ useRaidFinish()
                 :packed-ids="store.packedIds"
                 :packed-amount="store.packedAmount"
                 :pile-count="store.piles.length"
-                :dragging="drag.dragging.value && !depositing"
-                :over="drag.over.value && !depositing"
+                :dragging="drag.dragging.value"
+                :over="drag.over.value"
                 :all-packed="store.allPacked"
                 :sealed="store.sealed"
                 @seal="store.sealBag"
             />
 
+            <RaidDeposit
+                v-for="deposit in deposits"
+                :key="deposit.id"
+                :deposit="deposit"
+                @complete="finishDeposit"
+            />
+
             <div
                 v-if="drag.dragging.value"
                 class="raid-cash-bundle raid-cash-ghost"
-                data-raid-drag-preview
                 :style="{
                     left: `${drag.x.value}px`,
                     top: `${drag.y.value}px`,
