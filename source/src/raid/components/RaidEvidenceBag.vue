@@ -3,9 +3,7 @@ import RaidSeal from './RaidSeal.vue'
 import { formatRaidMoney } from '../utils/raid.utils'
 
 defineProps<{
-    packedIds: number[]
     packedAmount: number
-    pileCount: number
     dragging: boolean
     over: boolean
     allPacked: boolean
@@ -57,14 +55,6 @@ const emit = defineEmits<{
         <span>POLICE EVIDENCE</span>
 
         <strong>{{ formatRaidMoney(packedAmount) }}</strong>
-
-        <small>
-            {{
-                sealed
-                    ? 'Evidence secured'
-                    : `${packedIds.length} / ${pileCount} bundles secured`
-            }}
-        </small>
     </div>
 
     <RaidSeal
