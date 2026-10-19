@@ -54,6 +54,9 @@ const {
                 :pile-count="store.piles.length"
                 :dragging="drag.dragging.value"
                 :over="drag.over.value"
+                :all-packed="store.allPacked"
+                :sealed="store.sealed"
+                @seal="store.sealBag"
             />
 
             <div

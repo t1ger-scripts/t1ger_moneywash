@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import {
-    raidImages,
-    formatRaidMoney,
-} from '../utils/raid.utils'
+
+import RaidSeal from './RaidSeal.vue'
+import { raidImages, formatRaidMoney } from '../utils/raid.utils'
+
+const emit = defineEmits<{
+    seal: []
+}>()
 
 defineProps<{
     packedIds: number[]
@@ -10,6 +13,8 @@ defineProps<{
     pileCount: number
     dragging: boolean
     over: boolean
+    allPacked: boolean
+    sealed: boolean
 }>()
 
 function packedPilePosition(index: number) {
@@ -55,4 +60,20 @@ function packedPilePosition(index: number) {
             {{ packedIds.length }} / {{ pileCount }} bundles secured
         </small>
     </div>
+
+    <template v-if="allPacked">
+        <div
+            class="raid-bag-fold"
+            :style="{
+                backgroundImage:
+                    `linear-gradient(175deg, #a47e4d22, #bc996533), url(${raidImages.scene})`,
+            }"
+            aria-hidden="true"
+        ></div>
+
+        <RaidSeal
+            :sealed="sealed"
+            @complete="emit('seal')"
+        />
+    </template>
 </template>
