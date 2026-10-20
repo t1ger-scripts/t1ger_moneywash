@@ -194,10 +194,7 @@ function OpenBusinessPortal()
         isPortalOpening = false
         CloseMoneywashUi("marketplace")
 
-        _API.ShowNotification(
-            "The business portal is currently unavailable.",
-            "error"
-        )
+        _API.ShowNotification(locale("notification.portal_unavailable"), "error", {})
 
         return
     end

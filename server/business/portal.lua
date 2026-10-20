@@ -252,10 +252,7 @@ local function createMarketplaceSnapshot(source)
 
     return {
         profile = {
-            characterName =
-                _API.Player.GetCharacterName(source)
-                or GetPlayerName(source)
-                or "Unknown Investor",
+            characterName = _API.Player.GetCharacterName(source) or GetPlayerName(source) or locale("portal.unknownInvestor"),
 
             bankBalance = _API.Player.GetMoney(source, "bank"),
             ownsBusiness = ownsAnyBusiness,

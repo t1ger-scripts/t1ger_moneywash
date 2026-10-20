@@ -102,6 +102,8 @@
         }
     },
     "notification": {
+        "portal_unavailable": "The business portal is currently unavailable.",
+        "portal_loading": "Loading the business portal...",
         "business_removed": "Your business has been permanently removed",
         "money_laundered": "%s laundered into your Safe (%s covered, %s exposed)",
         "suspicion_changed": "Business suspicion has risen to %s",
@@ -193,6 +195,7 @@
         "loading": "Loading..."
     },
     "portal": {
+        "unknownInvestor": "Unknown Investor",
         "header": {
             "city": "Los Santos",
             "portalName": "Business Portal",
