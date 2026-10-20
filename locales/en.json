@@ -10,7 +10,11 @@
         "atm_cancel": "Cancel deposit",
         "atm_review": "Review flagged deposits",
         "raid_business": "Raid Business",
-        "accountant": "Hand Over Folder"
+        "accountant": "Hand Over Folder",
+        "payphone": "Call a Contact",
+        "payphone_cancel": "Cancel the Meeting",
+        "street_wash_contact": "Hand Over Cash",
+        "street_wash_bag": "Take Back Cash"
     },
     "menu": {
         "handler": {
@@ -85,6 +89,11 @@
             "pay_title": "Accountant",
             "pay_body": "The accountant will review %d receipts.\n\nSuspicion: %s → %s\nFee: %s (paid from your bank)"
         },
+        "street_wash": {
+            "title": "Street Wash",
+            "amount_label": "Dirty cash to hand over (min %s, max %s)",
+            "amount_desc": "The contact keeps %d%%. You are carrying %s in dirty cash."
+        },
         "manage": {
             "title": "Manage Business",
             "transfer": "Transfer Business",
@@ -152,6 +161,15 @@
         "review_cancelled": "Review cancelled. Your receipts are untouched.",
         "review_cancel_timeout": "You ran out of time. The review was cancelled and your receipts are untouched.",
         "review_cancel_dead": "You collapsed. The review was cancelled and your receipts are untouched.",
+        "street_wash_started": "A contact will meet you. Reach the spot on your map within %d minutes.",
+        "street_wash_completed": "Handed over %s. The contact kept %s and %s was paid into your bank.",
+        "street_wash_betrayed_flee": "He grabbed the bag and ran! Catch him and take the bag back.",
+        "street_wash_betrayed_attack": "He turned on you! Put him down and take the bag back.",
+        "street_wash_recovered": "You took your cash back. There is no payout this time.",
+        "street_wash_lost": "The cash is gone. The contact got away with it.",
+        "street_wash_cancelled": "You called the meeting off. Nothing was taken.",
+        "street_wash_cancel_timeout": "You took too long. The contact left and nothing was taken.",
+        "street_wash_cancel_dead": "You went down. The meeting was called off and nothing was taken.",
         "unknown_location": "an unknown location",
         "police_alert": {
             "Moderate": "Unusual financial activity reported at %s near %s",
@@ -215,6 +233,14 @@
         "error_no_review": "You aren't carrying a sealed folder",
         "error_accountant_too_far": "You're too far from the accountant",
         "error_no_accountant_locations": "No accountant offices are configured",
+        "error_street_wash_disabled": "Street wash is disabled",
+        "error_street_wash_active": "You already have a meeting arranged",
+        "error_street_wash_cooldown": "Lay low for a while before the next run",
+        "error_street_wash_daily_limit": "You've handed over enough for today",
+        "error_street_wash_no_run": "You have no meeting arranged",
+        "error_street_wash_no_spots": "No meeting spots are configured",
+        "error_contact_too_far": "You're too far from the contact",
+        "error_nothing_to_claim": "There is nothing to take back here",
         "error_unknown": "Something went wrong"
     },
     "progress": {
