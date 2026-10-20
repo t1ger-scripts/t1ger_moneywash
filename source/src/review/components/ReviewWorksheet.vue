@@ -33,7 +33,10 @@ const store = useReviewStore()
                 </p>
             </header>
 
-            <table class="review-worksheet-table">
+            <table
+                class="review-worksheet-table"
+                :style="{ '--review-sheet-rows': store.sheetPageSize }"
+            >
                 <thead>
                     <tr>
                         <th scope="col">Receipt #</th>
@@ -63,10 +66,6 @@ const store = useReviewStore()
                                     `Delivery date for receipt ${entry.id}`
                                 "
                             />
-
-                            <small>
-                                {{ store.formatTime(entry.createdAt) }}
-                            </small>
                         </td>
 
                         <td>

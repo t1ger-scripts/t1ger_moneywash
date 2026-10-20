@@ -30,6 +30,5 @@ export interface ReviewEntry {
     deliveryDate: string
     units: number | string
     totalAmount: number | string
-    createdAt: number
     matchedReceiptId: number | null
 }

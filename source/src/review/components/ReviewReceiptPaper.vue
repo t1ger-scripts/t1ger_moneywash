@@ -24,8 +24,7 @@ const store = useReviewStore()
         </span>
 
         <span class="review-receipt-delivery">
-            <span>{{ store.formatDate(receipt.createdAt) }}</span>
-            <span>{{ store.formatTime(receipt.createdAt) }}</span>
+            {{ store.formatDate(receipt.createdAt) }}
         </span>
 
         <span class="review-receipt-line">

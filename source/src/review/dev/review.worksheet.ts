@@ -29,7 +29,6 @@ export function createReviewWorksheet(
             deliveryDate: formatReviewDateInput(receipt.createdAt),
             units: receipt.units,
             totalAmount: receipt.totalAmount,
-            createdAt: receipt.createdAt,
             matchedReceiptId: null,
         }
 

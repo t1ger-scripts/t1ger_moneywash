@@ -215,19 +215,7 @@ export const useReviewStore = defineStore('review', () => {
             year: 'numeric',
             timeZone: 'UTC',
         }),
-    )
-
-    const timeFormatter = computed(() =>
-        new Intl.DateTimeFormat(payload.value?.locale ?? 'en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false,
-            timeZone: 'UTC',
-        }),
-    )
-
-    
+    )    
 
     function formatMoney(amount: number): string {
         return `${payload.value?.currency ?? '$'}${moneyFormatter.value.format(amount)}`
@@ -235,10 +223,6 @@ export const useReviewStore = defineStore('review', () => {
 
     function formatDate(timestamp: number): string {
         return dateFormatter.value.format(new Date(timestamp * 1000))
-    }
-
-    function formatTime(timestamp: number): string {
-        return timeFormatter.value.format(new Date(timestamp * 1000))
     }
 
     function open(data: ReviewPayload) {
@@ -369,6 +353,7 @@ export const useReviewStore = defineStore('review', () => {
         stage,
         entries,
         sheetPage,
+        sheetPageSize: SHEET_PAGE_SIZE,
         sheetPageCount,
         visibleEntries,
         assignedCount,
@@ -382,7 +367,6 @@ export const useReviewStore = defineStore('review', () => {
         receiptOvershoots,
         formatMoney,
         formatDate,
-        formatTime,
         open,
         toggleReceipt,
         changePage,

@@ -64,8 +64,9 @@
 .review-worksheet-content {
     position: absolute;
     inset: 7% 6% 8%;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 0.65em;
     min-height: 0;
 }
 
@@ -91,37 +92,59 @@
 }
 
 .review-worksheet-table {
-    flex-shrink: 0;
+    --review-columns: 17% 24% 13% 30% 16%;
+
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
     width: 100%;
-    margin-top: 0.45em;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
     border-collapse: collapse;
     table-layout: fixed;
     font-size: inherit;
     line-height: 1.25;
 
-    th {
-        padding: 0.45em 0.35em;
-        border-bottom: 1px solid #7b684780;
-        font-weight: 700;
+    thead {
+        display: block;
+    }
+
+    tbody {
+        display: grid;
+        grid-template-rows:
+            repeat(var(--review-sheet-rows), minmax(0, 1fr));
+        min-height: 0;
+    }
+
+    tr {
+        display: grid;
+        grid-template-columns: var(--review-columns);
+        min-height: 0;
+    }
+
+    th,
+    td {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        padding: 0.3em 0.4em;
         text-align: left;
     }
 
-    th:nth-child(1) { width: 14%; }
-    th:nth-child(2) { width: 30%; }
-    th:nth-child(3) { width: 12%; }
-    th:nth-child(4) { width: 25%; }
-    th:nth-child(5) { width: 19%; }
-
-    td {
-        padding: 0.35em;
-        border-bottom: 1px dashed #7b68474d;
-        vertical-align: middle;
+    th {
+        padding-top: 0.4em;
+        padding-bottom: 0.6em;
+        border-bottom: 1px solid #7b684780;
+        font-weight: 700;
     }
 
-    small {
-        display: block;
-        margin-top: 0.2em;
-        font-size: 0.85em;
+    td {
+        border-bottom: 1px dashed #7b68474d;
+    }
+
+    th:last-child,
+    td:last-child {
+        justify-content: center;
     }
 
     tr.is-over td {
@@ -131,15 +154,18 @@
     input {
         width: 100%;
         min-width: 0;
-        padding: 0.25em;
+        height: 1.9em;
+        padding: 0.2em 0.3em;
         border: 0;
         border-bottom: 1px solid #7b684766;
         border-radius: 0;
         background: #fff3;
         color: inherit;
         font: inherit;
+        line-height: 1.25;
         text-align: right;
         appearance: textfield;
+
         &[type='date'] {
             appearance: auto;
             text-align: left;
@@ -160,8 +186,10 @@
 
 .review-worksheet-money {
     display: flex;
-    align-items: baseline;
-    gap: 0.2em;
+    align-items: center;
+    gap: 0.35em;
+    width: 100%;
+    min-width: 0;
 }
 
 .review-row-assignment {
@@ -219,8 +247,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.8em;
-    margin-top: auto;
-    padding-top: 0.7em;
+    margin-top: 0;
+    padding-top: 0.35em;
     font-size: 0.9em;
 
     nav {
