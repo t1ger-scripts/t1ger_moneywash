@@ -28,8 +28,8 @@ const store = useReviewStore()
                 <h1>Prepare Book</h1>
 
                 <p class="review-worksheet-instructions">
-                    Match receipts by ID. Each row has one incorrect
-                    date, unit count or total paid. Correct it before sealing.
+                    Match receipts by ID. Each row has incorrect units
+                    or total paid. Correct it before sealing.
                 </p>
             </header>
 
@@ -59,13 +59,7 @@ const store = useReviewStore()
                         </td>
 
                         <td>
-                            <input
-                                v-model="entry.deliveryDate"
-                                type="date"
-                                :aria-label="
-                                    `Delivery date for receipt ${entry.id}`
-                                "
-                            />
+                            {{ store.formatDate(entry.createdAt) }}
                         </td>
 
                         <td>

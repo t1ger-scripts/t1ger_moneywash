@@ -27,7 +27,7 @@ export interface ReviewPayload {
 
 export interface ReviewEntry {
     id: number
-    deliveryDate: string
+    createdAt: number
     units: number | string
     totalAmount: number | string
     matchedReceiptId: number | null

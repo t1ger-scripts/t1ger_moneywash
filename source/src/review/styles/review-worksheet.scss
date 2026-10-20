@@ -166,11 +166,6 @@
         text-align: right;
         appearance: textfield;
 
-        &[type='date'] {
-            appearance: auto;
-            text-align: left;
-        }
-
         &::-webkit-inner-spin-button,
         &::-webkit-outer-spin-button {
             margin: 0;
