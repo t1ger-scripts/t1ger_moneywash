@@ -5,11 +5,46 @@
 --- server/main.lua — not here — to avoid double-firing.
 --- ============================================================================
 
+--- Resolves level data for a points value. Single source for the title,
+--- thresholds and progress used by the class and the portal.
+---@param points integer
+---@return { title: string, currentPoints: integer, nextPoints: integer|nil, progress: integer }
+function GetReputationLevel(points)
+    local thresholds = {}
+    for threshold in pairs(Config.Reputation.Levels) do
+        thresholds[#thresholds + 1] = tonumber(threshold)
+    end
+    table.sort(thresholds)
+
+    local current = thresholds[1] or 0
+    local nextPoints = nil
+
+    for _, threshold in ipairs(thresholds) do
+        if points >= threshold then
+            current = threshold
+        else
+            nextPoints = threshold
+            break
+        end
+    end
+
+    local progress = 100
+    if nextPoints then
+        progress = math.floor(((points - current) / (nextPoints - current)) * 100)
+    end
+
+    return {
+        title         = Config.Reputation.Levels[current] or Config.Reputation.Levels[0] or "Unranked",
+        currentPoints = current,
+        nextPoints    = nextPoints,
+        progress      = math.max(0, math.min(100, progress)),
+    }
+end
+
 ---@class MoneyWashReputation
 ---@field source number
 ---@field identifier string
 ---@field points integer
----@field totalWashed number
 ---@field title string
 
 MoneyWashReputation = {}
@@ -17,7 +52,7 @@ MoneyWashReputation.__index = MoneyWashReputation
 
 --- Creates a new MoneyWashReputation instance for a player
 --- @param src number
---- @param data { points: integer, total_washed: number }
+--- @param data { points: integer }
 --- @return MoneyWashReputation
 function MoneyWashReputation:Create(src, data)
     local self = setmetatable({}, MoneyWashReputation)
@@ -25,7 +60,6 @@ function MoneyWashReputation:Create(src, data)
     self.source     = src
     self.identifier = _API.Player.GetIdentifier(src)
     self.points     = data.points or 0
-    self.totalWashed = data.total_washed or 0
     self.title      = self:_ResolveTitle()
 
     return self
@@ -35,12 +69,6 @@ end
 --- @return integer
 function MoneyWashReputation:GetPoints()
     return self.points
-end
-
---- Returns lifetime dirty money laundered
---- @return number
-function MoneyWashReputation:GetTotalWashed()
-    return self.totalWashed
 end
 
 --- Returns current reputation title
@@ -64,42 +92,23 @@ end
 --- Sets reputation points directly and syncs statebag
 --- @param amount number
 function MoneyWashReputation:SetPoints(amount)
-    self.points = math.floor(amount)
+    self.points = math.max(0, math.floor(amount))
     Player(self.source).state:set("t1ger_moneywash:reputationPoints", self.points, true)
     self:_SyncTitle()
 end
 
---- Adds to the lifetime total washed counter
---- @param amount number
-function MoneyWashReputation:AddWashed(amount)
-    self.totalWashed = self.totalWashed + amount
-end
-
 --- Saves reputation to DB
 function MoneyWashReputation:Save()
-    MySQL.update(
-        "UPDATE moneywash_reputation SET points = ?, total_washed = ? WHERE identifier = ?",
-        {self.points, self.totalWashed, self.identifier}
-    )
+    MySQL.update("UPDATE moneywash_reputation SET points = ? WHERE identifier = ?", {
+        self.points,
+        self.identifier
+    })
 end
 
 --- Resolves and returns the correct title for current points (no statebag sync)
 --- @return string
 function MoneyWashReputation:_ResolveTitle()
-    local title = "Unknown"
-    local thresholds = {}
-    for k in pairs(Config.Reputation.Levels) do
-        thresholds[#thresholds + 1] = k
-    end
-    table.sort(thresholds)
-    for _, threshold in ipairs(thresholds) do
-        if self.points >= threshold then
-            title = Config.Reputation.Levels[threshold]
-        else
-            break
-        end
-    end
-    return title
+    return GetReputationLevel(self.points).title
 end
 
 --- Updates title and syncs statebag if it changed
@@ -183,16 +192,16 @@ function LoadReputation(src)
     if not identifier then return end
 
     local row = MySQL.single.await(
-        "SELECT points, total_washed FROM moneywash_reputation WHERE identifier = ?",
+        "SELECT points FROM moneywash_reputation WHERE identifier = ?",
         {identifier}
     )
 
     if not row then
         MySQL.insert.await(
-            "INSERT INTO moneywash_reputation (identifier, points, total_washed) VALUES (?, 0, 0)",
+            "INSERT INTO moneywash_reputation (identifier, points) VALUES (?, 0)",
             {identifier}
         )
-        row = {points = 0, total_washed = 0}
+        row = {points = 0}
     end
 
     local rep = MoneyWashReputation:Create(src, row)
@@ -229,17 +238,3 @@ end
 function UnloadReputation(src)
     PlayerReputation[src] = nil
 end
-
---- ============================================================================
---- CALLBACKS
---- ============================================================================
-
-lib.callback.register("t1ger_moneywash:server:getReputationData", function(source)
-    local rep = PlayerReputation[source]
-    if not rep then return nil end
-    return {
-        points      = rep:GetPoints(),
-        totalWashed = rep:GetTotalWashed(),
-        title       = rep:GetTitle(),
-    }
-end)

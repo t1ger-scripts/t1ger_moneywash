@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS `moneywash_reputation` (
     `id`           INT(11)      NOT NULL AUTO_INCREMENT,
     `identifier`   VARCHAR(100) NOT NULL,               -- player identifier (license)
     `points`       INT(11)      NOT NULL DEFAULT 0,      -- total reputation points
-    `total_washed` BIGINT(20)   NOT NULL DEFAULT 0,      -- lifetime dirty money laundered
     PRIMARY KEY (`id`),
     UNIQUE KEY `identifier` (`identifier`)
 );

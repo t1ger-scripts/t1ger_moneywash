@@ -30,7 +30,6 @@ local function countEntries(collection)
     return count
 end
 
-
 --- Returns reputation progression data for the portal header.
 ---@param source number
 ---@return table
@@ -47,53 +46,16 @@ local function createInvestorProgress(source)
 
     local reputation = GetPlayerReputation(source)
     local points = reputation and reputation:GetPoints() or 0
-    local rank = reputation and reputation:GetTitle()
-        or Config.Reputation.Levels[0]
-        or "Investor"
-
-    local thresholds = {}
-
-    for threshold in pairs(Config.Reputation.Levels) do
-        thresholds[#thresholds + 1] = tonumber(threshold)
-    end
-
-    table.sort(thresholds)
-
-    local currentRankPoints = thresholds[1] or 0
-    local nextRankPoints = nil
-
-    for _, threshold in ipairs(thresholds) do
-        if points >= threshold then
-            currentRankPoints = threshold
-        elseif not nextRankPoints then
-            nextRankPoints = threshold
-            break
-        end
-    end
-
-    local percentage = 100
-
-    if nextRankPoints then
-        local range = nextRankPoints - currentRankPoints
-
-        if range > 0 then
-            percentage = math.floor(
-                ((points - currentRankPoints) / range) * 100
-            )
-        end
-    end
-
-    percentage = math.max(0, math.min(100, percentage))
+    local level = GetReputationLevel(points)
 
     return {
         points = points,
-        rank = rank,
-        currentRankPoints = currentRankPoints,
-        nextRankPoints = nextRankPoints,
-        percentage = percentage,
+        rank = level.title,
+        currentRankPoints = level.currentPoints,
+        nextRankPoints = level.nextPoints,
+        percentage = level.progress,
     }
 end
-
 
 --- Loads the current runtime locale JSON without requiring a UI rebuild.
 ---@return string localeName
