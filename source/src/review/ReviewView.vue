@@ -69,7 +69,12 @@ const store = useReviewStore()
                         </div>
 
                         <div>
-                            <dt>Suspicion, up to</dt>
+                            <dt>
+                                Estimated suspicion
+                                <small class="review-summary-note">
+                                    With perfect paperwork
+                                </small>
+                            </dt>
                             <dd>
                                 {{
                                     store.formatReduction(
