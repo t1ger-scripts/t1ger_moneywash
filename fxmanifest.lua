@@ -70,6 +70,7 @@ server_scripts {
     'server/business/laundering.lua',
     'server/business/bank_deposit.lua',
     'server/business/raid.lua',
+    'server/business/review.lua',
     'server/business/stock.lua',
     'server/business/callbacks.lua',
     'server/business/commands.lua',
