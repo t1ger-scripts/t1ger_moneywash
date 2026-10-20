@@ -95,6 +95,7 @@ function MoneyWashReputation:SetPoints(amount)
     self.points = math.max(0, math.floor(amount))
     self.title  = self:_ResolveTitle()
     self:Sync()
+    RefreshBusinessPortalViewer(self.source)
 end
 
 --- Saves reputation to DB

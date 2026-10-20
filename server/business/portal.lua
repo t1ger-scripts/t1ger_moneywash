@@ -5,6 +5,7 @@
 --- ============================================================================
 
 local ActivePortalViewers = {}
+local QueuedViewerRefresh = {}
 
 local CLIENT_EVENTS = {
     refresh = "t1ger_moneywash:client:businessPortal:refresh",
@@ -310,6 +311,24 @@ function RefreshBusinessPortalViewers(excludedSource)
             )
         end
     end
+end
+
+--- Refreshes one player's open portal. Calls within 500 ms are merged into one refresh.
+---@param playerSource number
+function RefreshBusinessPortalViewer(playerSource)
+    if not ActivePortalViewers[playerSource] or QueuedViewerRefresh[playerSource] then
+        return
+    end
+
+    QueuedViewerRefresh[playerSource] = true
+
+    SetTimeout(500, function()
+        QueuedViewerRefresh[playerSource] = nil
+
+        if ActivePortalViewers[playerSource] and GetPlayerName(playerSource) then
+            TriggerClientEvent(CLIENT_EVENTS.refresh, playerSource)
+        end
+    end)
 end
 
 --- Returns the initial portal snapshot and registers the player as a viewer.

@@ -348,6 +348,7 @@ function TransferBusiness(src, targetSrc, businessId)
         business.locationId)
 
     RunHook("OnBusinessTransferred", identifier, targetIdentifier, businessId, business.type, business.locationId)
+    RefreshBusinessPortalViewers()
 
     if Config.Debug then
         print(("[MoneyWash] Business %d transferred: %s -> %s"):format(businessId, identifier, targetIdentifier))
@@ -453,6 +454,7 @@ function AbandonBusiness(src, businessId)
 
     TriggerClientEvent("t1ger_moneywash:client:businessAbandoned", src, businessId)
     BroadcastBusinessLocations()
+    RefreshBusinessPortalViewers()
 
     RunHook("OnBusinessAbandoned", identifier, businessId, business.type, business.locationId)
 
@@ -571,6 +573,7 @@ function AdminAddBusiness(identifier, businessType, locationId)
     end
 
     BroadcastBusinessLocations()
+    RefreshBusinessPortalViewers()
 
     if Config.Debug then
         print(("[MoneyWash] Admin added %s #%d to %s"):format(businessType, locationId, identifier))
@@ -674,6 +677,7 @@ function AdminRemoveBusiness(businessType, locationId)
     end
 
     BroadcastBusinessLocations()
+    RefreshBusinessPortalViewers()
 
     if Config.Debug then
         print(("[MoneyWash] Admin removed %s #%d"):format(businessType, locationId))

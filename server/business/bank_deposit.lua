@@ -200,8 +200,7 @@ local function refundDeposit(d, silent)
     local src = not silent and onlineSource(d.identifier)
     if src then
         TriggerClientEvent("t1ger_moneywash:client:bankDepositEnded", src)
-        _API.SendNotification(src,
-            string.format(locale("notification.deposit_refunded"), Config.Currency .. d.amount), "inform")
+        _API.SendNotification(src, string.format(locale("notification.deposit_refunded"), Config.Currency .. d.amount), "inform")
     end
 
     return true
@@ -252,6 +251,7 @@ local function payDeposit(d)
     RunHook("OnBankDepositCompleted", d.identifier, d.businessId, d.amount, net)
 
     if src then
+        RefreshBusinessPortalViewer(src)
         TriggerClientEvent("t1ger_moneywash:client:bankDepositEnded", src)
         _API.SendNotification(src, string.format(locale("notification.deposit_cleared"), Config.Currency .. net, Config.Currency .. (d.amount - net)), "success")
     end
