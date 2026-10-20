@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS `moneywash_receipts` (
     `created_at`   BIGINT(20) NOT NULL,                  -- unix timestamp of delivery completion
     PRIMARY KEY (`id`),
     KEY `business_id` (`business_id`)
-);
+) AUTO_INCREMENT = 1000;
 
 -- Bank deposits
 CREATE TABLE IF NOT EXISTS `moneywash_deposits` (
