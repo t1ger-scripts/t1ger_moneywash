@@ -1,3 +1,5 @@
+import type { LocaleMessages } from '@/integrations/i18n'
+
 export interface ReviewReceipt {
     id: number
     units: number
@@ -18,6 +20,7 @@ export interface ReviewPayload {
     businessName: string
     currency: string
     locale: string
+    messages: LocaleMessages
     maxReceipts: number
     suspicion: number
     expectedRevenue: number
@@ -52,4 +55,25 @@ export interface ReviewResult extends ReviewGrade {
     fee: number
     suspicionBefore: number
     suspicionAfter: number
+}
+
+export interface ReviewWorksheetRow {
+    id: number
+    createdAt: number
+    units: number
+    totalAmount: number
+}
+
+export interface ReviewPrepareResponse {
+    success: boolean
+    reason?: string
+    message?: string
+    rows?: ReviewWorksheetRow[]
+}
+
+export interface ReviewStampResponse {
+    success: boolean
+    reason?: string
+    message?: string
+    result?: ReviewResult
 }

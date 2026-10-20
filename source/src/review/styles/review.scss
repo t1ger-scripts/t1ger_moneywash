@@ -3,3 +3,18 @@
 @use './review-summary';
 @use './review-worksheet';
 @use './review-finish';
+
+.review-error {
+    position: absolute;
+    left: 50%;
+    bottom: 3%;
+    z-index: 5;
+    transform: translateX(-50%);
+    padding: 0.5em 1em;
+    border: 1px solid #735f42;
+    border-radius: 2px;
+    background: #58452d;
+    color: #f5ead6;
+    font-family: 'Courier New', monospace;
+    font-size: clamp(10px, 0.85vw, 16px);
+}

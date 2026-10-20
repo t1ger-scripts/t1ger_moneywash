@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useReviewStore } from '../stores/review.store'
 import ReviewReceiptPaper from './ReviewReceiptPaper.vue'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 defineProps<{
     pickedId: number | null
@@ -26,7 +28,7 @@ function clickReceipt(event: MouseEvent, id: number) {
 </script>
 
 <template>
-    <section class="review-receipt-tray" aria-label="Receipts">
+    <section class="review-receipt-tray" :aria-label="t('review.tray.label')">
         <div class="review-receipt-grid">
             <button
                 v-for="receipt in store.visibleReceipts"
@@ -53,7 +55,7 @@ function clickReceipt(event: MouseEvent, id: number) {
                 :title="
                     store.stage === 'select' &&
                     store.receiptOvershoots(receipt)
-                        ? 'This receipt exceeds the reduction cap. Excess value will be used.'
+                        ? t('review.tray.overshoot')
                         : undefined
                 "
                 @pointerdown="
@@ -82,7 +84,7 @@ function clickReceipt(event: MouseEvent, id: number) {
                     "
                     class="review-receipt-assigned"
                 >
-                    Attached
+                    {{ t('review.tray.attached') }}
                 </span>
             </button>
         </div>
@@ -91,11 +93,11 @@ function clickReceipt(event: MouseEvent, id: number) {
             v-if="!store.visibleReceipts.length"
             class="review-receipt-empty"
         >
-            No stock-delivery receipts available.
+            {{ t('review.tray.empty') }}
         </p>
     </section>
 
-    <nav class="review-pagination" aria-label="Receipt pages">
+    <nav class="review-pagination" :aria-label="t('review.tray.pages')">
         <button
             type="button"
             :disabled="
@@ -103,7 +105,7 @@ function clickReceipt(event: MouseEvent, id: number) {
                     store.stage !== 'prepare') ||
                 store.page === 0
             "
-            aria-label="Previous receipt page"
+            :aria-label="t('review.tray.previousPage')"
             @click="store.changePage(-1)"
         >
             ‹
@@ -120,7 +122,7 @@ function clickReceipt(event: MouseEvent, id: number) {
                     store.stage !== 'prepare') ||
                 store.page >= store.pageCount - 1
             "
-            aria-label="Next receipt page"
+            :aria-label="t('review.tray.nextPage')"
             @click="store.changePage(1)"
         >
             ›

@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted } from 'vue'
+import { defineAsyncComponent } from 'vue'
 
 import { useUiStore } from '@/shared/stores/ui.store'
 import { useUiLifecycle } from '@/shared/composables/useUiLifecycle'
-import { isFiveMEnvironment } from '@/integrations/nui'
 
 const PortalView = defineAsyncComponent(
     () => import('@/portal/PortalView.vue'),
@@ -24,32 +23,6 @@ const ReviewView = defineAsyncComponent(
 const ui = useUiStore()
 
 useUiLifecycle()
-
-onMounted(async () => {
-    if (!import.meta.env.DEV || isFiveMEnvironment()) return
-
-    const screen = new URLSearchParams(window.location.search).get('screen')
-
-    if (screen !== 'review') return
-
-    const { useReviewStore } = await import(
-        '@/review/stores/review.store'
-    )
-
-    const { createReviewPreview } = await import(
-        '@/review/dev/review.preview'
-    )
-
-    const requestedCount = new URLSearchParams(
-        window.location.search,
-    ).get('receipts')
-
-    const count = requestedCount === null
-        ? 24
-        : Number(requestedCount)
-
-    useReviewStore().open(createReviewPreview(count))
-})
 </script>
 
 <template>

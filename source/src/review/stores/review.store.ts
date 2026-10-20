@@ -2,17 +2,17 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
 import { useUiStore } from '@/shared/stores/ui.store'
+import { i18n, installLocaleMessages } from '@/integrations/i18n'
+import { NUI_CALLBACKS, postNui } from '@/integrations/nui'
 import type {
     ReviewPayload,
     ReviewReceipt,
     ReviewEntry,
     ReviewStage,
     ReviewResult,
+    ReviewPrepareResponse,
+    ReviewStampResponse,
 } from '../review.types'
-import {
-    createReviewWorksheet,
-    gradeReviewWorksheet,
-} from '../dev/review.worksheet'
 
 const PAGE_SIZE = 6
 const SHEET_PAGE_SIZE = 8
@@ -27,9 +27,14 @@ export const useReviewStore = defineStore('review', () => {
     const stage = ref<ReviewStage>('select')
     const result = ref<ReviewResult | null>(null)
 
+    const submitting = ref(false)
+    const errorMessage = ref('')
+
     let finishTimer: ReturnType<typeof setTimeout> | undefined
 
-    const hasPendingReview = computed(() => result.value !== null)
+    // Bumped on every open/dismiss so late server replies are ignored.
+    let generation = 0
+
     const entries = ref<ReviewEntry[]>([])
     const sheetPage = ref(0)
 
@@ -78,6 +83,7 @@ export const useReviewStore = defineStore('review', () => {
 
     const canStamp = computed(() =>
         stage.value === 'prepare' &&
+        !submitting.value &&
         entries.value.length > 0 &&
         assignedCount.value === entries.value.length,
     )
@@ -173,28 +179,29 @@ export const useReviewStore = defineStore('review', () => {
     )
 
     const selectionHint = computed(() => {
+        const t = i18n.global.t
+
         if (selectedIds.value.length === 0) {
-            return 'Select receipts from the tray to prepare your books.'
+            return t('review.hint.empty')
         }
 
         if (!meetsMinimum.value) {
-            const minimum = payload.value?.settings.minReduction ?? 0
-
-            return `Select more receipts to reach at least ${formatReduction(minimum)
-                } points of potential reduction.`
+            return t('review.hint.minimum', {
+                minimum: formatReduction(
+                    payload.value?.settings.minReduction ?? 0,
+                ),
+            })
         }
 
         if (capReached.value) {
             return uncappedReduction.value > reductionCap.value
-                ? 'Reduction cap reached. Excess receipt value will be used without increasing the reduction.'
-                : 'Reduction cap reached. Your selection is ready.'
+                ? t('review.hint.capExcess')
+                : t('review.hint.capReady')
         }
 
-        if (folderFull.value) {
-            return 'Folder full. Your selection is ready.'
-        }
+        if (folderFull.value) return t('review.hint.folderFull')
 
-        return 'Selection ready. Add more receipts for a greater potential reduction.'
+        return t('review.hint.ready')
     })
 
     function formatReduction(value: number): string {
@@ -245,18 +252,15 @@ export const useReviewStore = defineStore('review', () => {
     }
 
     function open(data: ReviewPayload) {
-        if (hasPendingReview.value) {
-            console.info(
-                '[MoneyWash] A committed review is awaiting accountant delivery.',
-            )
-
-            return
-        }
-
+        generation++
         clearTimeout(finishTimer)
+
+        installLocaleMessages(data.locale, data.messages)
 
         payload.value = data
         result.value = null
+        submitting.value = false
+        errorMessage.value = ''
         page.value = 0
         selectedIds.value = []
         stage.value = 'select'
@@ -282,16 +286,59 @@ export const useReviewStore = defineStore('review', () => {
         selectedIds.value.push(id)
     }
 
-    function prepareBooks() {
+    function failureMessage(
+        response: { reason?: string; message?: string } | null,
+    ): string {
+        const key = `review.errors.${response?.reason ?? ''}`
+
+        if (i18n.global.te(key)) return i18n.global.t(key)
+
+        return response?.message ||
+            i18n.global.t('review.errors.request_failed')
+    }
+
+    async function prepareBooks() {
         if (
             stage.value !== 'select' ||
             !meetsMinimum.value ||
-            !payload.value
+            !payload.value ||
+            submitting.value
         ) return
 
-        entries.value = createReviewWorksheet(
-            selectedReceipts.value,
-        )
+        const current = generation
+
+        submitting.value = true
+        errorMessage.value = ''
+
+        let response: ReviewPrepareResponse | null = null
+
+        try {
+            response = await postNui<
+                ReviewPrepareResponse,
+                { ids: number[] }
+            >(NUI_CALLBACKS.reviewPrepare, {
+                ids: [...selectedIds.value],
+            })
+        } catch {
+            response = null
+        }
+
+        if (current !== generation) return
+
+        submitting.value = false
+
+        if (!response?.success || !response.rows) {
+            errorMessage.value = failureMessage(response)
+            return
+        }
+
+        entries.value = response.rows.map((row) => ({
+            id: row.id,
+            createdAt: row.createdAt,
+            units: row.units,
+            totalAmount: row.totalAmount,
+            matchedReceiptId: null,
+        }))
 
         sheetPage.value = 0
         page.value = 0
@@ -347,32 +394,66 @@ export const useReviewStore = defineStore('review', () => {
         )
     }
 
+    // The stamp drop needs an immediate yes/no; the server answer follows.
     function stampBooks(): boolean {
         if (!canStamp.value || !payload.value) return false
 
-        const grade = gradeReviewWorksheet(
-            entries.value,
-            selectedReceipts.value,
-            payload.value.settings.skillImpact,
-        )
+        void commitStamp()
 
-        const reduction = Math.min(
-            baseReduction.value,
-            Math.round(baseReduction.value * grade.quality * 100) / 100,
-        )
+        return true
+    }
 
-        result.value = {
-            ...grade,
-            rows: entries.value.length,
-            reduction,
-            fee: fee.value,
-            suspicionBefore: payload.value.suspicion,
-            suspicionAfter: Math.max(
-                0,
-                payload.value.suspicion - reduction,
-            ),
+    async function commitStamp() {
+        const current = generation
+
+        submitting.value = true
+        errorMessage.value = ''
+
+        let response: ReviewStampResponse | null = null
+
+        try {
+            response = await postNui<
+                ReviewStampResponse,
+                {
+                    rows: Array<{
+                        id: number
+                        matchedReceiptId: number | null
+                        units: number | string
+                        totalAmount: number | string
+                    }>
+                }
+            >(NUI_CALLBACKS.reviewStamp, {
+                rows: entries.value.map((entry) => ({
+                    id: entry.id,
+                    matchedReceiptId: entry.matchedReceiptId,
+                    units: entry.units,
+                    totalAmount: entry.totalAmount,
+                })),
+            })
+        } catch {
+            response = null
         }
 
+        if (current !== generation) return
+
+        submitting.value = false
+
+        if (!response?.success || !response.result) {
+            errorMessage.value = failureMessage(response)
+
+            // The server dropped the sheet: start over from the receipts.
+            if (
+                response?.reason === 'not_prepared' ||
+                response?.reason === 'no_review'
+            ) {
+                entries.value = []
+                stage.value = 'select'
+            }
+
+            return
+        }
+
+        result.value = response.result
         stage.value = 'stamped'
 
         const reducedMotion = window.matchMedia(
@@ -392,17 +473,21 @@ export const useReviewStore = defineStore('review', () => {
                 if (stage.value !== 'filing') return
 
                 stage.value = 'complete'
-                ui.close('review')
-
-                // Dev placeholder: the future client integration
-                // resumes the accountant delivery mission here.
-                console.info(
-                    '[MoneyWash] Review committed. Accountant delivery pending.',
-                )
+                void finishReview()
             }, reducedMotion ? 100 : 1900)
         }, reducedMotion ? 100 : 650)
+    }
 
-        return true
+    // Tells the client the paperwork is filed: it closes the UI and
+    // starts the delivery mission.
+    async function finishReview() {
+        try {
+            await postNui(NUI_CALLBACKS.reviewClose)
+        } catch {
+            // Resource shutdown also performs cleanup.
+        }
+
+        ui.close('review')
     }
 
     function changePage(direction: -1 | 1) {
@@ -413,14 +498,40 @@ export const useReviewStore = defineStore('review', () => {
         )
     }
 
+    // Back button: discard the worksheet. The server replaces the old
+    // sheet the next time books are prepared.
+    function back() {
+        if (stage.value !== 'prepare' || submitting.value) return
+
+        entries.value = []
+        sheetPage.value = 0
+        page.value = 0
+        errorMessage.value = ''
+        stage.value = 'select'
+    }
+
+    // ESC before the stamp: tell the client to discard and close.
+    async function cancel() {
+        if (submitting.value) return
+        if (stage.value !== 'select' && stage.value !== 'prepare') return
+
+        submitting.value = true
+
+        try {
+            await postNui(NUI_CALLBACKS.reviewCancel)
+        } catch {
+            // Resource shutdown also performs cleanup.
+        }
+
+        dismiss()
+    }
+
+    // The client closed the UI (cancelled, timed out, died).
     function dismiss() {
-        ui.close('review')
-
-        // Closing the UI cannot undo committed paperwork.
-        // Let its completion timer finish even if Escape was pressed.
-        if (hasPendingReview.value) return
-
+        generation++
         clearTimeout(finishTimer)
+
+        ui.close('review')
 
         payload.value = null
         result.value = null
@@ -429,6 +540,8 @@ export const useReviewStore = defineStore('review', () => {
         stage.value = 'select'
         entries.value = []
         sheetPage.value = 0
+        submitting.value = false
+        errorMessage.value = ''
     }
 
     return {
@@ -457,7 +570,10 @@ export const useReviewStore = defineStore('review', () => {
         assignedCount,
         result,
         canStamp,
-        hasPendingReview,
+        submitting,
+        errorMessage,
+        back,
+        cancel,
         stampBooks,
         assignReceipt,
         unassignReceipt,

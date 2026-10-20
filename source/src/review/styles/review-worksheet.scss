@@ -296,3 +296,36 @@
         box-shadow: none;
     }
 }
+
+.review-worksheet-header {
+    position: relative;
+}
+
+.review-worksheet-back {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0.45em 0.6em;
+    border: 1px solid #756144;
+    border-radius: 2px;
+    background: #58452d;
+    color: #f5ead6;
+    font: inherit;
+    font-weight: 700;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) {
+        background: #6b5538;
+    }
+
+    &:disabled {
+        background: #c4b59a;
+        border-color: #9b896c;
+        color: #665a45;
+    }
+
+    &:focus-visible {
+        outline: 1px solid #72522f;
+        outline-offset: 2px;
+    }
+}

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ReviewReceiptTray from './components/ReviewReceiptTray.vue'
 import ReviewWorksheet from './components/ReviewWorksheet.vue'
 import ReviewReceiptPaper from './components/ReviewReceiptPaper.vue'
@@ -11,6 +12,7 @@ import { useReviewStore } from './stores/review.store'
 import { reviewImages } from './utils/review.utils'
 import './styles/review.scss'
 
+const { t } = useI18n()
 const store = useReviewStore()
 
 const root = ref<HTMLElement | null>(null)
@@ -77,7 +79,7 @@ function transferStamp(event: KeyboardEvent) {
             }"
             role="dialog"
             aria-modal="true"
-            aria-label="Review business books"
+            :aria-label="t('review.dialogLabel')"
             tabindex="-1"
             @pointermove="moveScene"
             @pointerup="releaseScene"
@@ -104,7 +106,7 @@ function transferStamp(event: KeyboardEvent) {
             <section
                 v-if="store.stage === 'select'"
                 class="review-summary"
-                aria-label="Selected receipt summary"
+                :aria-label="t('review.summary.label')"
             >
                 <img
                     class="review-summary-paper"
@@ -114,9 +116,9 @@ function transferStamp(event: KeyboardEvent) {
                 />
 
                 <div class="review-summary-content">
-                    <p class="review-summary-eyebrow">Accountant review</p>
+                    <p class="review-summary-eyebrow">{{ t('review.eyebrow') }}</p>
 
-                    <h1>Review Books</h1>
+                    <h1>{{ t('review.title') }}</h1>
 
                     <p class="review-summary-business">
                         {{ store.payload?.businessName }}
@@ -124,32 +126,32 @@ function transferStamp(event: KeyboardEvent) {
 
                     <dl class="review-summary-totals">
                         <div>
-                            <dt>Receipts selected</dt>
+                            <dt>{{ t('review.summary.receiptsSelected') }}</dt>
                             <dd>{{ store.selectedIds.length }}</dd>
                         </div>
 
                         <div>
-                            <dt>Delivered units</dt>
+                            <dt>{{ t('review.summary.deliveredUnits') }}</dt>
                             <dd>{{ store.selectedUnits }}</dd>
                         </div>
 
                         <div>
-                            <dt>Purchase value</dt>
+                            <dt>{{ t('review.summary.purchaseValue') }}</dt>
                             <dd>
                                 {{ store.formatMoney(store.selectedAmount) }}
                             </dd>
                         </div>
 
                         <div>
-                            <dt>Accountant fee</dt>
+                            <dt>{{ t('review.summary.accountantFee') }}</dt>
                             <dd>{{ store.formatMoney(store.fee) }}</dd>
                         </div>
 
                         <div>
                             <dt>
-                                Estimated suspicion
+                                {{ t('review.summary.estimatedSuspicion') }}
                                 <small class="review-summary-note">
-                                    With perfect paperwork
+                                    {{ t('review.summary.perfectPaperwork') }}
                                 </small>
                             </dt>
 
@@ -188,10 +190,10 @@ function transferStamp(event: KeyboardEvent) {
                 <button
                     type="button"
                     class="review-paper-button review-prepare-button"
-                    :disabled="!store.meetsMinimum"
+                    :disabled="!store.meetsMinimum || store.submitting"
                     @click="store.prepareBooks"
                 >
-                    Prepare books
+                    {{ t('review.prepareBooks') }}
                 </button>
             </section>
 
@@ -225,6 +227,14 @@ function transferStamp(event: KeyboardEvent) {
             >
                 <ReviewReceiptPaper :receipt="drag.receipt.value" />
             </div>
+
+            <p
+                v-if="store.errorMessage"
+                class="review-error"
+                role="alert"
+            >
+                {{ store.errorMessage }}
+            </p>
         </section>
     </div>
 </template>

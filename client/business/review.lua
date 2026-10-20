@@ -23,11 +23,11 @@ local MSG = {
 local KEYS = {
     errorPrefix = "notification.error_",
     errorUnknown = "notification.error_unknown",
-    started   = "notification.review_started",   -- no args
-    completed = "notification.review_completed", -- %s reduction, %s fee
+    started   = "notification.review_prepared",
+    completed = "notification.review_completed", -- %s suspicion before, %s after, %s fee
     cancelled = "notification.review_cancelled",
-    timeout   = "notification.review_timeout",
-    died      = "notification.review_died",
+    timeout   = "notification.review_cancel_timeout",
+    died      = "notification.review_cancel_dead",
     target    = "target.accountant",
 }
 
@@ -42,9 +42,18 @@ local TARGET_NAME = "t1ger_moneywash:accountant"
 --- HELPERS
 --- ---------------------------------------------------------------------------
 
+--- Server reasons that reuse an existing error key.
+local REASON_ALIASES = {
+    not_enough_money     = "insufficient_funds",
+    business_raided      = "raid_in_progress",
+    busy                 = "business_busy",
+    pending_cash_counter = "business_busy",
+    request_failed       = "unknown",
+}
+
 --- Translates a server failure reason into a readable message.
 local function reasonText(reason)
-    local key = KEYS.errorPrefix .. tostring(reason)
+    local key = KEYS.errorPrefix .. tostring(REASON_ALIASES[reason] or reason)
     local text = locale(key)
 
     if not text or text == key then
@@ -59,6 +68,10 @@ local function formatLocale(key, ...)
     local text = locale(key)
     local ok, result = pcall(string.format, text, ...)
     return ok and result or text
+end
+
+local function formatSuspicion(value)
+    return ("%.1f"):format(tonumber(value) or 0)
 end
 
 local function notifyError(reason)
@@ -202,7 +215,13 @@ local function deliverFolder()
 
     local confirmed = lib.alertDialog({
         header   = locale("menu.review.pay_title"),
-        content  = formatLocale("menu.review.pay_body", FormatMoney(result.fee), result.reduction),
+        content  = formatLocale(
+            "menu.review.pay_body",
+            result.rows,
+            formatSuspicion(result.suspicionBefore),
+            formatSuspicion(result.suspicionAfter),
+            FormatMoney(result.fee)
+        ),
         centered = true,
         cancel   = true,
     })
@@ -230,7 +249,12 @@ local function deliverFolder()
 
     resetMission()
     _API.ShowNotification(
-        formatLocale(KEYS.completed, response.reduction, FormatMoney(response.fee)),
+        formatLocale(
+            KEYS.completed,
+            formatSuspicion(result.suspicionBefore),
+            formatSuspicion(response.suspicionAfter),
+            FormatMoney(response.fee)
+        ),
         "success"
     )
 end
@@ -408,9 +432,22 @@ end
 function BuildReviewMenuOption(businessId, status, menuIcons)
     if status.reviewActive then
         return {
-            title    = locale("menu.review.cancel_title"),
-            icon     = "fa-solid fa-ban",
-            onSelect = cancelReview,
+            title       = locale("menu.handler.review_cancel"),
+            icon        = "fa-solid fa-ban",
+            description = locale("menu.handler.review_cancel_desc"),
+            onSelect    = cancelReview,
+        }
+    end
+
+    if (status.reviewCooldown or 0) > 0 then
+        return {
+            title       = locale("menu.handler.review_books"),
+            icon        = menuIcons.reviewBooks or "fa-solid fa-folder-open",
+            description = formatLocale(
+                "menu.handler.review_cooldown",
+                ("%d min"):format(math.ceil(status.reviewCooldown / 60))
+            ),
+            disabled    = true,
         }
     end
 

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useReviewStore } from '../stores/review.store'
 import { reviewImages } from '../utils/review.utils'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 defineProps<{
     overRowId: number | null
@@ -16,7 +18,7 @@ const store = useReviewStore()
 </script>
 
 <template>
-    <section class="review-worksheet" aria-label="Bookkeeping worksheet">
+    <section class="review-worksheet" :aria-label="t('review.worksheet.label')">
         <img
             class="review-worksheet-paper"
             :src="reviewImages.worksheet"
@@ -26,11 +28,19 @@ const store = useReviewStore()
 
         <div class="review-worksheet-content">
             <header class="review-worksheet-header">
-                <h1>Prepare Book</h1>
+                <button
+                    type="button"
+                    class="review-worksheet-back"
+                    :disabled="store.stage !== 'prepare' || store.submitting"
+                    @click="store.back"
+                >
+                    {{ t('review.back') }}
+                </button>
+
+                <h1>{{ t('review.worksheet.title') }}</h1>
 
                 <p class="review-worksheet-instructions">
-                    Match receipts by ID. Each row has incorrect units
-                    or total paid. Correct it before sealing.
+                    {{ t('review.worksheet.instructions') }}
                 </p>
             </header>
 
@@ -40,11 +50,11 @@ const store = useReviewStore()
             >
                 <thead>
                     <tr>
-                        <th scope="col">Receipt #</th>
-                        <th scope="col">Date</th>
-                        <th scope="col">Units</th>
-                        <th scope="col">Total paid</th>
-                        <th scope="col">Attached</th>
+                        <th scope="col">{{ t('review.worksheet.receiptNumber') }}</th>
+                        <th scope="col">{{ t('review.worksheet.date') }}</th>
+                        <th scope="col">{{ t('review.worksheet.units') }}</th>
+                        <th scope="col">{{ t('review.worksheet.totalPaid') }}</th>
+                        <th scope="col">{{ t('review.worksheet.attached') }}</th>
                     </tr>
                 </thead>
 
@@ -71,7 +81,7 @@ const store = useReviewStore()
                                 min="1"
                                 step="1"
                                 :aria-label="
-                                    `Delivered units for receipt ${entry.id}`
+                                    t('review.worksheet.unitsFor', { id: entry.id })
                                 "
                             />
                         </td>
@@ -87,7 +97,7 @@ const store = useReviewStore()
                                     min="0"
                                     step="1"
                                     :aria-label="
-                                        `Total paid for receipt ${entry.id}`
+                                        t('review.worksheet.totalFor', { id: entry.id })
                                     "
                                 />
                             </span>
@@ -103,12 +113,12 @@ const store = useReviewStore()
                                         store.stage !== 'prepare'
                                     "
                                     :aria-label="
-                                        `Attach selected receipt to row ${entry.id}`
+                                        t('review.worksheet.attach', { id: entry.id })
                                     "
                                     :title="
                                         entry.matchedReceiptId === null
-                                            ? 'No receipt attached'
-                                            : `Attached receipt #${entry.matchedReceiptId}`
+                                            ? t('review.worksheet.noReceipt')
+                                            : t('review.worksheet.attachedReceipt', { id: entry.matchedReceiptId })
                                     "
                                     @click="emit('place', entry.id)"
                                 >
@@ -140,7 +150,7 @@ const store = useReviewStore()
                                     class="review-row-remove"
                                     :disabled="store.stage !== 'prepare'"
                                     :aria-label="
-                                        `Remove receipt from row ${entry.id}`
+                                        t('review.worksheet.remove', { id: entry.id })
                                     "
                                     @click="store.unassignReceipt(entry.id)"
                                 >
@@ -165,8 +175,8 @@ const store = useReviewStore()
                 >
                     {{
                         store.stage === 'stamped'
-                            ? 'PREPARED'
-                            : 'Stamp to commit'
+                            ? t('review.prepared')
+                            : t('review.stampToCommit')
                     }}
                 </div>
 
@@ -175,29 +185,37 @@ const store = useReviewStore()
                     class="review-worksheet-status"
                     aria-live="polite"
                 >
-                    {{ store.assignedCount }} / {{ store.entries.length }}
-                    attached
+                    {{
+                        t('review.worksheet.progress', {
+                            assigned: store.assignedCount,
+                            total: store.entries.length,
+                        })
+                    }}
                 </span>
 
-                <nav aria-label="Worksheet pages">
+                <nav :aria-label="t('review.worksheet.pages')">
                     <button
                         type="button"
                         :disabled="
                             store.stage !== 'prepare' ||
                             store.sheetPage === 0
                         "
-                        aria-label="Previous worksheet page"
+                        :aria-label="t('review.worksheet.previousPage')"
                         @click="store.changeSheetPage(-1)"
                     >
-                        ‹ Previous
+                        ‹ {{ t('review.previous') }}
                     </button>
 
                     <span
                         class="review-worksheet-page"
                         aria-live="polite"
                     >
-                        Page {{ store.sheetPage + 1 }}
-                        of {{ store.sheetPageCount }}
+                        {{
+                            t('review.worksheet.page', {
+                                page: store.sheetPage + 1,
+                                pages: store.sheetPageCount,
+                            })
+                        }}
                     </span>
 
                     <button
@@ -206,10 +224,10 @@ const store = useReviewStore()
                             store.stage !== 'prepare' ||
                             store.sheetPage >= store.sheetPageCount - 1
                         "
-                        aria-label="Next worksheet page"
+                        :aria-label="t('review.worksheet.nextPage')"
                         @click="store.changeSheetPage(1)"
                     >
-                        Next ›
+                        {{ t('review.next') }} ›
                     </button>
                 </nav>
             </footer>

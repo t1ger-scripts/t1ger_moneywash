@@ -9,6 +9,11 @@ export const NUI_CALLBACKS = {
     raidFinish: 't1ger_moneywash:raid:finish',
     raidClose: 't1ger_moneywash:raid:close',
 
+    reviewPrepare: 't1ger_moneywash:review:prepare',
+    reviewStamp: 't1ger_moneywash:review:stamp',
+    reviewCancel: 't1ger_moneywash:review:cancel',
+    reviewClose: 't1ger_moneywash:review:close',
+
     ready: 't1ger_moneywash:portal:ready',
     purchaseBusiness: 't1ger_moneywash:portal:purchaseBusiness',
     setBusinessWaypoint: 't1ger_moneywash:portal:setBusinessWaypoint',
@@ -21,6 +26,9 @@ export const NUI_MESSAGES = {
 
     raidOpen: 't1ger_moneywash:raid:open',
     raidClose: 't1ger_moneywash:raid:close',
+
+    reviewOpen: 't1ger_moneywash:review:open',
+    reviewClose: 't1ger_moneywash:review:close',
 
     open: 't1ger_moneywash:portal:open',
     refresh: 't1ger_moneywash:portal:refresh',

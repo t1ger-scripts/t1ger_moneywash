@@ -7,6 +7,7 @@ import type { CashCounterPayload } from '@/cash-counter/cash-counter.types'
 import { useRaidStore } from '@/raid/stores/raid.store'
 import type { RaidPayload } from '@/raid/raid.types'
 import { useReviewStore } from '@/review/stores/review.store'
+import type { ReviewPayload } from '@/review/review.types'
 import { isFiveMEnvironment, onNuiMessage, postNui, NUI_CALLBACKS, NUI_MESSAGES } from '@/integrations/nui'
 
 export function useUiLifecycle() {
@@ -35,7 +36,7 @@ export function useUiLifecycle() {
         }
 
         if (ui.activeScreen === 'review') {
-            review.dismiss()
+            void review.cancel()
         }
     }
 
@@ -56,6 +57,14 @@ export function useUiLifecycle() {
             onNuiMessage<void>(
                 NUI_MESSAGES.raidClose,
                 raid.dismiss,
+            ),
+            onNuiMessage<ReviewPayload>(
+                NUI_MESSAGES.reviewOpen,
+                review.open,
+            ),
+            onNuiMessage<void>(
+                NUI_MESSAGES.reviewClose,
+                review.dismiss,
             ),
         ]
 

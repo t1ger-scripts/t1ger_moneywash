@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { reviewImages } from '../utils/review.utils'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 defineProps<{
     moving: boolean
@@ -19,7 +21,7 @@ const emit = defineEmits<{
         class="review-stamp-button"
         :class="{ 'is-moving': moving }"
         data-review-stamp
-        aria-label="Stamp paperwork and lock all answers"
+        :aria-label="t('review.stamp.aria')"
         @pointerdown="emit('pick', $event)"
         @keydown.enter.prevent="emit('transfer', $event)"
         @keydown.space.prevent="emit('transfer', $event)"
@@ -31,7 +33,7 @@ const emit = defineEmits<{
             draggable="false"
         />
 
-        <span class="review-stamp-caption">Stamp to commit</span>
+        <span class="review-stamp-caption">{{ t('review.stampToCommit') }}</span>
     </button>
 
     <div
