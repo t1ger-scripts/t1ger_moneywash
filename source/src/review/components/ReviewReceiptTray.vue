@@ -31,10 +31,6 @@ const store = useReviewStore()
 
                 <span class="review-receipt-content">
                     <span class="review-receipt-heading">
-                        Stock delivery
-                    </span>
-
-                    <span class="review-receipt-number">
                         Receipt #{{ receipt.id }}
                     </span>
 
@@ -54,7 +50,7 @@ const store = useReviewStore()
                     </span>
 
                     <span class="review-receipt-total">
-                        <span>Total paid</span>
+                        <span>Total</span>
 
                         <strong>
                             {{ store.formatMoney(receipt.totalAmount) }}

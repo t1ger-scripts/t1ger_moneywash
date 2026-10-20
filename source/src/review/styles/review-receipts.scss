@@ -1,17 +1,21 @@
 .review-receipt-tray {
     position: absolute;
-    left: 8.5%;
-    top: 24%;
-    width: 31%;
-    height: 46%;
+    left: 9%;
+    top: 27%;
+    width: 30%;
+    height: 42%;
 }
 
 .review-receipt-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-template-rows: repeat(2, minmax(0, 1fr));
-    gap: 7% 5%;
+    gap: 6% 4%;
     height: 100%;
+
+    > .review-receipt:nth-child(n + 4) {
+        translate: -14% 0;
+    }
 }
 
 .review-receipt {
@@ -53,72 +57,54 @@
 
 .review-receipt-content {
     position: absolute;
-    inset: 13% 17% 14%;
+    inset: 14% 16% 15%;
     display: flex;
     flex-direction: column;
+    color: #3c3429;
     font-family: 'Courier New', monospace;
-    font-size: clamp(6px, 0.68vw, 13px);
-    line-height: 1.35;
+    font-size: clamp(6px, 0.64vw, 12px);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.45;
     text-align: left;
     pointer-events: none;
 }
 
 .review-receipt-heading {
-    padding-bottom: 6%;
+    padding-bottom: 8%;
     border-bottom: 1px dashed #64533b80;
-    font-size: 0.82em;
     font-weight: 700;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
     white-space: nowrap;
-}
-
-.review-receipt-number {
-    margin-top: 7%;
-    font-size: 0.85em;
-    font-weight: 700;
 }
 
 .review-receipt-delivery {
     display: grid;
-    gap: 2%;
-    margin-top: 5%;
-    font-size: 0.85em;
+    margin-top: 8%;
 }
 
-.review-receipt-line {
+.review-receipt-line,
+.review-receipt-total {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    gap: 4%;
-    margin-top: auto;
-    padding-top: 8%;
+    gap: 5%;
 
     strong {
-        font-size: 1.15em;
-        font-weight: 700;
-        white-space: nowrap;
-    }
-}
-
-.review-receipt-total {
-    display: grid;
-    gap: 4%;
-    margin-top: 7%;
-    padding-top: 6%;
-    border-top: 1px dashed #64533b80;
-
-    > span {
-        font-size: 0.75em;
-        text-transform: uppercase;
-    }
-
-    strong {
-        font-size: 1.15em;
+        font: inherit;
         font-weight: 700;
         text-align: right;
         white-space: nowrap;
     }
+}
+
+.review-receipt-line {
+    margin-top: auto;
+    padding-top: 8%;
+}
+
+.review-receipt-total {
+    margin-top: 8%;
+    padding-top: 8%;
+    border-top: 1px dashed #64533b80;
 }
 
 .review-receipt-mark {
