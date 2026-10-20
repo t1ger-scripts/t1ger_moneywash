@@ -68,12 +68,25 @@ export const useReviewStore = defineStore('review', () => {
         }),
     )
 
+    const timeFormatter = computed(() =>
+        new Intl.DateTimeFormat(payload.value?.locale ?? 'en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+            timeZone: 'UTC',
+        }),
+    )    
+
     function formatMoney(amount: number): string {
         return `${payload.value?.currency ?? '$'}${moneyFormatter.value.format(amount)}`
     }
 
     function formatDate(timestamp: number): string {
         return dateFormatter.value.format(new Date(timestamp * 1000))
+    }
+
+    function formatTime(timestamp: number): string {
+        return timeFormatter.value.format(new Date(timestamp * 1000))
     }
 
     function open(data: ReviewPayload) {
@@ -126,6 +139,7 @@ export const useReviewStore = defineStore('review', () => {
         folderFull,
         formatMoney,
         formatDate,
+        formatTime,
         open,
         toggleReceipt,
         changePage,

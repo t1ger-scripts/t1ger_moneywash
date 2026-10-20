@@ -16,7 +16,7 @@ export function createReviewPreview(count = 24): ReviewPayload {
         maxReceipts: 12,
         receipts: Array.from({ length: total }, (_, index) => {
             const units = 20 + (index % 5) * 10
-            const unitPrice = 125 + (index % 3) * 25
+            const unitPrice = 125
 
             return {
                 id: 1048 + index,

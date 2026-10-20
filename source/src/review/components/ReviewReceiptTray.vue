@@ -35,11 +35,17 @@ const store = useReviewStore()
                     </span>
 
                     <span class="review-receipt-number">
-                        #{{ receipt.id }}
+                        Receipt #{{ receipt.id }}
                     </span>
 
-                    <span class="review-receipt-date">
-                        {{ store.formatDate(receipt.createdAt) }}
+                    <span class="review-receipt-delivery">
+                        <span>
+                            {{ store.formatDate(receipt.createdAt) }}
+                        </span>
+
+                        <span>
+                            {{ store.formatTime(receipt.createdAt) }}
+                        </span>
                     </span>
 
                     <span class="review-receipt-line">
@@ -47,15 +53,12 @@ const store = useReviewStore()
                         <strong>{{ receipt.units }}</strong>
                     </span>
 
-                    <span class="review-receipt-line">
-                        <span>Per unit</span>
-                        <strong>
-                            {{ store.formatMoney(receipt.unitPrice) }}
-                        </strong>
-                    </span>
-
                     <span class="review-receipt-total">
-                        {{ store.formatMoney(receipt.totalAmount) }}
+                        <span>Total paid</span>
+
+                        <strong>
+                            {{ store.formatMoney(receipt.totalAmount) }}
+                        </strong>
                     </span>
                 </span>
 
