@@ -11,7 +11,6 @@ export interface ReviewSettings {
     cyclesForMax: number
     minReduction: number
     feePercent: number
-    faultPercent: number
 }
 
 export interface ReviewPayload {
@@ -28,6 +27,7 @@ export interface ReviewPayload {
 
 export interface ReviewEntry {
     id: number
+    deliveryDate: string
     units: number | string
     totalAmount: number | string
     createdAt: number

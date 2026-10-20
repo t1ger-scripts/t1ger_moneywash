@@ -277,7 +277,6 @@ export const useReviewStore = defineStore('review', () => {
 
         entries.value = createReviewWorksheet(
             selectedReceipts.value,
-            payload.value.settings.faultPercent,
         )
 
         sheetPage.value = 0
