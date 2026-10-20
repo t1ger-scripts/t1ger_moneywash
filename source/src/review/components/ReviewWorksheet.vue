@@ -40,7 +40,7 @@ const store = useReviewStore()
                 <thead>
                     <tr>
                         <th scope="col">Receipt #</th>
-                        <th scope="col">Delivered</th>
+                        <th scope="col">Date</th>
                         <th scope="col">Units</th>
                         <th scope="col">Total paid</th>
                         <th scope="col">Attached</th>

@@ -92,7 +92,7 @@
 }
 
 .review-worksheet-table {
-    --review-columns: 17% 24% 13% 30% 16%;
+    --review-columns: 13% 20% 19% 32% 16%;
 
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
@@ -142,6 +142,11 @@
         border-bottom: 1px dashed #7b68474d;
     }
 
+    th:nth-child(4),
+    td:nth-child(4) {
+        padding-left: 1.3em;
+    }
+
     th:last-child,
     td:last-child {
         justify-content: center;
@@ -163,7 +168,7 @@
         color: inherit;
         font: inherit;
         line-height: 1.25;
-        text-align: right;
+        text-align: left;
         appearance: textfield;
 
         &::-webkit-inner-spin-button,
