@@ -77,3 +77,15 @@ end
 --- @param seizedAmount number exposed cash that was seized
 function OnBusinessRaided(officerIdentifier, ownerIdentifier, businessId, seizedAmount)
 end
+
+--- Called when an owner delivers a prepared review folder and the accountant applies it.
+--- Only fires on a completed delivery, never on a cancel or timeout.
+--- @param identifier string business owner
+--- @param businessId number
+--- @param reduction number suspicion points removed
+--- @param fee number fee paid from the bank
+--- @param suspicionBefore number
+--- @param suspicionAfter number
+--- @param receiptsUsed number how many receipts were consumed
+function OnBusinessBooksReviewed(identifier, businessId, reduction, fee, suspicionBefore, suspicionAfter, receiptsUsed)
+end

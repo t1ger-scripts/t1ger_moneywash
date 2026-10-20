@@ -26,6 +26,7 @@ shared_scripts {
     'shared/config.lua',
     'shared/business.lua',
     'shared/suspicion.lua',
+    'shared/review.lua',
 }
 
 client_scripts {
