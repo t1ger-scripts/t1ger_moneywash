@@ -6,7 +6,6 @@ import RaidEvidenceBag from './components/RaidEvidenceBag.vue'
 import RaidDeposit from './components/RaidDeposit.vue'
 import { useRaidStore } from './stores/raid.store'
 import { useRaidDrag } from './composables/useRaidDrag'
-import { useRaidFinish } from './composables/useRaidFinish'
 import { raidImages } from './utils/raid.utils'
 import './styles/raid.scss'
 
@@ -23,8 +22,6 @@ const {
     keyboardPack,
     finishDeposit,
 } = useRaidDrag(root)
-
-useRaidFinish()
 
 const errorMessage = computed(() => {
     if (!store.error) return ''
