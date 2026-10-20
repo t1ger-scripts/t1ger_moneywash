@@ -14,6 +14,15 @@ export function createReviewPreview(count = 24): ReviewPayload {
         currency: '$',
         locale: 'en-US',
         maxReceipts: 12,
+        suspicion: 68,
+        expectedRevenue: 50000,
+        launderDollarsPerUnit: 500,
+        settings: {
+            maxReduction: 15,
+            cyclesForMax: 5,
+            minReduction: 3,
+            feePercent: 20,
+        },
         receipts: Array.from({ length: total }, (_, index) => {
             const units = 20 + (index % 5) * 10
             const unitPrice = 125

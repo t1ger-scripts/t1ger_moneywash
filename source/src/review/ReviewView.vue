@@ -62,14 +62,32 @@ const store = useReviewStore()
                                 {{ store.formatMoney(store.selectedAmount) }}
                             </dd>
                         </div>
+
+                        <div>
+                            <dt>Accountant fee</dt>
+                            <dd>{{ store.formatMoney(store.fee) }}</dd>
+                        </div>
+
+                        <div>
+                            <dt>Suspicion, up to</dt>
+                            <dd>
+                                {{
+                                    store.formatReduction(
+                                        store.payload?.suspicion ?? 0,
+                                    )
+                                }}
+                                →
+                                {{
+                                    store.formatReduction(
+                                        store.expectedSuspicion,
+                                    )
+                                }}
+                            </dd>
+                        </div>
                     </dl>
 
                     <p class="review-summary-hint" aria-live="polite">
-                        {{
-                            store.folderFull
-                                ? 'Folder full. Deselect a receipt to make room.'
-                                : 'Select receipts from the tray to prepare your books.'
-                        }}
+                        {{ store.selectionHint }}
                     </p>
                 </div>
             </section>

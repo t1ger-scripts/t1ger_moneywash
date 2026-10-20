@@ -52,7 +52,7 @@
 
 .review-summary-totals {
     display: grid;
-    gap: clamp(8px, 1vw, 18px);
+    gap: clamp(6px, 0.7vw, 13px);
     margin: 12% 0 0;
     font-size: clamp(8px, 0.75vw, 14px);
 
@@ -71,8 +71,8 @@
 }
 
 .review-summary-hint {
-    margin-top: 14%;
-    padding-top: 8%;
+    margin-top: 8%;
+    padding-top: 6%;
     border-top: 1px dashed #7b684766;
     font-size: clamp(8px, 0.8vw, 15px);
 }

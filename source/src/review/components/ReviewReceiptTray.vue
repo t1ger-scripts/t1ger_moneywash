@@ -18,9 +18,11 @@ const store = useReviewStore()
                     'is-selected': store.selectedIds.includes(receipt.id),
                 }"
                 :aria-pressed="store.selectedIds.includes(receipt.id)"
-                :disabled="
-                    store.folderFull &&
-                    !store.selectedIds.includes(receipt.id)
+                :disabled="store.isReceiptUnavailable(receipt.id)"
+                :title="
+                    store.receiptOvershoots(receipt)
+                        ? 'This receipt exceeds the reduction cap. Excess value will be used.'
+                        : undefined
                 "
                 @click="store.toggleReceipt(receipt.id)"
             >
