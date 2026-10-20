@@ -6,6 +6,7 @@ import { useCashCounterStore } from '@/cash-counter/stores/cash-counter.store'
 import type { CashCounterPayload } from '@/cash-counter/cash-counter.types'
 import { useRaidStore } from '@/raid/stores/raid.store'
 import type { RaidPayload } from '@/raid/raid.types'
+import { useReviewStore } from '@/review/stores/review.store'
 import { isFiveMEnvironment, onNuiMessage, postNui, NUI_CALLBACKS, NUI_MESSAGES } from '@/integrations/nui'
 
 export function useUiLifecycle() {
@@ -14,6 +15,7 @@ export function useUiLifecycle() {
     const ui = useUiStore()
     const cash = useCashCounterStore()
     const raid = useRaidStore()
+    const review = useReviewStore()
     const portal = usePortalActions()
     let cleanup: Array<() => void> = []
 
@@ -30,6 +32,10 @@ export function useUiLifecycle() {
 
         if (ui.activeScreen === 'raid') {
             void raid.close()
+        }
+
+        if (ui.activeScreen === 'review') {
+            review.dismiss()
         }
     }
 

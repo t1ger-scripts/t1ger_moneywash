@@ -1,7 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export type UiScreen = 'marketplace' | 'cash-counter' | 'raid' | null
+export type UiScreen =
+    | 'marketplace'
+    | 'cash-counter'
+    | 'raid'
+    | 'review'
+    | null
 
 export const useUiStore = defineStore('ui', () => {
     const activeScreen = ref<UiScreen>(null)
