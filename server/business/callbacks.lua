@@ -57,6 +57,8 @@ lib.callback.register("t1ger_moneywash:server:getBusinessStatus", function(sourc
         unitPrice       = GetUnitPrice(business.type),
         minOrder        = GetMinOrder(business.type),
         maxOrder        = GetMaxOrder(business.type),
+        reviewActive    = IsBusinessInReview(businessId),
+        reviewCooldown  = GetReviewCooldownRemaining(businessId),
     }
 end)
 

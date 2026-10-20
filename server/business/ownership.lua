@@ -304,6 +304,11 @@ function TransferBusiness(src, targetSrc, businessId)
         return false, "pending_business_deposit"
     end
 
+    if IsBusinessInReview(businessId) then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "review_in_progress"
+    end
+
     if PlayerOwnsBusiness(targetIdentifier) then
         ReleaseOwnershipLocks(lockKeys)
         return false, "target_owns_business"
@@ -420,6 +425,11 @@ function AbandonBusiness(src, businessId)
     if HasBusinessDeposit(businessId) then
         ReleaseOwnershipLocks(lockKeys)
         return false, "pending_business_deposit"
+    end
+
+    if IsBusinessInReview(businessId) then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "review_in_progress"
     end
 
     local transactionExecuted, transactionSucceeded = pcall(
@@ -630,6 +640,11 @@ function AdminRemoveBusiness(businessType, locationId)
     if HasBusinessDeposit(businessId) then
         ReleaseOwnershipLocks(lockKeys)
         return false, "pending_business_deposit"
+    end
+
+    if IsBusinessInReview(businessId) then
+        ReleaseOwnershipLocks(lockKeys)
+        return false, "review_in_progress"
     end
 
     local transactionExecuted, transactionSucceeded = pcall(
