@@ -45,8 +45,10 @@ function clickReceipt(event: MouseEvent, id: number) {
                         : pickedId === receipt.id
                 "
                 :disabled="
-                    store.stage === 'select' &&
-                    store.isReceiptUnavailable(receipt.id)
+                    (store.stage !== 'select' &&
+                        store.stage !== 'prepare') ||
+                    (store.stage === 'select' &&
+                        store.isReceiptUnavailable(receipt.id))
                 "
                 :title="
                     store.stage === 'select' &&
@@ -96,7 +98,11 @@ function clickReceipt(event: MouseEvent, id: number) {
     <nav class="review-pagination" aria-label="Receipt pages">
         <button
             type="button"
-            :disabled="store.page === 0"
+            :disabled="
+                (store.stage !== 'select' &&
+                    store.stage !== 'prepare') ||
+                store.page === 0
+            "
             aria-label="Previous receipt page"
             @click="store.changePage(-1)"
         >
@@ -109,7 +115,11 @@ function clickReceipt(event: MouseEvent, id: number) {
 
         <button
             type="button"
-            :disabled="store.page >= store.pageCount - 1"
+            :disabled="
+                (store.stage !== 'select' &&
+                    store.stage !== 'prepare') ||
+                store.page >= store.pageCount - 1
+            "
             aria-label="Next receipt page"
             @click="store.changePage(1)"
         >

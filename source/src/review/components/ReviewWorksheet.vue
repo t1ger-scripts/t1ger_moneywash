@@ -182,7 +182,10 @@ const store = useReviewStore()
                 <nav aria-label="Worksheet pages">
                     <button
                         type="button"
-                        :disabled="store.sheetPage === 0"
+                        :disabled="
+                            store.stage !== 'prepare' ||
+                            store.sheetPage === 0
+                        "
                         aria-label="Previous worksheet page"
                         @click="store.changeSheetPage(-1)"
                     >
@@ -200,6 +203,7 @@ const store = useReviewStore()
                     <button
                         type="button"
                         :disabled="
+                            store.stage !== 'prepare' ||
                             store.sheetPage >= store.sheetPageCount - 1
                         "
                         aria-label="Next worksheet page"

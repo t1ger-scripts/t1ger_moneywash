@@ -20,6 +20,7 @@
 
 .review-receipt {
     position: relative;
+    touch-action: none;    
     min-width: 0;
     height: 100%;
     aspect-ratio: 1086 / 1448;
@@ -52,6 +53,10 @@
 
     &.is-selected {
         filter: drop-shadow(0 0 3px #d4bc83);
+    }
+
+    &.is-dragging {
+        opacity: 0.25;
     }
 }
 
@@ -180,14 +185,6 @@
             outline-offset: 2px;
             box-shadow: none;
         }
-    }
-}
-
-.review-receipt {
-    touch-action: none;
-
-    &.is-dragging {
-        opacity: 0.25;
     }
 }
 

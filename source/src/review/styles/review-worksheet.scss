@@ -71,7 +71,6 @@
 }
 
 .review-worksheet-header {
-    flex-shrink: 0;
     padding-bottom: 0.7em;
     border-bottom: 1px solid #7b684780;
 
@@ -100,8 +99,6 @@
     height: 100%;
     min-height: 0;
     margin: 0;
-    border-collapse: collapse;
-    table-layout: fixed;
     font-size: inherit;
     line-height: 1.25;
 
@@ -243,7 +240,6 @@
 
 .review-worksheet-footer {
     display: flex;
-    flex-shrink: 0;
     align-items: center;
     justify-content: space-between;
     gap: 0.8em;

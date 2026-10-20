@@ -19,7 +19,7 @@
 
 .review-summary-content {
     position: absolute;
-    inset: 12% 14% 15%;
+    inset: 12% 14% 22%;
     font-family: 'Courier New', monospace;
 
     p,
@@ -52,8 +52,8 @@
 
 .review-summary-totals {
     display: grid;
-    gap: clamp(6px, 0.7vw, 13px);
-    margin: 12% 0 0;
+    gap: clamp(5px, 0.55vw, 10px);
+    margin: 8% 0 0;
     font-size: clamp(8px, 0.75vw, 14px);
 
     > div {
@@ -71,8 +71,8 @@
 }
 
 .review-summary-hint {
-    margin-top: 8%;
-    padding-top: 6%;
+    margin-top: 6%;
+    padding-top: 5%;
     border-top: 1px dashed #7b684766;
     font-size: clamp(8px, 0.8vw, 15px);
 }
@@ -95,20 +95,4 @@
     font-size: 1.6em;
     font-weight: 700;
     line-height: 1;
-}
-
-.review-summary:not(.review-worksheet) {
-    .review-summary-content {
-        bottom: 22%;
-    }
-
-    .review-summary-totals {
-        margin-top: 8%;
-        gap: clamp(5px, 0.55vw, 10px);
-    }
-
-    .review-summary-hint {
-        margin-top: 6%;
-        padding-top: 5%;
-    }
 }

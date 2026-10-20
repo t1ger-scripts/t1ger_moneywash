@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, ref } from 'vue'
 import ReviewReceiptTray from './components/ReviewReceiptTray.vue'
 import ReviewWorksheet from './components/ReviewWorksheet.vue'
 import ReviewReceiptPaper from './components/ReviewReceiptPaper.vue'
@@ -64,8 +64,6 @@ function transferStamp(event: KeyboardEvent) {
 
     void stamp.transfer(event.currentTarget as HTMLElement)
 }
-
-onBeforeUnmount(cancelScene)
 
 </script>
 

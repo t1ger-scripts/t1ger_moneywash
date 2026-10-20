@@ -169,7 +169,7 @@ export const useReviewStore = defineStore('review', () => {
         selectedIds.value.length > 0 &&
         baseReduction.value > 0 &&
         baseReduction.value >=
-            (payload.value?.settings.minReduction ?? 0),
+        (payload.value?.settings.minReduction ?? 0),
     )
 
     const selectionHint = computed(() => {
@@ -180,9 +180,8 @@ export const useReviewStore = defineStore('review', () => {
         if (!meetsMinimum.value) {
             const minimum = payload.value?.settings.minReduction ?? 0
 
-            return `Select more receipts to reach at least ${
-                formatReduction(minimum)
-            } points of potential reduction.`
+            return `Select more receipts to reach at least ${formatReduction(minimum)
+                } points of potential reduction.`
         }
 
         if (capReached.value) {
@@ -235,7 +234,7 @@ export const useReviewStore = defineStore('review', () => {
             year: 'numeric',
             timeZone: 'UTC',
         }),
-    )    
+    )
 
     function formatMoney(amount: number): string {
         return `${payload.value?.currency ?? '$'}${moneyFormatter.value.format(amount)}`
@@ -337,6 +336,8 @@ export const useReviewStore = defineStore('review', () => {
     }
 
     function changeSheetPage(direction: -1 | 1) {
+        if (stage.value !== 'prepare') return
+
         sheetPage.value = Math.max(
             0,
             Math.min(
@@ -402,9 +403,10 @@ export const useReviewStore = defineStore('review', () => {
         }, reducedMotion ? 100 : 650)
 
         return true
-    } 
+    }
 
     function changePage(direction: -1 | 1) {
+        if (stage.value !== 'select' && stage.value !== 'prepare') return
         page.value = Math.max(
             0,
             Math.min(pageCount.value - 1, page.value + direction),
