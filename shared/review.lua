@@ -39,7 +39,7 @@ Config.Review = {
     -- FOLDER (carried to the accountant, hidden while in a vehicle)
     -- Starting values: tune pos/rot in-game.
     Folder               = {
-        Prop      = { model = "prop_cs_documents_01", pos = { x = 0.1, y = 0.0, z = 0.0 }, rot = { x = 0.0, y = 0.0, z = 0.0 }, bone = 36029 },
+        Prop      = { model = "prop_cs_documents_01", pos = { x = 0.10, y = 0.03, z = 0.07 }, rot = { x = 35.0, y = 130.0, z = 0.0 }, bone = 36029 }
         Animation = { dict = "amb@world_human_clipboard@male@idle_a", name = "idle_a", blendIn = 4.0, blendOut = 1.0, duration = -1, flag = 49 },
     },
 }
