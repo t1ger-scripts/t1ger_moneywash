@@ -27,7 +27,9 @@ export const useReviewStore = defineStore('review', () => {
     const stage = ref<ReviewStage>('select')
     const result = ref<ReviewResult | null>(null)
 
-    let folderTimer: ReturnType<typeof setTimeout> | undefined
+    let finishTimer: ReturnType<typeof setTimeout> | undefined
+
+    const hasPendingReview = computed(() => result.value !== null)
     const entries = ref<ReviewEntry[]>([])
     const sheetPage = ref(0)
 
@@ -244,9 +246,18 @@ export const useReviewStore = defineStore('review', () => {
     }
 
     function open(data: ReviewPayload) {
-        clearTimeout(folderTimer)
-        result.value = null
+        if (hasPendingReview.value) {
+            console.info(
+                '[MoneyWash] A committed review is awaiting accountant delivery.',
+            )
+
+            return
+        }
+
+        clearTimeout(finishTimer)
+
         payload.value = data
+        result.value = null
         page.value = 0
         selectedIds.value = []
         stage.value = 'select'
@@ -363,24 +374,35 @@ export const useReviewStore = defineStore('review', () => {
 
         stage.value = 'stamped'
 
-        clearTimeout(folderTimer)
+        const reducedMotion = window.matchMedia(
+            '(prefers-reduced-motion: reduce)',
+        ).matches
 
-        folderTimer = setTimeout(() => {
-            folderTimer = undefined
+        clearTimeout(finishTimer)
 
-            if (stage.value === 'stamped') {
-                stage.value = 'folder'
-            }
-        }, 650)
+        finishTimer = setTimeout(() => {
+            if (stage.value !== 'stamped') return
+
+            stage.value = 'filing'
+
+            finishTimer = setTimeout(() => {
+                finishTimer = undefined
+
+                if (stage.value !== 'filing') return
+
+                stage.value = 'complete'
+                ui.close('review')
+
+                // Dev placeholder: the future client integration
+                // resumes the accountant delivery mission here.
+                console.info(
+                    '[MoneyWash] Review committed. Accountant delivery pending.',
+                )
+            }, reducedMotion ? 100 : 1900)
+        }, reducedMotion ? 100 : 650)
 
         return true
-    }
-
-    function sealFolder() {
-        if (stage.value !== 'folder' || !result.value) return
-
-        stage.value = 'complete'
-    }    
+    } 
 
     function changePage(direction: -1 | 1) {
         page.value = Math.max(
@@ -390,11 +412,16 @@ export const useReviewStore = defineStore('review', () => {
     }
 
     function dismiss() {
-        clearTimeout(folderTimer)
-        result.value = null
         ui.close('review')
 
+        // Closing the UI cannot undo committed paperwork.
+        // Let its completion timer finish even if Escape was pressed.
+        if (hasPendingReview.value) return
+
+        clearTimeout(finishTimer)
+
         payload.value = null
+        result.value = null
         page.value = 0
         selectedIds.value = []
         stage.value = 'select'
@@ -428,8 +455,8 @@ export const useReviewStore = defineStore('review', () => {
         assignedCount,
         result,
         canStamp,
+        hasPendingReview,
         stampBooks,
-        sealFolder,
         assignReceipt,
         unassignReceipt,
         isReceiptAssigned,

@@ -38,7 +38,7 @@ export type ReviewStage =
     | 'select'
     | 'prepare'
     | 'stamped'
-    | 'folder'
+    | 'filing'
     | 'complete'
 
 export interface ReviewGrade {

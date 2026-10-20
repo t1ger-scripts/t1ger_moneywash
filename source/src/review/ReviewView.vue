@@ -18,7 +18,9 @@ const drag = useReviewDrag(root)
 const stamp = useReviewStamp(root, () => !drag.dragging.value)
 
 const showingPaper = computed(() =>
-    store.stage === 'prepare' || store.stage === 'stamped',
+    store.stage === 'prepare' ||
+    store.stage === 'stamped' ||
+    store.stage === 'filing',
 )
 
 function moveScene(event: PointerEvent) {
@@ -72,6 +74,9 @@ onBeforeUnmount(cancelScene)
         <section
             ref="root"
             class="review-scene"
+            :class="{
+                'review-scene--filing': store.stage === 'filing',
+            }"
             role="dialog"
             aria-modal="true"
             aria-label="Review business books"
@@ -200,7 +205,7 @@ onBeforeUnmount(cancelScene)
                 @place="drag.place"
             />
 
-            <ReviewFolder v-else />
+            <ReviewFolder v-if="store.stage === 'filing'" />
 
             <ReviewStamp
                 v-if="store.canStamp"
