@@ -40,22 +40,112 @@
     margin: 0;
 }
 
-.review-entry-navigation {
+.review-worksheet {
+    position: absolute;
+    left: 47%;
+    top: 24%;
+    width: 47%;
+    height: 55%;
+    color: #463b2c;
+    font-family: 'Courier New', monospace;
+    font-size: clamp(8px, 0.7vw, 13px);
+    font-variant-numeric: tabular-nums;
+}
+
+.review-worksheet-paper {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    filter: drop-shadow(4px 7px 5px #0006);
+}
+
+.review-worksheet-content {
+    position: absolute;
+    inset: 8% 8% 9%;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 7%;
-    font-size: clamp(8px, 0.8vw, 15px);
+    flex-direction: column;
+}
 
-    button {
-        padding: 0.1em 0.45em;
-        background: transparent;
-        color: #463b2c;
-        font-size: 1.7em;
-        line-height: 1;
+.review-worksheet-header {
+    padding-bottom: 2%;
+    border-bottom: 1px solid #7b684766;
 
-        &:disabled {
-            opacity: 0.3;
+    p {
+        color: inherit;
+        font-size: 0.9em;
+        line-height: 1.4;
+    }
+
+    h1 {
+        margin: 1% 0;
+        color: inherit;
+        font-size: 1.8em;
+        line-height: 1.2;
+    }
+}
+
+.review-worksheet-instructions {
+    margin: 2% 0;
+    color: inherit;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.review-worksheet-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: inherit;
+
+    th {
+        padding: 0.5em 0.35em;
+        border-bottom: 1px solid #7b684780;
+        text-align: left;
+    }
+
+    th:nth-child(1) { width: 28%; }
+    th:nth-child(2) { width: 14%; }
+    th:nth-child(3) { width: 29%; }
+    th:nth-child(4) { width: 29%; }
+
+    td {
+        padding: 0.65em 0.35em;
+        border-bottom: 1px dashed #7b68474d;
+        vertical-align: middle;
+    }
+
+    td:first-child > span,
+    small {
+        display: block;
+    }
+
+    small {
+        font-size: 0.9em;
+    }
+
+    tr.is-over td {
+        background: #7b684726;
+    }
+
+    input {
+        width: 100%;
+        min-width: 0;
+        padding: 0.2em;
+        border: 0;
+        border-bottom: 1px solid #7b684766;
+        border-radius: 0;
+        background: #fff3;
+        color: inherit;
+        font: inherit;
+        text-align: right;
+        appearance: textfield;
+
+        &::-webkit-inner-spin-button,
+        &::-webkit-outer-spin-button {
+            margin: 0;
+            appearance: none;
         }
 
         &:focus-visible {
@@ -65,23 +155,74 @@
     }
 }
 
-.review-worksheet .review-summary-totals {
-    margin-top: 7%;
+.review-worksheet-money {
+    display: flex;
+    align-items: baseline;
+    gap: 0.2em;
 }
 
-.review-entry-match {
-    margin-top: 9%;
-    padding-top: 7%;
-    border-top: 1px dashed #7b684766;
-    font-size: clamp(8px, 0.8vw, 15px);
+.review-row-assignment {
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
 }
 
-.review-entry-progress {
-    margin-top: 4%;
-    font-size: clamp(7px, 0.7vw, 13px);
-    opacity: 0.75;
+.review-row-drop {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5em 0.2em;
+    border: 1px dashed #7b684780;
+    background: #6b573212;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+
+    &:disabled {
+        cursor: default;
+    }
 }
 
-.review-back-button {
-    margin-top: 7%;
+.review-row-remove {
+    padding: 0.1em;
+    background: transparent;
+    color: inherit;
+    font-size: 1.3em;
+}
+
+.review-worksheet-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1em;
+    margin-top: auto;
+    padding-top: 2%;
+    font-size: 0.9em;
+
+    nav {
+        display: flex;
+        align-items: center;
+        gap: 0.8em;
+    }
+
+    button {
+        padding: 0.1em 0.4em;
+        background: transparent;
+        color: inherit;
+        font-size: 1.6em;
+        line-height: 1;
+
+        &:disabled {
+            opacity: 0.3;
+        }
+    }
+}
+
+.review-row-drop,
+.review-row-remove,
+.review-worksheet-footer button {
+    &:focus-visible {
+        outline: 1px solid #72522f;
+        outline-offset: 2px;
+        box-shadow: none;
+    }
 }

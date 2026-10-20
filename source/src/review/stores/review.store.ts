@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 
 import { useUiStore } from '@/shared/stores/ui.store'
 import type { ReviewPayload, ReviewReceipt, ReviewEntry } from '../review.types'
+import { createReviewWorksheet } from '../dev/review.worksheet'
 
 const PAGE_SIZE = 6
 
@@ -15,7 +16,7 @@ export const useReviewStore = defineStore('review', () => {
 
     const stage = ref<'select' | 'prepare'>('select')
     const entries = ref<ReviewEntry[]>([])
-    const activeEntryIndex = ref(0)
+    const sheetPage = ref(0)
 
     const receipts = computed(() => payload.value?.receipts ?? [])
 
@@ -41,11 +42,17 @@ export const useReviewStore = defineStore('review', () => {
         return trayReceipts.value.slice(start, start + PAGE_SIZE)
     })
 
-    const activeEntry = computed(() =>
-        entries.value[activeEntryIndex.value] ?? null,
+    const sheetPageCount = computed(() =>
+        Math.max(1, Math.ceil(entries.value.length / PAGE_SIZE)),
     )
 
-    const matchedCount = computed(() =>
+    const visibleEntries = computed(() => {
+        const start = sheetPage.value * PAGE_SIZE
+
+        return entries.value.slice(start, start + PAGE_SIZE)
+    })
+
+    const assignedCount = computed(() =>
         entries.value.filter(
             (entry) => entry.matchedReceiptId !== null,
         ).length,
@@ -210,6 +217,7 @@ export const useReviewStore = defineStore('review', () => {
         new Intl.DateTimeFormat(payload.value?.locale ?? 'en-US', {
             hour: '2-digit',
             minute: '2-digit',
+            second: '2-digit',
             hour12: false,
             timeZone: 'UTC',
         }),
@@ -235,7 +243,7 @@ export const useReviewStore = defineStore('review', () => {
         selectedIds.value = []
         stage.value = 'select'
         entries.value = []
-        activeEntryIndex.value = 0
+        sheetPage.value = 0
 
         ui.open('review')
     }
@@ -257,56 +265,67 @@ export const useReviewStore = defineStore('review', () => {
     }
 
     function prepareBooks() {
-        if (stage.value !== 'select' || !meetsMinimum.value) return
+        if (
+            stage.value !== 'select' ||
+            !meetsMinimum.value ||
+            !payload.value
+        ) return
 
-        // Dev worksheet. Later, the server will supply these entries.
-        const worksheet: ReviewEntry[] = selectedReceipts.value.map(
-            (receipt) => ({
-                id: receipt.id,
-                units: receipt.units,
-                totalAmount: receipt.totalAmount,
-                createdAt: receipt.createdAt,
-                matchedReceiptId: null,
-            }),
+        entries.value = createReviewWorksheet(
+            selectedReceipts.value,
+            payload.value.settings.faultPercent,
         )
 
-        // Shuffle without changing the receipt order in the tray.
-        for (let index = worksheet.length - 1; index > 0; index--) {
-            const target = Math.floor(Math.random() * (index + 1))
-
-            const entry = worksheet[index]!
-            worksheet[index] = worksheet[target]!
-            worksheet[target] = entry
-        }
-
-        entries.value = worksheet
-        activeEntryIndex.value = 0
+        sheetPage.value = 0
         page.value = 0
         stage.value = 'prepare'
     }
 
-    function matchReceipt(id: number) {
-        if (stage.value !== 'prepare' || !activeEntry.value) return
-        if (!selectedIds.value.includes(id)) return
+    function assignReceipt(entryId: number, receiptId: number) {
+        if (stage.value !== 'prepare') return
+        if (!selectedIds.value.includes(receiptId)) return
 
-        activeEntry.value.matchedReceiptId = id
+        const target = entries.value.find(
+            (entry) => entry.id === entryId,
+        )
+
+        if (!target) return
+
+        // One receipt can only be attached to one row.
+        for (const entry of entries.value) {
+            if (entry.matchedReceiptId === receiptId) {
+                entry.matchedReceiptId = null
+            }
+        }
+
+        // Replacing an assignment releases the previous receipt.
+        target.matchedReceiptId = receiptId
     }
 
-    function changeEntry(direction: -1 | 1) {
-        activeEntryIndex.value = Math.max(
-            0,
-            Math.min(
-                entries.value.length - 1,
-                activeEntryIndex.value + direction,
-            ),
+    function unassignReceipt(entryId: number) {
+        if (stage.value !== 'prepare') return
+
+        const entry = entries.value.find(
+            (item) => item.id === entryId,
+        )
+
+        if (entry) entry.matchedReceiptId = null
+    }
+
+    function isReceiptAssigned(receiptId: number): boolean {
+        return entries.value.some(
+            (entry) => entry.matchedReceiptId === receiptId,
         )
     }
 
-    function backToSelection() {
-        stage.value = 'select'
-        entries.value = []
-        activeEntryIndex.value = 0
-        page.value = 0
+    function changeSheetPage(direction: -1 | 1) {
+        sheetPage.value = Math.max(
+            0,
+            Math.min(
+                sheetPageCount.value - 1,
+                sheetPage.value + direction,
+            ),
+        )
     }
 
     function changePage(direction: -1 | 1) {
@@ -324,7 +343,7 @@ export const useReviewStore = defineStore('review', () => {
         selectedIds.value = []
         stage.value = 'select'
         entries.value = []
-        activeEntryIndex.value = 0
+        sheetPage.value = 0
     }
 
     return {
@@ -346,13 +365,15 @@ export const useReviewStore = defineStore('review', () => {
         selectionHint,
         stage,
         entries,
-        activeEntryIndex,
-        activeEntry,
-        matchedCount,
+        sheetPage,
+        sheetPageCount,
+        visibleEntries,
+        assignedCount,
+        assignReceipt,
+        unassignReceipt,
+        isReceiptAssigned,
+        changeSheetPage,
         prepareBooks,
-        matchReceipt,
-        changeEntry,
-        backToSelection,
         formatReduction,
         isReceiptUnavailable,
         receiptOvershoots,

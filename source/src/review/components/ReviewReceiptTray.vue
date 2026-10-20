@@ -1,28 +1,32 @@
 <script setup lang="ts">
 import { useReviewStore } from '../stores/review.store'
-import { reviewImages } from '../utils/review.utils'
-import ReviewAmount from './ReviewAmount.vue'
+import ReviewReceiptPaper from './ReviewReceiptPaper.vue'
+
+defineProps<{
+    pickedId: number | null
+    draggingId: number | null
+}>()
+
+const emit = defineEmits<{
+    pick: [event: PointerEvent, id: number]
+    choose: [id: number]
+}>()
 
 const store = useReviewStore()
 
-function isHighlighted(id: number): boolean {
-    return store.stage === 'select'
-        ? store.selectedIds.includes(id)
-        : store.activeEntry?.matchedReceiptId === id
-}
-
-function pickReceipt(id: number) {
-    if (store.stage === 'prepare') {
-        store.matchReceipt(id)
+function clickReceipt(event: MouseEvent, id: number) {
+    if (store.stage === 'select') {
+        store.toggleReceipt(id)
         return
     }
 
-    store.toggleReceipt(id)
+    // Keyboard activation provides an alternative to dragging.
+    if (event.detail === 0) emit('choose', id)
 }
 </script>
 
 <template>
-    <section class="review-receipt-tray" aria-label="Available receipts">
+    <section class="review-receipt-tray" aria-label="Receipts">
         <div class="review-receipt-grid">
             <button
                 v-for="receipt in store.visibleReceipts"
@@ -30,9 +34,16 @@ function pickReceipt(id: number) {
                 type="button"
                 class="review-receipt"
                 :class="{
-                    'is-selected': isHighlighted(receipt.id),
+                    'is-selected': store.stage === 'select'
+                        ? store.selectedIds.includes(receipt.id)
+                        : pickedId === receipt.id,
+                    'is-dragging': draggingId === receipt.id,
                 }"
-                :aria-pressed="isHighlighted(receipt.id)"
+                :aria-pressed="
+                    store.stage === 'select'
+                        ? store.selectedIds.includes(receipt.id)
+                        : pickedId === receipt.id
+                "
                 :disabled="
                     store.stage === 'select' &&
                     store.isReceiptUnavailable(receipt.id)
@@ -43,49 +54,33 @@ function pickReceipt(id: number) {
                         ? 'This receipt exceeds the reduction cap. Excess value will be used.'
                         : undefined
                 "
-                @click="pickReceipt(receipt.id)"
+                @pointerdown="
+                    store.stage === 'prepare' &&
+                    emit('pick', $event, receipt.id)
+                "
+                @click="clickReceipt($event, receipt.id)"
             >
-                <img
-                    :src="reviewImages.receipt"
-                    alt=""
-                    draggable="false"
-                />
-
-                <span class="review-receipt-content">
-                    <span class="review-receipt-heading">
-                        Receipt #{{ receipt.id }}
-                    </span>
-
-                    <span class="review-receipt-delivery">
-                        <span>
-                            {{ store.formatDate(receipt.createdAt) }}
-                        </span>
-
-                        <span>
-                            {{ store.formatTime(receipt.createdAt) }}
-                        </span>
-                    </span>
-
-                    <span class="review-receipt-line">
-                        <span>Units</span>
-                        <strong>{{ receipt.units }}</strong>
-                    </span>
-
-                    <span class="review-receipt-total">
-                        <span>Total paid</span>
-
-                        <ReviewAmount
-                            :value="store.formatMoney(receipt.totalAmount)"
-                        />
-                    </span>
-                </span>
+                <ReviewReceiptPaper :receipt="receipt" />
 
                 <span
-                    v-if="isHighlighted(receipt.id)"
+                    v-if="
+                        store.stage === 'select' &&
+                        store.selectedIds.includes(receipt.id)
+                    "
                     class="review-receipt-mark"
                     aria-hidden="true"
                 >
                     ✓
+                </span>
+
+                <span
+                    v-if="
+                        store.stage === 'prepare' &&
+                        store.isReceiptAssigned(receipt.id)
+                    "
+                    class="review-receipt-assigned"
+                >
+                    Attached
                 </span>
             </button>
         </div>

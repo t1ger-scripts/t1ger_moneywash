@@ -1,21 +1,32 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import ReviewReceiptTray from './components/ReviewReceiptTray.vue'
 import ReviewWorksheet from './components/ReviewWorksheet.vue'
+import ReviewReceiptPaper from './components/ReviewReceiptPaper.vue'
+import { useReviewDrag } from './composables/useReviewDrag'
 import { useReviewStore } from './stores/review.store'
 import { reviewImages } from './utils/review.utils'
 import './styles/review.scss'
 
 const store = useReviewStore()
+
+const root = ref<HTMLElement | null>(null)
+const drag = useReviewDrag(root)
 </script>
 
 <template>
     <div class="review-overlay">
         <section
+            ref="root"
             class="review-scene"
             role="dialog"
             aria-modal="true"
             aria-label="Review business books"
             tabindex="-1"
+            @pointermove="drag.move"
+            @pointerup="drag.up"
+            @pointercancel="drag.cancel"
+            @lostpointercapture="drag.cancel"
         >
             <img
                 class="review-scene-image"
@@ -24,7 +35,14 @@ const store = useReviewStore()
                 draggable="false"
             />
 
-            <ReviewReceiptTray />
+            <ReviewReceiptTray
+                :picked-id="drag.pickedId.value"
+                :dragging-id="
+                    drag.dragging.value ? drag.pickedId.value : null
+                "
+                @pick="drag.start"
+                @choose="drag.pick"
+            />
 
             <section
                 v-if="store.stage === 'select'"
@@ -120,7 +138,24 @@ const store = useReviewStore()
                 </button>
             </section>
 
-            <ReviewWorksheet v-else />
+            <ReviewWorksheet
+                v-else
+                :over-row-id="drag.overRowId.value"
+                :picked-id="drag.pickedId.value"
+                @place="drag.place"
+            />
+
+            <div
+                v-if="drag.dragging.value && drag.receipt.value"
+                class="review-receipt review-receipt-ghost"
+                :style="{
+                    left: `${drag.x.value}px`,
+                    top: `${drag.y.value}px`,
+                }"
+                aria-hidden="true"
+            >
+                <ReviewReceiptPaper :receipt="drag.receipt.value" />
+            </div>
         </section>
     </div>
 </template>

@@ -86,6 +86,8 @@
     justify-content: space-between;
     align-items: baseline;
     gap: 5%;
+    margin-top: auto;
+    padding-top: 8%;
 
     strong {
         font: inherit;
@@ -93,11 +95,6 @@
         text-align: right;
         white-space: nowrap;
     }
-}
-
-.review-receipt-line {
-    margin-top: auto;
-    padding-top: 8%;
 }
 
 .review-receipt-total {
@@ -184,4 +181,36 @@
             box-shadow: none;
         }
     }
+}
+
+.review-receipt {
+    touch-action: none;
+
+    &.is-dragging {
+        opacity: 0.25;
+    }
+}
+
+.review-receipt-assigned {
+    position: absolute;
+    right: 5%;
+    top: 2%;
+    padding: 0.15em 0.4em;
+    border: 1px solid #756144;
+    background: #d8c9a9;
+    color: #463b2c;
+    font-family: 'Courier New', monospace;
+    font-size: clamp(6px, 0.55vw, 10px);
+    pointer-events: none;
+}
+
+.review-receipt-ghost {
+    position: absolute;
+    z-index: 100;
+    width: 9%;
+    height: auto;
+    aspect-ratio: 1086 / 1448;
+    transform: translate(-50%, -50%) rotate(-3deg);
+    pointer-events: none;
+    transition: none;
 }

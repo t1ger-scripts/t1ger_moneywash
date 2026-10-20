@@ -22,6 +22,7 @@ export function createReviewPreview(count = 24): ReviewPayload {
             cyclesForMax: 5,
             minReduction: 3,
             feePercent: 20,
+            faultPercent: 30,
         },
         receipts: Array.from({ length: total }, (_, index) => {
             const units = 20 + (index % 5) * 10
