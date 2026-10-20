@@ -42,7 +42,7 @@ function OpenHandlerMenu(businessId)
     local safeDisabled = (status.safeCovered + status.safeExposed) <= 0
     local safeDesc = safeDisabled and locale("menu.handler.no_safe_balance") or locale("menu.handler.safe_desc")
 
-    lib.registerContext({
+    local mainContext = {
         id      = "moneywash:handler:main",
         title   = locale("menu.handler.title"),
         options = {
@@ -86,8 +86,13 @@ function OpenHandlerMenu(businessId)
                 end,
             },
         },
-    })
+    }
 
+    if Config.Review and Config.Review.Enable then
+        table.insert(mainContext.options, 4, BuildReviewMenuOption(businessId, status, menuIcons))
+    end
+
+    lib.registerContext(mainContext)
     lib.showContext("moneywash:handler:main")
 end
 

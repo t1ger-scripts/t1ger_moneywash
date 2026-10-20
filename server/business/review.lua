@@ -26,7 +26,6 @@ local Cooldowns = {}
 --- Per-player guard against double-click interleaving
 local Busy = {}
 
-
 --- ---------------------------------------------------------------------------
 --- HELPERS
 --- ---------------------------------------------------------------------------
@@ -52,7 +51,6 @@ local function releasePlayer(src, reason)
     end
 end
 
-
 --- Is a review running (prepared or sealed) for this business?
 ---@param businessId number
 ---@return boolean
@@ -67,7 +65,6 @@ function IsBusinessInReview(businessId)
 end
 exports("IsBusinessInReview", IsBusinessInReview)
 
-
 --- Returns the active sealed review of a player (used by the client mission)
 ---@param src number
 ---@return table|nil
@@ -75,7 +72,6 @@ function GetActiveReview(src)
     local businessId = SealedBySource[src]
     return businessId and Sealed[businessId] or nil
 end
-
 
 --- Seconds left on the cooldown of a business (0 when none).
 ---@param businessId number
@@ -92,7 +88,6 @@ function GetReviewCooldownRemaining(businessId)
 
     return remaining
 end
-
 
 --- Common checks before starting a review. Returns the business on success.
 ---@param src number
@@ -125,7 +120,6 @@ local function validateStart(src, businessId)
     return business
 end
 
-
 --- Loads the player's receipts for a business, newest first.
 ---@param businessId number
 ---@return table[]
@@ -149,7 +143,6 @@ local function loadReceipts(businessId)
     return receipts
 end
 
-
 --- Receipts that are not reserved by a sealed review.
 ---@param businessId number
 ---@return table[]
@@ -163,7 +156,6 @@ local function loadFreeReceipts(businessId)
 
     return free
 end
-
 
 --- Reduction math shared by open (settings), prepare and seal.
 ---@param business table
@@ -186,7 +178,6 @@ local function calculate(business, selectedUnits, quality)
     return base, final, fee
 end
 
-
 --- Changes a number by roughly `percentage`, never below `minimum`.
 local function changeNumber(value, percentage, minimum)
     local difference = math.max(1, math.floor(value * percentage + 0.5))
@@ -194,7 +185,6 @@ local function changeNumber(value, percentage, minimum)
 
     return candidate >= minimum and candidate or (value + difference)
 end
-
 
 --- Shuffles a list in place.
 local function shuffle(list)
@@ -204,6 +194,23 @@ local function shuffle(list)
     end
 end
 
+--- Loads the locale file for the UI, falling back to "en".
+---@return string localeName
+---@return table messages
+local function loadLocalization()
+    local resource = GetCurrentResourceName()
+    local name = (Config.BusinessPortal or {}).Locale or GetConvar("ox:locale", "en")
+    if type(name) ~= "string" or not name:match("^[%w_-]+$") then name = "en" end
+
+    local raw = LoadResourceFile(resource, "locales/" .. name .. ".json")
+    if not raw then
+        name = "en"
+        raw = LoadResourceFile(resource, "locales/en.json")
+    end
+
+    local ok, messages = pcall(json.decode, raw or "{}")
+    return name, ok and messages or {}
+end
 
 --- ---------------------------------------------------------------------------
 --- CALLBACKS
@@ -219,10 +226,13 @@ lib.callback.register("t1ger_moneywash:server:review:open", function(source, bus
 
     local tier = GetTierByType(business.type)
     local cfg = Config.Review
+    local localeName, messages = loadLocalization()
 
     return {
         success = true,
         data = {
+            locale                = localeName,
+            messages              = messages,
             currency              = Config.Currency,
             businessName          = GetBusinessLabel(business),
             maxReceipts           = cfg.MaxReceiptsPerReview,
@@ -240,7 +250,6 @@ lib.callback.register("t1ger_moneywash:server:review:open", function(source, bus
         },
     }
 end)
-
 
 --- "Prepare books": validates the selection and returns the shuffled worksheet.
 lib.callback.register("t1ger_moneywash:server:review:prepare", function(source, businessId, ids)
@@ -316,7 +325,6 @@ lib.callback.register("t1ger_moneywash:server:review:prepare", function(source, 
     Busy[source] = nil
     return response
 end)
-
 
 --- Stamp: grade the answers, lock the result and reserve the receipts.
 lib.callback.register("t1ger_moneywash:server:review:stamp", function(source, answers)
@@ -413,13 +421,11 @@ lib.callback.register("t1ger_moneywash:server:review:stamp", function(source, an
     return response
 end)
 
-
 --- Cancel (Back button, ESC, mission abandoned): free everything, no cost.
 lib.callback.register("t1ger_moneywash:server:review:cancel", function(source)
     releasePlayer(source, nil)
     return true
 end)
-
 
 --- Delivery at the accountant: pay the fee, consume receipts, apply the result.
 lib.callback.register("t1ger_moneywash:server:review:deliver", function(source)
@@ -496,7 +502,6 @@ lib.callback.register("t1ger_moneywash:server:review:deliver", function(source)
     Busy[source] = nil
     return response
 end)
-
 
 --- ---------------------------------------------------------------------------
 --- CLEANUP

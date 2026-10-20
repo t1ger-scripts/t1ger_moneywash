@@ -46,6 +46,7 @@ client_scripts {
     'client/business/main.lua',
     'client/business/menu.lua',
     'client/business/stock.lua',
+    'client/business/review.lua',
     'client/main.lua',
 }
 
