@@ -75,18 +75,30 @@ const store = useReviewStore()
                                     With perfect paperwork
                                 </small>
                             </dt>
-                            <dd>
-                                {{
-                                    store.formatReduction(
-                                        store.payload?.suspicion ?? 0,
-                                    )
-                                }}
-                                →
-                                {{
-                                    store.formatReduction(
-                                        store.expectedSuspicion,
-                                    )
-                                }}
+
+                            <dd class="review-summary-suspicion">
+                                <span>
+                                    {{
+                                        store.formatReduction(
+                                            store.payload?.suspicion ?? 0,
+                                        )
+                                    }}
+                                </span>
+
+                                <span
+                                    class="review-summary-arrow"
+                                    aria-hidden="true"
+                                >
+                                    →
+                                </span>
+
+                                <span>
+                                    {{
+                                        store.formatReduction(
+                                            store.expectedSuspicion,
+                                        )
+                                    }}
+                                </span>
                             </dd>
                         </div>
                     </dl>
