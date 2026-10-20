@@ -1,11 +1,11 @@
 .review-summary {
     position: absolute;
-    left: 59%;
-    top: 24%;
-    width: 27%;
+    left: 60.5%;
+    top: 23%;
+    width: 23%;
     aspect-ratio: 1080 / 1457;
     color: #463b2c;
-    transform: rotate(1deg);
+    transform: rotate(-1deg);
 }
 
 .review-summary-paper {
@@ -52,9 +52,9 @@
 
 .review-summary-totals {
     display: grid;
-    gap: 18px;
+    gap: clamp(8px, 1vw, 18px);
     margin: 12% 0 0;
-    font-size: clamp(8px, 0.85vw, 16px);
+    font-size: clamp(8px, 0.75vw, 14px);
 
     > div {
         display: flex;
