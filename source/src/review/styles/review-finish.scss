@@ -6,8 +6,8 @@
 }
 
 .review-stamp-button {
-    left: 38%;
-    top: 68%;
+    left: 70%;
+    top: 6.0%;
     z-index: 10;
     background: transparent;
     touch-action: none;
@@ -31,6 +31,21 @@
     max-width: none;
     height: auto;
     pointer-events: none;
+    filter: drop-shadow(2px 4px 3px #0006);
+    transition: filter 160ms ease, transform 160ms ease;
+}
+
+.review-stamp-button:hover:not(.is-moving) .review-stamp-art,
+.review-stamp-button:focus-visible .review-stamp-art,
+.review-stamp-ghost .review-stamp-art {
+    filter:
+        drop-shadow(2px 4px 3px #0006)
+        drop-shadow(0 0 3px #e9c987cc)
+        drop-shadow(0 0 10px #d0ad5a80);
+}
+
+.review-stamp-button:hover:not(.is-moving) .review-stamp-art {
+    transform: translateY(-2%);
 }
 
 .review-stamp-caption {
@@ -54,21 +69,38 @@
 .review-stamp-target {
     display: grid;
     place-items: center;
-    min-width: 10em;
-    min-height: 2.6em;
-    padding: 0.3em 0.6em;
-    border: 1px dashed #756144;
-    color: #68543a;
+    min-width: 14em;
+    min-height: 3.2em;
+    padding: 0.5em 0.9em;
+    border: 2px dashed #8c683c;
+    border-radius: 2px;
+    background: #b9965826;
+    color: #624522;
+    box-shadow:
+        0 0 0 3px #a58b551a,
+        inset 0 0 12px #b5985b1a;
+    font-weight: 700;
     text-align: center;
+    transition:
+        background 140ms ease,
+        border-color 140ms ease,
+        box-shadow 140ms ease;
 
     &.is-over {
-        background: #7b684726;
         border-style: solid;
+        border-color: #68461f;
+        background: #b996584d;
+        box-shadow:
+            0 0 0 3px #a58b5533,
+            0 0 14px #b5985b66,
+            inset 0 0 12px #b5985b26;
     }
 
     &.is-stamped {
         border: 2px solid #66503a;
+        background: transparent;
         color: #66503a;
+        box-shadow: none;
         font-weight: 700;
         letter-spacing: 0.12em;
         transform: rotate(-5deg);
