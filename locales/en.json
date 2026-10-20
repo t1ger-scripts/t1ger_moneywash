@@ -8,7 +8,8 @@
         "deliver_stock": "Deliver Stock",
         "atm_deposit": "Deposit cash",
         "atm_cancel": "Cancel deposit",
-        "atm_review": "Review flagged deposits"
+        "atm_review": "Review flagged deposits",
+        "raid_business": "Raid Business"
     },
     "menu": {
         "handler": {

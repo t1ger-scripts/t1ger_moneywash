@@ -38,6 +38,10 @@ local function DeliverTargetName(businessId)
     return ("t1ger_moneywash:handler:deliverstock:%d"):format(businessId)
 end
 
+local function RaidTargetName(businessId)
+    return ("t1ger_moneywash:handler:raid:%d"):format(businessId)
+end
+
 --- -------------------------------------------------------------------------
 --- NPC MANAGEMENT
 --- -------------------------------------------------------------------------
@@ -85,6 +89,22 @@ local function SpawnHandlerNPC(data)
                 DeliverStock()
             end,
         },
+        {
+            name        = RaidTargetName(businessId),
+            icon        = Config.Police.Raid.Target.icon,
+            label       = locale("target.raid_business"),
+            distance    = Config.Police.Raid.Target.distance,
+            canInteract = function(entity)
+                if not Config.Police.Raid.Enable then return false end
+                -- Owners can't raid themselves (Config.Debug allows it for testing)
+                if OwnedBusinesses[businessId] and not Config.Debug then return false end
+                if not IsPoliceJobWithGrade(Config.Police.Raid.MinGrade) then return false end
+                return IsEntityValid(entity) and not IsPedInAnyVehicle(PlayerPedId(), false)
+            end,
+            onSelect    = function()
+                StartRaid(businessId)
+            end,
+        },
     })
 
     if Config.Debug then
@@ -101,7 +121,7 @@ local function DespawnHandlerNPC(businessId)
     HandlerNPCs[businessId] = nil
 
     _API.Target.RemoveLocalEntity(ped, {
-        names = { HandlerTargetName(businessId), DeliverTargetName(businessId) }
+        names = { HandlerTargetName(businessId), DeliverTargetName(businessId), RaidTargetName(businessId) }
     })
     DeletePed(ped)
 
