@@ -319,5 +319,22 @@
             "insufficient_safe_cash": "The Safe no longer holds that amount.",
             "deposit_pending": "You already have a bank deposit in progress."
         }
+    },
+    "raid": {
+        "dialogLabel": "Police evidence collection",
+        "sceneAlt": "Open business safe and evidence bag",
+        "dropHere": "DROP CASH HERE",
+        "releaseToBag": "RELEASE TO BAG",
+        "evidenceLabel": "POLICE EVIDENCE",
+        "bagPile": "Bag {amount}",
+        "slideToSecure": "EVIDENCE · SLIDE TO SECURE",
+        "securing": "SECURING EVIDENCE…",
+        "evidenceSecured": "EVIDENCE SECURED",
+        "sealAria": "Slide from left to right to secure the evidence. Alternatively, press Enter.",
+        "errors": {
+            "request_failed": "Unable to reach the server. Try again.",
+            "no_raid": "This raid is no longer active.",
+            "too_far": "Return to the business to secure the evidence."
+        }
     }
 }

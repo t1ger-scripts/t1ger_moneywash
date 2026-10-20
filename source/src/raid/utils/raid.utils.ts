@@ -66,10 +66,6 @@ export function splitRaidCash(
     )
 }
 
-export function formatRaidMoney(amount: number): string {
-    return `$${amount.toLocaleString('en-US')}`
-}
-
 export function isRaidBagDropPoint(
     event: PointerEvent,
     target: Element,

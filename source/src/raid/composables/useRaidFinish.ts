@@ -1,12 +1,13 @@
 import { onBeforeUnmount, watch } from 'vue'
-import { useUiStore } from '@/shared/stores/ui.store'
 import { useRaidStore } from '../stores/raid.store'
 
+/**
+ * Plays the confirmation sound when the server accepts the seal.
+ * Closing the screen is handled by the store, which also tells Lua.
+ */
 export function useRaidFinish() {
-    const ui = useUiStore()
     const store = useRaidStore()
 
-    let finishTimer: ReturnType<typeof setTimeout> | undefined
     let sound: AudioContext | undefined
 
     function playConfirmation() {
@@ -53,24 +54,12 @@ export function useRaidFinish() {
     watch(
         () => store.sealed,
         sealed => {
-            clearTimeout(finishTimer)
-
-            if (!sealed) return
-
-            playConfirmation()
-
-            finishTimer = setTimeout(() => {
-                if (store.sealed) {
-                    ui.close('raid')
-                }
-            }, 800)
+            if (sealed) playConfirmation()
         },
         { flush: 'sync' },
     )
 
     onBeforeUnmount(() => {
-        clearTimeout(finishTimer)
-
         if (sound && sound.state !== 'closed') {
             void sound.close().catch(() => {})
         }

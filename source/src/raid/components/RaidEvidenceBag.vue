@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import RaidSeal from './RaidSeal.vue'
-import { formatRaidMoney } from '../utils/raid.utils'
 
 defineProps<{
     packedAmount: number
@@ -8,11 +8,15 @@ defineProps<{
     over: boolean
     allPacked: boolean
     sealed: boolean
+    busy: boolean
+    format: (amount: number) => string
 }>()
 
 const emit = defineEmits<{
     seal: []
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -47,19 +51,20 @@ const emit = defineEmits<{
         </svg>
 
         <span v-if="dragging" class="raid-bag-hint">
-            {{ over ? 'RELEASE TO BAG' : 'DROP CASH HERE' }}
+            {{ over ? t('raid.releaseToBag') : t('raid.dropHere') }}
         </span>
     </div>
 
     <div class="raid-evidence-label" aria-live="polite">
-        <span>POLICE EVIDENCE</span>
+        <span>{{ t('raid.evidenceLabel') }}</span>
 
-        <strong>{{ formatRaidMoney(packedAmount) }}</strong>
+        <strong>{{ format(packedAmount) }}</strong>
     </div>
 
     <RaidSeal
         v-if="allPacked"
         :sealed="sealed"
+        :busy="busy"
         @complete="emit('seal')"
     />
 </template>

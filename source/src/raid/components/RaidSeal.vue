@@ -1,13 +1,18 @@
 <script setup lang="ts">
+import { computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRaidSeal } from '../composables/useRaidSeal'
 
 const props = defineProps<{
     sealed: boolean
+    busy: boolean
 }>()
 
 const emit = defineEmits<{
     complete: []
 }>()
+
+const { t } = useI18n()
 
 const {
     progress,
@@ -17,9 +22,24 @@ const {
     cancel,
     finish,
 } = useRaidSeal(
-    () => !props.sealed,
+    () => !props.sealed && !props.busy,
     () => emit('complete'),
 )
+
+// The server refused the seal: put the handle back at the start.
+watch(
+    () => props.busy,
+    (busy, wasBusy) => {
+        if (wasBusy && !busy && !props.sealed) cancel()
+    },
+)
+
+const text = computed(() => {
+    if (props.sealed) return t('raid.evidenceSecured')
+    if (props.busy) return t('raid.securing')
+
+    return t('raid.slideToSecure')
+})
 </script>
 
 <template>
@@ -32,7 +52,7 @@ const {
                 : `${progress * 100}%`,
         }"
         :disabled="sealed"
-        aria-label="Slide from left to right to secure the evidence. Alternatively, press Enter."
+        :aria-label="t('raid.sealAria')"
         @pointerdown="down"
         @pointermove="move"
         @pointerup="up"
@@ -41,11 +61,7 @@ const {
         @keydown.space.prevent="finish"
     >
         <span class="raid-seal-text">
-            {{
-                sealed
-                    ? 'EVIDENCE SECURED'
-                    : 'EVIDENCE · SLIDE TO SECURE'
-            }}
+            {{ text }}
         </span>
 
         <span

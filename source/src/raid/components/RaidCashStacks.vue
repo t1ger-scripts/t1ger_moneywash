@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
     raidImages,
     createSafePileLayout,
-    formatRaidMoney,
 } from '../utils/raid.utils'
 
 const props = defineProps<{
@@ -11,12 +11,15 @@ const props = defineProps<{
     unavailableIds: number[]
     selectedId: number | null
     dragging: boolean
+    format: (amount: number) => string
 }>()
 
 const emit = defineEmits<{
     pick: [event: PointerEvent, id: number]
     transfer: [event: KeyboardEvent, id: number]
 }>()
+
+const { t } = useI18n()
 
 const visiblePiles = computed(() =>
     createSafePileLayout(
@@ -37,7 +40,7 @@ const visiblePiles = computed(() =>
                     'raid-cash-bundle--held':
                         dragging && selectedId === pile.id,
                 }"
-                :aria-label="`Bag ${formatRaidMoney(piles[pile.id])}`"
+                :aria-label="t('raid.bagPile', { amount: format(piles[pile.id]) })"
                 @pointerdown="emit('pick', $event, pile.id)"
                 @keydown.enter.prevent="emit('transfer', $event, pile.id)"
                 @keydown.space.prevent="emit('transfer', $event, pile.id)"
@@ -61,7 +64,7 @@ const visiblePiles = computed(() =>
                 }"
                 aria-hidden="true"
             >
-                {{ formatRaidMoney(piles[pile.id]) }}
+                {{ format(piles[pile.id]) }}
             </span>
         </template>
     </div>

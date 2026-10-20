@@ -6,6 +6,9 @@ export const NUI_CALLBACKS = {
     cashStatus: 't1ger_moneywash:cashCounter:status',
     cashClose: 't1ger_moneywash:cashCounter:close',
 
+    raidFinish: 't1ger_moneywash:raid:finish',
+    raidClose: 't1ger_moneywash:raid:close',
+
     ready: 't1ger_moneywash:portal:ready',
     purchaseBusiness: 't1ger_moneywash:portal:purchaseBusiness',
     setBusinessWaypoint: 't1ger_moneywash:portal:setBusinessWaypoint',
@@ -15,6 +18,9 @@ export const NUI_CALLBACKS = {
 export const NUI_MESSAGES = {
     cashOpen: 't1ger_moneywash:cashCounter:open',
     cashClose: 't1ger_moneywash:cashCounter:close',
+
+    raidOpen: 't1ger_moneywash:raid:open',
+    raidClose: 't1ger_moneywash:raid:close',
 
     open: 't1ger_moneywash:portal:open',
     refresh: 't1ger_moneywash:portal:refresh',

@@ -23,4 +23,22 @@
         object-fit: contain;
         pointer-events: none;
     }
+    
+    .raid-error {
+        position: absolute;
+        z-index: 60;
+        top: 2.8%;
+        left: 50%;
+        max-width: 65%;
+        margin: 0;
+        padding: 9px 14px;
+        border: 1px solid #ac805b80;
+        border-radius: 3px;
+        background: #2a1b14f2;
+        color: #f1ceb3;
+        font-size: clamp(10px, 0.8vw, 15px);
+        text-align: center;
+        transform: translateX(-50%);
+        pointer-events: none;
+    }
 }

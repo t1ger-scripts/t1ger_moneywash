@@ -4,19 +4,16 @@ import { usePortalActions } from '@/portal/composables/usePortalActions'
 import { useUiStore } from '@/shared/stores/ui.store'
 import { useCashCounterStore } from '@/cash-counter/stores/cash-counter.store'
 import type { CashCounterPayload } from '@/cash-counter/cash-counter.types'
-import {
-    isFiveMEnvironment,
-    onNuiMessage,
-    postNui,
-    NUI_CALLBACKS,
-    NUI_MESSAGES,
-} from '@/integrations/nui'
+import { useRaidStore } from '@/raid/stores/raid.store'
+import type { RaidPayload } from '@/raid/raid.types'
+import { isFiveMEnvironment, onNuiMessage, postNui, NUI_CALLBACKS, NUI_MESSAGES } from '@/integrations/nui'
 
 export function useUiLifecycle() {
     usePortalLifecycle()
 
     const ui = useUiStore()
     const cash = useCashCounterStore()
+    const raid = useRaidStore()
     const portal = usePortalActions()
     let cleanup: Array<() => void> = []
 
@@ -30,6 +27,10 @@ export function useUiLifecycle() {
         if (ui.activeScreen === 'cash-counter') {
             void cash.close()
         }
+
+        if (ui.activeScreen === 'raid') {
+            void raid.close()
+        }
     }
 
     onMounted(async () => {
@@ -42,17 +43,17 @@ export function useUiLifecycle() {
                 NUI_MESSAGES.cashClose,
                 cash.dismiss,
             ),
+            onNuiMessage<RaidPayload>(
+                NUI_MESSAGES.raidOpen,
+                raid.open,
+            ),
+            onNuiMessage<void>(
+                NUI_MESSAGES.raidClose,
+                raid.dismiss,
+            ),
         ]
 
         window.addEventListener('keydown', keydown)
-
-        if (import.meta.env.DEV && !isFiveMEnvironment()) {
-            const params = new URLSearchParams(window.location.search)
-
-            if (params.get('preview') === 'raid') {
-                ui.open('raid')
-            }
-        }
 
         if (isFiveMEnvironment()) {
             try {
