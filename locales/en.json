@@ -9,7 +9,8 @@
         "atm_deposit": "Deposit cash",
         "atm_cancel": "Cancel deposit",
         "atm_review": "Review flagged deposits",
-        "raid_business": "Raid Business"
+        "raid_business": "Raid Business",
+        "accountant": "Hand Over Folder"
     },
     "menu": {
         "handler": {
@@ -47,7 +48,14 @@
             "safe_desc": "View your Safe balance and make a deposit",
             "bank_deposit_desc": "Move your Safe balance into your bank account",
             "deposit_enroute": "In progress: take %s to any ATM (%s left)",
-            "deposit_processing": "Processing: %s clears in %s"
+            "deposit_processing": "Processing: %s clears in %s",
+            "review_books": "Review Books",
+            "review_books_desc": "Hand your stock receipts to an accountant to lower suspicion",
+            "review_in_progress": "A sealed folder is waiting to be delivered to the accountant",
+            "review_cooldown": "The accountant is fully booked. Available again in %s",
+            "review_no_suspicion": "Nothing to review. Suspicion is already at zero",
+            "review_cancel": "Cancel Review",
+            "review_cancel_desc": "Drop the sealed folder. Nothing is charged and your receipts are kept"
         },
         "launder": {
             "title": "Launder Money",
@@ -68,6 +76,13 @@
             "exposed_desc": "Exposed: %s | Covered: %s \n\n Exposed funds are drawn first.",
             "cancel_title": "Cancel Deposit",
             "cancel_body": "Cancel the deposit and return the cash to your Safe?"
+        },
+        "review": {
+            "title": "Review Books",
+            "cancel_title": "Cancel Review",
+            "cancel_body": "Drop the sealed folder? Nothing is charged and your receipts are kept.",
+            "pay_title": "Accountant",
+            "pay_body": "The accountant will review %d receipts.\n\nSuspicion: %s → %s\nFee: %s (paid from your bank)"
         },
         "manage": {
             "title": "Manage Business",
@@ -131,6 +146,11 @@
         "raid_cancel_timeout": "The raid took too long and was called off.",
         "raid_cancel_too_far": "You moved too far from the business. The raid was called off.",
         "raid_cancel_dead": "You went down. The raid was called off.",
+        "review_prepared": "Folder sealed. Deliver it to the accountant. The office is marked on your map.",
+        "review_completed": "Books reviewed. Suspicion %s → %s. Fee paid: %s.",
+        "review_cancelled": "Review cancelled. Your receipts are untouched.",
+        "review_cancel_timeout": "You ran out of time. The review was cancelled and your receipts are untouched.",
+        "review_cancel_dead": "You collapsed. The review was cancelled and your receipts are untouched.",
         "unknown_location": "an unknown location",
         "police_alert": {
             "Moderate": "Unusual financial activity reported at %s near %s",
@@ -183,6 +203,17 @@
         "error_raid_cooldown": "This business was raided recently",
         "error_business_busy": "The business is busy right now. Try again in a moment.",
         "error_nothing_to_seize": "There is nothing to seize here",
+        "error_review_disabled": "Accountant reviews are disabled",
+        "error_review_active": "You already have a review in progress",
+        "error_review_cooldown": "You reviewed your books recently. Try again later.",
+        "error_review_in_progress": "Finish or cancel your accountant review first",
+        "error_nothing_to_review": "Nothing to review. Suspicion is already at zero",
+        "error_invalid_selection": "Invalid receipt selection",
+        "error_below_minimum": "Those receipts aren't worth enough to review",
+        "error_not_prepared": "Your paperwork expired. Open the books again to start over",
+        "error_no_review": "You aren't carrying a sealed folder",
+        "error_accountant_too_far": "You're too far from the accountant",
+        "error_no_accountant_locations": "No accountant offices are configured",
         "error_unknown": "Something went wrong"
     },
     "progress": {
@@ -328,6 +359,81 @@
             "request_failed": "Unable to reach the server. Try again.",
             "no_raid": "This raid is no longer active.",
             "too_far": "Return to the business to secure the evidence."
+        }
+    },
+    "review": {
+        "dialogLabel": "Review business books",
+        "eyebrow": "Accountant review",
+        "title": "Review Books",
+        "prepareBooks": "Prepare books",
+        "back": "Back to receipts",
+        "stampToCommit": "Stamp to commit",
+        "prepared": "PREPARED",
+        "previous": "Previous",
+        "next": "Next",
+        "summary": {
+            "label": "Selected receipt summary",
+            "receiptsSelected": "Receipts selected",
+            "deliveredUnits": "Delivered units",
+            "purchaseValue": "Purchase value",
+            "accountantFee": "Accountant fee",
+            "estimatedSuspicion": "Estimated suspicion",
+            "perfectPaperwork": "With perfect paperwork"
+        },
+        "hint": {
+            "empty": "Select receipts from the tray to prepare your books.",
+            "minimum": "Select more receipts to reach at least {minimum} points of potential reduction.",
+            "capExcess": "Reduction cap reached. Excess receipt value will be used without increasing the reduction.",
+            "capReady": "Reduction cap reached. Your selection is ready.",
+            "folderFull": "Folder full. Your selection is ready.",
+            "ready": "Selection ready. Add more receipts for a greater potential reduction."
+        },
+        "tray": {
+            "label": "Receipts",
+            "overshoot": "This receipt exceeds the reduction cap. Excess value will be used.",
+            "attached": "Attached",
+            "empty": "No stock-delivery receipts available.",
+            "pages": "Receipt pages",
+            "previousPage": "Previous receipt page",
+            "nextPage": "Next receipt page"
+        },
+        "receipt": {
+            "heading": "Receipt #{id}",
+            "units": "Units",
+            "totalPaid": "Total paid"
+        },
+        "worksheet": {
+            "label": "Bookkeeping worksheet",
+            "title": "Prepare Book",
+            "instructions": "Match receipts by ID. Each row has incorrect units or total paid. Correct it before sealing.",
+            "receiptNumber": "Receipt #",
+            "date": "Date",
+            "units": "Units",
+            "totalPaid": "Total paid",
+            "attached": "Attached",
+            "unitsFor": "Delivered units for receipt {id}",
+            "totalFor": "Total paid for receipt {id}",
+            "attach": "Attach selected receipt to row {id}",
+            "noReceipt": "No receipt attached",
+            "attachedReceipt": "Attached receipt #{id}",
+            "remove": "Remove receipt from row {id}",
+            "progress": "{assigned} / {total} attached",
+            "pages": "Worksheet pages",
+            "previousPage": "Previous worksheet page",
+            "nextPage": "Next worksheet page",
+            "page": "Page {page} of {pages}"
+        },
+        "stamp": {
+            "aria": "Stamp paperwork and lock all answers"
+        },
+        "folder": {
+            "label": "Filing and sealing the prepared books"
+        },
+        "errors": {
+            "request_failed": "The accountant's office couldn't be reached. Try again.",
+            "invalid_selection": "Those receipts can't be used. Reopen the books and try again.",
+            "below_minimum": "Those receipts aren't worth enough to review.",
+            "not_prepared": "Your paperwork expired. Reopen the books to start over."
         }
     }
 }
