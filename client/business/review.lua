@@ -445,7 +445,7 @@ function BuildReviewMenuOption(businessId, status, menuIcons)
             icon        = menuIcons.reviewBooks or "fa-solid fa-folder-open",
             description = formatLocale(
                 "menu.handler.review_cooldown",
-                ("%d min"):format(math.ceil(status.reviewCooldown / 60))
+                formatLocale("menu.handler.review_cooldown_minutes", math.ceil(status.reviewCooldown / 60))
             ),
             disabled    = true,
         }

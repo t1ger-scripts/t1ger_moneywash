@@ -53,6 +53,7 @@
             "review_books_desc": "Hand your stock receipts to an accountant to lower suspicion",
             "review_in_progress": "A sealed folder is waiting to be delivered to the accountant",
             "review_cooldown": "The accountant is fully booked. Available again in %s",
+            "review_cooldown_minutes": "%d min",
             "review_no_suspicion": "Nothing to review. Suspicion is already at zero",
             "review_cancel": "Cancel Review",
             "review_cancel_desc": "Drop the sealed folder. Nothing is charged and your receipts are kept"
