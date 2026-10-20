@@ -565,11 +565,9 @@ function AdminAddBusiness(identifier, businessType, locationId)
 
     ReleaseOwnershipLocks(lockKeys)
 
-    for _, player in ipairs(_API.GetOnlinePlayers()) do
-        if player.identifier == identifier then
-            TriggerClientEvent("t1ger_moneywash:client:businessPurchased", player.source, id, businessType, locationId)
-            break
-        end
+    local ownerSrc = GetOnlineSourceByIdentifier(identifier)
+    if ownerSrc then
+        TriggerClientEvent("t1ger_moneywash:client:businessPurchased", ownerSrc, id, businessType, locationId)
     end
 
     BroadcastBusinessLocations()
@@ -653,27 +651,21 @@ function AdminRemoveBusiness(businessType, locationId)
     end
 
     -- Refund an active stock order belonging to this business.
-    for _, player in ipairs(_API.GetOnlinePlayers()) do
-        if player.identifier == identifier then
-            local mission = GetActiveStockMission(player.source)
+    local ownerSrc = GetOnlineSourceByIdentifier(identifier)
+    if ownerSrc then
+        local mission = GetActiveStockMission(ownerSrc)
 
-            if mission and mission.businessId == businessId then
-                CancelStockMission(player.source)
-            end
-
-            break
+        if mission and mission.businessId == businessId then
+            CancelStockMission(ownerSrc)
         end
     end
 
     RemoveFromStore(businessId)
     ReleaseOwnershipLocks(lockKeys)
 
-    for _, player in ipairs(_API.GetOnlinePlayers()) do
-        if player.identifier == identifier then
-            TriggerClientEvent("t1ger_moneywash:client:businessRemoved", player.source, businessId)
-
-            break
-        end
+    local removedOwnerSrc = GetOnlineSourceByIdentifier(identifier)
+    if removedOwnerSrc then
+        TriggerClientEvent("t1ger_moneywash:client:businessRemoved", removedOwnerSrc, businessId)
     end
 
     BroadcastBusinessLocations()

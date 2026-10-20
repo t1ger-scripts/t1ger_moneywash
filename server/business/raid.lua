@@ -25,9 +25,7 @@ local function fail(reason)
 end
 
 local function onlineSource(identifier)
-    for _, player in ipairs(_API.GetOnlinePlayers()) do
-        if player.identifier == identifier then return player.source end
-    end
+    return GetOnlineSourceByIdentifier(identifier)
 end
 
 --- True while a raid is running at the business. Checked by the cash counter,

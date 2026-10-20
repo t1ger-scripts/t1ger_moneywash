@@ -1,22 +1,44 @@
---- Returns the number of currently on-duty players whose job matches Config.Police.Jobs.
---- @return integer count
-function GetOnDutyPoliceCount()
-    local count = 0
-    local players = _API.GetOnlinePlayers()
+--- Returns the server id of an online player by identifier, or nil if offline.
+--- Single framework lookup - never scans the player list.
+--- @param identifier string
+--- @return integer|nil source
+function GetOnlineSourceByIdentifier(identifier)
+    if type(identifier) ~= "string" then return nil end
 
-    for _, playerData in ipairs(players) do
-        local job = playerData.job
-        if job and job.onDuty then
+    local src = _API.Player.GetSource(identifier)
+    if src and src > 0 then return src end
+
+    return nil
+end
+
+--- Returns the sources of online players holding a Config.Police.Jobs job.
+--- One framework lookup per player (job only).
+--- @param onDutyOnly boolean|nil
+--- @return integer[] sources
+function GetPoliceSources(onDutyOnly)
+    local sources = {}
+
+    for _, id in ipairs(GetPlayers()) do
+        local src = tonumber(id)
+        local job = src and _API.Player.GetJob(src)
+
+        if job and (not onDutyOnly or job.onDuty) then
             for _, policeJob in ipairs(Config.Police.Jobs) do
                 if job.name == policeJob then
-                    count = count + 1
+                    sources[#sources + 1] = src
                     break
                 end
             end
         end
     end
 
-    return count
+    return sources
+end
+
+--- Returns the number of currently on-duty players whose job matches Config.Police.Jobs.
+--- @return integer count
+function GetOnDutyPoliceCount()
+    return #GetPoliceSources(true)
 end
 
 --- Checks whether the given player's coordinates are within range of a target vector.

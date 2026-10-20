@@ -11,15 +11,7 @@ function SendPoliceNotification(alertType, coords, data)
 
     local position = coords and vector3(coords.x, coords.y, coords.z) or nil
 
-    for _, player in ipairs(_API.GetOnlinePlayers()) do
-        local job = player.job
-        if job then
-            for _, policeJob in ipairs(Config.Police.Jobs) do
-                if job.name == policeJob then
-                    TriggerClientEvent("t1ger_moneywash:client:policeAlert", player.source, alertType, position, data)
-                    break
-                end
-            end
-        end
+    for _, policeSrc in ipairs(GetPoliceSources(false)) do
+        TriggerClientEvent("t1ger_moneywash:client:policeAlert", policeSrc, alertType, position, data)
     end
 end

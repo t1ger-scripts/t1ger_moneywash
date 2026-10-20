@@ -170,9 +170,7 @@ end
 ---@param identifier string
 ---@return integer? source Nil if the player is offline
 local function onlineSource(identifier)
-    for _, player in ipairs(_API.GetOnlinePlayers()) do
-        if player.identifier == identifier then return player.source end
-    end
+    return GetOnlineSourceByIdentifier(identifier)
 end
 
 --- Status payload for the UI: the player's dirty cash and the batch's public state.

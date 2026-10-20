@@ -10,13 +10,7 @@
 function ApplySuspicionDecay(business)
     if business.suspicion <= 0 then return end
 
-    local isOnline = false
-    for _, player in ipairs(_API.GetOnlinePlayers()) do
-        if player.identifier == business.identifier then
-            isOnline = true
-            break
-        end
-    end
+    local isOnline = GetOnlineSourceByIdentifier(business.identifier) ~= nil
 
     local decayPerCycle = isOnline and Config.Suspicion.Decay.OnlinePointsPerCycle or
     Config.Suspicion.Decay.OfflinePointsPerCycle
