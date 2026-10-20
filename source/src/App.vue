@@ -36,7 +36,19 @@ onMounted(async () => {
         '@/review/stores/review.store'
     )
 
-    useReviewStore().open()
+    const { createReviewPreview } = await import(
+        '@/review/dev/review.preview'
+    )
+
+    const requestedCount = new URLSearchParams(
+        window.location.search,
+    ).get('receipts')
+
+    const count = requestedCount === null
+        ? 24
+        : Number(requestedCount)
+
+    useReviewStore().open(createReviewPreview(count))
 })
 </script>
 
