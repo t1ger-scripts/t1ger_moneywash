@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useReviewStore } from '../stores/review.store'
 import { reviewImages } from '../utils/review.utils'
+import ReviewAmount from './ReviewAmount.vue'
 
 const store = useReviewStore()
 </script>
@@ -50,11 +51,11 @@ const store = useReviewStore()
                     </span>
 
                     <span class="review-receipt-total">
-                        <span>Total</span>
+                        <span>Total paid</span>
 
-                        <strong>
-                            {{ store.formatMoney(receipt.totalAmount) }}
-                        </strong>
+                        <ReviewAmount
+                            :value="store.formatMoney(receipt.totalAmount)"
+                        />
                     </span>
                 </span>
 

@@ -81,8 +81,7 @@
     margin-top: 8%;
 }
 
-.review-receipt-line,
-.review-receipt-total {
+.review-receipt-line {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
@@ -102,9 +101,28 @@
 }
 
 .review-receipt-total {
-    margin-top: 8%;
-    padding-top: 8%;
+    display: grid;
+    gap: 0.15em;
+    margin-top: 6%;
+    padding-top: 6%;
     border-top: 1px dashed #64533b80;
+}
+
+.review-amount {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 1.45em;
+    font-weight: 700;
+    line-height: 1.45;
+    text-align: right;
+}
+
+.review-amount-value {
+    display: inline-block;
+    font: inherit;
+    vertical-align: top;
+    white-space: nowrap;
 }
 
 .review-receipt-mark {
