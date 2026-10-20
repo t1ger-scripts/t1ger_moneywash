@@ -164,7 +164,6 @@ Config.Reputation = {
         launder          = { enable = true, points = 10 }, -- per successful launder action
         stockDelivery    = { enable = true, points = 5 },  -- per completed stock delivery mission
         bankDeposit      = { enable = true, points = 5 },  -- when a deposit clears into personal bank
-        accountantReview = { enable = true, points = 15 }, -- per completed records review
         businessPurchase = { enable = true, points = 50 }, -- once per business type, first purchase only
     },
 

@@ -27,8 +27,6 @@
             "launder": "Launder Money",
             "order_stock": "Order Stock",
             "bank_deposit": "Bank Deposit",
-            "review_books": "Review Books",
-            "review_receipts": "Available Receipts",
             "manage": "Manage Business",
             "manage_desc": "Transfer ownership or abandon this business",
             "not_found": "Business not found",
@@ -49,8 +47,7 @@
             "safe_desc": "View your Safe balance and make a deposit",
             "bank_deposit_desc": "Move your Safe balance into your bank account",
             "deposit_enroute": "In progress: take %s to any ATM (%s left)",
-            "deposit_processing": "Processing: %s clears in %s",
-            "review_books_desc": "Submit receipts to reduce suspicion"
+            "deposit_processing": "Processing: %s clears in %s"
         },
         "launder": {
             "title": "Launder Money",
@@ -71,14 +68,6 @@
             "exposed_desc": "Exposed: %s | Covered: %s \n\n Exposed funds are drawn first.",
             "cancel_title": "Cancel Deposit",
             "cancel_body": "Cancel the deposit and return the cash to your Safe?"
-        },
-        "review": {
-            "title": "Review Books",
-            "select_label": "Select receipts to submit",
-            "no_receipts": "No receipts available — complete a stock delivery first",
-            "estimate_failed": "Could not estimate effectiveness",
-            "confirm_title": "Confirm Records Review",
-            "confirm_body": "Effectiveness: %s\nEstimated suspicion reduction: %d points\n\nA fee will be taken from your bank."
         },
         "manage": {
             "title": "Manage Business",
@@ -178,7 +167,6 @@
         "error_no_pickup_locations": "No pickup locations configured",
         "error_no_active_mission": "No active mission found",
         "error_insufficient_safe_balance": "Not enough funds in the Safe",
-        "error_no_receipts_selected": "No receipts selected",
         "error_invalid_atm": "That's not a valid ATM",
         "error_atm_too_far": "You're too far from the ATM",
         "error_pending_business_deposit": "Finish your pending bank deposit first",

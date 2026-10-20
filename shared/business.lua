@@ -35,7 +35,6 @@ Config.Business = {
         safeCovered    = "fa-solid fa-shield-halved",
         safeExposed    = "fa-solid fa-triangle-exclamation",
         bankDeposit    = "fa-solid fa-building-columns",
-        reviewBooks    = "fa-solid fa-book",
         manage         = "fa-solid fa-gear",
         transfer       = "fa-solid fa-right-left",
         abandon        = "fa-solid fa-door-open",
