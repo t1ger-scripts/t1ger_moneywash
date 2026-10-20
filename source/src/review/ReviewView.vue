@@ -48,10 +48,7 @@ const store = useReviewStore()
                     <dl class="review-summary-totals">
                         <div>
                             <dt>Receipts selected</dt>
-                            <dd>
-                                {{ store.selectedIds.length }}
-                                / {{ store.maxReceipts }}
-                            </dd>
+                            <dd>{{ store.selectedIds.length }}</dd>
                         </div>
 
                         <div>
