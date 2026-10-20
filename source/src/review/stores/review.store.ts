@@ -6,6 +6,7 @@ import type { ReviewPayload, ReviewReceipt, ReviewEntry } from '../review.types'
 import { createReviewWorksheet } from '../dev/review.worksheet'
 
 const PAGE_SIZE = 6
+const SHEET_PAGE_SIZE = 8
 
 export const useReviewStore = defineStore('review', () => {
     const ui = useUiStore()
@@ -43,13 +44,16 @@ export const useReviewStore = defineStore('review', () => {
     })
 
     const sheetPageCount = computed(() =>
-        Math.max(1, Math.ceil(entries.value.length / PAGE_SIZE)),
+        Math.max(
+            1,
+            Math.ceil(entries.value.length / SHEET_PAGE_SIZE),
+        ),
     )
 
     const visibleEntries = computed(() => {
-        const start = sheetPage.value * PAGE_SIZE
+        const start = sheetPage.value * SHEET_PAGE_SIZE
 
-        return entries.value.slice(start, start + PAGE_SIZE)
+        return entries.value.slice(start, start + SHEET_PAGE_SIZE)
     })
 
     const assignedCount = computed(() =>

@@ -25,15 +25,13 @@ const store = useReviewStore()
 
         <div class="review-worksheet-content">
             <header class="review-worksheet-header">
-                <p>Delivery reconciliation</p>
-                <h1>Prepare Books</h1>
-                <p>{{ store.payload?.businessName }}</p>
-            </header>
+                <h1>Prepare Book</h1>
 
-            <p class="review-worksheet-instructions">
-                Attach each receipt to its row. Check units and total paid;
-                edit only incorrect values.
-            </p>
+                <p class="review-worksheet-instructions">
+                    Drag each receipt onto its matching row.
+                    Correct any incorrect units or total paid.
+                </p>
+            </header>
 
             <table class="review-worksheet-table">
                 <thead>
@@ -112,9 +110,9 @@ const store = useReviewStore()
             </table>
 
             <footer class="review-worksheet-footer">
-                <span aria-live="polite">
+                <span class="review-worksheet-status" aria-live="polite">
                     {{ store.assignedCount }} / {{ store.entries.length }}
-                    receipts attached
+                    attached
                 </span>
 
                 <nav aria-label="Worksheet pages">
@@ -124,11 +122,15 @@ const store = useReviewStore()
                         aria-label="Previous worksheet page"
                         @click="store.changeSheetPage(-1)"
                     >
-                        ‹
+                        ‹ Previous
                     </button>
 
-                    <span>
-                        {{ store.sheetPage + 1 }} / {{ store.sheetPageCount }}
+                    <span
+                        class="review-worksheet-page"
+                        aria-live="polite"
+                    >
+                        Page {{ store.sheetPage + 1 }}
+                        of {{ store.sheetPageCount }}
                     </span>
 
                     <button
@@ -139,7 +141,7 @@ const store = useReviewStore()
                         aria-label="Next worksheet page"
                         @click="store.changeSheetPage(1)"
                     >
-                        ›
+                        Next ›
                     </button>
                 </nav>
             </footer>
