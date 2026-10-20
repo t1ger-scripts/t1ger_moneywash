@@ -38,8 +38,6 @@
             "launder_desc": "Convert dirty cash into clean money",
             "stock_desc": "View current stock and place new orders",
             "view_stock": "Current Stock",
-            "stock_value": "Stock Value",
-            "stock_coverage": "Stock Coverage",
             "view_stock_desc": "Total inventory held, out of your maximum storage capacity",
             "cycle_readiness": "Cycle Readiness",
             "cycle_readiness_desc": "How ready your stock is for the rest of this cycle's laundering — full bar means no suspicion penalty",
@@ -49,7 +47,6 @@
             "stock_full_desc": "Your storage is full",
             "order_in_progress": "You have an active order - use /%s to cancel it",
             "safe_desc": "View your Safe balance and make a deposit",
-            "view_safe": "Safe Balance",
             "bank_deposit_desc": "Move your Safe balance into your bank account",
             "deposit_enroute": "In progress: take %s to any ATM (%s left)",
             "deposit_processing": "Processing: %s clears in %s",
@@ -57,9 +54,7 @@
         },
         "launder": {
             "title": "Launder Money",
-            "no_dirty_cash": "You aren't carrying any dirty cash",
-            "amount_label": "Amount to launder (carrying %s)",
-            "amount_desc": "Remaining cycle capacity: %s"
+            "no_dirty_cash": "You aren't carrying any dirty cash"
         },
         "stock": {
             "title": "Order Stock",
@@ -124,7 +119,6 @@
         "no_permission": "You don't have permission to do this",
         "mission_already_active": "You already have an active mission",
         "stock_order_placed": "Stock order placed. GPS waypoint set to pickup location.",
-        "stock_box_ready": "Pick up your stock at the marked location",
         "stock_picked_up": "Stock picked up, load it in a vehicle.",
         "stock_loaded": "Stock loaded, return to your business with the stock.",
         "stock_delivered": "Stock delivered successfully",
@@ -202,15 +196,7 @@
         "error_unknown": "Something went wrong"
     },
     "progress": {
-        "laundering": "Laundering money...",
-        "delivering_stock": "Delivering stock...",
         "atm_deposit": "Depositing cash..."
-    },
-    "textui": {
-        "pickup_box": "[E] Pick up stock",
-        "load_vehicle": "Enter your vehicle to load the stock",
-        "deliver_stock": "Drive to your business and deliver the stock",
-        "dropoff_stock": "[E] Deliver stock to Handler"
     },
     "common": {
         "close": "Close",
@@ -269,8 +255,6 @@
             "acquisitionPrice": "Acquisition Price",
             "projectedRevenue": "Projected Revenue",
             "revenueCycle": "{amount} / cycle",
-            "operatingFee": "Operating Fee",
-            "operatingFeeValue": "{percentage}%",
             "requiredInvestorScore": "Required Investor Score",
             "investorScoreValue": "{points} pts",
             "purchase": "Purchase Business",
@@ -317,11 +301,9 @@
         "confirming": "Confirming transaction…",
         "injected": "{amount} injected into your business.",
         "withdrawn": "{amount} taken out of the Safe. Take it to an ATM.",
-        "empty": "No cash available.",
         "awaiting": "AWAITING CASH",
         "batchComplete": "BATCH COMPLETE",
         "dropHere": "DROP CASH HERE",
-        "deposited": "DEPOSITED",
         "errors": {
             "invalid_amount": "Choose a whole amount within your available balance.",
             "insufficient_dirty_cash": "You no longer have enough dirty cash. The transaction was cancelled.",
