@@ -75,6 +75,7 @@ server_scripts {
     'server/business/commands.lua',
     'server/business/portal.lua',
     'server/business/cash_counter.lua',
+    'server/street_wash.lua',
 
     'server/main.lua',
 }
