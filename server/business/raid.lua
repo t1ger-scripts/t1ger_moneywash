@@ -192,8 +192,6 @@ lib.callback.register("t1ger_moneywash:server:raid:start", function(src, busines
         _API.SendNotification(owner, locale("notification.raid_started"), "error")
     end
 
-    RunHook("OnBusinessRaidStarted", officerIdentifier, business.identifier, businessId)
-
     return { success = true, data = { exposed = business.safeExposed } }
 end)
 
