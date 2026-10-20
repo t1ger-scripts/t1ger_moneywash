@@ -128,6 +128,6 @@ for action, cfg in pairs(Config.Reputation.Commands or {}) do
                 and ("[MoneyWash] %s %d rep points for player %d"):format(action, amount, target)
                 or ("[MoneyWash] Failed to %s rep for player %d"):format(action, target)
             if isConsole then print(msg) else _API.SendNotification(src, msg, success and "success" or "error") end
-        end, true)
+        end, false)
     end
 end

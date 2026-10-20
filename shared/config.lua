@@ -152,6 +152,8 @@ Config.Reputation = {
     Enable           = true,
     AutosaveInterval = 5, -- real minutes between automatic DB saves
 
+    CommandSuggestion = "Usage: /%s <playerId> <amount>",
+
     Commands         = {
         set    = { enable = true, name = "moneywash:rep:set" },
         add    = { enable = true, name = "moneywash:rep:add" },
@@ -164,7 +166,7 @@ Config.Reputation = {
         launder          = { enable = true, points = 10 }, -- per successful launder action
         stockDelivery    = { enable = true, points = 5 },  -- per completed stock delivery mission
         bankDeposit      = { enable = true, points = 5 },  -- when a deposit clears into personal bank
-        businessPurchase = { enable = true, points = 50 }, -- once per business type, first purchase only
+        businessPurchase = { enable = true, points = 50 }, -- per business purchase
     },
 
     -- Titles are purely cosmetic - the script checks points only
