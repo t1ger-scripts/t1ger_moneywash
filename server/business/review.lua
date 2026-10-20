@@ -448,14 +448,9 @@ lib.callback.register("t1ger_moneywash:server:review:deliver", function(source)
         if not review then return { success = false, reason = "no_review" } end
 
         local cfg = Config.Review
-        local nearOffice = false
-
-        for _, location in ipairs(cfg.Accountant.Locations or {}) do
-            if IsPlayerNearCoords(source, location, cfg.Accountant.TargetDistance + 3.0) then
-                nearOffice = true
-                break
-            end
-        end
+        local office = cfg.Accountant.Location
+        local nearOffice = office ~= nil
+            and IsPlayerNearCoords(source, office, cfg.Accountant.TargetDistance + 3.0)
 
         if not nearOffice then return { success = false, reason = "accountant_too_far" } end
 

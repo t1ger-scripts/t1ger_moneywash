@@ -92,20 +92,6 @@ local function closeUi(notifyNui)
     ui = { open = false, sealed = false }
 end
 
-local function nearestLocation(locations)
-    local playerCoords = GetEntityCoords(PlayerPedId())
-    local best, bestDistance
-
-    for _, location in ipairs(locations or {}) do
-        local distance = #(playerCoords - vec3(location.x, location.y, location.z))
-        if not bestDistance or distance < bestDistance then
-            best, bestDistance = location, distance
-        end
-    end
-
-    return best
-end
-
 --- ---------------------------------------------------------------------------
 --- CARRY (folder prop + animation)
 --- ---------------------------------------------------------------------------
@@ -133,6 +119,11 @@ end
 local function createFolderProp()
     local cfg = Config.Review.Folder.Prop
     local ped = PlayerPedId()
+
+    if not IsModelInCdimage(GetHashKey(cfg.model)) then
+        print(("^1[MoneyWash] Invalid review folder prop model '%s'. Check Config.Review.Folder.Prop.model.^7"):format(cfg.model))
+        return nil
+    end
 
     lib.requestModel(cfg.model)
     local prop = CreateObject(GetHashKey(cfg.model), 0.0, 0.0, 0.0, false, false, false)
@@ -263,6 +254,12 @@ local function spawnAccountant()
     if not mission or mission.ped then return end
 
     local cfg = Config.Review.Accountant
+
+    if not IsModelInCdimage(GetHashKey(cfg.Model)) then
+        print(("^1[MoneyWash] Invalid accountant ped model '%s'. Check Config.Review.Accountant.Model.^7"):format(cfg.Model))
+        return
+    end
+
     local ped = SpawnStaticPed(cfg.Model, mission.location, cfg.Scenario)
     mission.ped = ped
 
@@ -286,7 +283,7 @@ end
 --- Starts the delivery after the stamp: folder in hand, blip on the office.
 local function startMission(businessId, result)
     local cfg = Config.Review.Accountant
-    local location = nearestLocation(cfg.Locations)
+    local location = cfg.Location
 
     if not location then
         request("cancel")
@@ -341,7 +338,7 @@ function OpenBooksReview(businessId)
     local cfg = Config.Review
     if not cfg or not cfg.Enable then return notifyError("review_disabled") end
 
-    if not cfg.Accountant.Locations or #cfg.Accountant.Locations == 0 then
+    if not cfg.Accountant.Location then
         return notifyError("no_accountant_locations")
     end
 
