@@ -267,7 +267,7 @@ local function createMarketplaceSnapshot(source)
         locations = visibleLocations,
 
         settings = {
-            currencySymbol = Config.CurrencySymbol or "$",
+            currencySymbol = Config.Currency or "$",
             theme = portalConfig.Theme or {},
         },
 
