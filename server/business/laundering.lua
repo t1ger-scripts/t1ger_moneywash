@@ -60,13 +60,7 @@ function PublishCashInjection(src, identifier, businessId, amount, result)
     end
 
     if Config.Reputation.Enable and Config.Reputation.Rewards.launder.enable then
-        local points = Config.Reputation.Rewards.launder.points
-        if src and IsReputationReady(src) then
-            AddReputationPoints(src, points)
-            SavePlayerReputation(src)
-        else
-            MySQL.update("UPDATE moneywash_reputation SET points = points + ? WHERE identifier = ?", { points, identifier })
-        end
+        AwardReputationPoints(src, identifier, Config.Reputation.Rewards.launder.points)
     end
 
     RollPoliceNotification(business)

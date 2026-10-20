@@ -168,20 +168,11 @@ function BuyBusiness(src, businessType, locationId)
     -- The database and in-memory store are now synchronized.
     ReleaseOwnershipLocks(lockKeys)
 
-    -- Award reputation for the first currently registered business of this type.
+    -- Award reputation for the purchase.
     if Config.Reputation.Enable and
         Config.Reputation.Rewards.businessPurchase.enable
     then
-        local previouslyOwned = MySQL.scalar.await(
-            "SELECT COUNT(*) FROM moneywash_businesses WHERE identifier = ? AND business_type = ? AND id != ?", {
-                identifier,
-                businessType,
-                id,
-            })
-
-        if (previouslyOwned or 0) == 0 then
-            AddReputationPoints(src, Config.Reputation.Rewards.businessPurchase.points)
-        end
+        AwardReputationPoints(src, identifier, Config.Reputation.Rewards.businessPurchase.points)
     end
 
     TriggerClientEvent("t1ger_moneywash:client:businessPurchased", src, id, businessType, locationId)

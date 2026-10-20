@@ -334,7 +334,7 @@ function CompleteStockDelivery(src)
     )
 
     if Config.Reputation.Enable and Config.Reputation.Rewards.stockDelivery.enable then
-        AddReputationPoints(src, Config.Reputation.Rewards.stockDelivery.points)
+        AwardReputationPoints(src, business.identifier, Config.Reputation.Rewards.stockDelivery.points)
     end
 
     RunHook("OnStockOrderCompleted", business.identifier, mission.businessId, business.type, mission.units, deliveredUnits, mission.cost)

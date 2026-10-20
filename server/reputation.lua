@@ -123,6 +123,9 @@ end
 ---@type table<number, MoneyWashReputation>
 local PlayerReputation = {}
 
+---@type table<string, integer>
+local PendingPoints = {} -- identifier -> points earned while the profile was still loading
+
 --- Returns the reputation object for a player
 --- @param src number
 --- @return MoneyWashReputation|nil
@@ -175,6 +178,35 @@ function SetReputationPoints(src, amount)
 end
 exports("SetReputationPoints", SetReputationPoints)
 
+--- Applies queued points straight to the database (used when the player left before loading finished)
+--- @param identifier string
+local function flushPendingPoints(identifier)
+    local pending = PendingPoints[identifier]
+    if not pending then return end
+    PendingPoints[identifier] = nil
+    MySQL.update("UPDATE moneywash_reputation SET points = points + ? WHERE identifier = ?", { pending, identifier })
+end
+
+--- Awards points to a player whether they are loaded, still loading, or offline.
+--- Loaded: applied in memory (saved by autosave/disconnect/shutdown).
+--- Online but still loading: queued and applied when the profile finishes loading.
+--- Offline: written straight to the database.
+--- @param src number|nil
+--- @param identifier string
+--- @param amount number
+function AwardReputationPoints(src, identifier, amount)
+    if type(amount) ~= "number" or amount == 0 or not identifier then return end
+
+    local rep = src and PlayerReputation[src]
+    if rep then
+        rep:AddPoints(amount)
+    elseif src then
+        PendingPoints[identifier] = (PendingPoints[identifier] or 0) + amount
+    else
+        MySQL.update("UPDATE moneywash_reputation SET points = points + ? WHERE identifier = ?", { amount, identifier })
+    end
+end
+
 --- ============================================================================
 --- LOAD / SAVE
 --- ============================================================================
@@ -200,8 +232,22 @@ function LoadReputation(src)
         row = {points = 0}
     end
 
+    -- The player left while the profile was loading: don't register a stale entry
+    -- (a reused server id would otherwise inherit this profile)
+    if not GetPlayerName(src) then
+        flushPendingPoints(identifier)
+        return
+    end
+
     local rep = MoneyWashReputation:Create(src, row)
     PlayerReputation[src] = rep
+
+    -- Apply points earned while the profile was loading
+    local pending = PendingPoints[identifier]
+    if pending then
+        PendingPoints[identifier] = nil
+        rep:AddPoints(pending)
+    end
 
     -- Sync to the owning client
     rep:Sync()

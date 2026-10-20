@@ -215,13 +215,7 @@ local function awardReputation(src, identifier)
     local reward = Config.Reputation.Rewards.bankDeposit
     if not (Config.Reputation.Enable and reward and reward.enable) then return end
 
-    if src and IsReputationReady(src) then
-        AddReputationPoints(src, reward.points)
-        SavePlayerReputation(src)
-    else
-        MySQL.update("UPDATE moneywash_reputation SET points = points + ? WHERE identifier = ?",
-            { reward.points, identifier })
-    end
+    AwardReputationPoints(src, identifier, reward.points)
 end
 
 local function payDeposit(d)
