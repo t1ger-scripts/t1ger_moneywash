@@ -163,6 +163,8 @@ local METER_POSITIONS = {
 
 --- Draws the cargo condition meter for the current frame.
 local function DrawStockDamageMeter()
+    if not stockMission then return end
+
     local cfg = Config.Business.StockMission.DamageMeter
     if not cfg.Enable then return end
 
@@ -210,7 +212,7 @@ CreateThread(function()
 
             -- Carrying the box by hand: no getting into vehicles. The only way to
             -- use a vehicle is to load the box onto it with the vehicle target.
-            if stockMission.state == "carried" then
+            if stockMission and stockMission.state == "carried" then
                 DisableControlAction(0, 23, true) -- INPUT_ENTER (F / controller Y)
                 if IsDisabledControlJustPressed(0, 23) then
                     _API.ShowNotification(locale("notification.stock_cannot_enter_vehicle"), "error")
