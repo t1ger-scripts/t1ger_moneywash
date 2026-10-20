@@ -20,13 +20,11 @@ shared_scripts {
     '@ox_lib/init.lua',
     'bridge/config.lua',
     'bridge/init.lua',
-
-    -- IMPORTANT: config.lua MUST load first
-    -- Do NOT switch back to shared/*.lua wildcard
     'shared/config.lua',
     'shared/business.lua',
     'shared/suspicion.lua',
     'shared/review.lua',
+    'shared/street_wash.lua',
 }
 
 client_scripts {

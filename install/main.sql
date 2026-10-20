@@ -49,8 +49,8 @@ CREATE TABLE IF NOT EXISTS `moneywash_deposits` (
     `identifier`  VARCHAR(100)    NOT NULL,                             -- owner player identifier
     `business_id` INT(11)         NOT NULL,                             -- the business the money came from
     `amount`      BIGINT(20)      NOT NULL,                             -- gross amount taken from the Safe
-    `covered`     INT             NOT NULL DEFAULT 0 AFTER `amount`,
-    `exposed`     INT             NOT NULL DEFAULT 0 AFTER `covered`;
+    `covered`     INT             NOT NULL DEFAULT 0,
+    `exposed`     INT             NOT NULL DEFAULT 0,
     `x`           DECIMAL(12,6)   DEFAULT NULL,                         -- where it was submitted (set at the ATM)
     `y`           DECIMAL(12,6)   DEFAULT NULL,
     `z`           DECIMAL(12,6)   DEFAULT NULL,
