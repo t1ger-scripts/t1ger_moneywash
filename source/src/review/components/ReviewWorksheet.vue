@@ -5,6 +5,7 @@ import { reviewImages } from '../utils/review.utils'
 defineProps<{
     overRowId: number | null
     pickedId: number | null
+    stampOver: boolean
 }>()
 
 const emit = defineEmits<{
@@ -66,6 +67,7 @@ const store = useReviewStore()
                             <input
                                 v-model.number="entry.units"
                                 type="number"
+                                :disabled="store.stage !== 'prepare'"
                                 min="1"
                                 step="1"
                                 :aria-label="
@@ -81,6 +83,7 @@ const store = useReviewStore()
                                 <input
                                     v-model.number="entry.totalAmount"
                                     type="number"
+                                    :disabled="store.stage !== 'prepare'"
                                     min="0"
                                     step="1"
                                     :aria-label="
@@ -95,7 +98,10 @@ const store = useReviewStore()
                                 <button
                                     type="button"
                                     class="review-row-attachment"
-                                    :disabled="pickedId === null"
+                                    :disabled="
+                                        pickedId === null ||
+                                        store.stage !== 'prepare'
+                                    "
                                     :aria-label="
                                         `Attach selected receipt to row ${entry.id}`
                                     "
@@ -132,6 +138,7 @@ const store = useReviewStore()
                                     v-if="entry.matchedReceiptId !== null"
                                     type="button"
                                     class="review-row-remove"
+                                    :disabled="store.stage !== 'prepare'"
                                     :aria-label="
                                         `Remove receipt from row ${entry.id}`
                                     "
@@ -146,7 +153,28 @@ const store = useReviewStore()
             </table>
 
             <footer class="review-worksheet-footer">
-                <span class="review-worksheet-status" aria-live="polite">
+                <div
+                    v-if="store.canStamp || store.stage === 'stamped'"
+                    class="review-stamp-target"
+                    :class="{
+                        'is-over': stampOver,
+                        'is-stamped': store.stage === 'stamped',
+                    }"
+                    data-review-stamp-target
+                    aria-live="polite"
+                >
+                    {{
+                        store.stage === 'stamped'
+                            ? 'PREPARED'
+                            : 'Stamp to commit'
+                    }}
+                </div>
+
+                <span
+                    v-else
+                    class="review-worksheet-status"
+                    aria-live="polite"
+                >
                     {{ store.assignedCount }} / {{ store.entries.length }}
                     attached
                 </span>

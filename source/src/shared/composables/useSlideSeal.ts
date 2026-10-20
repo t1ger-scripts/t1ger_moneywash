@@ -1,6 +1,6 @@
 import { onBeforeUnmount, ref } from 'vue'
 
-export function useRaidSeal(
+export function useSlideSeal(
     enabled: () => boolean,
     complete: () => void,
 ) {

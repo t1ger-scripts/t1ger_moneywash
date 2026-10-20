@@ -2,8 +2,17 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
 import { useUiStore } from '@/shared/stores/ui.store'
-import type { ReviewPayload, ReviewReceipt, ReviewEntry } from '../review.types'
-import { createReviewWorksheet } from '../dev/review.worksheet'
+import type {
+    ReviewPayload,
+    ReviewReceipt,
+    ReviewEntry,
+    ReviewStage,
+    ReviewResult,
+} from '../review.types'
+import {
+    createReviewWorksheet,
+    gradeReviewWorksheet,
+} from '../dev/review.worksheet'
 
 const PAGE_SIZE = 6
 const SHEET_PAGE_SIZE = 8
@@ -15,7 +24,10 @@ export const useReviewStore = defineStore('review', () => {
     const page = ref(0)
     const selectedIds = ref<number[]>([])
 
-    const stage = ref<'select' | 'prepare'>('select')
+    const stage = ref<ReviewStage>('select')
+    const result = ref<ReviewResult | null>(null)
+
+    let folderTimer: ReturnType<typeof setTimeout> | undefined
     const entries = ref<ReviewEntry[]>([])
     const sheetPage = ref(0)
 
@@ -60,6 +72,12 @@ export const useReviewStore = defineStore('review', () => {
         entries.value.filter(
             (entry) => entry.matchedReceiptId !== null,
         ).length,
+    )
+
+    const canStamp = computed(() =>
+        stage.value === 'prepare' &&
+        entries.value.length > 0 &&
+        assignedCount.value === entries.value.length,
     )
 
     const selectedReceipts = computed(() => {
@@ -226,6 +244,8 @@ export const useReviewStore = defineStore('review', () => {
     }
 
     function open(data: ReviewPayload) {
+        clearTimeout(folderTimer)
+        result.value = null
         payload.value = data
         page.value = 0
         selectedIds.value = []
@@ -315,6 +335,53 @@ export const useReviewStore = defineStore('review', () => {
         )
     }
 
+    function stampBooks(): boolean {
+        if (!canStamp.value || !payload.value) return false
+
+        const grade = gradeReviewWorksheet(
+            entries.value,
+            selectedReceipts.value,
+            payload.value.settings.skillImpact,
+        )
+
+        const reduction = Math.min(
+            baseReduction.value,
+            Math.round(baseReduction.value * grade.quality * 100) / 100,
+        )
+
+        result.value = {
+            ...grade,
+            rows: entries.value.length,
+            reduction,
+            fee: fee.value,
+            suspicionBefore: payload.value.suspicion,
+            suspicionAfter: Math.max(
+                0,
+                payload.value.suspicion - reduction,
+            ),
+        }
+
+        stage.value = 'stamped'
+
+        clearTimeout(folderTimer)
+
+        folderTimer = setTimeout(() => {
+            folderTimer = undefined
+
+            if (stage.value === 'stamped') {
+                stage.value = 'folder'
+            }
+        }, 650)
+
+        return true
+    }
+
+    function sealFolder() {
+        if (stage.value !== 'folder' || !result.value) return
+
+        stage.value = 'complete'
+    }    
+
     function changePage(direction: -1 | 1) {
         page.value = Math.max(
             0,
@@ -323,6 +390,8 @@ export const useReviewStore = defineStore('review', () => {
     }
 
     function dismiss() {
+        clearTimeout(folderTimer)
+        result.value = null
         ui.close('review')
 
         payload.value = null
@@ -357,6 +426,10 @@ export const useReviewStore = defineStore('review', () => {
         sheetPageCount,
         visibleEntries,
         assignedCount,
+        result,
+        canStamp,
+        stampBooks,
+        sealFolder,
         assignReceipt,
         unassignReceipt,
         isReceiptAssigned,

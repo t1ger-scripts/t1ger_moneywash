@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRaidSeal } from '../composables/useRaidSeal'
+import { useSlideSeal } from '@/shared/composables/useSlideSeal'
 
 const props = defineProps<{
     sealed: boolean
@@ -21,7 +21,7 @@ const {
     up,
     cancel,
     finish,
-} = useRaidSeal(
+} = useSlideSeal(
     () => !props.sealed && !props.busy,
     () => emit('complete'),
 )

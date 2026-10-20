@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import ReviewReceiptTray from './components/ReviewReceiptTray.vue'
 import ReviewWorksheet from './components/ReviewWorksheet.vue'
 import ReviewReceiptPaper from './components/ReviewReceiptPaper.vue'
+import ReviewStamp from './components/ReviewStamp.vue'
+import ReviewFolder from './components/ReviewFolder.vue'
+import { useReviewStamp } from './composables/useReviewStamp'
 import { useReviewDrag } from './composables/useReviewDrag'
 import { useReviewStore } from './stores/review.store'
 import { reviewImages } from './utils/review.utils'
@@ -12,6 +15,56 @@ const store = useReviewStore()
 
 const root = ref<HTMLElement | null>(null)
 const drag = useReviewDrag(root)
+const stamp = useReviewStamp(root, () => !drag.dragging.value)
+
+const showingPaper = computed(() =>
+    store.stage === 'prepare' || store.stage === 'stamped',
+)
+
+function moveScene(event: PointerEvent) {
+    drag.move(event)
+    stamp.move(event)
+}
+
+function releaseScene(event: PointerEvent) {
+    drag.up(event)
+    stamp.up(event)
+}
+
+function cancelScene() {
+    drag.cancel()
+    stamp.cancel()
+}
+
+function pickReceipt(event: PointerEvent, id: number) {
+    if (stamp.dragging.value) return
+
+    drag.start(event, id)
+}
+
+function chooseReceipt(id: number) {
+    if (stamp.dragging.value) return
+
+    drag.pick(id)
+}
+
+function pickStamp(event: PointerEvent) {
+    if (drag.dragging.value) return
+
+    drag.cancel()
+    stamp.down(event)
+}
+
+function transferStamp(event: KeyboardEvent) {
+    if (drag.dragging.value) return
+
+    drag.cancel()
+
+    void stamp.transfer(event.currentTarget as HTMLElement)
+}
+
+onBeforeUnmount(cancelScene)
+
 </script>
 
 <template>
@@ -23,9 +76,9 @@ const drag = useReviewDrag(root)
             aria-modal="true"
             aria-label="Review business books"
             tabindex="-1"
-            @pointermove="drag.move"
-            @pointerup="drag.up"
-            @pointercancel="drag.cancel"
+            @pointermove="moveScene"
+            @pointerup="releaseScene"
+            @pointercancel="cancelScene"
             @lostpointercapture="drag.cancel"
         >
             <img
@@ -36,12 +89,13 @@ const drag = useReviewDrag(root)
             />
 
             <ReviewReceiptTray
+                v-if="store.stage === 'select' || showingPaper"
                 :picked-id="drag.pickedId.value"
                 :dragging-id="
                     drag.dragging.value ? drag.pickedId.value : null
                 "
-                @pick="drag.start"
-                @choose="drag.pick"
+                @pick="pickReceipt"
+                @choose="chooseReceipt"
             />
 
             <section
@@ -139,10 +193,22 @@ const drag = useReviewDrag(root)
             </section>
 
             <ReviewWorksheet
-                v-else
+                v-else-if="showingPaper"
                 :over-row-id="drag.overRowId.value"
                 :picked-id="drag.pickedId.value"
+                :stamp-over="stamp.over.value"
                 @place="drag.place"
+            />
+
+            <ReviewFolder v-else />
+
+            <ReviewStamp
+                v-if="store.canStamp"
+                :moving="stamp.dragging.value"
+                :x="stamp.x.value"
+                :y="stamp.y.value"
+                @pick="pickStamp"
+                @transfer="transferStamp"
             />
 
             <div

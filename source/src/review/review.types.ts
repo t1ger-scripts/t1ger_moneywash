@@ -11,6 +11,7 @@ export interface ReviewSettings {
     cyclesForMax: number
     minReduction: number
     feePercent: number
+    skillImpact: number
 }
 
 export interface ReviewPayload {
@@ -31,4 +32,24 @@ export interface ReviewEntry {
     units: number | string
     totalAmount: number | string
     matchedReceiptId: number | null
+}
+
+export type ReviewStage =
+    | 'select'
+    | 'prepare'
+    | 'stamped'
+    | 'folder'
+    | 'complete'
+
+export interface ReviewGrade {
+    mistakes: number
+    quality: number
+}
+
+export interface ReviewResult extends ReviewGrade {
+    rows: number
+    reduction: number
+    fee: number
+    suspicionBefore: number
+    suspicionAfter: number
 }

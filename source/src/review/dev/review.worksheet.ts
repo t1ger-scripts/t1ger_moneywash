@@ -1,6 +1,7 @@
 import type {
     ReviewEntry,
     ReviewReceipt,
+    ReviewGrade,
 } from '../review.types'
 
 function changeNumber(
@@ -54,4 +55,51 @@ export function createReviewWorksheet(
     }
 
     return entries
+}
+
+export function gradeReviewWorksheet(
+    entries: ReviewEntry[],
+    receipts: ReviewReceipt[],
+    skillImpact: number,
+): ReviewGrade {
+    const originals = new Map(
+        receipts.map((receipt) => [receipt.id, receipt]),
+    )
+
+    function matches(
+        value: number | string,
+        expected: number,
+    ): boolean {
+        const number = typeof value === 'string' && value.trim() === ''
+            ? NaN
+            : Number(value)
+
+        return Number.isSafeInteger(number) && number === expected
+    }
+
+    const mistakes = entries.reduce((total, entry) => {
+        const original = originals.get(entry.id)
+
+        const correct = original &&
+            entry.matchedReceiptId === original.id &&
+            entry.createdAt === original.createdAt &&
+            matches(entry.units, original.units) &&
+            matches(entry.totalAmount, original.totalAmount)
+
+        // A row contributes at most one mistake.
+        return total + (correct ? 0 : 1)
+    }, 0)
+
+    const impact = Number.isFinite(skillImpact)
+        ? Math.max(0, Math.min(100, skillImpact))
+        : 30
+
+    const accuracy = entries.length === 0
+        ? 1
+        : 1 - mistakes / entries.length
+
+    return {
+        mistakes,
+        quality: Math.max(1 - impact / 100, accuracy),
+    }
 }
