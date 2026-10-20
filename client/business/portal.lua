@@ -114,6 +114,8 @@ local function resolveLocationAddress(coordinates)
     }
 end
 
+-- Locations never move, so each address is resolved once per session.
+local addressCache = {}
 
 --- Adds client-resolved address information to every visible location.
 ---@param snapshot table
@@ -129,7 +131,14 @@ local function prepareSnapshotForNui(snapshot)
     end
 
     for _, location in ipairs(snapshot.locations) do
-        location.address = resolveLocationAddress(location.coordinates)
+        local address = addressCache[location.key]
+
+        if not address then
+            address = resolveLocationAddress(location.coordinates)
+            addressCache[location.key] = address
+        end
+
+        location.address = address
     end
 
     return snapshot
