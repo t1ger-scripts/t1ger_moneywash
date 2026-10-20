@@ -242,7 +242,7 @@ local function deliverFolder()
     _API.ShowNotification(
         formatLocale(
             KEYS.completed,
-            formatSuspicion(result.suspicionBefore),
+            formatSuspicion(response.suspicionBefore),
             formatSuspicion(response.suspicionAfter),
             FormatMoney(response.fee)
         ),
@@ -416,7 +416,12 @@ local function cancelReview()
 
     if confirmed ~= "confirm" then return end
 
-    request("cancel")
+    local response = request("cancel")
+
+    if not response.success then
+        return notifyError(response.reason)
+    end
+
     resetMission()
     _API.ShowNotification(locale(KEYS.cancelled), "inform")
 end

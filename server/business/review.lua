@@ -436,9 +436,9 @@ end)
 
 --- Cancel (Back button, ESC, mission abandoned): free everything, no cost.
 lib.callback.register("t1ger_moneywash:server:review:cancel", function(source)
-    if Busy[source] then return false end
+    if Busy[source] then return { success = false, reason = "busy" } end
     releasePlayer(source, nil)
-    return true
+    return { success = true }
 end)
 
 --- Delivery at the accountant: pay the fee, consume receipts, apply the result.
@@ -506,6 +506,7 @@ lib.callback.register("t1ger_moneywash:server:review:deliver", function(source)
             success = true,
             reduction = review.reduction,
             fee = review.fee,
+            suspicionBefore = before,
             suspicionAfter = after,
         }
     end)
