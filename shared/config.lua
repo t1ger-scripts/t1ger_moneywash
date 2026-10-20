@@ -92,6 +92,8 @@ Config.BusinessPortal = {
 
     TargetDistance   = 2.0,
     TargetIcon       = "fa-solid fa-building",
+
+    CloseDistance    = 6.0, -- the portal closes automatically if you move this far from where you opened it
 }
 
 --- Bank deposit settings

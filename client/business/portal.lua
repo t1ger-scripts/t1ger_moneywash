@@ -38,6 +38,9 @@ local isPortalOpen = false
 local isPortalOpening = false
 local isTargetRegistered = false
 
+local portalOpenCoords = nil
+local portalSession = 0
+local closeBusinessPortal -- forward declaration, defined below
 
 --- Converts an empty or invalid game label into nil.
 ---@param value any
@@ -175,6 +178,26 @@ local function requestMarketplaceSnapshot()
     return response
 end
 
+--- Closes the portal if the player dies, gets cuffed or walks away from the computer.
+---@param session number
+local function watchPortal(session)
+    local maxDistance = (Config.BusinessPortal and Config.BusinessPortal.CloseDistance) or 6.0
+
+    while isPortalOpen and portalSession == session do
+        Wait(500)
+
+        local ped = PlayerPedId()
+
+        if isPortalOpen and portalSession == session
+            and (IsEntityDead(ped)
+                or IsPedCuffed(ped)
+                or #(GetEntityCoords(ped) - portalOpenCoords) > maxDistance)
+        then
+            closeBusinessPortal(true)
+            return
+        end
+    end
+end
 
 --- Opens the portal after successfully obtaining its data.
 function OpenBusinessPortal()
@@ -195,6 +218,11 @@ function OpenBusinessPortal()
         and attempts < MAX_READY_RETRIES
     do
         attempts = attempts + 1
+
+        if attempts == 1 then
+            _API.ShowNotification(locale("notification.portal_loading"), "inform", {})
+        end
+
         Wait(READY_RETRY_DELAY)
         response = requestMarketplaceSnapshot()
     end
@@ -212,6 +240,10 @@ function OpenBusinessPortal()
 
     isPortalOpen = true
     isPortalOpening = false
+
+    portalOpenCoords = GetEntityCoords(PlayerPedId())
+    portalSession = portalSession + 1
+    CreateThread(function() watchPortal(portalSession) end)
 end
 
 --- Refreshes an already-open portal without resetting its selection.
@@ -233,10 +265,9 @@ local function refreshBusinessPortal()
     })
 end
 
-
 --- Closes the portal locally and optionally notifies Vue.
 ---@param notifyNui boolean
-local function closeBusinessPortal(notifyNui)
+function closeBusinessPortal(notifyNui)
     if notifyNui then
         SendNUIMessage({
             action = NUI_MESSAGES.close,
@@ -252,7 +283,6 @@ local function closeBusinessPortal(notifyNui)
         "t1ger_moneywash:server:businessPortal:closed"
     )
 end
-
 
 --- Allows other client files to open the portal without duplicating logic.
 RegisterNetEvent(
