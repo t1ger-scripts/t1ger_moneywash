@@ -60,7 +60,7 @@ end
 --- Loads the current runtime locale JSON without requiring a UI rebuild.
 ---@return string localeName
 ---@return table messages
-local function loadPortalLocalization()
+local function readPortalLocalization()
     local portalConfig = Config.BusinessPortal or {}
 
     local localeName = portalConfig.Locale
@@ -107,6 +107,27 @@ local function loadPortalLocalization()
     return localeName, messages
 end
 
+local cachedLocaleName = nil
+local cachedMessages = nil
+
+--- Returns the portal locale, reading and decoding the file only once.
+---@return string localeName
+---@return table messages
+local function loadPortalLocalization()
+    if cachedMessages then
+        return cachedLocaleName, cachedMessages
+    end
+
+    local localeName, messages = readPortalLocalization()
+
+    -- Never cache a failed read, so a fixed file is picked up on the next open
+    if next(messages) then
+        cachedLocaleName = localeName
+        cachedMessages = messages
+    end
+
+    return localeName, messages
+end
 
 --- Creates a plain coordinate table safe for NUI serialization.
 ---@param coordinates vector3|vector4|table
