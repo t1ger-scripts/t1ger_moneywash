@@ -1,6 +1,6 @@
 --- ============================================================================
 --- Server Reputation
---- OOP reputation class, DB load/save, statebag sync and exports.
+--- OOP reputation class, DB load/save, owner-only client sync and exports.
 --- Lifecycle events (playerDropped, autosave, shutdown) are handled in
 --- server/main.lua — not here — to avoid double-firing.
 --- ============================================================================
@@ -77,24 +77,24 @@ function MoneyWashReputation:GetTitle()
     return self.title
 end
 
---- Adds reputation points and syncs statebag
+--- Adds reputation points and syncs the owner's client
 --- @param amount number
 function MoneyWashReputation:AddPoints(amount)
     self:SetPoints(self.points + amount)
 end
 
---- Removes reputation points (floor 0) and syncs statebag
+--- Removes reputation points (floor 0) and syncs the owner's client
 --- @param amount number
 function MoneyWashReputation:RemovePoints(amount)
     self:SetPoints(math.max(0, self.points - amount))
 end
 
---- Sets reputation points directly and syncs statebag
+--- Sets reputation points directly and syncs the owner's client
 --- @param amount number
 function MoneyWashReputation:SetPoints(amount)
     self.points = math.max(0, math.floor(amount))
-    Player(self.source).state:set("t1ger_moneywash:reputationPoints", self.points, true)
-    self:_SyncTitle()
+    self.title  = self:_ResolveTitle()
+    self:Sync()
 end
 
 --- Saves reputation to DB
@@ -111,13 +111,9 @@ function MoneyWashReputation:_ResolveTitle()
     return GetReputationLevel(self.points).title
 end
 
---- Updates title and syncs statebag if it changed
-function MoneyWashReputation:_SyncTitle()
-    local newTitle = self:_ResolveTitle()
-    if self.title ~= newTitle then
-        self.title = newTitle
-        Player(self.source).state:set("t1ger_moneywash:reputationTitle", newTitle, true)
-    end
+--- Sends points and title to the owning client only
+function MoneyWashReputation:Sync()
+    TriggerClientEvent("t1ger_moneywash:client:reputationSync", self.source, self.points, self.title)
 end
 
 --- ============================================================================
@@ -207,9 +203,8 @@ function LoadReputation(src)
     local rep = MoneyWashReputation:Create(src, row)
     PlayerReputation[src] = rep
 
-    -- Sync to client statebags
-    Player(src).state:set("t1ger_moneywash:reputationPoints", rep.points, true)
-    Player(src).state:set("t1ger_moneywash:reputationTitle",  rep.title,  true)
+    -- Sync to the owning client
+    rep:Sync()
 
     if Config.Debug then
         print(("[MoneyWash] Reputation loaded: %s | %d points | %s"):format(

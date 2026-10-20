@@ -183,13 +183,4 @@ Config.Reputation = {
         [10000] = "Institutional Buyer",
         [15000] = "Premium Member",
     },
-
-    ProgressColors   = {
-        { threshold = 0,   color = "#dc2626" },
-        { threshold = 20,  color = "#f97316" },
-        { threshold = 40,  color = "#facc15" },
-        { threshold = 60,  color = "#84cc16" },
-        { threshold = 80,  color = "#22c55e" },
-        { threshold = 100, color = "#16a34a" },
-    },
 }
