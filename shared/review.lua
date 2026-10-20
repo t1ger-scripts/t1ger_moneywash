@@ -28,7 +28,7 @@ Config.Review = {
 
     -- -------------------------------------------------------------------------
     -- ACCOUNTANT
-    -- One location is picked at random per review. Add as many as you like.
+    -- The office nearest to the player is used when the delivery starts. Add as many as you like.
     -- -------------------------------------------------------------------------
     Accountant           = {
         Model          = "a_m_m_business_01",

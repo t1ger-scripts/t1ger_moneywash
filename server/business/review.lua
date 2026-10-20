@@ -194,6 +194,24 @@ local function shuffle(list)
     end
 end
 
+--- Runs a callback body under the per-player busy guard. Whatever happens
+--- (even an error), the guard is released and the player gets a clean reply.
+local function guarded(source, fn)
+    if Busy[source] then return { success = false, reason = "busy" } end
+    Busy[source] = true
+
+    local ok, response = pcall(fn)
+    Busy[source] = nil
+
+    if not ok then
+        print(("^1[MoneyWash] Review error: %s^7"):format(tostring(response)))
+        return { success = false, reason = "unknown" }
+    end
+
+    return response
+end
+
+
 --- Loads the locale file for the UI, falling back to "en".
 ---@return string localeName
 ---@return table messages
@@ -224,6 +242,13 @@ lib.callback.register("t1ger_moneywash:server:review:open", function(source, bus
     local receipts = loadFreeReceipts(business.id)
     if #receipts == 0 then return { success = false, reason = "nothing_to_review" } end
 
+    local location = GetLocationConfig(business.type, business.locationId)
+    if not location
+        or not IsPlayerNearCoords(source, location.coords, (Config.Business.HandlerTargetDistance or 2.0) + 4.0)
+    then
+        return { success = false, reason = "business_too_far" }
+    end
+
     local tier = GetTierByType(business.type)
     local cfg = Config.Review
     local localeName, messages = loadLocalization()
@@ -253,10 +278,7 @@ end)
 
 --- "Prepare books": validates the selection and returns the shuffled worksheet.
 lib.callback.register("t1ger_moneywash:server:review:prepare", function(source, businessId, ids)
-    if Busy[source] then return { success = false, reason = "busy" } end
-    Busy[source] = true
-
-    local response = (function()
+    return guarded(source, function()
         -- A second prepare (e.g. after Back) simply replaces the first sheet.
         Prepared[source] = nil
 
@@ -320,18 +342,12 @@ lib.callback.register("t1ger_moneywash:server:review:prepare", function(source, 
         }
 
         return { success = true, rows = rows }
-    end)()
-
-    Busy[source] = nil
-    return response
+    end)
 end)
 
 --- Stamp: grade the answers, lock the result and reserve the receipts.
 lib.callback.register("t1ger_moneywash:server:review:stamp", function(source, answers)
-    if Busy[source] then return { success = false, reason = "busy" } end
-    Busy[source] = true
-
-    local response = (function()
+    return guarded(source, function()
         local prepared = Prepared[source]
         if not prepared then return { success = false, reason = "not_prepared" } end
 
@@ -415,29 +431,23 @@ lib.callback.register("t1ger_moneywash:server:review:stamp", function(source, an
                 suspicionAfter  = math.max(0, business.suspicion - reduction),
             },
         }
-    end)()
-
-    Busy[source] = nil
-    return response
+    end)
 end)
 
 --- Cancel (Back button, ESC, mission abandoned): free everything, no cost.
 lib.callback.register("t1ger_moneywash:server:review:cancel", function(source)
+    if Busy[source] then return false end
     releasePlayer(source, nil)
     return true
 end)
 
 --- Delivery at the accountant: pay the fee, consume receipts, apply the result.
 lib.callback.register("t1ger_moneywash:server:review:deliver", function(source)
-    if Busy[source] then return { success = false, reason = "busy" } end
-    Busy[source] = true
-
-    local response = (function()
+    return guarded(source, function()
         local review = GetActiveReview(source)
         if not review then return { success = false, reason = "no_review" } end
 
         local cfg = Config.Review
-        local ped = GetPlayerPed(source)
         local nearOffice = false
 
         for _, location in ipairs(cfg.Accountant.Locations or {}) do
@@ -459,14 +469,20 @@ lib.callback.register("t1ger_moneywash:server:review:deliver", function(source)
             return { success = false, reason = "not_enough_money", fee = review.fee }
         end
 
-        _API.Player.RemoveMoney(source, review.fee, "bank")
-
-        -- Receipts are consumed whole.
+        -- Receipts are consumed whole. Delete first: if they changed behind
+        -- our back, nothing is charged.
         local placeholders = string.rep("?,", #review.receiptIds):sub(1, -2)
-        MySQL.update.await(
+        local deleted = MySQL.update.await(
             ("DELETE FROM moneywash_receipts WHERE business_id = ? AND id IN (%s)"):format(placeholders),
             { business.id, table.unpack(review.receiptIds) }
         )
+
+        if deleted ~= #review.receiptIds then
+            releasePlayer(source, "review_cancelled")
+            return { success = false, reason = "no_review" }
+        end
+
+        _API.Player.RemoveMoney(source, review.fee, "bank")
 
         local before = business.suspicion
         local after = math.max(0, before - review.reduction)
@@ -497,10 +513,7 @@ lib.callback.register("t1ger_moneywash:server:review:deliver", function(source)
             fee = review.fee,
             suspicionAfter = after,
         }
-    end)()
-
-    Busy[source] = nil
-    return response
+    end)
 end)
 
 --- ---------------------------------------------------------------------------
