@@ -136,6 +136,15 @@
         "deposit_refunded": "Bank deposit cancelled. %s returned to your Safe.",
         "deposit_confiscated": "Police confiscated your pending bank deposit.",
         "deposit_head_to_atm": "Take the cash to any ATM within %d minutes",
+        "raid_started": "Police are raiding your business!",
+        "raid_ended": "The police raid on your business has ended.",
+        "raid_seized_owner": "Police seized %s from your Safe.",
+        "raid_seized": "You seized %s from the Safe.",
+        "raid_in_progress": "Police are raiding your business.",
+        "raid_cancelled": "The raid was called off.",
+        "raid_cancel_timeout": "The raid took too long and was called off.",
+        "raid_cancel_too_far": "You moved too far from the business. The raid was called off.",
+        "raid_cancel_dead": "You went down. The raid was called off.",
         "unknown_location": "an unknown location",
         "police_alert": {
             "Moderate": "Unusual financial activity reported at %s near %s",
@@ -180,6 +189,15 @@
         "error_pending_business_deposit": "Finish your pending bank deposit first",
         "error_deposit_pending": "You already have a bank deposit in progress",
         "error_insufficient_safe_cash": "The Safe no longer holds that amount",
+        "error_raid_disabled": "Raids are disabled",
+        "error_not_ready": "Not ready yet. Please try again.",
+        "error_raid_not_allowed": "You are not allowed to raid businesses",
+        "error_raid_active": "You are already raiding a business",
+        "error_own_business": "You cannot raid your own business",
+        "error_raid_in_progress": "Police are raiding this business",
+        "error_raid_cooldown": "This business was raided recently",
+        "error_business_busy": "The business is busy right now. Try again in a moment.",
+        "error_nothing_to_seize": "There is nothing to seize here",
         "error_unknown": "Something went wrong"
     },
     "progress": {
@@ -317,7 +335,8 @@
             "invalid_batch": "This count has expired. Start a new count.",
             "invalid_business_config": "This business is not configured correctly. Contact an administrator.",
             "insufficient_safe_cash": "The Safe no longer holds that amount.",
-            "deposit_pending": "You already have a bank deposit in progress."
+            "deposit_pending": "You already have a bank deposit in progress.",
+            "raid_in_progress": "Police are raiding your business. The Safe is locked."
         }
     },
     "raid": {

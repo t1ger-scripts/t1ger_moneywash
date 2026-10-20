@@ -34,6 +34,8 @@ lib.callback.register("t1ger_moneywash:server:getBusinessStatus", function(sourc
 
     if not business or business.identifier ~= identifier then return nil end
 
+    if IsBusinessRaided(businessId) then return { raided = true } end
+
     local tier = GetTierByType(business.type)
     local label = GetSuspicionLabel(business.suspicion)
 

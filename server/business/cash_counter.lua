@@ -144,6 +144,7 @@ local function playerBusiness(src, businessId)
     local business = GetBusiness(businessId)
     if not business then return nil, "not_found" end
     if business.identifier ~= identifier then return nil, "not_owner" end
+    if IsBusinessRaided(businessId) then return nil, "raid_in_progress" end
     local location = GetLocationConfig(business.type, business.locationId)
     if not location or not IsPlayerNearCoords(src, location.coords, Config.CashCounter.InteractionDistance) then
         return nil, "too_far"

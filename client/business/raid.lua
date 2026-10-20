@@ -1,11 +1,9 @@
--- Raid evidence collection (NUI).
---
--- PREVIEW STAGE: the UI is driven by a local fake raid (`preview`) so the
--- screen can be tested before any server logic exists. When the server
--- callbacks are added, only the two NUI callbacks at the bottom change -
--- the UI and OpenRaidUi stay as they are.
+-- Police raid, client side.
+-- StartRaid asks the server to start a raid, then opens the evidence UI.
+-- The server owns everything that matters: the amounts, the seizure and the
+-- cancellation (death, distance, timeout).
 
-local preview = nil -- { exposed = number, finished = boolean, seized = number }
+local seized = nil -- amount the server reported as seized; shown once the UI closes
 
 --- Loads the locale file for the UI (same rules as the cash counter).
 ---@return string localeName
@@ -27,7 +25,7 @@ end
 --- Opens the raid UI.
 ---@param exposed number Exposed Safe cash at the start of the raid (> 0)
 ---@return boolean opened
-function OpenRaidUi(exposed)
+local function OpenRaidUi(exposed)
     if not BeginMoneywashUi("raid") then return false end
 
     local localeName, messages = loadLocale()
@@ -43,62 +41,91 @@ function OpenRaidUi(exposed)
     return true
 end
 
--- -----------------------------------------------------------------------
--- Preview raid (fake data)
--- -----------------------------------------------------------------------
+--- Starts a raid on a business. Police only; the server decides if it is allowed.
+---@param businessId number
+---@return boolean started
+function StartRaid(businessId)
+    if GetMoneywashUiScreen() then return false end
 
-if Config.Debug then
-    --- /raidtest [exposed]
-    --- Opens the raid UI with fake data. Testing only.
-    ---   /raidtest          -> 125000 exposed
-    ---   /raidtest 500000   -> 500000 exposed
-    ---   /raidtest 0        -> refused, like a real raid on an empty Safe
-    RegisterCommand("raidtest", function(_, args)
-        local exposed = math.max(0, math.floor(tonumber(args[1]) or 125000))
+    local response = lib.callback.await("t1ger_moneywash:server:raid:start", false, businessId)
 
-        if exposed <= 0 then
-            _API.ShowNotification("Nothing to seize.", "error", {})
-            return
-        end
+    if not response or not response.success then
+        _API.ShowNotification(
+            locale("notification.error_" .. ((response and response.reason) or "unknown")), "error", {})
+        return false
+    end
 
-        preview = { exposed = exposed, finished = false, seized = 0 }
+    seized = nil
 
-        if not OpenRaidUi(exposed) then
-            preview = nil
-        end
-    end, false)
+    if not OpenRaidUi(response.data.exposed) then
+        -- The UI was taken by something else in the meantime: release the business again.
+        lib.callback.await("t1ger_moneywash:server:raid:cancel", false)
+        return false
+    end
+
+    return true
 end
 
--- -----------------------------------------------------------------------
--- NUI callbacks (swap the preview for server callbacks later)
--- -----------------------------------------------------------------------
+--- The server called the raid off (timeout, died, moved away): close the UI and say why.
+RegisterNetEvent("t1ger_moneywash:client:raidCancelled", function(reason)
+    if GetMoneywashUiScreen() == "raid" then
+        SendNUIMessage({ action = "t1ger_moneywash:raid:close" })
+        CloseMoneywashUi("raid")
+    end
+
+    seized = nil
+
+    local key = "notification.raid_cancel_" .. tostring(reason)
+    local text = locale(key)
+    if text == key then text = locale("notification.raid_cancelled") end
+
+    _API.ShowNotification(text, "error", {})
+end)
 
 --- NUI: the officer bagged everything and sealed the bag.
---- Must answer { success, data = { seized } } with the amount really seized.
+--- The server answers with the amount it really seized.
 RegisterNUICallback("t1ger_moneywash:raid:finish", function(_, cb)
-    if GetMoneywashUiScreen() ~= "raid" or not preview then
+    if GetMoneywashUiScreen() ~= "raid" then
         cb({ success = false, reason = "no_raid" })
         return
     end
 
-    if not preview.finished then
-        preview.finished = true
-        preview.seized   = preview.exposed
+    local response = lib.callback.await("t1ger_moneywash:server:raid:finish", false)
+
+    if response and response.success and response.data then
+        seized = response.data.seized
     end
 
-    cb({ success = true, data = { seized = preview.seized } })
+    cb(response or { success = false, reason = "request_failed" })
 end)
 
---- NUI: the officer aborted (ESC), or the screen closed after finishing.
+--- NUI: the screen closed - after finishing, or because the officer pressed ESC.
 RegisterNUICallback("t1ger_moneywash:raid:close", function(_, cb)
     SendNUIMessage({ action = "t1ger_moneywash:raid:close" })
     CloseMoneywashUi("raid")
-
-    if preview and preview.finished then
-        _API.ShowNotification(("Seized %s"):format(FormatMoney(preview.seized)), "success", {})
-    end
-
-    preview = nil
-
     cb({ success = true })
+
+    if seized then
+        _API.ShowNotification(
+            string.format(locale("notification.raid_seized"), FormatMoney(seized)), "success", {})
+        seized = nil
+    else
+        -- Closed before finishing: the raid is called off.
+        lib.callback.await("t1ger_moneywash:server:raid:cancel", false)
+    end
 end)
+
+if Config.Debug then
+    --- /raidtest <businessId> - starts a real raid on a business. Testing only.
+    --- You must have a police job and stand next to the business handler NPC.
+    RegisterCommand("raidtest", function(_, args)
+        local businessId = tonumber(args[1])
+
+        if not businessId then
+            print("[MoneyWash] Usage: /raidtest <businessId>")
+            return
+        end
+
+        StartRaid(businessId)
+    end, false)
+end

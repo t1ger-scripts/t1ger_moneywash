@@ -68,3 +68,19 @@ end
 --- @param amount number gross amount that was seized
 function OnBankDepositConfiscated(officerIdentifier, ownerIdentifier, businessId, amount)
 end
+
+--- Called when police start a raid on a business.
+--- @param officerIdentifier string
+--- @param ownerIdentifier string the business owner
+--- @param businessId number
+function OnBusinessRaidStarted(officerIdentifier, ownerIdentifier, businessId)
+end
+
+--- Called when a raid finishes and the exposed Safe cash is seized. The money
+--- is gone; this is only a notification point (e.g. reward the officer, log to Discord).
+--- @param officerIdentifier string
+--- @param ownerIdentifier string the business owner
+--- @param businessId number
+--- @param seizedAmount number exposed cash that was seized
+function OnBusinessRaided(officerIdentifier, ownerIdentifier, businessId, seizedAmount)
+end

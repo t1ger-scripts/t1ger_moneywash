@@ -14,6 +14,11 @@ function OpenHandlerMenu(businessId)
         return
     end
 
+    if status.raided then
+        _API.ShowNotification(locale("notification.raid_in_progress"), "error")
+        return
+    end
+
     local menuIcons = Config.Business.MenuIcons or {}
 
     -- Overview row - a single hover-metadata row showing totals only.
