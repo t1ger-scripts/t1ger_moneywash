@@ -45,6 +45,7 @@ client_scripts {
     'client/business/menu.lua',
     'client/business/stock.lua',
     'client/business/review.lua',
+    'client/street_wash.lua',
     'client/main.lua',
 }
 
@@ -75,8 +76,8 @@ server_scripts {
     'server/business/commands.lua',
     'server/business/portal.lua',
     'server/business/cash_counter.lua',
+    
     'server/street_wash.lua',
-
     'server/main.lua',
 }
 
