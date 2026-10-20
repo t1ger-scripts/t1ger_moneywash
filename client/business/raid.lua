@@ -114,18 +114,3 @@ RegisterNUICallback("t1ger_moneywash:raid:close", function(_, cb)
         lib.callback.await("t1ger_moneywash:server:raid:cancel", false)
     end
 end)
-
-if Config.Debug then
-    --- /raidtest <businessId> - starts a real raid on a business. Testing only.
-    --- You must have a police job and stand next to the business handler NPC.
-    RegisterCommand("raidtest", function(_, args)
-        local businessId = tonumber(args[1])
-
-        if not businessId then
-            print("[MoneyWash] Usage: /raidtest <businessId>")
-            return
-        end
-
-        StartRaid(businessId)
-    end, false)
-end
