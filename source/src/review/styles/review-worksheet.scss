@@ -1,0 +1,87 @@
+.review-paper-button {
+    display: block;
+    width: 100%;
+    margin-top: 8%;
+    padding: 0.7em 0.8em;
+    border: 1px solid #735f42;
+    border-radius: 2px;
+    background: #58452d;
+    color: #f5ead6;
+    font-family: 'Courier New', monospace;
+    font-size: clamp(10px, 0.85vw, 16px);
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+
+    &:hover:not(:disabled) {
+        background: #6b5538;
+    }
+
+    &:disabled {
+        background: #c4b59a;
+        border-color: #9b896c;
+        color: #665a45;
+        opacity: 1;
+    }
+
+    &:focus-visible {
+        outline: 2px solid #72522f;
+        outline-offset: 3px;
+        box-shadow: none;
+    }
+}
+
+.review-prepare-button {
+    position: absolute;
+    left: 14%;
+    right: 14%;
+    bottom: 8%;
+    width: auto;
+    margin: 0;
+}
+
+.review-entry-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 7%;
+    font-size: clamp(8px, 0.8vw, 15px);
+
+    button {
+        padding: 0.1em 0.45em;
+        background: transparent;
+        color: #463b2c;
+        font-size: 1.7em;
+        line-height: 1;
+
+        &:disabled {
+            opacity: 0.3;
+        }
+
+        &:focus-visible {
+            outline: 1px solid #72522f;
+            box-shadow: none;
+        }
+    }
+}
+
+.review-worksheet .review-summary-totals {
+    margin-top: 7%;
+}
+
+.review-entry-match {
+    margin-top: 9%;
+    padding-top: 7%;
+    border-top: 1px dashed #7b684766;
+    font-size: clamp(8px, 0.8vw, 15px);
+}
+
+.review-entry-progress {
+    margin-top: 4%;
+    font-size: clamp(7px, 0.7vw, 13px);
+    opacity: 0.75;
+}
+
+.review-back-button {
+    margin-top: 7%;
+}

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ReviewReceiptTray from './components/ReviewReceiptTray.vue'
+import ReviewWorksheet from './components/ReviewWorksheet.vue'
 import { useReviewStore } from './stores/review.store'
 import { reviewImages } from './utils/review.utils'
 import './styles/review.scss'
@@ -26,6 +27,7 @@ const store = useReviewStore()
             <ReviewReceiptTray />
 
             <section
+                v-if="store.stage === 'select'"
                 class="review-summary"
                 aria-label="Selected receipt summary"
             >
@@ -107,7 +109,18 @@ const store = useReviewStore()
                         {{ store.selectionHint }}
                     </p>
                 </div>
+
+                <button
+                    type="button"
+                    class="review-paper-button review-prepare-button"
+                    :disabled="!store.meetsMinimum"
+                    @click="store.prepareBooks"
+                >
+                    Prepare books
+                </button>
             </section>
+
+            <ReviewWorksheet v-else />
         </section>
     </div>
 </template>

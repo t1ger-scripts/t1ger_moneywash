@@ -96,3 +96,19 @@
     font-weight: 700;
     line-height: 1;
 }
+
+.review-summary:not(.review-worksheet) {
+    .review-summary-content {
+        bottom: 22%;
+    }
+
+    .review-summary-totals {
+        margin-top: 8%;
+        gap: clamp(5px, 0.55vw, 10px);
+    }
+
+    .review-summary-hint {
+        margin-top: 6%;
+        padding-top: 5%;
+    }
+}

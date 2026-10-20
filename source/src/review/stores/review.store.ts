@@ -2,7 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
 import { useUiStore } from '@/shared/stores/ui.store'
-import type { ReviewPayload, ReviewReceipt } from '../review.types'
+import type { ReviewPayload, ReviewReceipt, ReviewEntry } from '../review.types'
 
 const PAGE_SIZE = 6
 
@@ -13,21 +13,43 @@ export const useReviewStore = defineStore('review', () => {
     const page = ref(0)
     const selectedIds = ref<number[]>([])
 
+    const stage = ref<'select' | 'prepare'>('select')
+    const entries = ref<ReviewEntry[]>([])
+    const activeEntryIndex = ref(0)
+
     const receipts = computed(() => payload.value?.receipts ?? [])
 
     const maxReceipts = computed(() =>
         Math.max(1, Math.floor(payload.value?.maxReceipts ?? 12)),
     )
 
+    const trayReceipts = computed(() => {
+        if (stage.value === 'select') return receipts.value
+
+        const ids = new Set(selectedIds.value)
+
+        return receipts.value.filter((receipt) => ids.has(receipt.id))
+    })
+
     const pageCount = computed(() =>
-        Math.max(1, Math.ceil(receipts.value.length / PAGE_SIZE)),
+        Math.max(1, Math.ceil(trayReceipts.value.length / PAGE_SIZE)),
     )
 
     const visibleReceipts = computed(() => {
         const start = page.value * PAGE_SIZE
 
-        return receipts.value.slice(start, start + PAGE_SIZE)
+        return trayReceipts.value.slice(start, start + PAGE_SIZE)
     })
+
+    const activeEntry = computed(() =>
+        entries.value[activeEntryIndex.value] ?? null,
+    )
+
+    const matchedCount = computed(() =>
+        entries.value.filter(
+            (entry) => entry.matchedReceiptId !== null,
+        ).length,
+    )
 
     const selectedReceipts = computed(() => {
         const ids = new Set(selectedIds.value)
@@ -211,11 +233,16 @@ export const useReviewStore = defineStore('review', () => {
         payload.value = data
         page.value = 0
         selectedIds.value = []
+        stage.value = 'select'
+        entries.value = []
+        activeEntryIndex.value = 0
 
         ui.open('review')
     }
 
     function toggleReceipt(id: number) {
+        if (stage.value !== 'select') return
+
         const index = selectedIds.value.indexOf(id)
 
         if (index !== -1) {
@@ -227,6 +254,59 @@ export const useReviewStore = defineStore('review', () => {
         if (!receipts.value.some((receipt) => receipt.id === id)) return
 
         selectedIds.value.push(id)
+    }
+
+    function prepareBooks() {
+        if (stage.value !== 'select' || !meetsMinimum.value) return
+
+        // Dev worksheet. Later, the server will supply these entries.
+        const worksheet: ReviewEntry[] = selectedReceipts.value.map(
+            (receipt) => ({
+                id: receipt.id,
+                units: receipt.units,
+                totalAmount: receipt.totalAmount,
+                createdAt: receipt.createdAt,
+                matchedReceiptId: null,
+            }),
+        )
+
+        // Shuffle without changing the receipt order in the tray.
+        for (let index = worksheet.length - 1; index > 0; index--) {
+            const target = Math.floor(Math.random() * (index + 1))
+
+            const entry = worksheet[index]!
+            worksheet[index] = worksheet[target]!
+            worksheet[target] = entry
+        }
+
+        entries.value = worksheet
+        activeEntryIndex.value = 0
+        page.value = 0
+        stage.value = 'prepare'
+    }
+
+    function matchReceipt(id: number) {
+        if (stage.value !== 'prepare' || !activeEntry.value) return
+        if (!selectedIds.value.includes(id)) return
+
+        activeEntry.value.matchedReceiptId = id
+    }
+
+    function changeEntry(direction: -1 | 1) {
+        activeEntryIndex.value = Math.max(
+            0,
+            Math.min(
+                entries.value.length - 1,
+                activeEntryIndex.value + direction,
+            ),
+        )
+    }
+
+    function backToSelection() {
+        stage.value = 'select'
+        entries.value = []
+        activeEntryIndex.value = 0
+        page.value = 0
     }
 
     function changePage(direction: -1 | 1) {
@@ -242,6 +322,9 @@ export const useReviewStore = defineStore('review', () => {
         payload.value = null
         page.value = 0
         selectedIds.value = []
+        stage.value = 'select'
+        entries.value = []
+        activeEntryIndex.value = 0
     }
 
     return {
@@ -261,6 +344,15 @@ export const useReviewStore = defineStore('review', () => {
         expectedSuspicion,
         meetsMinimum,
         selectionHint,
+        stage,
+        entries,
+        activeEntryIndex,
+        activeEntry,
+        matchedCount,
+        prepareBooks,
+        matchReceipt,
+        changeEntry,
+        backToSelection,
         formatReduction,
         isReceiptUnavailable,
         receiptOvershoots,

@@ -24,3 +24,11 @@ export interface ReviewPayload {
     settings: ReviewSettings
     receipts: ReviewReceipt[]
 }
+
+export interface ReviewEntry {
+    id: number
+    units: number
+    totalAmount: number
+    createdAt: number
+    matchedReceiptId: number | null
+}

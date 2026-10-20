@@ -4,6 +4,21 @@ import { reviewImages } from '../utils/review.utils'
 import ReviewAmount from './ReviewAmount.vue'
 
 const store = useReviewStore()
+
+function isHighlighted(id: number): boolean {
+    return store.stage === 'select'
+        ? store.selectedIds.includes(id)
+        : store.activeEntry?.matchedReceiptId === id
+}
+
+function pickReceipt(id: number) {
+    if (store.stage === 'prepare') {
+        store.matchReceipt(id)
+        return
+    }
+
+    store.toggleReceipt(id)
+}
 </script>
 
 <template>
@@ -15,16 +30,20 @@ const store = useReviewStore()
                 type="button"
                 class="review-receipt"
                 :class="{
-                    'is-selected': store.selectedIds.includes(receipt.id),
+                    'is-selected': isHighlighted(receipt.id),
                 }"
-                :aria-pressed="store.selectedIds.includes(receipt.id)"
-                :disabled="store.isReceiptUnavailable(receipt.id)"
+                :aria-pressed="isHighlighted(receipt.id)"
+                :disabled="
+                    store.stage === 'select' &&
+                    store.isReceiptUnavailable(receipt.id)
+                "
                 :title="
+                    store.stage === 'select' &&
                     store.receiptOvershoots(receipt)
                         ? 'This receipt exceeds the reduction cap. Excess value will be used.'
                         : undefined
                 "
-                @click="store.toggleReceipt(receipt.id)"
+                @click="pickReceipt(receipt.id)"
             >
                 <img
                     :src="reviewImages.receipt"
@@ -62,7 +81,7 @@ const store = useReviewStore()
                 </span>
 
                 <span
-                    v-if="store.selectedIds.includes(receipt.id)"
+                    v-if="isHighlighted(receipt.id)"
                     class="review-receipt-mark"
                     aria-hidden="true"
                 >
