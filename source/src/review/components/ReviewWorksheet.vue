@@ -18,7 +18,7 @@ const store = useReviewStore()
     <section class="review-worksheet" aria-label="Bookkeeping worksheet">
         <img
             class="review-worksheet-paper"
-            :src="reviewImages.ledgerSheet"
+            :src="reviewImages.worksheet"
             alt=""
             draggable="false"
         />

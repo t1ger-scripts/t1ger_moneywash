@@ -42,10 +42,10 @@
 
 .review-worksheet {
     position: absolute;
-    left: 45%;
-    top: 20%;
-    width: 52%;
-    height: 61%;
+    left: 48%;
+    top: 23.5%;
+    width: 46%;
+    aspect-ratio: 3 / 2;
     color: #463b2c;
     font-family: 'Courier New', monospace;
     font-size: clamp(7px, 0.72cqw, 14px);
@@ -63,7 +63,7 @@
 
 .review-worksheet-content {
     position: absolute;
-    inset: 11% 12% 13%;
+    inset: 7% 6% 8%;
     display: flex;
     flex-direction: column;
     min-height: 0;

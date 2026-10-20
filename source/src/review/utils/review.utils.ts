@@ -4,6 +4,7 @@ export const reviewImages = {
     scene: `${imageRoot}review-scene.png`,
     receipt: `${imageRoot}receipt.png`,
     ledgerSheet: `${imageRoot}ledger-sheet.png`,
+    worksheet: `${imageRoot}worksheet-sheet.png`,
     folderOpen: `${imageRoot}folder-open.png`,
     folderClosed: `${imageRoot}folder-closed.png`,
     stamp: `${imageRoot}stamp.png`,
