@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { Building2, ShoppingCart } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
-
+import { failureMessage } from '@/integrations/i18n'
 import { usePortalActions } from '@/portal/composables/usePortalActions'
 import AppButton from '@/portal/components/ui/AppButton.vue'
 import AppModal from '@/portal/components/ui/AppModal.vue'
@@ -65,9 +65,7 @@ async function confirmPurchase(): Promise<void> {
         purchaseSucceeded = response.success
 
         if (!response.success) {
-            errorMessage.value = t(
-                'portal.purchaseDialog.failed',
-            )
+            errorMessage.value = failureMessage(response)
         }
     } finally {
         portalStore.finishPurchase()

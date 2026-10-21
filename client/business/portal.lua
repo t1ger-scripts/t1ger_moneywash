@@ -233,19 +233,19 @@ end)
 --- Vue submits a confirmed business purchase.
 RegisterNUICallback("t1ger_moneywash:portal:purchaseBusiness", function(request, callback)
     if not isPortalOpen then
-        callback({success = false, reason = "portal_closed"})
+        callback(ErrorResponse("portal_closed"))
         return
     end
 
     if type(request) ~= "table" then
-        callback({success = false, reason = "invalid_request",})
+        callback(ErrorResponse("invalid_request"))
         return
     end
 
     local callbackSucceeded, response = pcall(lib.callback.await, "t1ger_moneywash:server:businessPortal:purchaseBusiness", false, request.businessType, request.locationId)
 
     if not callbackSucceeded or type(response) ~= "table" then
-        callback({success = false, reason = "request_failed",})
+        callback(ErrorResponse("request_failed"))
         return
     end
 
@@ -256,6 +256,8 @@ RegisterNUICallback("t1ger_moneywash:portal:purchaseBusiness", function(request,
             action = "t1ger_moneywash:portal:refresh",
             data = response.data,
         })
+    elseif not response.success then
+        response.message = GetErrorMessage(response.reason)
     end
 
     callback(response)

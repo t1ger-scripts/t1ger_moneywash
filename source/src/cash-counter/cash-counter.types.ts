@@ -12,6 +12,8 @@ export interface CounterBatch {
     durationMs: number
     remainingMs: number
     status: 'counting' | 'ready' | 'settling' | 'complete' | 'review'
+    /** Set by Lua when the status is "review": why an administrator is needed. */
+    message?: string
     settings: CashCounterSettings
 }
 
@@ -23,8 +25,6 @@ export interface CashCounterPayload {
     currency: string
     locale: string
     messages: LocaleMessages
-    titleKey: string
-    successKey: string
     settings: CashCounterSettings
     batch?: CounterBatch
 }

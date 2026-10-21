@@ -22,7 +22,7 @@ import './styles/cash-counter-paper.scss'
 
 const store = useCashCounterStore()
 const sound = useCounterSound()
-const { t, te } = useI18n()
+const { t } = useI18n()
 
 const root = ref<HTMLElement | null>(null)
 
@@ -240,7 +240,7 @@ function keyboardCollect() {
 const status = computed(() => {
     if (complete.value) return t('cashCounter.complete')
     if (settling.value) return t('cashCounter.confirming')
-    if (reviewing.value) return t('cashCounter.errors.manual_review')
+    if (reviewing.value) return store.batch?.message ?? ''
     if (store.submitting) return t('common.loading')
 
     if (store.running) {
@@ -289,23 +289,15 @@ const displayState = computed(() => {
 })
 
 const errorMessage = computed(() => {
-    if (reviewing.value) return t('cashCounter.errors.manual_review')
+    if (reviewing.value) return store.batch?.message ?? ''
 
-    if (store.error) {
-        const key = `cashCounter.errors.${store.error}`
-
-        return t(
-            te(key)
-                ? key
-                : 'cashCounter.errors.request_failed',
-        )
-    }
+    if (store.error) return store.error
 
     if (
         !store.busy &&
         store.amount > 0 &&
         !validAmount(store.amount, store.available)
-    ) return t('cashCounter.errors.invalid_amount')
+    ) return t('cashCounter.invalidAmount')
 
     return ''
 })
@@ -444,8 +436,9 @@ onUnmounted(() => {
             <h1 id="cash-counter-title" class="counter-sr-only">
                 {{
                     t(
-                        store.payload?.titleKey ??
-                        'cashCounter.injectTitle'
+                        store.payload?.operation === 'withdraw'
+                            ? 'cashCounter.withdrawTitle'
+                            : 'cashCounter.injectTitle'
                     )
                 }}
             </h1>

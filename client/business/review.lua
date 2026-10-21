@@ -330,7 +330,7 @@ end
 
 --- "Prepare books": the server returns the shuffled worksheet.
 RegisterNUICallback(NUI.prepare, function(body, cb)
-    if not ui.open or ui.sealed then return cb({ success = false, reason = "no_review" }) end
+    if not ui.open or ui.sealed then return cb(ErrorResponse("no_review")) end
 
     local ids = type(body) == "table" and body.ids or nil
     local response = request("prepare", ui.businessId, ids)
@@ -341,7 +341,7 @@ end)
 
 --- Stamp: the server grades the answers and locks the result.
 RegisterNUICallback(NUI.stamp, function(body, cb)
-    if not ui.open or ui.sealed then return cb({ success = false, reason = "no_review" }) end
+    if not ui.open or ui.sealed then return cb(ErrorResponse("no_review")) end
 
     local rows = type(body) == "table" and body.rows or nil
     local response = request("stamp", rows)

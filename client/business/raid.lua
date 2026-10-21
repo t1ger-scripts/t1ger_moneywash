@@ -64,17 +64,21 @@ end)
 --- The server answers with the amount it really seized.
 RegisterNUICallback("t1ger_moneywash:raid:finish", function(_, cb)
     if GetMoneywashUiScreen() ~= "raid" then
-        cb({ success = false, reason = "no_raid" })
+        cb(ErrorResponse("no_raid"))
         return
     end
 
-    local response = lib.callback.await("t1ger_moneywash:server:raid:finish", false)
+    local ok, response = pcall(lib.callback.await, "t1ger_moneywash:server:raid:finish", false)
 
-    if response and response.success and response.data then
+    if not ok or type(response) ~= "table" then
+        response = ErrorResponse("request_failed")
+    elseif response.success and response.data then
         seized = response.data.seized
+    elseif not response.success then
+        response.message = GetErrorMessage(response.reason)
     end
 
-    cb(response or { success = false, reason = "request_failed" })
+    cb(response)
 end)
 
 --- NUI: the screen closed - after finishing, or because the officer pressed ESC.

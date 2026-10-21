@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useUiStore } from '@/shared/stores/ui.store'
-import { installLocaleMessages } from '@/integrations/i18n'
+import { failureMessage, installLocaleMessages } from '@/integrations/i18n'
 import {
     postNui,
     NUI_CALLBACKS,
@@ -191,19 +191,19 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
             if (response.data) applyStatus(response.data)
 
             if (!response.success) {
-                error.value = response.reason ?? 'request_failed'
+                error.value = failureMessage(response)
                 return false
             }
 
             if (!response.data) {
-                error.value = 'request_failed'
+                error.value = failureMessage()
                 return false
             }
 
             return true
         } catch {
             if (version === generation) {
-                error.value = 'request_failed'
+                error.value = failureMessage()
             }
 
             return false

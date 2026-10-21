@@ -4,6 +4,7 @@ local confirming = false -- true while a confirm request is in flight; blocks do
 ---@class CashCounterResponse
 ---@field success boolean
 ---@field reason? string Failure reason, see error.<reason> in the locales
+---@field message? string Translated failure text, shown by the UI
 ---@field data? table Payload returned by the server on success
 
 --- Calls a `t1ger_moneywash:server:cashCounter:<name>` server callback.
@@ -14,8 +15,19 @@ local confirming = false -- true while a confirm request is in flight; blocks do
 local function serverRequest(name, ...)
     local ok, response = pcall(lib.callback.await, "t1ger_moneywash:server:cashCounter:" .. name, false, ...)
     if not ok or type(response) ~= "table" then
-        return { success = false, reason = "request_failed" }
+        return ErrorResponse("request_failed")
     end
+
+    if not response.success then
+        response.message = GetErrorMessage(response.reason)
+    end
+
+    -- A batch that needs an administrator carries its own message for the UI
+    local batch = response.data and response.data.batch
+    if batch and batch.status == "review" then
+        batch.message = GetErrorMessage("manual_review")
+    end
+
     return response
 end
 
@@ -62,7 +74,7 @@ exports("OpenCashCounter", OpenCashCounter)
 ---@param cb fun(response: CashCounterResponse)
 RegisterNUICallback("t1ger_moneywash:cashCounter:start", function(data, cb)
     if GetMoneywashUiScreen() ~= "cash-counter" or type(data) ~= "table" then
-        cb({ success = false, reason = "ui_closed" })
+        cb(ErrorResponse("ui_closed"))
         return
     end
     cb(serverRequest("start", data.amount))
@@ -74,12 +86,12 @@ end)
 ---@param cb fun(response: CashCounterResponse)
 RegisterNUICallback("t1ger_moneywash:cashCounter:confirm", function(data, cb)
     if GetMoneywashUiScreen() ~= "cash-counter" or type(data) ~= "table" then
-        cb({ success = false, reason = "ui_closed" })
+        cb(ErrorResponse("ui_closed"))
         return
     end
 
     if confirming then
-        cb({success = false, reason = "operation_in_progress"})
+        cb(ErrorResponse("operation_in_progress"))
         return
     end
 
@@ -107,7 +119,7 @@ end)
 ---@param cb fun(response: CashCounterResponse)
 RegisterNUICallback("t1ger_moneywash:cashCounter:status", function(_, cb)
     if GetMoneywashUiScreen() ~= "cash-counter" then
-        cb({ success = false, reason = "ui_closed" })
+        cb(ErrorResponse("ui_closed"))
         return
     end
     cb(serverRequest("status"))

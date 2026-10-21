@@ -179,3 +179,10 @@ end
 function NotifyError(reason)
     _API.ShowNotification(GetErrorMessage(reason), "error", {})
 end
+
+--- Builds a failed NUI response. The UI shows `message` as it is.
+---@param reason string
+---@return { success: false, reason: string, message: string }
+function ErrorResponse(reason)
+    return { success = false, reason = reason, message = GetErrorMessage(reason) }
+end

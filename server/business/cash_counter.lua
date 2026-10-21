@@ -259,8 +259,6 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, b
             amount = amount,
             available = available,
             currency = Config.Currency,
-            titleKey = operation == "inject" and "cashCounter.injectTitle" or "cashCounter.withdrawTitle",
-            successKey = operation == "inject" and "cashCounter.injected" or "cashCounter.withdrawn",
             settings = GetCashCounterSettings(),
         },
     }

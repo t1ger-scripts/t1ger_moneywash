@@ -6,6 +6,7 @@ Config.UiText = {
         close = "Close",
         cancel = "Cancel",
         loading = "Loading...",
+        requestFailed = "Unable to reach the server. Try again.",
     },
     portal = {
         header = {
@@ -78,7 +79,6 @@ Config.UiText = {
             price = "Acquisition Price",
             notice = "The purchase is final once the transaction has been approved.",
             confirm = "Confirm Purchase",
-            failed = "The purchase could not be completed. Please try again.",
         },
     },
     cashCounter = {
@@ -100,26 +100,10 @@ Config.UiText = {
         complete = "Complete",
         counting = "Counting",
         confirming = "Confirming transaction…",
+        invalidAmount = "Enter a whole amount within your available balance.",
         awaiting = "AWAITING CASH",
         batchComplete = "BATCH COMPLETE",
         dropHere = "DROP CASH HERE",
-        errors = {
-            invalid_amount = "Choose a whole amount within your available balance.",
-            insufficient_dirty_cash = "You no longer have enough dirty cash. The transaction was cancelled.",
-            not_owner = "You no longer own this business.",
-            too_far = "Return to your business handler.",
-            operation_in_progress = "Another operation is already in progress.",
-            request_failed = "Unable to confirm the request. Checking the transaction status…",
-            not_ready = "The cash counter is not ready yet.",
-            manual_review = "The cash removal could not be confirmed. Contact an administrator before retrying.",
-            unsupported_operation = "This cash operation is not available.",
-            count_not_ready = "Wait for the machine to finish counting.",
-            invalid_batch = "This count has expired. Start a new count.",
-            invalid_business_config = "This business is not configured correctly. Contact an administrator.",
-            insufficient_safe_cash = "The Safe no longer holds that amount.",
-            deposit_pending = "You already have a bank deposit in progress.",
-            raid_in_progress = "Police are raiding your business. The Safe is locked.",
-        },
     },
     raid = {
         dialogLabel = "Police evidence collection",
@@ -132,11 +116,6 @@ Config.UiText = {
         securing = "SECURING EVIDENCE…",
         evidenceSecured = "EVIDENCE SECURED",
         sealAria = "Slide from left to right to secure the evidence. Alternatively, press Enter.",
-        errors = {
-            request_failed = "Unable to reach the server. Try again.",
-            no_raid = "This raid is no longer active.",
-            too_far = "Return to the business to secure the evidence.",
-        },
     },
     review = {
         dialogLabel = "Review business books",
@@ -205,12 +184,6 @@ Config.UiText = {
         },
         folder = {
             label = "Filing and sealing the prepared books",
-        },
-        errors = {
-            request_failed = "The accountant's office couldn't be reached. Try again.",
-            invalid_selection = "Those receipts can't be used. Reopen the books and try again.",
-            below_minimum = "Those receipts aren't worth enough to review.",
-            not_prepared = "Your paperwork expired. Reopen the books to start over.",
         },
     },
 }

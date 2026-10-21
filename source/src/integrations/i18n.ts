@@ -9,6 +9,7 @@ const fallbackMessages: LocaleMessages = {
         close: 'Close',
         cancel: 'Cancel',
         loading: 'Loading...',
+        requestFailed: 'Unable to reach the server. Try again.',
     },
 }
 
@@ -31,4 +32,15 @@ export function installLocaleMessages(
 ): void {
     i18n.global.setLocaleMessage(locale, messages)
     i18n.global.locale.value = locale
+}
+
+
+/**
+ * Text for a failed request: the server's message, or a generic one when
+ * the request itself did not get through.
+ */
+export function failureMessage(
+    response?: { message?: string } | null,
+): string {
+    return response?.message || i18n.global.t('common.requestFailed')
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import RaidCashStacks from './components/RaidCashStacks.vue'
 import RaidEvidenceBag from './components/RaidEvidenceBag.vue'
@@ -10,7 +10,7 @@ import { raidImages } from './utils/raid.utils'
 import './styles/raid.scss'
 
 const store = useRaidStore()
-const { t, te } = useI18n()
+const { t } = useI18n()
 const root = ref<HTMLElement | null>(null)
 
 const {
@@ -23,13 +23,6 @@ const {
     finishDeposit,
 } = useRaidDrag(root)
 
-const errorMessage = computed(() => {
-    if (!store.error) return ''
-
-    const key = `raid.errors.${store.error}`
-
-    return t(te(key) ? key : 'raid.errors.request_failed')
-})
 </script>
 
 <template>
@@ -51,8 +44,8 @@ const errorMessage = computed(() => {
                 draggable="false"
             />
 
-            <p v-if="errorMessage" class="raid-error" role="alert">
-                {{ errorMessage }}
+            <p v-if="store.error" class="raid-error" role="alert">
+                {{ store.error }}
             </p>
 
             <RaidCashStacks

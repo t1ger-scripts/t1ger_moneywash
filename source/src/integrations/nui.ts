@@ -44,6 +44,8 @@ export type NuiMessageName =
 export interface NuiResponse<TData = undefined> {
     success: boolean
     reason?: string
+    /** Translated by Lua; the UI shows it as it is. */
+    message?: string
     data?: TData
 }
 

@@ -2,7 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
 import { useUiStore } from '@/shared/stores/ui.store'
-import { i18n, installLocaleMessages } from '@/integrations/i18n'
+import { failureMessage, i18n, installLocaleMessages } from '@/integrations/i18n'
 import { NUI_CALLBACKS, postNui } from '@/integrations/nui'
 import type {
     ReviewPayload,
@@ -284,17 +284,6 @@ export const useReviewStore = defineStore('review', () => {
         if (!receipts.value.some((receipt) => receipt.id === id)) return
 
         selectedIds.value.push(id)
-    }
-
-    function failureMessage(
-        response: { reason?: string; message?: string } | null,
-    ): string {
-        const key = `review.errors.${response?.reason ?? ''}`
-
-        if (i18n.global.te(key)) return i18n.global.t(key)
-
-        return response?.message ||
-            i18n.global.t('review.errors.request_failed')
     }
 
     async function prepareBooks() {

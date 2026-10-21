@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useUiStore } from '@/shared/stores/ui.store'
-import { installLocaleMessages } from '@/integrations/i18n'
+import { failureMessage, installLocaleMessages } from '@/integrations/i18n'
 import {
     postNui,
     NUI_CALLBACKS,
@@ -120,7 +120,7 @@ export const useRaidStore = defineStore('raid', () => {
             if (version !== generation) return false
 
             if (!response.success || !response.data) {
-                error.value = response.reason ?? 'request_failed'
+                error.value = failureMessage(response)
                 return false
             }
 
@@ -134,7 +134,7 @@ export const useRaidStore = defineStore('raid', () => {
 
             return true
         } catch {
-            if (version === generation) error.value = 'request_failed'
+            if (version === generation) error.value = failureMessage()
 
             return false
         } finally {
