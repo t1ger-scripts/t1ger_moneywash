@@ -21,7 +21,6 @@ shared_scripts {
     'bridge/config.lua',
     'bridge/init.lua',
     'shared/config.lua',
-    'shared/street_wash.lua',
 }
 
 client_scripts {
@@ -42,7 +41,6 @@ client_scripts {
     'client/business/menu.lua',
     'client/business/stock.lua',
     'client/business/review.lua',
-    'client/street_wash.lua',
     'client/main.lua',
 }
 
@@ -74,7 +72,6 @@ server_scripts {
     'server/business/portal.lua',
     'server/business/cash_counter.lua',
     
-    'server/street_wash.lua',
     'server/main.lua',
 }
 
