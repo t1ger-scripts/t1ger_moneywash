@@ -1,33 +1,16 @@
---- ============================================================================
---- Business Portal Server
---- Creates authoritative marketplace snapshots, validates portal actions and
---- keeps open portals synchronized when a location is purchased.
---- ============================================================================
+--- Business portal server: builds marketplace snapshots, validates portal actions and syncs open portals on purchase.
 
 local ActivePortalViewers = {}
 local QueuedViewerRefresh = {}
-
-local CLIENT_EVENTS = {
-    refresh = "t1ger_moneywash:client:businessPortal:refresh",
-}
-
-local SERVER_CALLBACKS = {
-    getSnapshot = "t1ger_moneywash:server:businessPortal:getSnapshot",
-    purchaseBusiness = "t1ger_moneywash:server:businessPortal:purchaseBusiness",
-    getWaypoint = "t1ger_moneywash:server:businessPortal:getWaypoint",
-}
-
 
 --- Counts the entries in a keyed table.
 ---@param collection table|nil
 ---@return number
 local function countEntries(collection)
     local count = 0
-
     for _ in pairs(collection or {}) do
         count = count + 1
     end
-
     return count
 end
 
@@ -62,11 +45,7 @@ end
 ---@return string localeName
 ---@return table messages
 local function readPortalLocalization()
-    local portalConfig = Config.BusinessPortal or {}
-
-    local localeName = portalConfig.Locale
-        or GetConvar("ox:locale", "en")
-        or "en"
+    local localeName = Config.WebPortal.Locale or GetConvar("ox:locale", "en") or "en"
 
     if type(localeName) ~= "string"
         or not localeName:match("^[%w_-]+$")
@@ -75,33 +54,21 @@ local function readPortalLocalization()
     end
 
     local resourceName = GetCurrentResourceName()
-    local localeContents = LoadResourceFile(
-        resourceName,
-        ("locales/%s.json"):format(localeName)
-    )
+    local localeContents = LoadResourceFile(resourceName, ("locales/%s.json"):format(localeName))
 
     if not localeContents and localeName ~= "en" then
         localeName = "en"
-        localeContents = LoadResourceFile(
-            resourceName,
-            "locales/en.json"
-        )
+        localeContents = LoadResourceFile(resourceName, "locales/en.json")
     end
 
     if not localeContents then
         return localeName, {}
     end
 
-    local decodeSucceeded, messages = pcall(
-        json.decode,
-        localeContents
-    )
+    local decodeSucceeded, messages = pcall(json.decode, localeContents)
 
     if not decodeSucceeded or type(messages) ~= "table" then
-        print(("^1[MoneyWash] Failed to decode locales/%s.json.^7"):format(
-            localeName
-        ))
-
+        print(("^1[MoneyWash] Failed to decode locales/%s.json.^7"):format(localeName))
         return localeName, {}
     end
 
@@ -153,10 +120,7 @@ local function createMarketplaceSnapshot(source)
         return nil, "business_store_not_ready"
     end
 
-    if Config.Reputation.Enable
-        and type(IsReputationReady) == "function"
-        and not IsReputationReady(source)
-    then
+    if Config.Reputation.Enable and type(IsReputationReady) == "function" and not IsReputationReady(source) then
         return nil, "reputation_not_ready"
     end
 
@@ -172,9 +136,7 @@ local function createMarketplaceSnapshot(source)
     local ownedLocations = {}
 
     for _, business in ipairs(playerBusinesses) do
-        ownedLocations[
-        ("%s:%d"):format(business.type, business.locationId)
-        ] = business
+        ownedLocations[("%s:%d"):format(business.type, business.locationId)] = business
     end
 
     local reputation = GetPlayerReputation(source)
@@ -189,16 +151,14 @@ local function createMarketplaceSnapshot(source)
         local tierLocations = configuredLocations[tier.type] or {}
         local totalLocationCount = countEntries(tierLocations)
 
-        local isUnlocked = not Config.Reputation.Enable
-            or reputationPoints >= tier.requiredPoints
+        local isUnlocked = not Config.Reputation.Enable or reputationPoints >= tier.requiredPoints
 
         local availableLocationCount = 0
 
         if isUnlocked then
             for locationId in pairs(tierLocations) do
                 if not IsLocationOwned(tier.type, locationId) then
-                    availableLocationCount =
-                        availableLocationCount + 1
+                    availableLocationCount = availableLocationCount + 1
                 end
             end
         end
@@ -215,16 +175,10 @@ local function createMarketplaceSnapshot(source)
         }
 
         for locationId, location in pairs(tierLocations) do
-            local locationKey = ("%s:%d"):format(
-                tier.type,
-                locationId
-            )
+            local locationKey = ("%s:%d"):format(tier.type, locationId)
 
             local ownedBusiness = ownedLocations[locationKey]
-            local isAvailable = not IsLocationOwned(
-                tier.type,
-                locationId
-            )
+            local isAvailable = not IsLocationOwned(tier.type, locationId)
 
             -- Locked locations and locations owned by other players are never
             -- sent to the client, preventing their coordinates being exposed.
@@ -232,24 +186,14 @@ local function createMarketplaceSnapshot(source)
                 visibleLocations[#visibleLocations + 1] = {
                     key = locationKey,
                     locationId = locationId,
-                    ownedBusinessId = ownedBusiness
-                        and ownedBusiness.id
-                        or nil,
+                    ownedBusinessId = ownedBusiness and ownedBusiness.id or nil,
                     businessType = tier.type,
                     displayName = location.brand or tier.label,
                     imageFileName = location.image or ("%s_%03d.webp"):format(tier.type, locationId),
                     price = location.price,
-                    ownership = ownedBusiness
-                        and "ownedByPlayer"
-                        or "available",
-                    coordinates = serializeCoordinates(
-                        location.coords
-                    ),
-                    address = {
-                        street = nil,
-                        crossingRoad = nil,
-                        zone = nil,
-                    },
+                    ownership = ownedBusiness and "ownedByPlayer" or "available",
+                    coordinates = serializeCoordinates(location.coords),
+                    address = { street = nil, crossingRoad = nil, zone = nil },
                 }
             end
         end
@@ -261,16 +205,13 @@ local function createMarketplaceSnapshot(source)
 
     table.sort(visibleLocations, function(firstLocation, secondLocation)
         if firstLocation.businessType == secondLocation.businessType then
-            return firstLocation.locationId
-                < secondLocation.locationId
+            return firstLocation.locationId < secondLocation.locationId
         end
 
-        return firstLocation.businessType
-            < secondLocation.businessType
+        return firstLocation.businessType < secondLocation.businessType
     end)
 
     local localeName, messages = loadPortalLocalization()
-    local portalConfig = Config.BusinessPortal or {}
 
     return {
         profile = {
@@ -287,12 +228,12 @@ local function createMarketplaceSnapshot(source)
 
         settings = {
             currencySymbol = Config.Currency or "$",
-            theme = portalConfig.Theme or {},
+            theme = Config.WebPortal.Theme or {},
         },
 
         localization = {
             locale = localeName,
-            messages = messages,
+            messages = messages
         },
     }
 end
@@ -305,10 +246,7 @@ function RefreshBusinessPortalViewers(excludedSource)
         if not GetPlayerName(playerSource) then
             ActivePortalViewers[playerSource] = nil
         elseif playerSource ~= excludedSource then
-            TriggerClientEvent(
-                CLIENT_EVENTS.refresh,
-                playerSource
-            )
+            TriggerClientEvent("t1ger_moneywash:client:businessPortal:refresh", playerSource)
         end
     end
 end
@@ -326,166 +264,97 @@ function RefreshBusinessPortalViewer(playerSource)
         QueuedViewerRefresh[playerSource] = nil
 
         if ActivePortalViewers[playerSource] and GetPlayerName(playerSource) then
-            TriggerClientEvent(CLIENT_EVENTS.refresh, playerSource)
+            TriggerClientEvent("t1ger_moneywash:client:businessPortal:refresh", playerSource)
         end
     end)
 end
 
 --- Returns the initial portal snapshot and registers the player as a viewer.
-lib.callback.register(
-    SERVER_CALLBACKS.getSnapshot,
-    function(source)
-        local snapshot, reason = createMarketplaceSnapshot(source)
+lib.callback.register("t1ger_moneywash:server:businessPortal:getSnapshot", function(source)
+    local snapshot, reason = createMarketplaceSnapshot(source)
 
-        if not snapshot then
-            return {
-                success = false,
-                reason = reason or "snapshot_unavailable",
-            }
-        end
-
-        ActivePortalViewers[source] = true
-
-        return {
-            success = true,
-            data = snapshot,
-        }
+    if not snapshot then
+        return {success = false, reason = reason or "snapshot_unavailable"}
     end
-)
 
+    ActivePortalViewers[source] = true
+
+    return {success = true, data = snapshot}
+end)
 
 --- Performs a server-authoritative purchase using the existing business logic.
-lib.callback.register(
-    SERVER_CALLBACKS.purchaseBusiness,
-    function(source, businessType, locationId)
-        if not ActivePortalViewers[source] then
-            return {
-                success = false,
-                reason = "portal_closed",
-            }
-        end
-
-        if type(businessType) ~= "string" then
-            return {
-                success = false,
-                reason = "invalid_type",
-            }
-        end
-
-        locationId = tonumber(locationId)
-
-        if not locationId then
-            return {
-                success = false,
-                reason = "invalid_location",
-            }
-        end
-
-        local purchaseSucceeded, reason = BuyBusiness(
-            source,
-            businessType,
-            locationId
-        )
-
-        if not purchaseSucceeded then
-            return {
-                success = false,
-                reason = reason or "purchase_failed",
-            }
-        end
-
-        local snapshot, snapshotReason =
-            createMarketplaceSnapshot(source)
-
-        -- Other open portals immediately stop exposing the purchased location.
-        RefreshBusinessPortalViewers(source)
-
-        if not snapshot then
-            return {
-                success = true,
-                reason = snapshotReason,
-            }
-        end
-
-        return {
-            success = true,
-            data = snapshot,
-        }
+lib.callback.register("t1ger_moneywash:server:businessPortal:purchaseBusiness", function(source, businessType, locationId)
+    if not ActivePortalViewers[source] then
+        return { success = false, reason = "portal_closed" }
     end
-)
 
+    if type(businessType) ~= "string" then
+        return { success = false, reason = "invalid_type" }
+    end
+
+    locationId = tonumber(locationId)
+
+    if not locationId then
+        return { success = false, reason = "invalid_location" }
+    end
+
+    local purchaseSucceeded, reason = BuyBusiness(source, businessType, locationId)
+
+    if not purchaseSucceeded then
+        return { success = false, reason = reason or "purchase_failed" }
+    end
+
+    local snapshot, snapshotReason = createMarketplaceSnapshot(source)
+
+    -- Other open portals immediately stop exposing the purchased location.
+    RefreshBusinessPortalViewers(source)
+
+    if not snapshot then
+        return { success = true, reason = snapshotReason }
+    end
+
+    return { success = true, data = snapshot }
+end)
 
 --- Validates ownership before returning waypoint coordinates.
-lib.callback.register(
-    SERVER_CALLBACKS.getWaypoint,
-    function(source, businessType, locationId)
-        if not ActivePortalViewers[source] then
-            return {
-                success = false,
-                reason = "portal_closed",
-            }
-        end
-
-        if type(businessType) ~= "string" then
-            return {
-                success = false,
-                reason = "invalid_type",
-            }
-        end
-
-        locationId = tonumber(locationId)
-
-        if not locationId then
-            return {
-                success = false,
-                reason = "invalid_location",
-            }
-        end
-
-        local identifier = _API.Player.GetIdentifier(source)
-        local business = GetBusinessByLocation(
-            businessType,
-            locationId
-        )
-
-        if not identifier
-            or not business
-            or business.identifier ~= identifier
-        then
-            return {
-                success = false,
-                reason = "not_owner",
-            }
-        end
-
-        local location = GetLocationConfig(
-            businessType,
-            locationId
-        )
-
-        if not location or not location.coords then
-            return {
-                success = false,
-                reason = "invalid_location",
-            }
-        end
-
-        return {
-            success = true,
-            data = serializeCoordinates(location.coords),
-        }
+lib.callback.register("t1ger_moneywash:server:businessPortal:getWaypoint", function(source, businessType, locationId)
+    if not ActivePortalViewers[source] then
+        return { success = false, reason = "portal_closed" }
     end
-)
 
+    if type(businessType) ~= "string" then
+        return { success = false, reason = "invalid_type" }
+    end
+
+    locationId = tonumber(locationId)
+
+    if not locationId then
+        return { success = false, reason = "invalid_location" }
+    end
+
+    local identifier = _API.Player.GetIdentifier(source)
+    local business = GetBusinessByLocation(businessType, locationId)
+
+    if not identifier or not business or business.identifier ~= identifier then
+        return { success = false, reason = "not_owner" }
+    end
+
+    local location = GetLocationConfig(businessType, locationId)
+
+    if not location or not location.coords then
+        return { success = false, reason = "invalid_location" }
+    end
+
+    return {
+        success = true,
+        data = serializeCoordinates(location.coords),
+    }
+end)
 
 --- Stops sending refresh events after the player closes the portal.
-RegisterNetEvent(
-    "t1ger_moneywash:server:businessPortal:closed",
-    function()
-        ActivePortalViewers[source] = nil
-    end
-)
-
+RegisterNetEvent("t1ger_moneywash:server:businessPortal:closed", function()
+    ActivePortalViewers[source] = nil
+end)
 
 AddEventHandler("playerDropped", function()
     ActivePortalViewers[source] = nil
