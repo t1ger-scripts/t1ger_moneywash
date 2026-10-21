@@ -52,18 +52,19 @@ Config.Police = {
     },
 }
 
+-- Web portal: locale, UI colors, laptop target and auto-close range
 Config.WebPortal = {
-    Locale         = "en",
+    Locale        = "en",  -- Locale file in locales/
 
-    -- Runtime portal colors.
-    Theme          = {
-        -- Primary interaction colors
+    -- Portal UI colors
+    Theme         = {
+        -- Primary
         PrimaryColor       = "#1687ff",
         PrimaryHoverColor  = "#3a9aff",
         PrimaryActiveColor = "#0a6fd8",
         PrimarySubtleColor = "rgb(22 135 255 / 14%)",
 
-        -- Application surfaces
+        -- Surfaces
         BackgroundColor    = "#07111f",
         SurfaceColor       = "#0c1a2a",
         RaisedSurfaceColor = "#102238",
@@ -73,12 +74,12 @@ Config.WebPortal = {
         BorderColor        = "#1d3854",
         StrongBorderColor  = "#2d5579",
 
-        -- Typography
+        -- Text
         PrimaryTextColor   = "#f3f7fb",
         SecondaryTextColor = "#bdcadb",
         MutedTextColor     = "#8295ac",
 
-        -- Status colors
+        -- Status
         SuccessColor       = "#20c985",
         SuccessSubtleColor = "rgb(32 201 133 / 14%)",
         WarningColor       = "#f2b84b",
@@ -87,42 +88,20 @@ Config.WebPortal = {
         DangerSubtleColor  = "rgb(239 98 98 / 14%)",
     },
 
-    Target = {
-        models = {
-            "prop_monitor_01a",
-            "prop_monitor_li",
-            "prop_monitor_01d",
-            "prop_monitor_04a",
-            "prop_monitor_01c",
+    -- Target option on laptop props
+    Target        = {
+        icon     = "fa-solid fa-building", -- Target icon
+        distance = 2.0,                    -- Target range
+        models   = {                       -- Props that open the portal
             "prop_laptop_lester",
             "prop_laptop_jimmy",
             "prop_laptop_lester2",
             "prop_laptop_01a",
             "h4_prop_h4_laptop_01a",
         },
-
-        icon = "fa-solid fa-building",
-        distance = 2.0,
     },
 
-    -- Computer and laptop models that provide access to the business portal
-    Models         = {
-        "prop_monitor_01a",
-        "prop_monitor_li",
-        "prop_monitor_01d",
-        "prop_monitor_04a",
-        "prop_monitor_01c",
-        "prop_laptop_lester",
-        "prop_laptop_jimmy",
-        "prop_laptop_lester2",
-        "prop_laptop_01a",
-        "h4_prop_h4_laptop_01a",
-    },
-
-    TargetDistance = 2.0,
-    TargetIcon     = "fa-solid fa-building",
-
-    CloseDistance  = 6.0,   -- the portal closes automatically if you move this far from where you opened it
+    CloseDistance = 6.0,   -- Portal closes if you move this far from where you opened it
 }
 
 --- Bank deposit settings

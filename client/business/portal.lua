@@ -306,9 +306,9 @@ CreateThread(function()
     _API.Target.AddModel(Config.WebPortal.Target.models, {
         {
             name = "t1ger_moneywash_business_portal",
-            icon = Config.WebPortal.TargetIcon,
+            icon = Config.WebPortal.Target.icon,
             label = locale("target.portal_npc"),
-            distance = Config.WebPortal.TargetDistance or 2.0,
+            distance = Config.WebPortal.Target.distance or 2.0,
 
             canInteract = function()
                 return not isPortalOpen and not isPortalOpening and GetMoneywashUiScreen() == nil
