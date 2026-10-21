@@ -211,25 +211,6 @@ local function guarded(source, fn)
     return response
 end
 
-
---- Loads the locale file for the UI, falling back to "en".
----@return string localeName
----@return table messages
-local function loadLocalization()
-    local resource = GetCurrentResourceName()
-    local name = (Config.WebPortal or {}).Locale or GetConvar("ox:locale", "en")
-    if type(name) ~= "string" or not name:match("^[%w_-]+$") then name = "en" end
-
-    local raw = LoadResourceFile(resource, "locales/" .. name .. ".json")
-    if not raw then
-        name = "en"
-        raw = LoadResourceFile(resource, "locales/en.json")
-    end
-
-    local ok, messages = pcall(json.decode, raw or "{}")
-    return name, ok and messages or {}
-end
-
 --- ---------------------------------------------------------------------------
 --- CALLBACKS
 --- ---------------------------------------------------------------------------
@@ -251,13 +232,10 @@ lib.callback.register("t1ger_moneywash:server:review:open", function(source, bus
 
     local tier = GetTierByType(business.type)
     local cfg = Config.Review
-    local localeName, messages = loadLocalization()
 
     return {
         success = true,
         data = {
-            locale                = localeName,
-            messages              = messages,
             currency              = Config.Currency,
             businessName          = GetBusinessLabel(business),
             maxReceipts           = cfg.MaxReceiptsPerReview,

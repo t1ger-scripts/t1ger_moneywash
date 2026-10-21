@@ -76,6 +76,9 @@ local function prepareSnapshotForNui(snapshot)
         return snapshot
     end
 
+    local localeName, messages = GetMoneywashUiLocale()
+    snapshot.localization = { locale = localeName, messages = messages }
+
     if type(snapshot.locations) ~= "table" then
         snapshot.locations = {}
         return snapshot

@@ -31,7 +31,6 @@
 ---@type table<integer, CashCounterSession> UI sessions by player source
 local Pending, ByBusiness, Sessions = {}, {}, {}
 local nextBatchId = 0
-local Resource = GetCurrentResourceName()
 
 --- Converts a value to an integer clamped to a range; non-numeric, NaN and infinite values use `fallback`.
 ---@param value any
@@ -152,20 +151,6 @@ local function playerBusiness(src, businessId)
     return business
 end
 
---- Loads the locale file for the UI (Config.WebPortal.Locale or ox:locale), falling back to "en".
----@return string localeName
----@return table messages
-local function localization()
-    local name = (Config.WebPortal or {}).Locale or GetConvar("ox:locale", "en")
-    if type(name) ~= "string" or not name:match("^[%w_-]+$") then name = "en" end
-    local raw = LoadResourceFile(Resource, "locales/" .. name .. ".json")
-    if not raw then
-        name = "en"; raw = LoadResourceFile(Resource, "locales/en.json")
-    end
-    local ok, messages = pcall(json.decode, raw or "{}")
-    return name, ok and messages or {}
-end
-
 --- Finds the server id of an online player by identifier.
 ---@param identifier string
 ---@return integer? source Nil if the player is offline
@@ -266,8 +251,6 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, b
         operation = operation,
     }
 
-    local localeName, messages = localization()
-
     return {
         success = true,
         data = {
@@ -276,8 +259,6 @@ lib.callback.register("t1ger_moneywash:server:cashCounter:open", function(src, b
             amount = amount,
             available = available,
             currency = Config.Currency,
-            locale = localeName,
-            messages = messages,
             titleKey = operation == "inject" and "cashCounter.injectTitle" or "cashCounter.withdrawTitle",
             successKey = operation == "inject" and "cashCounter.injected" or "cashCounter.withdrawn",
             settings = GetCashCounterSettings(),

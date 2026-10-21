@@ -5,35 +5,14 @@
 
 local seized = nil -- amount the server reported as seized; shown once the UI closes
 
---- Loads the locale file for the UI (same rules as the cash counter).
----@return string localeName
----@return table messages
-local function loadLocale()
-    local resource = GetCurrentResourceName()
-    local name = (Config.WebPortal or {}).Locale or GetConvar("ox:locale", "en")
-    local raw = LoadResourceFile(resource, "locales/" .. name .. ".json")
-
-    if not raw then
-        name = "en"
-        raw = LoadResourceFile(resource, "locales/en.json")
-    end
-
-    local ok, messages = pcall(json.decode, raw or "{}")
-    return name, ok and messages or {}
-end
-
 --- Opens the raid UI.
 ---@param exposed number Exposed Safe cash at the start of the raid (> 0)
 ---@return boolean opened
 local function OpenRaidUi(exposed)
     if not BeginMoneywashUi("raid") then return false end
 
-    local localeName, messages = loadLocale()
-
     ShowMoneywashUi("raid", "t1ger_moneywash:raid:open", {
         currency   = Config.Currency,
-        locale     = localeName,
-        messages   = messages,
         stackCount = Config.Police.Raid.StackCount,
         exposed    = exposed,
     })

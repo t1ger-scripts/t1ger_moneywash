@@ -25,6 +25,39 @@ function BeginMoneywashUi(screen)
     return true
 end
 
+---@type string|nil
+local uiLocaleName = nil
+
+---@type table|nil
+local uiLocaleMessages = nil
+
+--- Loads locales/<Config.WebPortal.Locale>.json for the UI once, falling back to "en".
+---@return string localeName
+---@return table messages
+function GetMoneywashUiLocale()
+    if uiLocaleMessages then return uiLocaleName, uiLocaleMessages end
+
+    local name = (Config.WebPortal or {}).Locale or GetConvar("ox:locale", "en")
+    if type(name) ~= "string" or not name:match("^[%w_-]+$") then name = "en" end
+
+    local resource = GetCurrentResourceName()
+    local raw = LoadResourceFile(resource, ("locales/%s.json"):format(name))
+
+    if not raw and name ~= "en" then
+        name = "en"
+        raw = LoadResourceFile(resource, "locales/en.json")
+    end
+
+    local ok, messages = pcall(json.decode, raw or "{}")
+    if not ok or type(messages) ~= "table" then
+        print(("^1[MoneyWash] Failed to decode locales/%s.json.^7"):format(name))
+        messages = {}
+    end
+
+    uiLocaleName, uiLocaleMessages = name, messages
+    return name, messages
+end
+
 --- Sends a message to the UI and gives it focus. Held back until the page is ready.
 ---@param screen string The screen that claimed the UI
 ---@param action string
@@ -32,6 +65,10 @@ end
 ---@return boolean shown false if the screen doesn't own the UI
 function ShowMoneywashUi(screen, action, payload)
     if activeScreen ~= screen then return false end
+
+    if type(payload) == "table" then
+        payload.locale, payload.messages = GetMoneywashUiLocale()
+    end
 
     local message = { action = action, data = payload }
     pendingMessage = message

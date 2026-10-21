@@ -41,61 +41,7 @@ local function createInvestorProgress(source)
     }
 end
 
---- Loads the current runtime locale JSON without requiring a UI rebuild.
----@return string localeName
----@return table messages
-local function readPortalLocalization()
-    local localeName = Config.WebPortal.Locale or GetConvar("ox:locale", "en") or "en"
 
-    if type(localeName) ~= "string"
-        or not localeName:match("^[%w_-]+$")
-    then
-        localeName = "en"
-    end
-
-    local resourceName = GetCurrentResourceName()
-    local localeContents = LoadResourceFile(resourceName, ("locales/%s.json"):format(localeName))
-
-    if not localeContents and localeName ~= "en" then
-        localeName = "en"
-        localeContents = LoadResourceFile(resourceName, "locales/en.json")
-    end
-
-    if not localeContents then
-        return localeName, {}
-    end
-
-    local decodeSucceeded, messages = pcall(json.decode, localeContents)
-
-    if not decodeSucceeded or type(messages) ~= "table" then
-        print(("^1[MoneyWash] Failed to decode locales/%s.json.^7"):format(localeName))
-        return localeName, {}
-    end
-
-    return localeName, messages
-end
-
-local cachedLocaleName = nil
-local cachedMessages = nil
-
---- Returns the portal locale, reading and decoding the file only once.
----@return string localeName
----@return table messages
-local function loadPortalLocalization()
-    if cachedMessages then
-        return cachedLocaleName, cachedMessages
-    end
-
-    local localeName, messages = readPortalLocalization()
-
-    -- Never cache a failed read, so a fixed file is picked up on the next open
-    if next(messages) then
-        cachedLocaleName = localeName
-        cachedMessages = messages
-    end
-
-    return localeName, messages
-end
 
 --- Creates a plain coordinate table safe for NUI serialization.
 ---@param coordinates vector3|vector4|table
@@ -107,7 +53,6 @@ local function serializeCoordinates(coordinates)
         z = coordinates.z + 0.0,
     }
 end
-
 
 --- Creates the complete player-specific marketplace payload.
 ---@param source number
@@ -211,8 +156,6 @@ local function createMarketplaceSnapshot(source)
         return firstLocation.businessType < secondLocation.businessType
     end)
 
-    local localeName, messages = loadPortalLocalization()
-
     return {
         profile = {
             characterName = _API.Player.GetCharacterName(source) or GetPlayerName(source) or locale("portal.unknownInvestor"),
@@ -229,11 +172,6 @@ local function createMarketplaceSnapshot(source)
         settings = {
             currencySymbol = Config.Currency or "$",
             theme = Config.WebPortal.Theme or {},
-        },
-
-        localization = {
-            locale = localeName,
-            messages = messages
         },
     }
 end
