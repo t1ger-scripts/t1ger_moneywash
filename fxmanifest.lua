@@ -94,7 +94,7 @@ files {
     'web/mapStyles/styleSatelite/5/**/*',
 
     'shared/locations.lua',
-    'shared/stock_mission.lua',
+    'shared/delivery.lua',
 }
 
 ox_libs {

@@ -68,37 +68,6 @@ Config.HandlerNPC = {
     }
 }
 
--- Police access, business raids and alert blips
-Config.Police = {
-    Jobs                  = { "police", "sheriff" }, -- Jobs with police access
-    DepositReviewMinGrade = 2,                       -- Min grade to review flagged deposits
-    AlertNotifyDuration   = 10000,                   -- Alert notification time (ms)
-
-    -- Raid a business via the handler ped
-    Raid                  = {
-        Enable         = true,
-        MinGrade       = 1,                                                  -- Min grade to raid
-        Target         = { icon = "fa-solid fa-shield-halved", distance = 2.0 }, -- Target icon and range
-        StackCount     = 10,                                                 -- Cash piles in the safe (1-20)
-        MaxTime        = 5,                                                  -- Minutes until an unfinished raid is cancelled
-        Cooldown       = 60,                                                 -- Minutes before the same business can be raided again (resets on restart)
-
-        -- Suspicion after a raid (never raises it)
-        -- "set": drops to Value if higher | "reduce": lowers by Value % of current
-        SuspicionAfter = { Mode = "set", Value = 50 },
-    },
-
-    -- Alerts per suspicion level (Enable = false turns one off)
-    -- Texts: locales/en.json > notification.police_alert.<type>
-    Alerts                = {
-        Moderate = { Enable = true, BlipName = "Unusual activity",     BlipSprite = 108, BlipColour = 5,  BlipScale = 0.9, BlipFlash = false, BlipDuration = 30 },
-        High     = { Enable = true, BlipName = "Suspicious business",  BlipSprite = 108, BlipColour = 47, BlipScale = 1.0, BlipFlash = false, BlipDuration = 30 },
-        Critical = { Enable = true, BlipName = "High-risk laundering", BlipSprite = 108, BlipColour = 1,  BlipScale = 1.0, BlipFlash = true,  BlipDuration = 30 },
-        Max      = { Enable = true, BlipName = "Exposed laundering",   BlipSprite = 108, BlipColour = 1,  BlipScale = 1.2, BlipFlash = true,  BlipDuration = 30 },
-        Deposit  = { Enable = true, BlipName = "Flagged ATM deposit",  BlipSprite = 108, BlipColour = 1,  BlipScale = 1.0, BlipFlash = true,  BlipDuration = 30 },
-    },
-}
-
 -- Web portal: locale, UI colors, laptop target and auto-close range
 Config.WebPortal = {
     Locale        = "en",  -- Locale file in locales/
@@ -151,10 +120,10 @@ Config.WebPortal = {
     CloseDistance = 6.0,   -- Portal closes if you move this far from where you opened it
 }
 
-    -- Global stock economy - every number below applies the same way to
-    -- every business type. Bigger tiers naturally need/hold more stock
-    -- because their expectedRevenue is bigger, not because anything here
-    -- is set per-tier.
+-- Global stock economy - every number below applies the same way to
+-- every business type. Bigger tiers naturally need/hold more stock
+-- because their expectedRevenue is bigger, not because anything here
+-- is set per-tier.
 Config.Stock = {
     LaunderDollarsPerUnit = 100, -- $ laundered per 1 unit of stock consumed
     UnitPricePercent      = 15,  -- cost to BUY 1 unit, as % of the value it represents
@@ -167,7 +136,7 @@ Config.Stock = {
     -- players won't be told when their stock is about to stop covering them)
     ShowCycleReadiness    = true,
 
-    Mission = require("shared/stock_mission"), -- Stock delivery mission settings - see shared/stock_mission.lua
+    Mission = require("shared/delivery"), -- Stock delivery mission settings - see shared/delivery.lua
 }
 
 --- Bank deposit settings
@@ -259,5 +228,36 @@ Config.Reputation = {
         [7500]  = "Commercial Investor",
         [10000] = "Institutional Buyer",
         [15000] = "Premium Member",
+    },
+}
+
+-- Police access, business raids and alert blips
+Config.Police = {
+    Jobs                  = { "police", "sheriff" }, -- Jobs with police access
+    DepositReviewMinGrade = 2,                       -- Min grade to review flagged deposits
+    AlertNotifyDuration   = 10000,                   -- Alert notification time (ms)
+
+    -- Raid a business via the handler ped
+    Raid                  = {
+        Enable         = true,
+        MinGrade       = 1,                                                  -- Min grade to raid
+        Target         = { icon = "fa-solid fa-shield-halved", distance = 2.0 }, -- Target icon and range
+        StackCount     = 10,                                                 -- Cash piles in the safe (1-20)
+        MaxTime        = 5,                                                  -- Minutes until an unfinished raid is cancelled
+        Cooldown       = 60,                                                 -- Minutes before the same business can be raided again (resets on restart)
+
+        -- Suspicion after a raid (never raises it)
+        -- "set": drops to Value if higher | "reduce": lowers by Value % of current
+        SuspicionAfter = { Mode = "set", Value = 50 },
+    },
+
+    -- Alerts per suspicion level (Enable = false turns one off)
+    -- Texts: locales/en.json > notification.police_alert.<type>
+    Alerts                = {
+        Moderate = { Enable = true, BlipName = "Unusual activity",     BlipSprite = 108, BlipColour = 5,  BlipScale = 0.9, BlipFlash = false, BlipDuration = 30 },
+        High     = { Enable = true, BlipName = "Suspicious business",  BlipSprite = 108, BlipColour = 47, BlipScale = 1.0, BlipFlash = false, BlipDuration = 30 },
+        Critical = { Enable = true, BlipName = "High-risk laundering", BlipSprite = 108, BlipColour = 1,  BlipScale = 1.0, BlipFlash = true,  BlipDuration = 30 },
+        Max      = { Enable = true, BlipName = "Exposed laundering",   BlipSprite = 108, BlipColour = 1,  BlipScale = 1.2, BlipFlash = true,  BlipDuration = 30 },
+        Deposit  = { Enable = true, BlipName = "Flagged ATM deposit",  BlipSprite = 108, BlipColour = 1,  BlipScale = 1.0, BlipFlash = true,  BlipDuration = 30 },
     },
 }

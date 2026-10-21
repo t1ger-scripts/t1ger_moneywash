@@ -1,7 +1,4 @@
--- ============================================================================
--- STOCK DELIVERY MISSION SETTINGS
--- Required directly from shared/business.lua as Config.Stock.Mission.
--- ============================================================================
+-- Stock delivery mission: cancel rules, pickup and target ranges, icons, props, blips, cargo damage and pickup locations
 
 return {
     CancelCommand         = "cancelstock", -- chat command to voluntarily cancel an active mission
@@ -73,7 +70,7 @@ return {
         DangerColor      = { r = 231, g = 76,  b = 60,  a = 220 }, -- low condition
         WarningThreshold = 60, -- % remaining, below this uses WarningColor
         DangerThreshold  = 30, -- % remaining, below this uses DangerColor
-    },    
+    },
 
     -- Randomly selected for every stock order, regardless of business type.
     -- Add as many locations as you like.
