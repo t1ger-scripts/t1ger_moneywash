@@ -78,7 +78,7 @@ local function GetCashCounterBatchDuration(amount, settings)
 end
 
 --- Builds a failed callback response.
----@param reason string Error key, matches `cashCounter.errors.<reason>` in the locales
+---@param reason string Failure reason, see error.<reason> in the locales
 ---@param data? table Optional status data for the UI
 ---@return { success: false, reason: string, data: table? }
 local function failure(reason, data)

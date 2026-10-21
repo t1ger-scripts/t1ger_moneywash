@@ -3,7 +3,7 @@ local confirming = false -- true while a confirm request is in flight; blocks do
 
 ---@class CashCounterResponse
 ---@field success boolean
----@field reason? string Error key, matches `cashCounter.errors.<reason>` in the locales
+---@field reason? string Failure reason, see error.<reason> in the locales
 ---@field data? table Payload returned by the server on success
 
 --- Calls a `t1ger_moneywash:server:cashCounter:<name>` server callback.
@@ -19,20 +19,6 @@ local function serverRequest(name, ...)
     return response
 end
 
---- Shows a cash counter error notification.
---- Falls back to the `request_failed` message when the reason has no locale entry.
----@param reason? string Error key, defaults to "request_failed"
-local function ShowCashCounterError(reason)
-    local key = "cashCounter.errors." .. (reason or "request_failed")
-    local message = locale(key)
-
-    if type(message) ~= "string" or message == key then
-        message = locale("cashCounter.errors.request_failed")
-    end
-
-    _API.ShowNotification(message, "error", {})
-end
-
 --- Opens the cash counter UI after the server validates the request.
 --- The client-side amount check is only for early feedback; the server re-checks everything.
 ---@param businessId number
@@ -45,7 +31,7 @@ function OpenCashCounter(businessId, amount, operation)
     amount = tonumber(amount)
 
     if not amount or amount ~= amount or amount % 1 ~= 0 or amount < 1 or amount > Config.CashCounter.MaxAmount then
-        ShowCashCounterError("invalid_amount")
+        NotifyError("invalid_amount")
         return false
     end
 
@@ -60,7 +46,7 @@ function OpenCashCounter(businessId, amount, operation)
     if not response.success or not response.data then
         opening = false
         CloseMoneywashUi("cash-counter")
-        ShowCashCounterError(response.reason)
+        NotifyError(response.reason)
         return false
     end
 
@@ -108,7 +94,7 @@ RegisterNUICallback("t1ger_moneywash:cashCounter:confirm", function(data, cb)
     cb(response)
 
     if not response.success then
-        ShowCashCounterError(response.reason)
+        NotifyError(response.reason)
     end
 
     serverRequest("cancel")

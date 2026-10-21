@@ -29,8 +29,7 @@ function StartRaid(businessId)
     local response = lib.callback.await("t1ger_moneywash:server:raid:start", false, businessId)
 
     if not response or not response.success then
-        _API.ShowNotification(
-            locale("notification.error_" .. ((response and response.reason) or "unknown")), "error", {})
+        NotifyError(response and response.reason)
         return false
     end
 

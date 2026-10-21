@@ -21,8 +21,6 @@ local MSG = {
 
 --- Locale keys used by this file. Rename here if your locale file differs.
 local KEYS = {
-    errorPrefix = "notification.error_",
-    errorUnknown = "notification.error_unknown",
     started   = "notification.review_prepared",
     completed = "notification.review_completed", -- %s suspicion before, %s after, %s fee
     cancelled = "notification.review_cancelled",
@@ -42,27 +40,6 @@ local TARGET_NAME = "t1ger_moneywash:accountant"
 --- HELPERS
 --- ---------------------------------------------------------------------------
 
---- Server reasons that reuse an existing error key.
-local REASON_ALIASES = {
-    not_enough_money     = "insufficient_funds",
-    business_raided      = "raid_in_progress",
-    busy                 = "business_busy",
-    pending_cash_counter = "business_busy",
-    request_failed       = "unknown",
-}
-
---- Translates a server failure reason into a readable message.
-local function reasonText(reason)
-    local key = KEYS.errorPrefix .. tostring(REASON_ALIASES[reason] or reason)
-    local text = locale(key)
-
-    if not text or text == key then
-        return locale(KEYS.errorUnknown)
-    end
-
-    return text
-end
-
 --- Formats a locale string safely (a wrong placeholder never errors).
 local function formatLocale(key, ...)
     local text = locale(key)
@@ -72,10 +49,6 @@ end
 
 local function formatSuspicion(value)
     return ("%.1f"):format(tonumber(value) or 0)
-end
-
-local function notifyError(reason)
-    _API.ShowNotification(reasonText(reason), "error")
 end
 
 local function request(name, ...)
@@ -234,7 +207,7 @@ local function deliverFolder()
             resetMission()
         end
 
-        notifyError(response.reason)
+        NotifyError(response.reason)
         return
     end
 
@@ -287,7 +260,7 @@ local function startMission(businessId, result)
 
     if not location then
         request("cancel")
-        notifyError("no_accountant_locations")
+        NotifyError("no_accountant_locations")
         return
     end
 
@@ -336,10 +309,10 @@ end
 ---@param businessId number
 function OpenBooksReview(businessId)
     local cfg = Config.Review
-    if not cfg or not cfg.Enable then return notifyError("review_disabled") end
+    if not cfg or not cfg.Enable then return NotifyError("review_disabled") end
 
     if not cfg.Accountant.Location then
-        return notifyError("no_accountant_locations")
+        return NotifyError("no_accountant_locations")
     end
 
     if not BeginMoneywashUi("review") then return end
@@ -348,7 +321,7 @@ function OpenBooksReview(businessId)
 
     if not response.success or not response.data then
         CloseMoneywashUi("review")
-        return notifyError(response.reason)
+        return NotifyError(response.reason)
     end
 
     ui = { open = true, sealed = false, businessId = businessId }
@@ -362,7 +335,7 @@ RegisterNUICallback(NUI.prepare, function(body, cb)
     local ids = type(body) == "table" and body.ids or nil
     local response = request("prepare", ui.businessId, ids)
 
-    if not response.success then response.message = reasonText(response.reason) end
+    if not response.success then response.message = GetErrorMessage(response.reason) end
     cb(response)
 end)
 
@@ -377,7 +350,7 @@ RegisterNUICallback(NUI.stamp, function(body, cb)
         ui.sealed = true
         ui.result = response.result
     else
-        response.message = reasonText(response.reason)
+        response.message = GetErrorMessage(response.reason)
     end
 
     cb(response)
@@ -419,7 +392,7 @@ local function cancelReview()
     local response = request("cancel")
 
     if not response.success then
-        return notifyError(response.reason)
+        return NotifyError(response.reason)
     end
 
     resetMission()

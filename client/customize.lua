@@ -26,7 +26,7 @@ function ShowPoliceAlert(alertType, coords, data)
         subject = data.amount and FormatMoney(data.amount) or (data.business or "")
     end
 
-    local location = coords and GetLocationName(coords) or locale("notification.unknown_location")
+    local location = coords and GetLocationName(coords) or locale("general.unknown_location")
 
     _API.ShowNotification(string.format(locale("notification.police_alert." .. alertType), subject, location), "inform", {
         duration = Config.Police.AlertNotifyDuration or 10000

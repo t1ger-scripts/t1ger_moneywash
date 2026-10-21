@@ -338,7 +338,7 @@ function RequestStockPickup()
     local result = lib.callback.await("t1ger_moneywash:server:pickupStockShipment", false)
 
     if not result.success then
-        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error")
+        NotifyError(result.reason)
         return
     end
 
@@ -418,7 +418,7 @@ function RequestStockLoad(vehicle)
     local result = lib.callback.await("t1ger_moneywash:server:loadStockShipment", false, netId)
 
     if not result.success then
-        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error")
+        NotifyError(result.reason)
         return
     end
 
@@ -433,7 +433,7 @@ function RequestStockUnload()
     local result = lib.callback.await("t1ger_moneywash:server:unloadStockShipment", false)
 
     if not result.success then
-        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error")
+        NotifyError(result.reason)
         return
     end
 
@@ -537,7 +537,7 @@ function DeliverStock()
     local result = lib.callback.await("t1ger_moneywash:server:completeStockDelivery", false)
 
     if not result.success then
-        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error")
+        NotifyError(result.reason)
         return
     end
 
@@ -553,7 +553,7 @@ function CancelStockMission()
     local result = lib.callback.await("t1ger_moneywash:server:cancelStockMission", false)
 
     if not result.success then
-        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error")
+        NotifyError(result.reason)
         return
     end
 
@@ -589,7 +589,7 @@ if Config.Debug then
         local result = lib.callback.await("t1ger_moneywash:server:orderStock", false, businessId, units)
 
         if not result.success then
-            _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error")
+            NotifyError(result.reason)
             return
         end
 

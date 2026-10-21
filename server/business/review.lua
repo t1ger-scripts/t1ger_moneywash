@@ -110,11 +110,11 @@ local function validateStart(src, businessId)
     if IsBusinessInReview(business.id) then return nil, "review_active" end
 
     if IsBusinessRaided and IsBusinessRaided(business.id) then
-        return nil, "business_raided"
+        return nil, "raid_in_progress"
     end
 
     if HasPendingCashCounter and HasPendingCashCounter(business.id) then
-        return nil, "pending_cash_counter"
+        return nil, "business_busy"
     end
 
     return business
@@ -197,7 +197,7 @@ end
 --- Runs a callback body under the per-player busy guard. Whatever happens
 --- (even an error), the guard is released and the player gets a clean reply.
 local function guarded(source, fn)
-    if Busy[source] then return { success = false, reason = "busy" } end
+    if Busy[source] then return { success = false, reason = "business_busy" } end
     Busy[source] = true
 
     local ok, response = pcall(fn)
@@ -414,7 +414,7 @@ end)
 
 --- Cancel (Back button, ESC, mission abandoned): free everything, no cost.
 lib.callback.register("t1ger_moneywash:server:review:cancel", function(source)
-    if Busy[source] then return { success = false, reason = "busy" } end
+    if Busy[source] then return { success = false, reason = "business_busy" } end
     releasePlayer(source, nil)
     return { success = true }
 end)
@@ -439,7 +439,7 @@ lib.callback.register("t1ger_moneywash:server:review:deliver", function(source)
         end
 
         if _API.Player.GetMoney(source, "bank") < review.fee then
-            return { success = false, reason = "not_enough_money", fee = review.fee }
+            return { success = false, reason = "insufficient_funds", fee = review.fee }
         end
 
         -- Receipts are consumed whole. Delete first: if they changed behind

@@ -284,9 +284,9 @@ function StartLaunderFlow(businessId)
         {
             {
                 type = "number",
-                label = locale("cashCounter.amount"),
+                label = locale("menu.launder.amount_label"),
                 description = string.format(
-                    locale("cashCounter.amountAvailable"),
+                    locale("menu.launder.amount_desc"),
                     FormatMoney(maximum)
                 ),
                 min = 1,
@@ -302,7 +302,7 @@ function StartLaunderFlow(businessId)
     local amount = tonumber(input[1])
 
     if not amount or amount ~= amount or amount % 1 ~= 0 or amount < 1 or amount > maximum then
-        _API.ShowNotification(locale("cashCounter.errors.invalid_amount"), "error", {})
+        NotifyError("invalid_amount")
         return
     end
 
@@ -372,7 +372,7 @@ function OpenStockOrderDialog(businessId, status)
     local result = lib.callback.await("t1ger_moneywash:server:orderStock", false, businessId, units)
 
     if not result.success then
-        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error")
+        NotifyError(result.reason)
         return OpenStockMenu(businessId)
     end
 
@@ -405,7 +405,7 @@ function OpenBankDepositDialog(businessId, status)
 
     local amount = tonumber(input[1])
     if not amount or amount ~= amount or amount % 1 ~= 0 or amount < 1 or amount > maximum then
-        _API.ShowNotification(locale("cashCounter.errors.invalid_amount"), "error", {})
+        NotifyError("invalid_amount")
         return
     end
 
@@ -519,7 +519,7 @@ function OpenTransferDialog(businessId)
     if result.success then
         _API.ShowNotification(locale("menu.transfer.success"), "success", {})
     else
-        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error", {})
+        NotifyError(result.reason)
     end
 end
 
@@ -540,7 +540,7 @@ function ConfirmAbandonBusiness(businessId)
     if result.success then
         _API.ShowNotification(locale("menu.abandon.success"), "success", {})
     else
-        _API.ShowNotification(locale("notification.error_" .. (result.reason or "unknown")), "error", {})
+        NotifyError(result.reason)
     end
 end
 
@@ -617,6 +617,6 @@ function ConfirmConfiscateDeposit(deposit)
     if result and result.success then
         _API.ShowNotification(locale("menu.police.confiscate_success"), "success", {})
     else
-        _API.ShowNotification(locale("notification.error_" .. ((result and result.reason) or "unknown")), "error", {})
+        NotifyError(result and result.reason)
     end
 end

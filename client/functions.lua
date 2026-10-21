@@ -160,3 +160,22 @@ function GetLocationName(coords)
 
     return location
 end
+
+--- Returns the translated message for a failure reason (error.<reason> in the locales).
+--- A reason without a message gives error.unknown.
+---@param reason? string
+---@return string
+function GetErrorMessage(reason)
+    local key = "error." .. tostring(reason or "unknown")
+    local message = locale(key)
+
+    if message == key then return locale("error.unknown") end
+
+    return message
+end
+
+--- Shows an error notification for a failure reason.
+---@param reason? string
+function NotifyError(reason)
+    _API.ShowNotification(GetErrorMessage(reason), "error", {})
+end

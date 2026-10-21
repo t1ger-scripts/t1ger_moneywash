@@ -316,7 +316,7 @@ function CompleteStockDelivery(src)
     local business = GetBusiness(mission.businessId)
     if not business then
         ActiveStockMissions[src] = nil
-        return false, "business_not_found"
+        return false, "not_found"
     end
 
     local location = GetLocationConfig(business.type, business.locationId)
