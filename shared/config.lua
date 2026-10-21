@@ -120,23 +120,19 @@ Config.WebPortal = {
     CloseDistance = 6.0,   -- Portal closes if you move this far from where you opened it
 }
 
--- Global stock economy - every number below applies the same way to
--- every business type. Bigger tiers naturally need/hold more stock
--- because their expectedRevenue is bigger, not because anything here
--- is set per-tier.
+-- Stock economy: applies equally to every business type
+-- Bigger tiers need and hold more stock because their expectedRevenue is higher, not because of per-tier values
 Config.Stock = {
-    LaunderDollarsPerUnit = 100, -- $ laundered per 1 unit of stock consumed
-    UnitPricePercent      = 15,  -- cost to BUY 1 unit, as % of the value it represents
+    LaunderDollarsPerUnit = 100, -- $ laundered per unit of stock consumed
+    UnitPricePercent      = 15,  -- Price to buy 1 unit, as % of the value it represents (15 = $15 at 100 per unit)
 
-    maxCapacityCycles     = 3.0, -- total capacity = this many cycles' worth of consumption
-    minOrderPercent       = 1,   -- smallest order = this % of total capacity
-    maxOrderPercent       = 50,  -- largest single order = this % of total capacity
+    MaxCapacityCycles     = 3.0, -- Max stock capacity, in cycles' worth of consumption
+    MinOrderPercent       = 1,   -- Smallest order, as % of max capacity
+    MaxOrderPercent       = 50,  -- Largest single order, as % of max capacity
 
-    -- Set false to hide the Cycle Readiness row entirely (hardcore mode -
-    -- players won't be told when their stock is about to stop covering them)
-    ShowCycleReadiness    = true,
+    ShowCycleReadiness    = true, -- false = hide the Cycle Readiness row (players aren't warned when stock stops covering them)
 
-    Mission = require("shared/delivery"), -- Stock delivery mission settings - see shared/delivery.lua
+    Mission               = require("shared/delivery"), -- Delivery mission settings (shared/delivery.lua)
 }
 
 -- Suspicion: how fast it builds, how it's labelled and how it decays

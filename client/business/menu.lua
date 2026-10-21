@@ -115,7 +115,7 @@ function OpenStockMenu(businessId)
     local unitPrice = math.floor(stockCfg.LaunderDollarsPerUnit * (stockCfg.UnitPricePercent / 100))
 
     local unitsPerCycle = status.expectedRevenue / stockCfg.LaunderDollarsPerUnit
-    local capacity = math.floor(unitsPerCycle * stockCfg.maxCapacityCycles)
+    local capacity = math.floor(unitsPerCycle * stockCfg.MaxCapacityCycles)
     local storagePercent = capacity > 0 and math.floor((status.stock / capacity) * 100) or 0
 
     local remaining = math.max(0, status.expectedRevenue - status.cycleLaundered)
@@ -332,7 +332,7 @@ function OpenStockOrderDialog(businessId, status)
     end
 
     local stockCfg = Config.Stock
-    local capacity = math.floor((status.expectedRevenue / stockCfg.LaunderDollarsPerUnit) * stockCfg.maxCapacityCycles)
+    local capacity = math.floor((status.expectedRevenue / stockCfg.LaunderDollarsPerUnit) * stockCfg.MaxCapacityCycles)
     local maxOrder = math.min(status.maxOrder, capacity - status.stock)
     local minOrder = math.min(status.minOrder, maxOrder)
     local unitPrice = status.unitPrice
