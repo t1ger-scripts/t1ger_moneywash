@@ -285,27 +285,28 @@ Config.Reputation = {
     },
 }
 
--- Police access, business raids and alert blips
+-- Police: access, business raids and alert blips
 Config.Police = {
     Jobs                  = { "police", "sheriff" }, -- Jobs with police access
     DepositReviewMinGrade = 2,                       -- Min grade to review flagged deposits
-    AlertNotifyDuration   = 10000,                   -- Alert notification time (ms)
+    AlertNotifyDuration   = 10000,                   -- Alert notification time in ms
 
     -- Raid a business via the handler ped
     Raid                  = {
         Enable         = true,
-        MinGrade       = 1,                                                  -- Min grade to raid
+        MinGrade       = 1,                                                      -- Min grade to raid
         Target         = { icon = "fa-solid fa-shield-halved", distance = 2.0 }, -- Target icon and range
-        StackCount     = 10,                                                 -- Cash piles in the safe (1-20)
-        MaxTime        = 5,                                                  -- Minutes until an unfinished raid is cancelled
-        Cooldown       = 60,                                                 -- Minutes before the same business can be raided again (resets on restart)
+        StackCount     = 10,                                                     -- Cash piles in the safe (1-20)
+        MaxTime        = 5,                                                      -- Minutes until an unfinished raid is cancelled
+        Cooldown       = 60,                                                     -- Minutes before the same business can be raided again (resets on restart)
 
         -- Suspicion after a raid (never raises it)
         -- "set": drops to Value if higher | "reduce": lowers by Value % of current
         SuspicionAfter = { Mode = "set", Value = 50 },
     },
 
-    -- Alerts per suspicion level (Enable = false turns one off)
+    -- Alerts by suspicion label, plus flagged ATM deposits (Enable = false turns one off)
+    -- Blip: BlipDuration is in seconds, BlipFlash makes it flash
     -- Texts: locales/en.json > notification.police_alert.<type>
     Alerts                = {
         Moderate = { Enable = true, BlipName = "Unusual activity",     BlipSprite = 108, BlipColour = 5,  BlipScale = 0.9, BlipFlash = false, BlipDuration = 30 },
