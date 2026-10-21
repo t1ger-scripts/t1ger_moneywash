@@ -176,33 +176,28 @@ Config.Suspicion = {
     },
 }
 
---- Bank deposit settings
--- Flow: Safe -> cash counter -> go to any ATM -> submit -> wait -> personal bank
+-- Bank deposit: Safe -> cash counter -> any ATM -> submit -> wait -> personal bank
 Config.BankDeposit = {
-    ProcessingTime   = 10,  -- real minutes for a submitted deposit to clear into personal bank
-    MissionTimeout   = 15,  -- real minutes to reach an ATM after the cash counter finishes
-    InteractDistance = 2.0, -- how close the player must be to the ATM
+    ProcessingTime   = 10,   -- Minutes for a submitted deposit to clear into the personal bank
+    MissionTimeout   = 15,   -- Minutes to reach an ATM after the cash counter finishes
+    InteractDistance = 2.0,  -- Range to the ATM
+    SubmitDuration   = 5000, -- Ms of the depositing progress bar
+    Animation        = { dict = "amb@prop_human_atm@male@idle_a", clip = "idle_a" }, -- Played at the ATM
 
-    -- The only guaranteed fee in the laundering pipeline - paid once, when a Safe
-    -- balance converts into real bank money. Set to 0 to disable.
-    Tax              = 20,
+    Tax              = 20,   -- % taken once when a Safe balance converts to bank money (0 = off)
 
-    -- ATM models the owner deposits at and police inspect
-    Models           = {
+
+    Models           = {     -- ATM models used for deposits and police inspection
         "prop_atm_01",
         "prop_atm_02",
         "prop_atm_03",
         "prop_fleeca_atm",
     },
 
-    SubmitDuration   = 5000, -- ms the "depositing" progress bar takes at the ATM
-    Animation        = { dict = "amb@prop_human_atm@male@idle_a", clip = "idle_a" },
+    TargetIcon       = "fa-solid fa-credit-card",            -- Owner deposit option
+    PoliceTargetIcon = "fa-solid fa-magnifying-glass-dollar", -- Police inspect option
 
-    TargetIcon       = "fa-solid fa-credit-card",
-    PoliceTargetIcon = "fa-solid fa-magnifying-glass-dollar",
-
-    -- % chance a deposit is flagged, by business suspicion label at the moment of submit
-    FlagChance       = {
+    FlagChance       = {     -- % chance a deposit is flagged, by the business's suspicion label at submit
         Low      = 0,
         Moderate = 15,
         High     = 50,
