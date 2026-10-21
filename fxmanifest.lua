@@ -21,7 +21,6 @@ shared_scripts {
     'bridge/config.lua',
     'bridge/init.lua',
     'shared/config.lua',
-    'shared/suspicion.lua',
     'shared/street_wash.lua',
 }
 

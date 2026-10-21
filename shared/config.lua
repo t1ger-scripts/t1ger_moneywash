@@ -139,6 +139,47 @@ Config.Stock = {
     Mission = require("shared/delivery"), -- Stock delivery mission settings - see shared/delivery.lua
 }
 
+-- Suspicion: how fast it builds, how it's labelled and how it decays
+Config.Suspicion = {
+    -- Cycles of laundering a full allowance (expectedRevenue) with full stock needs to reach Critical (75), ignoring decay
+    -- Gain per such cycle = 75 / this value (15 = 5 points per cycle). Higher = more forgiving
+    CyclesUntilCritical = 15,
+
+    -- % that full stock coverage reduces the gain (keep below 100)
+    -- 80 = a fully stocked launder builds only 20% of an unstocked one's suspicion, before the penalty
+    FullStockReduction  = 80,
+
+    -- % extra suspicion gained by a business with no stock at all
+    NoStockPenalty      = 50,
+
+    -- Suspicion labels, from the threshold upwards
+    Labels              = {
+        { threshold = 0,  name = "Low",      color = "#22c55e" },
+        { threshold = 25, name = "Moderate", color = "#facc15" },
+        { threshold = 50, name = "High",     color = "#f97316" },
+        { threshold = 75, name = "Critical", color = "#dc2626" },
+    },
+
+    ShowExactValue      = true, -- true = show the exact value, false = label only
+    NotifyOnLabelChange = true, -- Warn the owner when a launder raises the label (decay never notifies)
+
+    -- Hidden police roll per launder, using the resulting label. The player never sees the outcome
+    NotificationChance  = {
+        Low      = 0,   -- % chance police are notified (0 = no roll)
+        Moderate = 10,
+        High     = 35,
+        Critical = 75,
+        Max      = 100, -- Only at suspicion 100
+    },
+
+    -- Constant decay, always running. A business gaining less than this per cycle is safe long-term
+    -- With full stock, the safe rate is about sqrt(decay / 25) of the cycle allowance
+    Decay               = {
+        OnlinePointsPerCycle  = 5, -- Suspicion removed per cycle while the owner is online
+        OfflinePointsPerCycle = 2, -- Suspicion removed per cycle while the owner is offline
+    },
+}
+
 --- Bank deposit settings
 -- Flow: Safe -> cash counter -> go to any ATM -> submit -> wait -> personal bank
 Config.BankDeposit = {
