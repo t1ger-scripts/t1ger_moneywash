@@ -178,3 +178,24 @@ function FormatMoney(amount)
     end
     return Config.Currency .. result
 end
+
+
+--- Builds a readable location ("Street / Cross street, Zone") for coords.
+--- @param coords vector3
+--- @return string
+function GetLocationName(coords)
+    local streetHash, crossingHash = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
+    local location = GetStreetNameFromHashKey(streetHash)
+
+    if crossingHash ~= 0 then
+        local crossing = GetStreetNameFromHashKey(crossingHash)
+        if crossing ~= "" then location = ("%s / %s"):format(location, crossing) end
+    end
+
+    local zone = GetLabelText(GetNameOfZone(coords.x, coords.y, coords.z))
+    if zone ~= "NULL" and zone ~= "" then
+        location = ("%s, %s"):format(location, zone)
+    end
+
+    return location
+end

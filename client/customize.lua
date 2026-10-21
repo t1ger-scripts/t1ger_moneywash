@@ -21,26 +21,6 @@ function SkillCheck(difficulty, inputs)
     return lib.skillCheck(difficulty, inputs or {'w', 'a', 's', 'd'})
 end
 
---- Builds a readable location ("Street / Cross street, Zone") for coords.
---- @param coords vector3
---- @return string
-local function GetLocationName(coords)
-    local streetHash, crossingHash = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
-    local location = GetStreetNameFromHashKey(streetHash)
-
-    if crossingHash ~= 0 then
-        local crossing = GetStreetNameFromHashKey(crossingHash)
-        if crossing ~= "" then location = ("%s / %s"):format(location, crossing) end
-    end
-
-    local zone = GetLabelText(GetNameOfZone(coords.x, coords.y, coords.z))
-    if zone ~= "NULL" and zone ~= "" then
-        location = ("%s, %s"):format(location, zone)
-    end
-
-    return location
-end
-
 --- Shown to police for every alert: notification with the street name plus a blip
 --- on the location. Replace with your own dispatch alert if needed.
 --- @param alertType string "Moderate" | "High" | "Critical" | "Max" | "Deposit"
