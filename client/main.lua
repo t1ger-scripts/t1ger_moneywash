@@ -178,7 +178,8 @@ local function RefreshHandlerBlips()
             HandlerBlips[businessId] = nil
         end
     end
-
+    
+    local blipCfg = Config.HandlerNPC.Blip
     for businessId, data in pairs(OwnedBusinesses) do
         if not HandlerBlips[businessId] then
             local tier = GetBusinessTier(data.type)
@@ -187,11 +188,11 @@ local function RefreshHandlerBlips()
             if tier and location then
                 HandlerBlips[businessId] = CreateMapBlip(
                     location.coords,
-                    Config.HandlerNPC.Blip.sprite or 375,
-                    Config.HandlerNPC.Blip.display or 4,
-                    Config.HandlerNPC.Blip.scale or 0.7,
-                    Config.HandlerNPC.Blip.color or 2,
-                    ("%s — %s"):format(tier.label, location.brand or tier.label)
+                    blipCfg.sprite or 375,
+                    blipCfg.display or 4,
+                    blipCfg.scale or 0.7,
+                    blipCfg.color or 2,
+                    locale("blip.business"):format(tier.label, location.brand or tier.label)
                 )
             end
         end

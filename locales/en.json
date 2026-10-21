@@ -1,4 +1,7 @@
 {
+    "blip": {
+        "business": "%s — %s"
+    },
     "target": {
         "portal_npc": "Access Business Portal",
         "handler_npc": "Manage Business",
