@@ -68,10 +68,23 @@ Config.HandlerNPC = {
     }
 }
 
--- Web portal: locale, UI colors, laptop target and auto-close range
+-- Web portal: UI colors, laptop target and auto-close range
 Config.WebPortal = {
-    Locale        = "en",  -- Locale file in locales/
+    -- Target option on laptop props
+    Target        = {
+        icon     = "fa-solid fa-building", -- Target icon
+        distance = 2.0,                    -- Target range
+        models   = {                       -- Props that open the portal
+            "prop_laptop_lester",
+            "prop_laptop_jimmy",
+            "prop_laptop_lester2",
+            "prop_laptop_01a",
+            "h4_prop_h4_laptop_01a",
+        },
+    },
 
+    CloseDistance = 6.0,   -- Portal closes if you move this far from where you opened it
+    
     -- Portal UI colors
     Theme         = {
         -- Primary
@@ -103,21 +116,6 @@ Config.WebPortal = {
         DangerColor        = "#ef6262",
         DangerSubtleColor  = "rgb(239 98 98 / 14%)",
     },
-
-    -- Target option on laptop props
-    Target        = {
-        icon     = "fa-solid fa-building", -- Target icon
-        distance = 2.0,                    -- Target range
-        models   = {                       -- Props that open the portal
-            "prop_laptop_lester",
-            "prop_laptop_jimmy",
-            "prop_laptop_lester2",
-            "prop_laptop_01a",
-            "h4_prop_h4_laptop_01a",
-        },
-    },
-
-    CloseDistance = 6.0,   -- Portal closes if you move this far from where you opened it
 }
 
 -- Stock economy: applies equally to every business type

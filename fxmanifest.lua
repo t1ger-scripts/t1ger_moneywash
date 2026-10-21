@@ -21,6 +21,7 @@ shared_scripts {
     'bridge/config.lua',
     'bridge/init.lua',
     'shared/config.lua',
+    'shared/ui_text.lua',
 }
 
 client_scripts {
