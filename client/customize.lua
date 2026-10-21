@@ -1,6 +1,10 @@
 --- Open file: safe to edit without touching core logic.
 --- Swap the progress bar, skill check and police alert for your own resources.
 
+--- Runs when the player has loaded. Add your own client code here.
+function OnPlayerLoaded()
+end
+
 --- Progress bar wrapper. Replace with your own progress bar resource if needed.
 ---@param options table ox_lib progressBar options
 ---@return boolean completed false if cancelled
@@ -44,4 +48,19 @@ function ShowPoliceAlert(alertType, coords, data)
     SetTimeout(cfg.BlipDuration * 1000, function()
         if DoesBlipExist(blip) then RemoveBlip(blip) end
     end)
+end
+
+--- Shown when money is laundered into the safe.
+---@param amount number Total laundered
+---@param covered number Part covered by stock
+---@param exposed number Part not covered by stock
+function NotifyMoneyLaundered(amount, covered, exposed)
+    _API.ShowNotification(string.format(locale("notification.money_laundered"), FormatMoney(amount), FormatMoney(covered), FormatMoney(exposed)),"success", {})
+end
+
+--- Shown when a launder raises the suspicion label.
+---@param newLabel { name: string, color: string }
+function NotifySuspicionChanged(newLabel)
+    if not Config.Suspicion.NotifyOnLabelChange then return end
+    _API.ShowNotification(string.format(locale("notification.suspicion_changed"), newLabel.name), "inform", {})
 end

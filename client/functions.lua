@@ -42,6 +42,23 @@ function CanInteractWithHandlerNPC(entity)
     return true
 end
 
+--- Finds the tier config for a business type.
+---@param businessType string
+---@return table|nil tier
+function GetBusinessTier(businessType)
+    for _, tier in pairs(Config.Business.Tiers) do
+        if tier.type == businessType then return tier end
+    end
+end
+
+--- Finds the location config for a business.
+---@param data { type: string, locationId: number }
+---@return table|nil location
+function GetBusinessLocation(data)
+    local group = Config.Business.Locations[data.type]
+    return group and group[data.locationId]
+end
+
 --- Creates a map blip at coords.
 ---@param coords vector3|vector4
 ---@param sprite number|nil Default 1
