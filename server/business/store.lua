@@ -215,7 +215,7 @@ function GetStockCapacity(businessType)
     local tier = GetTierByType(businessType)
     if not tier then return nil end
 
-    local cfg = Config.Business.Stock
+    local cfg = Config.Stock
     local unitsPerCycle = tier.expectedRevenue / cfg.LaunderDollarsPerUnit
 
     return math.floor(unitsPerCycle * cfg.maxCapacityCycles)
@@ -229,7 +229,7 @@ end
 function GetUnitPrice(businessType)
     if not GetTierByType(businessType) then return nil end
 
-    local cfg = Config.Business.Stock
+    local cfg = Config.Stock
     return math.floor(cfg.LaunderDollarsPerUnit * (cfg.UnitPricePercent / 100))
 end
 
@@ -240,7 +240,7 @@ function GetMinOrder(businessType)
     local capacity = GetStockCapacity(businessType)
     if not capacity then return nil end
 
-    return math.max(1, math.floor(capacity * (Config.Business.Stock.minOrderPercent / 100)))
+    return math.max(1, math.floor(capacity * (Config.Stock.minOrderPercent / 100)))
 end
 
 --- Returns the maximum order size, in units.
@@ -250,7 +250,7 @@ function GetMaxOrder(businessType)
     local capacity = GetStockCapacity(businessType)
     if not capacity then return nil end
 
-    return math.floor(capacity * (Config.Business.Stock.maxOrderPercent / 100))
+    return math.floor(capacity * (Config.Stock.maxOrderPercent / 100))
 end
 
 --- Returns stock consumed for a given launder amount and business type
@@ -258,5 +258,5 @@ end
 --- @param amount number
 --- @return number
 function GetStockConsumed(amount)
-    return math.ceil(amount / Config.Business.Stock.LaunderDollarsPerUnit)
+    return math.ceil(amount / Config.Stock.LaunderDollarsPerUnit)
 end

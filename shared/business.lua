@@ -13,25 +13,6 @@ Config.Business = {
     -- Maximum distance (metres) between two players for a business transfer
     TransferDistance      = 10.0,
 
-    -- Global stock economy - every number below applies the same way to
-    -- every business type. Bigger tiers naturally need/hold more stock
-    -- because their expectedRevenue is bigger, not because anything here
-    -- is set per-tier.
-    Stock = {
-        LaunderDollarsPerUnit = 100, -- $ laundered per 1 unit of stock consumed
-        UnitPricePercent      = 15,  -- cost to BUY 1 unit, as % of the value it represents
-
-        maxCapacityCycles     = 3.0, -- total capacity = this many cycles' worth of consumption
-        minOrderPercent       = 1,   -- smallest order = this % of total capacity
-        maxOrderPercent       = 50,  -- largest single order = this % of total capacity
-
-        -- Set false to hide the Cycle Readiness row entirely (hardcore mode -
-        -- players won't be told when their stock is about to stop covering them)
-        ShowCycleReadiness    = true,
-
-        Mission = require("shared/stock_mission"), -- Stock delivery mission settings - see shared/stock_mission.lua
-    },
-
     -- Business ladder
     -- type:            Internal key, must match a key in shared/business_locations.lua
     -- label:           Display name in menus

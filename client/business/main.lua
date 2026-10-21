@@ -79,9 +79,9 @@ local function SpawnHandlerNPC(data)
         },
         {
             name        = DeliverTargetName(businessId),
-            icon        = Config.Business.StockMission.Icons.DeliverTarget,
+            icon        = Config.Stock.Mission.Icons.DeliverTarget,
             label       = locale("target.deliver_stock"),
-            distance    = Config.Business.StockMission.PickupTargetDistance,
+            distance    = Config.Stock.Mission.PickupTargetDistance,
             canInteract = function()
                 return IsCarryingStockBox(businessId)
             end,

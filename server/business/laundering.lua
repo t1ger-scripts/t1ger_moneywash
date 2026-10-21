@@ -18,7 +18,7 @@ local function CalculateCoveredExposed(business, amount, tier)
     -- Stock check on within-revenue portion only
     local stockConsumed = GetStockConsumed(amount)
     local stockValue = business.stock -- units available
-    local stockSupported = math.min(withinRevenue, stockValue * Config.Business.Stock.LaunderDollarsPerUnit)
+    local stockSupported = math.min(withinRevenue, stockValue * Config.Stock.LaunderDollarsPerUnit)
 
     local covered = math.floor(stockSupported)
     local exposed = math.floor(overRevenue + (withinRevenue - stockSupported))

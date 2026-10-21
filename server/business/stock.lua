@@ -85,7 +85,7 @@ function OrderStock(src, businessId, units)
         end
     end
 
-    local pool = Config.Business.StockMission.PickupLocations
+    local pool = Config.Stock.Mission.PickupLocations
     if not pool or #pool == 0 then
         return false, "no_pickup_locations"
     end
@@ -182,7 +182,7 @@ function PickupStockShipment(src)
     if not mission then return false, "no_active_mission" end
     if mission.state ~= "awaiting_pickup" then return false, "invalid_state" end
 
-    if not IsPlayerNearCoords(src, mission.pickupLocation, Config.Business.StockMission.PickupDistance) then
+    if not IsPlayerNearCoords(src, mission.pickupLocation, Config.Stock.Mission.PickupDistance) then
         return false, "pickup_too_far"
     end
 
@@ -219,7 +219,7 @@ function LoadStockIntoVehicle(src, vehicleNetId)
     local vehicle = ResolveVehicle(vehicleNetId)
     if not vehicle then return false, "invalid_vehicle" end
 
-    if not IsPlayerNearCoords(src, GetEntityCoords(vehicle), Config.Business.StockMission.VehicleTargetDistance) then
+    if not IsPlayerNearCoords(src, GetEntityCoords(vehicle), Config.Stock.Mission.VehicleTargetDistance) then
         return false, "vehicle_too_far"
     end
 
@@ -240,7 +240,7 @@ function UnloadStockFromVehicle(src)
 
     local vehicle = ResolveVehicle(mission.vehicleNetId)
     if vehicle then
-        if not IsPlayerNearCoords(src, GetEntityCoords(vehicle), Config.Business.StockMission.VehicleTargetDistance) then
+        if not IsPlayerNearCoords(src, GetEntityCoords(vehicle), Config.Stock.Mission.VehicleTargetDistance) then
             return false, "vehicle_too_far"
         end
     end
@@ -263,7 +263,7 @@ end
 --- @param clientVehicleNetId number|nil
 --- @return boolean applied, number|nil deductedPercent, number|nil currentUnits
 function ReportVehicleCollision(src, clientVehicleNetId)
-    local cfg = Config.Business.StockMission.CollisionDamage
+    local cfg = Config.Stock.Mission.CollisionDamage
     if not cfg.Enable then return false end
 
     local mission = ActiveStockMissions[src]
@@ -365,7 +365,7 @@ function CancelStockMission(src)
     if not mission then return false, "no_active_mission" end
 
     local identifier = _API.Player.GetIdentifier(src)
-    local penaltyPercent = Config.Business.StockMission.CancelPenaltyPercent or 0
+    local penaltyPercent = Config.Stock.Mission.CancelPenaltyPercent or 0
     local refund = math.floor(mission.cost * (1 - (penaltyPercent / 100)))
 
     _API.Player.AddMoney(src, refund, "bank")
@@ -373,7 +373,7 @@ function CancelStockMission(src)
     ActiveStockMissions[src] = nil
 
     if identifier then
-        CancelCooldowns[identifier] = os.time() + (Config.Business.StockMission.CancelCooldown or 0)
+        CancelCooldowns[identifier] = os.time() + (Config.Stock.Mission.CancelCooldown or 0)
     end
 
     if Config.Debug then

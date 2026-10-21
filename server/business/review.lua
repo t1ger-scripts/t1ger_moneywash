@@ -168,7 +168,7 @@ local function calculate(business, selectedUnits, quality)
     local cfg = Config.Review
     local tier = GetTierByType(business.type)
     local expectedRevenue = tier and tier.expectedRevenue or 0
-    local unitsPerCycle = math.max(1, expectedRevenue / Config.Business.Stock.LaunderDollarsPerUnit)
+    local unitsPerCycle = math.max(1, expectedRevenue / Config.Stock.LaunderDollarsPerUnit)
 
     local reductionPerUnit = cfg.MaxReduction / cfg.CyclesForMax / unitsPerCycle
     local base = math.min(selectedUnits * reductionPerUnit, cfg.MaxReduction, business.suspicion)
@@ -263,7 +263,7 @@ lib.callback.register("t1ger_moneywash:server:review:open", function(source, bus
             maxReceipts           = cfg.MaxReceiptsPerReview,
             suspicion             = business.suspicion,
             expectedRevenue       = tier and tier.expectedRevenue or 0,
-            launderDollarsPerUnit = Config.Business.Stock.LaunderDollarsPerUnit,
+            launderDollarsPerUnit = Config.Stock.LaunderDollarsPerUnit,
             settings = {
                 maxReduction = cfg.MaxReduction,
                 cyclesForMax = cfg.CyclesForMax,

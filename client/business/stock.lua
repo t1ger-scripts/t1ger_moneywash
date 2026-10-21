@@ -79,7 +79,7 @@ end
 
 --- Starts the looping carry animation.
 local function StartCarryAnimation()
-    local anim = Config.Business.StockMission.CarryAnimation
+    local anim = Config.Stock.Mission.CarryAnimation
     local playerPed = PlayerPedId()
 
     lib.requestAnimDict(anim.dict)
@@ -89,7 +89,7 @@ end
 
 --- Stops the carry animation, if currently playing.
 local function StopCarryAnimation()
-    local anim = Config.Business.StockMission.CarryAnimation
+    local anim = Config.Stock.Mission.CarryAnimation
     local playerPed = PlayerPedId()
 
     if IsEntityPlayingAnim(playerPed, anim.dict, anim.name, 3) then
@@ -107,7 +107,7 @@ CreateThread(function()
         Wait(1000)
 
         if stockMission and stockMission.state == "carried" then
-            local anim = Config.Business.StockMission.CarryAnimation
+            local anim = Config.Stock.Mission.CarryAnimation
             local playerPed = PlayerPedId()
 
             local inVehicle = IsPedInAnyVehicle(playerPed, false)
@@ -124,7 +124,7 @@ end)
 --- Attaches the box to the player's hand using the configured offset,
 --- and starts the carry animation.
 local function AttachBoxToPlayer()
-    local cfg = Config.Business.StockMission.PickupObject
+    local cfg = Config.Stock.Mission.PickupObject
     local playerPed = PlayerPedId()
 
     SetEntityVisible(stockMission.prop, true, false)
@@ -165,7 +165,7 @@ local METER_POSITIONS = {
 local function DrawStockDamageMeter()
     if not stockMission then return end
 
-    local cfg = Config.Business.StockMission.DamageMeter
+    local cfg = Config.Stock.Mission.DamageMeter
     if not cfg.Enable then return end
 
     local percent = math.max(0, math.min(100, (stockMission.currentUnits / stockMission.units) * 100))
@@ -280,7 +280,7 @@ end
 --- Registers the pickup-site point: spawns the box once the player first
 --- arrives, and draws the marker every frame while close enough.
 local function SetupPickupPoint()
-    local cfg = Config.Business.StockMission
+    local cfg = Config.Stock.Mission
     local pickup = stockMission.pickupLocation
     local coords = vector3(pickup.x, pickup.y, pickup.z)
 
@@ -358,7 +358,7 @@ function RequestStockPickup()
     end
 
     if stockMission.businessCoords then
-        local cfg = Config.Business.StockMission.DeliveryBlip
+        local cfg = Config.Stock.Mission.DeliveryBlip
 
         stockMission.deliveryBlip = CreateMissionBlip(
             stockMission.businessCoords, cfg.Sprite, cfg.Display, cfg.Scale, cfg.Color, cfg.Label
@@ -381,7 +381,7 @@ end
 --- visibility based on live mission state, since there's no per-instance
 --- remove function for global vehicle targets.
 local function RegisterVehicleTargets()
-    local cfg = Config.Business.StockMission
+    local cfg = Config.Stock.Mission
 
     _API.Target.AddGlobalVehicle({
         {
@@ -465,7 +465,7 @@ AddEventHandler("gameEventTriggered", function(eventName, args)
     if vehicle == 0 or damagedVehicle ~= vehicle then return end
     if GetPedInVehicleSeat(vehicle, -1) ~= playerPed then return end
 
-    local minSpeed = Config.Business.StockMission.CollisionDamage.MinImpactSpeed
+    local minSpeed = Config.Stock.Mission.CollisionDamage.MinImpactSpeed
     if GetEntitySpeed(vehicle) < minSpeed then return end
 
     local netId = NetworkGetNetworkIdFromEntity(vehicle)
@@ -497,7 +497,7 @@ function StartStockMission(businessId, missionData)
         return
     end
 
-    local blipCfg = Config.Business.StockMission.PickupBlip
+    local blipCfg = Config.Stock.Mission.PickupBlip
 
     stockMission = {
         active         = true,
@@ -561,7 +561,7 @@ function CancelStockMission()
     _API.ShowNotification(locale("notification.stock_cancelled"), "inform")
 end
 
-RegisterCommand(Config.Business.StockMission.CancelCommand, function()
+RegisterCommand(Config.Stock.Mission.CancelCommand, function()
     CancelStockMission()
 end, false)
 

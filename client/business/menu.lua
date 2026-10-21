@@ -99,7 +99,7 @@ end
 --- Stock submenu - separate rows for storage (units held vs. capacity) and
 --- cycle readiness (whether stock can fully cover the rest of this cycle's
 --- laundering), plus the order action. Cycle Readiness can be hidden
---- entirely via Config.Business.Stock.ShowCycleReadiness for servers that
+--- entirely via Config.Stock.ShowCycleReadiness for servers that
 --- don't want to hint at this to players.
 --- @param businessId number
 function OpenStockMenu(businessId)
@@ -110,7 +110,7 @@ function OpenStockMenu(businessId)
     end
 
     local menuIcons = Config.HandlerNPC.MenuIcons or {}
-    local stockCfg = Config.Business.Stock
+    local stockCfg = Config.Stock
 
     local unitPrice = math.floor(stockCfg.LaunderDollarsPerUnit * (stockCfg.UnitPricePercent / 100))
 
@@ -140,7 +140,7 @@ function OpenStockMenu(businessId)
     local stockDisabled = missionActive or stockFull
     local stockDesc
     if missionActive then
-        stockDesc = string.format(locale("menu.handler.order_in_progress"), Config.Business.StockMission.CancelCommand)
+        stockDesc = string.format(locale("menu.handler.order_in_progress"), Config.Stock.Mission.CancelCommand)
     elseif stockFull then
         stockDesc = locale("menu.handler.stock_full_desc")
     else
@@ -331,7 +331,7 @@ function OpenStockOrderDialog(businessId, status)
         return OpenStockMenu(businessId)
     end
 
-    local stockCfg = Config.Business.Stock
+    local stockCfg = Config.Stock
     local capacity = math.floor((status.expectedRevenue / stockCfg.LaunderDollarsPerUnit) * stockCfg.maxCapacityCycles)
     local maxOrder = math.min(status.maxOrder, capacity - status.stock)
     local minOrder = math.min(status.minOrder, maxOrder)

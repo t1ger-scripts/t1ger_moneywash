@@ -1,6 +1,6 @@
 -- ============================================================================
 -- STOCK DELIVERY MISSION SETTINGS
--- Required directly from shared/business.lua as Config.Business.StockMission.
+-- Required directly from shared/business.lua as Config.Stock.Mission.
 -- ============================================================================
 
 return {
