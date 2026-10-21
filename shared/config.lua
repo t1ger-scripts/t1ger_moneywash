@@ -182,10 +182,8 @@ Config.BankDeposit = {
     MissionTimeout   = 15,   -- Minutes to reach an ATM after the cash counter finishes
     InteractDistance = 2.0,  -- Range to the ATM
     SubmitDuration   = 5000, -- Ms of the depositing progress bar
-    Animation        = { dict = "amb@prop_human_atm@male@idle_a", clip = "idle_a" }, -- Played at the ATM
-
     Tax              = 20,   -- % taken once when a Safe balance converts to bank money (0 = off)
-
+    Animation        = { dict = "amb@prop_human_atm@male@idle_a", clip = "idle_a" }, -- Played at the ATM
 
     Models           = {     -- ATM models used for deposits and police inspection
         "prop_atm_01",
@@ -205,23 +203,13 @@ Config.BankDeposit = {
     },
 }
 
+-- Cash counter: piles shown, counting speed and limits
 Config.CashCounter = {
-    -- Number of piles used to represent the selected amount.
-    -- Whole number between 1 and 20.
-    StackCount = 3,
-
-    -- Time spent counting EACH pile, in milliseconds.
-    StackDurationMs = 1000,
-
-    -- Automatically place a finished pile on the right tray.
-    -- Loading the next pile remains manual.
-    AutoMoveToRight = false,
-
-    -- Maximum permitted amount for one batch.
-    MaxAmount = 10000000,
-
-    -- Maximum distance from the business handler.
-    InteractionDistance = 5.0,
+    StackCount          = 3,        -- Piles representing the amount (1-20)
+    StackDurationMs     = 1000,     -- Ms to count each pile
+    AutoMoveToRight     = false,    -- true = a counted pile moves to the right tray automatically (loading the next pile stays manual)
+    MaxAmount           = 10000000, -- Max amount per batch
+    InteractionDistance = 5.0,      -- Max distance from the business handler
 }
 
 -- Review books: owners hand stock-delivery receipts to an accountant to lower suspicion
