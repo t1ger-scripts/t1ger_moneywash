@@ -181,7 +181,7 @@ end
 --- Closes the portal if the player dies, gets cuffed or walks away from the computer.
 ---@param session number
 local function watchPortal(session)
-    local maxDistance = (Config.BusinessPortal and Config.BusinessPortal.CloseDistance) or 6.0
+    local maxDistance = (Config.WebPortal and Config.WebPortal.CloseDistance) or 6.0
 
     while isPortalOpen and portalSession == session do
         Wait(500)
@@ -436,22 +436,22 @@ CreateThread(function()
         Wait(100)
     end
 
-    local portalConfig = Config.BusinessPortal
+    local Config.WebPortal = Config.WebPortal
 
-    if not portalConfig
-        or type(portalConfig.Models) ~= "table"
-        or #portalConfig.Models == 0
+    if not Config.WebPortal
+        or type(Config.WebPortal.Target.models) ~= "table"
+        or #Config.WebPortal.Target.models == 0
     then
         print("^1[MoneyWash] No business portal target models configured.^7")
         return
     end
 
-    _API.Target.AddModel(portalConfig.Models, {
+    _API.Target.AddModel(Config.WebPortal.Target.models, {
         {
             name = TARGET_OPTION_NAME,
-            icon = portalConfig.TargetIcon,
+            icon = Config.WebPortal.TargetIcon,
             label = TARGET_OPTION_LABEL,
-            distance = portalConfig.TargetDistance or 2.0,
+            distance = Config.WebPortal.TargetDistance or 2.0,
 
             canInteract = function()
                 return not isPortalOpen and not isPortalOpening and GetMoneywashUiScreen() == nil
@@ -467,7 +467,7 @@ CreateThread(function()
 
     if Config.Debug then
         print(("[MoneyWash] Registered business portal target on %d models."):format(
-            #portalConfig.Models
+            #Config.WebPortal.Target.models
         ))
     end
 end)
@@ -483,8 +483,8 @@ AddEventHandler("onResourceStop", function(resourceName)
         SetNuiFocus(false, false)
     end
 
-    if isTargetRegistered and Config.BusinessPortal then
-        _API.Target.RemoveModel(Config.BusinessPortal.Models, {
+    if isTargetRegistered and Config.WebPortal then
+        _API.Target.RemoveModel(Config.WebPortal.Target.models, {
             names = {
                 TARGET_OPTION_NAME,
             },

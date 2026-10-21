@@ -56,7 +56,7 @@ local function SpawnHandlerNPC(data)
     local location = GetLocation(data)
     if not tier or not location then return end
 
-    local ped = SpawnStaticPed(tier.npc, location.coords, Config.Business.HandlerScenario)
+    local ped = SpawnStaticPed(tier.npc, location.coords, Config.HandlerNPC.Scenario)
     HandlerNPCs[businessId] = ped
 
     while not _Target do Wait(100) end
@@ -67,9 +67,9 @@ local function SpawnHandlerNPC(data)
     _API.Target.AddLocalEntity(ped, {
         {
             name        = HandlerTargetName(businessId),
-            icon        = Config.Business.HandlerTargetIcon or "fa-solid fa-briefcase",
+            icon        = Config.HandlerNPC.Target.icon or "fa-solid fa-briefcase",
             label       = locale("target.handler_npc"),
-            distance    = Config.Business.HandlerTargetDistance or 2.0,
+            distance    = Config.HandlerNPC.Target.distance or 2.0,
             canInteract = function(entity)
                 return OwnedBusinesses[businessId] ~= nil and CanInteractWithHandlerNPC(entity)
             end,
@@ -162,7 +162,7 @@ CreateThread(function()
 
     while true do
         local playerCoords = GetEntityCoords(PlayerPedId())
-        local range = Config.Business.HandlerSpawnDistance or 50.0
+        local range = Config.HandlerNPC.SpawnDistance or 50.0
 
         for businessId, entry in pairs(HandlerPoints) do
             local distance = #(playerCoords - entry.coords)
@@ -205,10 +205,10 @@ local function RefreshHandlerBlips()
             if tier and location then
                 HandlerBlips[businessId] = CreateMapBlip(
                     location.coords,
-                    Config.Business.HandlerBlipSprite or 375,
-                    Config.Business.HandlerBlipDisplay or 4,
-                    Config.Business.HandlerBlipScale or 0.7,
-                    Config.Business.HandlerBlipColor or 2,
+                    Config.HandlerNPC.Blip.sprite or 375,
+                    Config.HandlerNPC.Blip.display or 4,
+                    Config.HandlerNPC.Blip.scale or 0.7,
+                    Config.HandlerNPC.Blip.color or 2,
                     ("%s — %s"):format(tier.label, location.brand or tier.label)
                 )
             end

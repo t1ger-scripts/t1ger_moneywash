@@ -217,7 +217,7 @@ end
 ---@return table messages
 local function loadLocalization()
     local resource = GetCurrentResourceName()
-    local name = (Config.BusinessPortal or {}).Locale or GetConvar("ox:locale", "en")
+    local name = (Config.WebPortal or {}).Locale or GetConvar("ox:locale", "en")
     if type(name) ~= "string" or not name:match("^[%w_-]+$") then name = "en" end
 
     local raw = LoadResourceFile(resource, "locales/" .. name .. ".json")
@@ -244,7 +244,7 @@ lib.callback.register("t1ger_moneywash:server:review:open", function(source, bus
 
     local location = GetLocationConfig(business.type, business.locationId)
     if not location
-        or not IsPlayerNearCoords(source, location.coords, (Config.Business.HandlerTargetDistance or 2.0) + 4.0)
+        or not IsPlayerNearCoords(source, location.coords, (Config.HandlerNPC.Target.distance or 2.0) + 4.0)
     then
         return { success = false, reason = "business_too_far" }
     end

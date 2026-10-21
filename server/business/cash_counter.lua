@@ -152,11 +152,11 @@ local function playerBusiness(src, businessId)
     return business
 end
 
---- Loads the locale file for the UI (Config.BusinessPortal.Locale or ox:locale), falling back to "en".
+--- Loads the locale file for the UI (Config.WebPortal.Locale or ox:locale), falling back to "en".
 ---@return string localeName
 ---@return table messages
 local function localization()
-    local name = (Config.BusinessPortal or {}).Locale or GetConvar("ox:locale", "en")
+    local name = (Config.WebPortal or {}).Locale or GetConvar("ox:locale", "en")
     if type(name) ~= "string" or not name:match("^[%w_-]+$") then name = "en" end
     local raw = LoadResourceFile(Resource, "locales/" .. name .. ".json")
     if not raw then

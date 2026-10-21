@@ -1,3 +1,5 @@
+
+
 -- Revenue cycle duration in real minutes
 -- One cycle = one in-game day (48 real minutes by default)
 -- cycleLaundered (memory only) resets at the start of each new cycle
@@ -7,20 +9,6 @@ Config.Business = {
     -- Revenue cycle duration in real minutes
     -- Default: 48 (one GTA in-game day)
     CycleDuration         = 48,
-
-    -- Idle animation used by every Handler NPC regardless of tier
-    HandlerScenario       = "WORLD_HUMAN_STAND_IMPATIENT",
-
-    -- Handler NPC interaction target
-    HandlerTargetIcon     = "fa-solid fa-briefcase",
-    HandlerTargetDistance = 2.0,
-    HandlerSpawnDistance  = 50.0, -- the Handler NPC is shown to a player within this distance
-
-    -- Handler NPC map blip
-    HandlerBlipSprite     = 375,
-    HandlerBlipDisplay    = 4,
-    HandlerBlipScale      = 0.7,
-    HandlerBlipColor      = 2,
 
     -- Icons shown for each option in the Handler NPC's main menu
     -- and its submenus

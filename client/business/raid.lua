@@ -10,7 +10,7 @@ local seized = nil -- amount the server reported as seized; shown once the UI cl
 ---@return table messages
 local function loadLocale()
     local resource = GetCurrentResourceName()
-    local name = (Config.BusinessPortal or {}).Locale or GetConvar("ox:locale", "en")
+    local name = (Config.WebPortal or {}).Locale or GetConvar("ox:locale", "en")
     local raw = LoadResourceFile(resource, "locales/" .. name .. ".json")
 
     if not raw then

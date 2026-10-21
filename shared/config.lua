@@ -1,51 +1,62 @@
 Config = {}
 
-Config.Debug = true   -- set to false in production
+-- General settings
+Config.Debug             = true  -- Debug prints (set to false in production)
+Config.Currency          = "$"   -- Currency symbol in menus and notifications
+Config.UseCharacterNames = true  -- true = character name, false = game name (e.g. transfer picker)
 
-Config.Currency = "$" -- currency symbol used in menus and notifications
-
--- true = prefer the player's in-game character name where one is shown
--- (e.g. the business transfer picker); false = always use their game name
-Config.UseCharacterNames = true
-
---- Police interaction settings
-Config.Police = {
-    Jobs                  = { "police", "sheriff" }, -- jobs that can access police interactions
-    DepositReviewMinGrade = 2,                       -- minimum grade required to review flagged bank deposits
-
-    --- Manual business raids (police target on the business handler NPC)
-    Raid = {
-        Enable   = true,
-        MinGrade = 1,  -- minimum police grade required to raid a business
-        Target   = { icon = "fa-solid fa-shield-halved", distance = 2.0 },
-        StackCount = 10, -- cash piles shown in the Safe during a raid (1 to 20)
-        MaxTime    = 5,  -- real minutes before an unfinished raid is cancelled automatically
-        Cooldown   = 60, -- real minutes before the same business can be raided again (resets on restart)
-
-        -- What happens to the business suspicion after a finished raid. Never raises suspicion.
-        --   Mode = "set"    -> suspicion drops to Value, only if it is currently higher
-        --   Mode = "reduce" -> suspicion is reduced by Value percent of its current value
-        SuspicionAfter = { Mode = "set", Value = 50 },
+-- Business handler ped: idle animation, spawn range, target option and map blip
+Config.HandlerNPC = {
+    Scenario      = "WORLD_HUMAN_STAND_IMPATIENT", -- Idle animation
+    SpawnDistance = 50.0,                          -- Ped spawn range
+    Target        = {
+        icon     = "fa-solid fa-briefcase",        -- Target icon
+        distance = 2.0,                            -- Target range
     },
-
-    AlertNotifyDuration = 10000, -- ms the police alert notification stays on screen
-    
-    -- Police alerts. Every alert type can be switched off with Enable = false.
-    -- Notification texts are in locales/en.json (notification.police_alert.<type>).
-    Alerts = {
-        Moderate = { Enable = true, BlipName = "Unusual activity",         BlipSprite = 108, BlipColour = 5,  BlipScale = 0.9, BlipFlash = false, BlipDuration = 30 },
-        High     = { Enable = true, BlipName = "Suspicious business",      BlipSprite = 108, BlipColour = 47, BlipScale = 1.0, BlipFlash = false, BlipDuration = 30 },
-        Critical = { Enable = true, BlipName = "High-risk laundering",     BlipSprite = 108, BlipColour = 1,  BlipScale = 1.0, BlipFlash = true,  BlipDuration = 30 },
-        Max      = { Enable = true, BlipName = "Exposed laundering",       BlipSprite = 108, BlipColour = 1,  BlipScale = 1.2, BlipFlash = true,  BlipDuration = 30 },
-        Deposit  = { Enable = true, BlipName = "Flagged ATM deposit",      BlipSprite = 108, BlipColour = 1,  BlipScale = 1.0, BlipFlash = true,  BlipDuration = 30 },
+    Blip          = {
+        sprite  = 375,                             -- Blip sprite
+        display = 4,                               -- Blip display mode
+        scale   = 0.7,                             -- Blip size
+        color   = 2,                               -- Blip color
     },
 }
 
-Config.BusinessPortal = {
-    Locale = "en",
+-- Police access, business raids and alert blips
+Config.Police = {
+    Jobs                  = { "police", "sheriff" }, -- Jobs with police access
+    DepositReviewMinGrade = 2,                       -- Min grade to review flagged deposits
+    AlertNotifyDuration   = 10000,                   -- Alert notification time (ms)
 
-    -- Runtime portal colors. Changes only require a resource restart.
-    Theme = {
+    -- Raid a business via the handler ped
+    Raid                  = {
+        Enable         = true,
+        MinGrade       = 1,                                                  -- Min grade to raid
+        Target         = { icon = "fa-solid fa-shield-halved", distance = 2.0 }, -- Target icon and range
+        StackCount     = 10,                                                 -- Cash piles in the safe (1-20)
+        MaxTime        = 5,                                                  -- Minutes until an unfinished raid is cancelled
+        Cooldown       = 60,                                                 -- Minutes before the same business can be raided again (resets on restart)
+
+        -- Suspicion after a raid (never raises it)
+        -- "set": drops to Value if higher | "reduce": lowers by Value % of current
+        SuspicionAfter = { Mode = "set", Value = 50 },
+    },
+
+    -- Alerts per suspicion level (Enable = false turns one off)
+    -- Texts: locales/en.json > notification.police_alert.<type>
+    Alerts                = {
+        Moderate = { Enable = true, BlipName = "Unusual activity",     BlipSprite = 108, BlipColour = 5,  BlipScale = 0.9, BlipFlash = false, BlipDuration = 30 },
+        High     = { Enable = true, BlipName = "Suspicious business",  BlipSprite = 108, BlipColour = 47, BlipScale = 1.0, BlipFlash = false, BlipDuration = 30 },
+        Critical = { Enable = true, BlipName = "High-risk laundering", BlipSprite = 108, BlipColour = 1,  BlipScale = 1.0, BlipFlash = true,  BlipDuration = 30 },
+        Max      = { Enable = true, BlipName = "Exposed laundering",   BlipSprite = 108, BlipColour = 1,  BlipScale = 1.2, BlipFlash = true,  BlipDuration = 30 },
+        Deposit  = { Enable = true, BlipName = "Flagged ATM deposit",  BlipSprite = 108, BlipColour = 1,  BlipScale = 1.0, BlipFlash = true,  BlipDuration = 30 },
+    },
+}
+
+Config.WebPortal = {
+    Locale         = "en",
+
+    -- Runtime portal colors.
+    Theme          = {
         -- Primary interaction colors
         PrimaryColor       = "#1687ff",
         PrimaryHoverColor  = "#3a9aff",
@@ -59,8 +70,8 @@ Config.BusinessPortal = {
         HoverSurfaceColor  = "#142b45",
 
         -- Borders
-        BorderColor       = "#1d3854",
-        StrongBorderColor = "#2d5579",
+        BorderColor        = "#1d3854",
+        StrongBorderColor  = "#2d5579",
 
         -- Typography
         PrimaryTextColor   = "#f3f7fb",
@@ -76,8 +87,26 @@ Config.BusinessPortal = {
         DangerSubtleColor  = "rgb(239 98 98 / 14%)",
     },
 
+    Target = {
+        models = {
+            "prop_monitor_01a",
+            "prop_monitor_li",
+            "prop_monitor_01d",
+            "prop_monitor_04a",
+            "prop_monitor_01c",
+            "prop_laptop_lester",
+            "prop_laptop_jimmy",
+            "prop_laptop_lester2",
+            "prop_laptop_01a",
+            "h4_prop_h4_laptop_01a",
+        },
+
+        icon = "fa-solid fa-building",
+        distance = 2.0,
+    },
+
     -- Computer and laptop models that provide access to the business portal
-    Models = {
+    Models         = {
         "prop_monitor_01a",
         "prop_monitor_li",
         "prop_monitor_01d",
@@ -90,10 +119,10 @@ Config.BusinessPortal = {
         "h4_prop_h4_laptop_01a",
     },
 
-    TargetDistance   = 2.0,
-    TargetIcon       = "fa-solid fa-building",
+    TargetDistance = 2.0,
+    TargetIcon     = "fa-solid fa-building",
 
-    CloseDistance    = 6.0, -- the portal closes automatically if you move this far from where you opened it
+    CloseDistance  = 6.0,   -- the portal closes automatically if you move this far from where you opened it
 }
 
 --- Bank deposit settings
@@ -105,24 +134,24 @@ Config.BankDeposit = {
 
     -- The only guaranteed fee in the laundering pipeline - paid once, when a Safe
     -- balance converts into real bank money. Set to 0 to disable.
-    Tax = 20,
+    Tax              = 20,
 
     -- ATM models the owner deposits at and police inspect
-    Models = {
+    Models           = {
         "prop_atm_01",
         "prop_atm_02",
         "prop_atm_03",
         "prop_fleeca_atm",
     },
 
-    SubmitDuration = 5000, -- ms the "depositing" progress bar takes at the ATM
-    Animation      = { dict = "amb@prop_human_atm@male@idle_a", clip = "idle_a" },
+    SubmitDuration   = 5000, -- ms the "depositing" progress bar takes at the ATM
+    Animation        = { dict = "amb@prop_human_atm@male@idle_a", clip = "idle_a" },
 
     TargetIcon       = "fa-solid fa-credit-card",
     PoliceTargetIcon = "fa-solid fa-magnifying-glass-dollar",
 
     -- % chance a deposit is flagged, by business suspicion label at the moment of submit
-    FlagChance = {
+    FlagChance       = {
         Low      = 0,
         Moderate = 15,
         High     = 50,
@@ -151,12 +180,12 @@ Config.CashCounter = {
 
 --- Reputation system
 Config.Reputation = {
-    Enable           = true,
-    AutosaveInterval = 5, -- real minutes between automatic DB saves
+    Enable            = true,
+    AutosaveInterval  = 5, -- real minutes between automatic DB saves
 
     CommandSuggestion = "Usage: /%s <playerId> <amount>",
 
-    Commands         = {
+    Commands          = {
         set    = { enable = true, name = "moneywash:rep:set" },
         add    = { enable = true, name = "moneywash:rep:add" },
         remove = { enable = true, name = "moneywash:rep:remove" },
@@ -164,7 +193,7 @@ Config.Reputation = {
 
     -- Reputation point rewards per action
     -- enable = false to stop that action awarding points
-    Rewards          = {
+    Rewards           = {
         launder          = { enable = true, points = 10 }, -- per successful launder action
         stockDelivery    = { enable = true, points = 5 },  -- per completed stock delivery mission
         bankDeposit      = { enable = true, points = 5 },  -- when a deposit clears into personal bank
@@ -173,7 +202,7 @@ Config.Reputation = {
     },
 
     -- Titles are purely cosmetic - the script checks points only
-    Levels = {
+    Levels            = {
         [0]     = "Unverified",
         [250]   = "Registered",
         [500]   = "Active Operator",
