@@ -89,11 +89,3 @@ end
 --- @param receiptsUsed number how many receipts were consumed
 function OnBusinessBooksReviewed(identifier, businessId, reduction, fee, suspicionBefore, suspicionAfter, receiptsUsed)
 end
-
---- Called when a street wash handover is honest and the bank payout was made.
---- @param identifier string
---- @param amount number dirty cash handed over
---- @param cut number kept by the contact
---- @param payout number paid into the bank
-function OnStreetWashCompleted(identifier, amount, cut, payout)
-end
