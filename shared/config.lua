@@ -192,6 +192,40 @@ Config.CashCounter = {
     InteractionDistance = 5.0,
 }
 
+-- Review books: owners hand stock-delivery receipts to an accountant to lower suspicion
+-- One "cycle of paperwork" = receipts covering the business's expectedRevenue (units x LaunderDollarsPerUnit)
+Config.Review = {
+    Enable               = true,
+
+    MaxReduction         = 15,  -- Most suspicion one review can remove
+    CyclesForMax         = 5,   -- Cycles of paperwork needed to reach MaxReduction
+    MinReduction         = 3,   -- Min suspicion a review must remove to be allowed
+    FeePercent           = 20,  -- Fee as % of the business's expectedRevenue (same for any receipt count)
+    SkillImpact          = 30,  -- % sloppy paperwork can cut the result (0 = skill off)
+    MaxReceiptsPerReview = 12,  -- Max receipts in one folder
+
+    Cooldown             = 60,  -- Minutes between completed reviews of the same business (resets on restart)
+    PrepareTimeout       = 15,  -- Minutes before an opened desk is discarded if the folder isn't sealed
+    MaxTime              = 20,  -- Minutes to deliver the sealed folder
+
+    -- Accountant ped where the folder is delivered
+    Accountant           = {
+        Model          = "s_f_m_shop_high",
+        Scenario       = "WORLD_HUMAN_CLIPBOARD",
+        SpawnDistance  = 50.0,                 -- Ped spawns when a delivering player is this close
+        TargetIcon     = "fa-solid fa-folder-open",
+        TargetDistance = 2.0,
+        Location       = vector4(-555.362610, -227.050537, 38.159668, 218.267715),
+        Blip           = { Sprite = 1, Display = 4, Scale = 0.8, Color = 3, Route = true, RouteColor = 3, Label = "Accountant" }, -- Shown during delivery
+    },
+
+    -- Folder carried to the accountant (hidden in vehicles), tune pos/rot in-game
+    Folder               = {
+        Prop      = { model = "prop_cs_documents_01", pos = { x = 0.10, y = 0.03, z = 0.07 }, rot = { x = 35.0, y = 130.0, z = 0.0 }, bone = 36029 },
+        Animation = { dict = "amb@world_human_clipboard@male@idle_a", name = "idle_a", blendIn = 4.0, blendOut = 1.0, duration = -1, flag = 49 },
+    },
+}
+
 --- Reputation system
 Config.Reputation = {
     Enable            = true,
