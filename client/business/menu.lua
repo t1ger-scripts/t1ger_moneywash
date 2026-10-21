@@ -469,7 +469,7 @@ end
 --- Manage Business menu rather than closing outright.
 --- @param businessId number
 function OpenTransferDialog(businessId)
-    local transferDistance = Config.Business.TransferDistance or 10.0
+    local transferDistance = Config.HandlerNPC.TransferDistance or 10.0
     local coords = GetEntityCoords(PlayerPedId())
 
     local nearbyPlayers = lib.getNearbyPlayers(coords, transferDistance, Config.Debug and true or false)

@@ -207,7 +207,7 @@ local function ArePlayersWithinTransferDistance(sourcePlayer, targetPlayer)
     local targetCoords = GetEntityCoords(targetPed)
     local distance = #(sourceCoords - targetCoords)
 
-    return distance <= (Config.Business.TransferDistance or 10.0)
+    return distance <= (Config.HandlerNPC.TransferDistance or 10.0)
 end
 
 --- Transfers a business to another nearby online player.

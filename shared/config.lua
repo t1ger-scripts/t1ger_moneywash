@@ -5,18 +5,10 @@ Config.Debug             = true  -- Debug prints (set to false in production)
 Config.Currency          = "$"   -- Currency symbol in menus and notifications
 Config.UseCharacterNames = true  -- true = character name, false = game name (e.g. transfer picker)
 
--- Revenue cycle duration in real minutes
--- One cycle = one in-game day (48 real minutes by default)
--- cycleLaundered (memory only) resets at the start of each new cycle
--- Suspicion, stock, safe balances and receipts persist through cycle changes
+-- Business settings: revenue cycle, business ladder and locations
+-- cycleLaundered (memory only) resets each cycle; suspicion, stock, safe balances and receipts persist
 Config.Business = {
-
-    -- Revenue cycle duration in real minutes
-    -- Default: 48 (one GTA in-game day)
-    CycleDuration         = 48,
-
-    -- Maximum distance (metres) between two players for a business transfer
-    TransferDistance      = 10.0,
+    CycleDuration = 48, -- Cycle length in real minutes (48 = one in-game day)
 
     -- Business ladder
     -- type:            Internal key, must match a key in shared/business_locations.lua
@@ -43,6 +35,7 @@ Config.Business = {
 Config.HandlerNPC = {
     Scenario      = "WORLD_HUMAN_STAND_IMPATIENT", -- Idle animation
     SpawnDistance = 50.0,                          -- Ped spawn range
+    TransferDistance = 10.0,                       -- Max distance between two players for a business transfer
 
     Target        = {
         icon     = "fa-solid fa-briefcase",        -- Target icon
