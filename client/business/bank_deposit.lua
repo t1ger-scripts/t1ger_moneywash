@@ -77,7 +77,7 @@ local function submitDeposit(atm)
         if result and result.success then
             deposit.state = "processing"
         else
-            _API.ShowNotification(locale("notification.error_" .. ((result and result.reason) or "unknown")), "error", {})
+            NotifyError(result and result.reason)
         end
     end
 
@@ -102,7 +102,7 @@ local function cancelDeposit()
 
     -- Success is handled by the bankDepositEnded event
     if not (result and result.success) then
-        _API.ShowNotification(locale("notification.error_" .. ((result and result.reason) or "unknown")), "error", {})
+        NotifyError(result and result.reason)
     end
 end
 
