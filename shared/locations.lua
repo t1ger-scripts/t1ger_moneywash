@@ -1,21 +1,8 @@
--- All 96 real GTA V business locations indexed by [type][id].
---
--- The ID is an explicit and permanent table key, not an array position.
--- Locations may be reordered safely, but existing IDs must never be changed
--- or reused because ownership records reference them in the database.
---
--- Optional per-location fields:
--- `image` overrides the automatically generated business image filename.
---
--- Default image filenames use the following format:
--- `<business_type>_<three-digit-location-id>.webp`
--- Example: coffee_shop location [1] uses `coffee_shop_001.webp`.
---
--- Distributed business images are stored in:
--- `web/images/businesses/`
---
--- Images can be replaced without rebuilding the UI when the existing filename
--- is retained. Restart the resource afterward so clients receive the update.
+-- Business locations, indexed by [type][id]
+-- IDs are permanent table keys, not array positions: reorder freely, but never change or reuse an ID (ownership records in the database reference them)
+-- Optional per-location field: `image` overrides the default image filename
+-- Default image: web/images/businesses/<type>_<3-digit-id>.webp (e.g. coffee_shop [1] = coffee_shop_001.webp)
+-- Replace an image by keeping the filename, then restart the resource
 
 return {
     -- TIER 1: Coffee Shop (21 locations)
