@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS `moneywash_reputation` (
 CREATE TABLE IF NOT EXISTS `moneywash_businesses` (
     `id`                INT(11)      NOT NULL AUTO_INCREMENT,
     `identifier`        VARCHAR(100) NOT NULL,               -- owner player identifier
-    `business_type`     VARCHAR(50)  NOT NULL,               -- matches type key in business_locations.lua
-    `location_id`       INT(11)      NOT NULL,               -- matches id key in business_locations.lua
+    `business_type`     VARCHAR(50)  NOT NULL,               -- matches type key in shared/locations.lua
+    `location_id`       INT(11)      NOT NULL,               -- matches id key in shared/locations.lua
     `location_x`        DECIMAL(12,6) NOT NULL,              -- immutable purchased-location snapshot
     `location_y`        DECIMAL(12,6) NOT NULL,
     `location_z`        DECIMAL(12,6) NOT NULL,

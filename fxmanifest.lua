@@ -93,7 +93,7 @@ files {
     'web/mapStyles/styleSatelite/4/**/*',
     'web/mapStyles/styleSatelite/5/**/*',
 
-    'shared/business_locations.lua',
+    'shared/locations.lua',
     'shared/stock_mission.lua',
 }
 

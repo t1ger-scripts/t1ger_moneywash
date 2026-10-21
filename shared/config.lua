@@ -11,7 +11,7 @@ Config.Business = {
     CycleDuration = 48, -- Cycle length in real minutes (48 = one in-game day)
 
     -- Business ladder
-    -- type:            Internal key, must match a key in shared/business_locations.lua
+    -- type:            Internal key, must match a key in shared/locations.lua
     -- label:           Display name in menus
     -- requiredPoints:  Reputation needed to buy this tier
     -- npc:             Handler ped model spawned after purchase
@@ -28,7 +28,7 @@ Config.Business = {
         [9] = { type = "casino",      label = "Casino",      requiredPoints = 15000, npc = "s_m_y_casino_01",  expectedRevenue = 100000 },
     },
 
-    Locations = require("shared/business_locations") -- all business locations, see shared/business_locations.lua
+    Locations = require("shared/locations") -- all business locations, see shared/locations.lua
 }
 
 -- Business handler ped: idle animation, spawn range, target option and map blip
