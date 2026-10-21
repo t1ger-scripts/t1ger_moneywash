@@ -174,7 +174,7 @@ end
 --- @param locationId number
 --- @return table|nil
 function GetLocationConfig(businessType, locationId)
-    local locations = require("shared/business_locations")
+    local locations = Config.Business.Locations
     if not locations[businessType] then return nil end
     return locations[businessType][locationId]
 end

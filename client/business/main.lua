@@ -6,7 +6,7 @@
 --- player's own businesses current.
 --- ============================================================================
 
-local BusinessLocations = require("shared/business_locations")
+local BusinessLocations = Config.Business.Locations
 
 local HandlerNPCs   = {} -- { [businessId] = pedHandle }, only while the player is near
 local HandlerPoints = {} -- { [businessId] = { data, point } } spawn/despawn by distance

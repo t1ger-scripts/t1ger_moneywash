@@ -142,7 +142,7 @@ local function createMarketplaceSnapshot(source)
     local reputation = GetPlayerReputation(source)
     local reputationPoints = reputation and reputation:GetPoints() or 0
 
-    local configuredLocations = require("shared/business_locations")
+    local configuredLocations = Config.Business.Locations
 
     local tiers = {}
     local visibleLocations = {}
