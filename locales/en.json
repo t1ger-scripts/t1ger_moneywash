@@ -33,7 +33,6 @@
             "bank_deposit": "Bank Deposit",
             "manage": "Manage Business",
             "manage_desc": "Transfer ownership or abandon this business",
-            "not_found": "Business not found",
             "overview": "Business Overview",
             "overview_desc": "Hover to view current status",
             "total_cash": "Total Cash",
@@ -54,16 +53,13 @@
             "deposit_processing": "Processing: %s clears in %s",
             "review_books": "Review Books",
             "review_books_desc": "Hand your stock receipts to an accountant to lower suspicion",
-            "review_in_progress": "A sealed folder is waiting to be delivered to the accountant",
             "review_cooldown": "The accountant is fully booked. Available again in %s",
             "review_cooldown_minutes": "%d min",
-            "review_no_suspicion": "Nothing to review. Suspicion is already at zero",
             "review_cancel": "Cancel Review",
             "review_cancel_desc": "Drop the sealed folder. Nothing is charged and your receipts are kept"
         },
         "launder": {
             "title": "Launder Money",
-            "no_dirty_cash": "You aren't carrying any dirty cash",
             "amount_label": "Amount to count",
             "amount_desc": "Available to count: %s"
         },
@@ -71,7 +67,6 @@
             "title": "Order Stock",
             "amount_label": "Units to order (min %d, max %d)",
             "price_desc": "Price per unit: %s",
-            "invalid_units": "Invalid order amount",
             "order_on_cooldown": "You can place a new order in %d seconds",
             "confirm_title": "Confirm Stock Order",
             "confirm_body": "Order %d units for %s?\n\nPayment will be taken from your bank."
@@ -79,12 +74,11 @@
         "deposit": {
             "title": "Bank Deposit",
             "amount_label": "Amount to deposit (available: %s)",
-            "exposed_desc": "Exposed: %s | Covered: %s \n\n Exposed funds are drawn first.",
+            "exposed_desc": "Exposed: %s | Covered: %s\n\nExposed funds are drawn first.",
             "cancel_title": "Cancel Deposit",
             "cancel_body": "Cancel the deposit and return the cash to your Safe?"
         },
         "review": {
-            "title": "Review Books",
             "cancel_title": "Cancel Review",
             "cancel_body": "Drop the sealed folder? Nothing is charged and your receipts are kept.",
             "pay_title": "Accountant",
@@ -123,13 +117,10 @@
         }
     },
     "notification": {
-        "portal_unavailable": "The business portal is currently unavailable.",
         "portal_loading": "Loading the business portal...",
         "business_removed": "Your business has been permanently removed",
         "money_laundered": "%s laundered into your Safe (%s covered, %s exposed)",
         "suspicion_changed": "Business suspicion has risen to %s",
-        "no_permission": "You don't have permission to do this",
-        "mission_already_active": "You already have an active mission",
         "stock_order_placed": "Stock order placed. GPS waypoint set to pickup location.",
         "stock_picked_up": "Stock picked up, load it in a vehicle.",
         "stock_loaded": "Stock loaded, return to your business with the stock.",
@@ -147,7 +138,6 @@
         "raid_ended": "The police raid on your business has ended.",
         "raid_seized_owner": "Police seized %s from your Safe.",
         "raid_seized": "You seized %s from the Safe.",
-        "raid_in_progress": "Police are raiding your business.",
         "raid_cancelled": "The raid was called off.",
         "raid_cancel_timeout": "The raid took too long and was called off.",
         "raid_cancel_too_far": "You moved too far from the business. The raid was called off.",
@@ -178,6 +168,7 @@
         "invalid_player": "Invalid player",
         "invalid_state": "This action isn't available right now",
         "invalid_job": "You are not on duty for this action",
+        "no_permission": "You don't have permission to do this",
         "not_found": "Business not found",
         "not_owner": "You don't own this business",
         "not_owned": "Nobody owns that business",

@@ -1,5 +1,6 @@
 -- UI text for the portal, cash counter, raid and review screens
 -- Edit the text to translate it. Keep the keys and any {placeholders} as they are
+-- Messages for failed actions are in locales/<lang>.json under error
 
 Config.UiText = {
     common = {
@@ -93,13 +94,13 @@ Config.UiText = {
         collectPile = "Move {amount} to the right tray",
         collectReady = "Collect counted pile",
         countingPile = "Counting pile {current}/{total}",
-        waitingForServer = "Finishing batch…",
+        waitingForServer = "Finishing batch...",
         injectTitle = "Inject cash",
         withdrawTitle = "Withdraw cash",
         ready = "Ready",
         complete = "Complete",
         counting = "Counting",
-        confirming = "Confirming transaction…",
+        confirming = "Confirming transaction...",
         invalidAmount = "Enter a whole amount within your available balance.",
         awaiting = "AWAITING CASH",
         batchComplete = "BATCH COMPLETE",
@@ -113,7 +114,7 @@ Config.UiText = {
         evidenceLabel = "POLICE EVIDENCE",
         bagPile = "Bag {amount}",
         slideToSecure = "EVIDENCE · SLIDE TO SECURE",
-        securing = "SECURING EVIDENCE…",
+        securing = "SECURING EVIDENCE...",
         evidenceSecured = "EVIDENCE SECURED",
         sealAria = "Slide from left to right to secure the evidence. Alternatively, press Enter.",
     },

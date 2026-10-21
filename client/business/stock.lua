@@ -493,7 +493,7 @@ end)
 --- @param missionData table  { units, cost, pickupLocation }
 function StartStockMission(businessId, missionData)
     if IsStockMissionActive() then
-        _API.ShowNotification(locale("notification.mission_already_active"), "error")
+        NotifyError("order_already_active")
         return
     end
 

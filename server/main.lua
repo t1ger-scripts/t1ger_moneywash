@@ -101,7 +101,7 @@ for action, cfg in pairs(Config.Reputation.Commands or {}) do
             local isConsole = (src == 0)
             if not isConsole and not cfg.enable then return end
             if not isConsole and not _API.Player.IsAdmin(src) then
-                _API.SendNotification(src, locale("notification.no_permission"), "error")
+                _API.SendNotification(src, locale("error.no_permission"), "error")
                 return
             end
 

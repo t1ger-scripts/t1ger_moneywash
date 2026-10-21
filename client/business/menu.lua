@@ -10,12 +10,12 @@
 function OpenHandlerMenu(businessId)
     local status = lib.callback.await("t1ger_moneywash:server:getBusinessStatus", false, businessId)
     if not status then
-        _API.ShowNotification(locale("menu.handler.not_found"), "error")
+        NotifyError("not_found")
         return
     end
 
     if status.raided then
-        _API.ShowNotification(locale("notification.raid_in_progress"), "error")
+        NotifyError("raid_in_progress")
         return
     end
 
@@ -105,7 +105,7 @@ end
 function OpenStockMenu(businessId)
     local status = lib.callback.await("t1ger_moneywash:server:getBusinessStatus", false, businessId)
     if not status then
-        _API.ShowNotification(locale("menu.handler.not_found"), "error")
+        NotifyError("not_found")
         return
     end
 
@@ -215,7 +215,7 @@ end
 function OpenSafeMenu(businessId)
     local status = lib.callback.await("t1ger_moneywash:server:getBusinessStatus", false, businessId)
     if not status then
-        _API.ShowNotification(locale("menu.handler.not_found"), "error")
+        NotifyError("not_found")
         return
     end
 
@@ -273,7 +273,7 @@ function StartLaunderFlow(businessId)
     local dirtyMoney = lib.callback.await("t1ger_moneywash:server:getDirtyMoney", false) or 0
 
     if dirtyMoney <= 0 then
-        _API.ShowNotification(locale("menu.launder.no_dirty_cash"), "error", {})
+        NotifyError("insufficient_dirty_cash")
         return OpenHandlerMenu(businessId)
     end
 
@@ -317,7 +317,7 @@ end
 --- @param status table
 function OpenStockOrderDialog(businessId, status)
     if IsStockMissionActive() then
-        _API.ShowNotification(locale("notification.mission_already_active"), "error")
+        NotifyError("order_already_active")
         return OpenStockMenu(businessId)
     end
 
@@ -352,7 +352,7 @@ function OpenStockOrderDialog(businessId, status)
 
     local units = math.floor(tonumber(input[1]) or 0)
     if units < minOrder or units > maxOrder then
-        _API.ShowNotification(locale("menu.stock.invalid_units"), "error", {})
+        NotifyError("invalid_units")
         return OpenStockMenu(businessId)
     end
 

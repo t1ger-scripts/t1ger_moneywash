@@ -162,7 +162,7 @@ function OpenBusinessPortal()
     if not response or not response.success or not response.data then
         isPortalOpening = false
         CloseMoneywashUi("marketplace")
-        _API.ShowNotification(locale("notification.portal_unavailable"), "error", {})
+        NotifyError("snapshot_unavailable")
         return
     end
 
