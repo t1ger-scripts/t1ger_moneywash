@@ -4,35 +4,10 @@
 --- purchases, waypoints and live marketplace refreshes.
 --- ============================================================================
 
-local TARGET_OPTION_NAME = "t1ger_moneywash_business_portal"
-local TARGET_OPTION_LABEL = locale("target.portal_npc")
-
-local SERVER_CALLBACKS = {
-    getSnapshot = "t1ger_moneywash:server:businessPortal:getSnapshot",
-    purchaseBusiness = "t1ger_moneywash:server:businessPortal:purchaseBusiness",
-    getWaypoint = "t1ger_moneywash:server:businessPortal:getWaypoint",
-}
-
-local NUI_CALLBACKS = {
-    ready = "t1ger_moneywash:portal:ready",
-    close = "t1ger_moneywash:portal:close",
-    purchaseBusiness = "t1ger_moneywash:portal:purchaseBusiness",
-    setBusinessWaypoint = "t1ger_moneywash:portal:setBusinessWaypoint",
-}
-
-local NUI_MESSAGES = {
-    open = "t1ger_moneywash:portal:open",
-    refresh = "t1ger_moneywash:portal:refresh",
-    close = "t1ger_moneywash:portal:close",
-}
-
 local NOT_READY_REASONS = {
     business_store_not_ready = true,
     reputation_not_ready = true,
 }
-
-local MAX_READY_RETRIES = 10
-local READY_RETRY_DELAY = 500
 
 local isPortalOpen = false
 local isPortalOpening = false
@@ -59,7 +34,6 @@ local function normalizeGameLabel(value)
     return value
 end
 
-
 --- Resolves a GTA coordinate into its street, crossing road and zone.
 ---@param coordinates table
 ---@return table
@@ -69,52 +43,30 @@ local function resolveLocationAddress(coordinates)
     local z = tonumber(coordinates and coordinates.z)
 
     if not x or not y or not z then
-        return {
-            street = nil,
-            crossingRoad = nil,
-            zone = nil,
-        }
+        return {street = nil, crossingRoad = nil, zone = nil}
     end
 
-    local streetHash, crossingRoadHash = GetStreetNameAtCoord(
-        x + 0.0,
-        y + 0.0,
-        z + 0.0
-    )
+    local streetHash, crossingRoadHash = GetStreetNameAtCoord(x + 0.0, y + 0.0, z + 0.0)
 
     local street = nil
     local crossingRoad = nil
 
     if streetHash and streetHash ~= 0 then
-        street = normalizeGameLabel(
-            GetStreetNameFromHashKey(streetHash)
-        )
+        street = normalizeGameLabel(GetStreetNameFromHashKey(streetHash))
     end
 
-    if crossingRoadHash
-        and crossingRoadHash ~= 0
-        and crossingRoadHash ~= streetHash
-    then
-        crossingRoad = normalizeGameLabel(
-            GetStreetNameFromHashKey(crossingRoadHash)
-        )
+    if crossingRoadHash and crossingRoadHash ~= 0 and crossingRoadHash ~= streetHash then
+        crossingRoad = normalizeGameLabel(GetStreetNameFromHashKey(crossingRoadHash))
     end
 
-    local zoneCode = normalizeGameLabel(
-        GetNameOfZone(x + 0.0, y + 0.0, z + 0.0)
-    )
-
+    local zoneCode = normalizeGameLabel(GetNameOfZone(x + 0.0, y + 0.0, z + 0.0))
     local zone = nil
 
     if zoneCode then
         zone = normalizeGameLabel(GetLabelText(zoneCode)) or zoneCode
     end
 
-    return {
-        street = street,
-        crossingRoad = crossingRoad,
-        zone = zone,
-    }
+    return {street = street, crossingRoad = crossingRoad, zone = zone}
 end
 
 -- Locations never move, so each address is resolved once per session.
@@ -147,23 +99,15 @@ local function prepareSnapshotForNui(snapshot)
     return snapshot
 end
 
-
 --- Requests the player's current authoritative marketplace snapshot.
 ---@return table|nil response
 local function requestMarketplaceSnapshot()
-    local callbackSucceeded, response = pcall(
-        lib.callback.await,
-        SERVER_CALLBACKS.getSnapshot,
-        false
-    )
+    local callbackSucceeded, response = pcall(lib.callback.await, "t1ger_moneywash:server:businessPortal:getSnapshot", false)
 
     if not callbackSucceeded then
         if Config.Debug then
-            print(("[MoneyWash] Portal snapshot request failed: %s"):format(
-                tostring(response)
-            ))
+            print(("[MoneyWash] Portal snapshot request failed: %s"):format(tostring(response)))
         end
-
         return nil
     end
 
@@ -188,11 +132,7 @@ local function watchPortal(session)
 
         local ped = PlayerPedId()
 
-        if isPortalOpen and portalSession == session
-            and (IsEntityDead(ped)
-                or IsPedCuffed(ped)
-                or #(GetEntityCoords(ped) - portalOpenCoords) > maxDistance)
-        then
+        if isPortalOpen and portalSession == session and (IsEntityDead(ped) or IsPedCuffed(ped) or #(GetEntityCoords(ped) - portalOpenCoords) > maxDistance) then
             closeBusinessPortal(true)
             return
         end
@@ -201,66 +141,54 @@ end
 
 --- Opens the portal after successfully obtaining its data.
 function OpenBusinessPortal()
-    if isPortalOpen or isPortalOpening then
-        return
-    end
-
+    if isPortalOpen or isPortalOpening then return end
     if not BeginMoneywashUi("marketplace") then return end
+
     isPortalOpening = true
 
     local response = requestMarketplaceSnapshot()
     local attempts = 0
 
-    while
-        response
-        and not response.success
-        and NOT_READY_REASONS[response.reason]
-        and attempts < MAX_READY_RETRIES
-    do
+    while response and not response.success and NOT_READY_REASONS[response.reason] and attempts < 10 do
         attempts = attempts + 1
 
         if attempts == 1 then
             _API.ShowNotification(locale("notification.portal_loading"), "inform", {})
         end
 
-        Wait(READY_RETRY_DELAY)
+        Wait(500)
         response = requestMarketplaceSnapshot()
     end
 
     if not response or not response.success or not response.data then
         isPortalOpening = false
         CloseMoneywashUi("marketplace")
-
         _API.ShowNotification(locale("notification.portal_unavailable"), "error", {})
-
         return
     end
 
-    ShowMoneywashUi("marketplace", NUI_MESSAGES.open, response.data)
+    ShowMoneywashUi("marketplace", "t1ger_moneywash:portal:open", response.data)
 
     isPortalOpen = true
     isPortalOpening = false
 
     portalOpenCoords = GetEntityCoords(PlayerPedId())
     portalSession = portalSession + 1
-    CreateThread(function() watchPortal(portalSession) end)
+
+    CreateThread(function()
+        watchPortal(portalSession)
+    end)
 end
 
 --- Refreshes an already-open portal without resetting its selection.
 local function refreshBusinessPortal()
-    if not isPortalOpen then
-        return
-    end
-
+    if not isPortalOpen then return end
     local response = requestMarketplaceSnapshot()
-
-    if not response or not response.success or not response.data then
-        return
-    end
-
+    if not response or not response.success or not response.data then return end
     if not isPortalOpen or GetMoneywashUiScreen() ~= "marketplace" then return end
+
     SendNUIMessage({
-        action = NUI_MESSAGES.refresh,
+        action = "t1ger_moneywash:portal:refresh",
         data = response.data,
     })
 end
@@ -270,7 +198,7 @@ end
 function closeBusinessPortal(notifyNui)
     if notifyNui then
         SendNUIMessage({
-            action = NUI_MESSAGES.close,
+            action = "t1ger_moneywash:portal:close",
         })
     end
 
@@ -279,178 +207,107 @@ function closeBusinessPortal(notifyNui)
     isPortalOpen = false
     isPortalOpening = false
 
-    TriggerServerEvent(
-        "t1ger_moneywash:server:businessPortal:closed"
-    )
+    TriggerServerEvent("t1ger_moneywash:server:businessPortal:closed")
 end
 
 --- Allows other client files to open the portal without duplicating logic.
-RegisterNetEvent(
-    "t1ger_moneywash:client:businessPortal:open",
-    OpenBusinessPortal
-)
-
+RegisterNetEvent( "t1ger_moneywash:client:businessPortal:open", OpenBusinessPortal)
 exports("OpenBusinessPortal", OpenBusinessPortal)
 
-
 --- The server requests fresh data when marketplace availability changes.
-RegisterNetEvent(
-    "t1ger_moneywash:client:businessPortal:refresh",
-    function()
-        refreshBusinessPortal()
-    end
-)
-
+RegisterNetEvent("t1ger_moneywash:client:businessPortal:refresh", function()
+    refreshBusinessPortal()
+end)
 
 --- Vue announces that its NUI document has loaded.
 --- This does not open the portal automatically.
-RegisterNUICallback(NUI_CALLBACKS.ready, function(_, callback)
-    callback({
-        success = true,
-    })
+RegisterNUICallback("t1ger_moneywash:portal:ready", function(_, callback)
+    callback({success = true})
 end)
-
 
 --- Vue requests that the portal be closed.
-RegisterNUICallback(NUI_CALLBACKS.close, function(_, callback)
+RegisterNUICallback("t1ger_moneywash:portal:close", function(_, callback)
     closeBusinessPortal(false)
-
-    callback({
-        success = true,
-    })
+    callback({success = true})
 end)
 
-
 --- Vue submits a confirmed business purchase.
-RegisterNUICallback(
-    NUI_CALLBACKS.purchaseBusiness,
-    function(request, callback)
-        if not isPortalOpen then
-            callback({
-                success = false,
-                reason = "portal_closed",
-            })
-
-            return
-        end
-
-        if type(request) ~= "table" then
-            callback({
-                success = false,
-                reason = "invalid_request",
-            })
-
-            return
-        end
-
-        local callbackSucceeded, response = pcall(
-            lib.callback.await,
-            SERVER_CALLBACKS.purchaseBusiness,
-            false,
-            request.businessType,
-            request.locationId
-        )
-
-        if not callbackSucceeded or type(response) ~= "table" then
-            callback({
-                success = false,
-                reason = "request_failed",
-            })
-
-            return
-        end
-
-        if response.success and response.data then
-            response.data = prepareSnapshotForNui(response.data)
-
-            SendNUIMessage({
-                action = NUI_MESSAGES.refresh,
-                data = response.data,
-            })
-        end
-
-        callback(response)
+RegisterNUICallback("t1ger_moneywash:portal:purchaseBusiness", function(request, callback)
+    if not isPortalOpen then
+        callback({success = false, reason = "portal_closed"})
+        return
     end
-)
 
+    if type(request) ~= "table" then
+        callback({success = false, reason = "invalid_request",})
+        return
+    end
 
---- Vue requests a waypoint for the player's owned business.
-RegisterNUICallback(
-    NUI_CALLBACKS.setBusinessWaypoint,
-    function(request, callback)
-        if not isPortalOpen then
-            callback({
-                success = false,
-                reason = "portal_closed",
-            })
+    local callbackSucceeded, response = pcall(lib.callback.await, "t1ger_moneywash:server:businessPortal:purchaseBusiness", false, request.businessType, request.locationId)
 
-            return
-        end
+    if not callbackSucceeded or type(response) ~= "table" then
+        callback({success = false, reason = "request_failed",})
+        return
+    end
 
-        if type(request) ~= "table" then
-            callback({
-                success = false,
-                reason = "invalid_request",
-            })
+    if response.success and response.data then
+        response.data = prepareSnapshotForNui(response.data)
 
-            return
-        end
-
-        local callbackSucceeded, response = pcall(
-            lib.callback.await,
-            SERVER_CALLBACKS.getWaypoint,
-            false,
-            request.businessType,
-            request.locationId
-        )
-
-        if not callbackSucceeded or type(response) ~= "table" then
-            callback({
-                success = false,
-                reason = "request_failed",
-            })
-
-            return
-        end
-
-        if response.success and response.data then
-            local x = tonumber(response.data.x)
-            local y = tonumber(response.data.y)
-
-            if x and y then
-                SetNewWaypoint(x + 0.0, y + 0.0)
-            end
-        end
-
-        callback({
-            success = response.success == true,
-            reason = response.reason,
+        SendNUIMessage({
+            action = "t1ger_moneywash:portal:refresh",
+            data = response.data,
         })
     end
-)
+
+    callback(response)
+end)
+
+--- Vue requests a waypoint for the player's owned business.
+RegisterNUICallback("t1ger_moneywash:portal:setBusinessWaypoint", function(request, callback)
+    if not isPortalOpen then
+        callback({success = false, reason = "portal_closed" })
+        return
+    end
+
+    if type(request) ~= "table" then
+        callback({ success = false, reason = "invalid_request" })
+        return
+    end
+
+    local callbackSucceeded, response = pcall(lib.callback.await, "t1ger_moneywash:server:businessPortal:getWaypoint", false, request.businessType, request.locationId)
+
+    if not callbackSucceeded or type(response) ~= "table" then
+        callback({ success = false, reason = "request_failed" })
+        return
+    end
+
+    if response.success and response.data then
+        local x = tonumber(response.data.x)
+        local y = tonumber(response.data.y)
+
+        if x and y then
+            SetNewWaypoint(x + 0.0, y + 0.0)
+        end
+    end
+
+    callback({success = response.success == true, reason = response.reason})
+end)
 
 
 --- Registers the configured computers and laptops with the target bridge.
 CreateThread(function()
-    while not _Target do
-        Wait(100)
-    end
+    while not _Target do Wait(100) end
 
-    local Config.WebPortal = Config.WebPortal
-
-    if not Config.WebPortal
-        or type(Config.WebPortal.Target.models) ~= "table"
-        or #Config.WebPortal.Target.models == 0
-    then
+    if not Config.WebPortal or type(Config.WebPortal.Target.models) ~= "table" or #Config.WebPortal.Target.models == 0 then
         print("^1[MoneyWash] No business portal target models configured.^7")
         return
     end
 
     _API.Target.AddModel(Config.WebPortal.Target.models, {
         {
-            name = TARGET_OPTION_NAME,
+            name = "t1ger_moneywash_business_portal",
             icon = Config.WebPortal.TargetIcon,
-            label = TARGET_OPTION_LABEL,
+            label = locale("target.portal_npc"),
             distance = Config.WebPortal.TargetDistance or 2.0,
 
             canInteract = function()
@@ -472,7 +329,6 @@ CreateThread(function()
     end
 end)
 
-
 --- Clean up focus and target registrations if the resource is stopped.
 AddEventHandler("onResourceStop", function(resourceName)
     if resourceName ~= GetCurrentResourceName() then
@@ -485,12 +341,8 @@ AddEventHandler("onResourceStop", function(resourceName)
 
     if isTargetRegistered and Config.WebPortal then
         _API.Target.RemoveModel(Config.WebPortal.Target.models, {
-            names = {
-                TARGET_OPTION_NAME,
-            },
-            labels = {
-                TARGET_OPTION_LABEL,
-            },
+            names = { "t1ger_moneywash_business_portal" },
+            labels = { locale("target.portal_npc") },
         })
     end
 end)
