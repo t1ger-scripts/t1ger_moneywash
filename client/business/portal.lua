@@ -1,8 +1,4 @@
---- ============================================================================
---- Business Portal Client
---- Handles target registration, NUI focus, portal lifecycle, address resolution,
---- purchases, waypoints and live marketplace refreshes.
---- ============================================================================
+--- Business portal client: registers the target, manages NUI focus, resolves addresses and handles purchases, waypoints and live refreshes.
 
 local NOT_READY_REASONS = {
     business_store_not_ready = true,

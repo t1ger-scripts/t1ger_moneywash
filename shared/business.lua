@@ -10,24 +10,6 @@ Config.Business = {
     -- Default: 48 (one GTA in-game day)
     CycleDuration         = 48,
 
-    -- Icons shown for each option in the Handler NPC's main menu
-    -- and its submenus
-    MenuIcons             = {
-        overview       = "fa-solid fa-chart-line",
-        launder        = "fa-solid fa-money-bill-wave",
-        stock          = "fa-solid fa-boxes-stacked",
-        viewStock      = "fa-solid fa-warehouse",
-        cycleReadiness = "fa-solid fa-gauge-high",
-        orderStock     = "fa-solid fa-box",
-        safe           = "fa-solid fa-lock",
-        safeCovered    = "fa-solid fa-shield-halved",
-        safeExposed    = "fa-solid fa-triangle-exclamation",
-        bankDeposit    = "fa-solid fa-building-columns",
-        manage         = "fa-solid fa-gear",
-        transfer       = "fa-solid fa-right-left",
-        abandon        = "fa-solid fa-door-open",
-    },
-
     -- Maximum distance (metres) between two players for a business transfer
     TransferDistance      = 10.0,
 

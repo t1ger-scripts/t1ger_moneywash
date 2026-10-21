@@ -19,7 +19,7 @@ function OpenHandlerMenu(businessId)
         return
     end
 
-    local menuIcons = Config.Business.MenuIcons or {}
+    local menuIcons = Config.HandlerNPC.MenuIcons or {}
 
     -- Overview row - a single hover-metadata row showing totals only.
     -- Breakdown of each figure lives one level deeper, in Stock/Safe.
@@ -109,7 +109,7 @@ function OpenStockMenu(businessId)
         return
     end
 
-    local menuIcons = Config.Business.MenuIcons or {}
+    local menuIcons = Config.HandlerNPC.MenuIcons or {}
     local stockCfg = Config.Business.Stock
 
     local unitPrice = math.floor(stockCfg.LaunderDollarsPerUnit * (stockCfg.UnitPricePercent / 100))
@@ -219,7 +219,7 @@ function OpenSafeMenu(businessId)
         return
     end
 
-    local menuIcons = Config.Business.MenuIcons or {}
+    local menuIcons = Config.HandlerNPC.MenuIcons or {}
     local deposit = status.deposit
     local depositDisabled = deposit ~= nil or (status.safeCovered + status.safeExposed) <= 0
     local depositDesc
@@ -419,7 +419,7 @@ end
 
 --- @param businessId number
 function OpenManageBusinessMenu(businessId)
-    local menuIcons = Config.Business.MenuIcons or {}
+    local menuIcons = Config.HandlerNPC.MenuIcons or {}
 
     lib.registerContext({
         id      = "moneywash:handler:manage",

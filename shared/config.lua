@@ -9,16 +9,36 @@ Config.UseCharacterNames = true  -- true = character name, false = game name (e.
 Config.HandlerNPC = {
     Scenario      = "WORLD_HUMAN_STAND_IMPATIENT", -- Idle animation
     SpawnDistance = 50.0,                          -- Ped spawn range
+
     Target        = {
         icon     = "fa-solid fa-briefcase",        -- Target icon
         distance = 2.0,                            -- Target range
     },
+
     Blip          = {
         sprite  = 375,                             -- Blip sprite
         display = 4,                               -- Blip display mode
         scale   = 0.7,                             -- Blip size
         color   = 2,                               -- Blip color
     },
+
+    -- Icons shown for each option in the Handler NPC's main menu and its submenus
+    MenuIcons = {
+        overview       = "fa-solid fa-chart-line",
+        launder        = "fa-solid fa-money-bill-wave",
+        stock          = "fa-solid fa-boxes-stacked",
+        viewStock      = "fa-solid fa-warehouse",
+        cycleReadiness = "fa-solid fa-gauge-high",
+        orderStock     = "fa-solid fa-box",
+        reviewBooks    = "fa-solid fa-folder-open",
+        safe           = "fa-solid fa-lock",
+        safeCovered    = "fa-solid fa-shield-halved",
+        safeExposed    = "fa-solid fa-triangle-exclamation",
+        bankDeposit    = "fa-solid fa-building-columns",
+        manage         = "fa-solid fa-gear",
+        transfer       = "fa-solid fa-right-left",
+        abandon        = "fa-solid fa-door-open",
+    }
 }
 
 -- Police access, business raids and alert blips
