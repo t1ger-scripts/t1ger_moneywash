@@ -246,30 +246,30 @@ Config.Review = {
     },
 }
 
---- Reputation system
+-- Reputation: points, admin commands, rewards and titles
 Config.Reputation = {
     Enable            = true,
-    AutosaveInterval  = 5, -- real minutes between automatic DB saves
+    AutosaveInterval  = 5, -- Minutes between automatic database saves
 
-    CommandSuggestion = "Usage: /%s <playerId> <amount>",
+    CommandSuggestion = "Usage: /%s <playerId> <amount>", -- Command help text (%s = command name)
 
+    -- Admin commands (enable = false turns one off)
     Commands          = {
         set    = { enable = true, name = "moneywash:rep:set" },
         add    = { enable = true, name = "moneywash:rep:add" },
         remove = { enable = true, name = "moneywash:rep:remove" },
     },
 
-    -- Reputation point rewards per action
-    -- enable = false to stop that action awarding points
+    -- Points per action (enable = false stops that action awarding points)
     Rewards           = {
-        launder          = { enable = true, points = 10 }, -- per successful launder action
-        stockDelivery    = { enable = true, points = 5 },  -- per completed stock delivery mission
-        bankDeposit      = { enable = true, points = 5 },  -- when a deposit clears into personal bank
-        streetWash       = { enable = true, points = 10 }, -- per completed (not betrayed) street wash
-        businessPurchase = { enable = true, points = 50 }, -- per business purchase
+        businessPurchase = { enable = true, points = 50 }, -- Per business purchase
+        stockDelivery    = { enable = true, points = 5 },  -- Per completed stock delivery
+        launder          = { enable = true, points = 10 }, -- Per successful launder
+        bankDeposit      = { enable = true, points = 5 },  -- When a deposit clears into the personal bank
+        accountantReview = { enable = true, points = 5 }, -- Per completed review delivery
     },
 
-    -- Titles are purely cosmetic - the script checks points only
+    -- Titles by points, cosmetic only (the script checks points)
     Levels            = {
         [0]     = "Unverified",
         [250]   = "Registered",

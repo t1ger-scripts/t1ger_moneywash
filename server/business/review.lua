@@ -485,8 +485,7 @@ lib.callback.register("t1ger_moneywash:server:review:deliver", function(source)
         UpdateBusiness(business.id, "suspicion", after)
         SaveBusiness(business.id, true)
 
-        local reward = Config.Reputation.Enable
-            and Config.Reputation.Rewards.accountantReview
+        local reward = Config.Reputation.Enable and Config.Reputation.Rewards.accountantReview
         if reward and reward.enable then
             AwardReputationPoints(source, review.identifier, reward.points)
         end
