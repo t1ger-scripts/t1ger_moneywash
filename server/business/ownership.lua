@@ -506,3 +506,65 @@ lib.callback.register("t1ger_moneywash:server:abandonBusiness", function(source,
 
     return { success = success, reason = reason }
 end)
+
+--- Admin command: /moneywash:addbusiness <playerId> <type> <locationId> (online players only)
+RegisterCommand("moneywash:addbusiness", function(src, args)
+    if src ~= 0 and not _API.Player.IsAdmin(src) then return end
+
+    local target, businessType, locationId = tonumber(args[1]), args[2], tonumber(args[3])
+
+    if not target or not businessType or not locationId then
+        ReplyToCommand(src, "Usage: /moneywash:addbusiness <playerId> <type> <locationId>", "error")
+        return
+    end
+
+    local identifier = _API.Player.GetIdentifier(target)
+
+    if not identifier then
+        ReplyToCommand(src, ("Player %d is not online."):format(target), "error")
+        return
+    end
+
+    local success, reason = AdminAddBusiness(identifier, businessType, locationId)
+
+    ReplyToCommand(
+        src,
+        success and ("Business added: %s #%d → player %d"):format(businessType, locationId, target)
+            or ("Failed: %s"):format(reason),
+        success and "success" or "error"
+    )
+end, true)
+
+--- Admin command: /moneywash:removebusiness <playerId> (online players only)
+RegisterCommand("moneywash:removebusiness", function(src, args)
+    if src ~= 0 and not _API.Player.IsAdmin(src) then return end
+
+    local target = tonumber(args[1])
+
+    if not target then
+        ReplyToCommand(src, "Usage: /moneywash:removebusiness <playerId>", "error")
+        return
+    end
+
+    local identifier = _API.Player.GetIdentifier(target)
+
+    if not identifier then
+        ReplyToCommand(src, ("Player %d is not online."):format(target), "error")
+        return
+    end
+
+    local business = GetPlayerBusinesses(identifier)[1]
+
+    if not business then
+        ReplyToCommand(src, ("Player %d does not own a business."):format(target), "error")
+        return
+    end
+
+    local success, reason = AdminRemoveBusiness(business.type, business.locationId)
+
+    ReplyToCommand(src,
+        success and ("Business removed: %s #%d from player %d"):format(business.type, business.locationId, target)
+            or ("Failed: %s"):format(reason),
+        success and "success" or "error"
+    )
+end, true)

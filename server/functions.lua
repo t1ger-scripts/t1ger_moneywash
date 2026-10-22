@@ -105,3 +105,15 @@ function GetBusinessLabel(business)
 
     return label
 end
+
+--- Answers a command in the console, or as a notification to the player who ran it.
+---@param src number 0 = console
+---@param message string
+---@param kind string|nil "success", "error" or "inform"
+function ReplyToCommand(src, message, kind)
+    if src == 0 then
+        print(message)
+    else
+        _API.SendNotification(src, message, kind or "inform")
+    end
+end

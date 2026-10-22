@@ -280,3 +280,41 @@ end
 function UnloadReputation(src)
     PlayerReputation[src] = nil
 end
+
+--- Admin commands that set, add or remove reputation points (names and on/off in Config.Reputation.Commands).
+for action, cfg in pairs(Config.Reputation.Commands or {}) do
+    if type(cfg.name) == "string" then
+        RegisterCommand(cfg.name, function(src, args)
+            if src ~= 0 and not cfg.enable then return end
+
+            if src ~= 0 and not _API.Player.IsAdmin(src) then
+                ReplyToCommand(src, locale("error.no_permission"), "error")
+                return
+            end
+
+            local target, amount = tonumber(args[1]), tonumber(args[2])
+
+            if not target or not amount then
+                ReplyToCommand(src, (Config.Reputation.CommandSuggestion or "Usage: /%s <playerId> <amount>"):format(cfg.name), "inform")
+                return
+            end
+
+            local success = false
+
+            if action == "set" then
+                success = SetReputationPoints(target, amount)
+            elseif action == "add" then
+                success = AddReputationPoints(target, amount)
+            elseif action == "remove" then
+                success = RemoveReputationPoints(target, amount)
+            end
+
+            ReplyToCommand(
+                src,
+                success and ("[MoneyWash] %s %d rep points for player %d"):format(action, amount, target)
+                    or ("[MoneyWash] Failed to %s rep for player %d"):format(action, target),
+                success and "success" or "error"
+            )
+        end, false)
+    end
+end

@@ -65,7 +65,6 @@ server_scripts {
     'server/business/raid.lua',
     'server/business/review.lua',
     'server/business/stock.lua',
-    'server/business/commands.lua',
     'server/business/cash_operation.lua',
     
     'server/main.lua',
