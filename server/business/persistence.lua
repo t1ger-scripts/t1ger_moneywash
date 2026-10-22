@@ -172,7 +172,7 @@ local BusinessSaves = {}
 function IsBusinessSaveInProgress(id) return BusinessSaves[id] == true end
 
 function SaveBusiness(id, force)
-    if not force and IsCashCounterSaveBlocked(id) then
+    if not force and IsCashOperationSaveBlocked(id) then
         return false
     end
 
@@ -180,7 +180,7 @@ function SaveBusiness(id, force)
         Wait(10)
     end
 
-    if not force and IsCashCounterSaveBlocked(id) then
+    if not force and IsCashOperationSaveBlocked(id) then
         return false
     end
 

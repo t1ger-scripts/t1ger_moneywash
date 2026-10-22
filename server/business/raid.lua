@@ -3,7 +3,7 @@
 --- A police officer raids a business and seizes its exposed Safe cash.
 --- Flow: start -> officer bags the cash in the UI -> finish, or cancel.
 --- While a raid runs the owner cannot use the Safe, transfer or abandon
---- (see IsBusinessRaided, checked by the cash counter and ownership code).
+--- (see IsBusinessRaided, checked by cash operations and ownership code).
 --- ============================================================================
 
 ---@type table<integer, table> Active raids by business id
@@ -28,7 +28,7 @@ local function onlineSource(identifier)
     return GetOnlineSourceByIdentifier(identifier)
 end
 
---- True while a raid is running at the business. Checked by the cash counter,
+--- True while a raid is running at the business. Checked by cash operations,
 --- transfer, abandon, admin remove and the handler menu.
 ---@param businessId integer
 ---@return boolean
@@ -144,12 +144,12 @@ lib.callback.register("t1ger_moneywash:server:raid:start", function(src, busines
     local readyAt = Cooldowns[businessId]
     if readyAt and readyAt > os.time() then return fail("raid_cooldown") end
 
-    -- A cash counter batch is mid-confirmation: money is moving right now.
-    if HasPendingCashCounter(businessId) then return fail("business_busy") end
+    -- A cash operation is running: money is moving right now.
+    if HasPendingCashOperation(businessId) then return fail("business_busy") end
 
     local lockKeys = { ("business:%d"):format(businessId), "owner:" .. business.identifier }
 
-    if not AcquireCashCounterOwnershipLocks(lockKeys) then
+    if not AcquireCashOperationLocks(lockKeys) then
         return fail("business_busy")
     end
 
@@ -161,14 +161,14 @@ lib.callback.register("t1ger_moneywash:server:raid:start", function(src, busines
         problem = "not_found"
     elseif Raids[businessId] then
         problem = "raid_in_progress"
-    elseif HasPendingCashCounter(businessId) then
+    elseif HasPendingCashOperation(businessId) then
         problem = "business_busy"
     elseif business.safeExposed <= 0 then
         problem = "nothing_to_seize"
     end
 
     if problem then
-        ReleaseCashCounterOwnershipLocks(lockKeys)
+        ReleaseCashOperationLocks(lockKeys)
         return fail(problem)
     end
 
@@ -183,7 +183,7 @@ lib.callback.register("t1ger_moneywash:server:raid:start", function(src, busines
     }
     BySource[src] = businessId
 
-    ReleaseCashCounterOwnershipLocks(lockKeys)
+    ReleaseCashOperationLocks(lockKeys)
 
     local owner = onlineSource(business.identifier)
     if owner then
@@ -209,7 +209,7 @@ lib.callback.register("t1ger_moneywash:server:raid:finish", function(src)
 
     local lockKeys = { ("business:%d"):format(businessId), "owner:" .. raid.ownerIdentifier }
 
-    if not AcquireCashCounterOwnershipLocks(lockKeys) then
+    if not AcquireCashOperationLocks(lockKeys) then
         return fail("business_busy")
     end
 
@@ -224,7 +224,7 @@ lib.callback.register("t1ger_moneywash:server:raid:finish", function(src)
 
     if not business or business.identifier ~= raid.ownerIdentifier then
         removeRaid(raid)
-        ReleaseCashCounterOwnershipLocks(lockKeys)
+        ReleaseCashOperationLocks(lockKeys)
         return fail("no_raid")
     end
 
@@ -245,7 +245,7 @@ lib.callback.register("t1ger_moneywash:server:raid:finish", function(src)
     local cooldown = math.max(0, tonumber(Config.Police.Raid.Cooldown) or 0)
     Cooldowns[businessId] = os.time() + cooldown * 60
 
-    ReleaseCashCounterOwnershipLocks(lockKeys)
+    ReleaseCashOperationLocks(lockKeys)
 
     local owner = onlineSource(raid.ownerIdentifier)
     if owner then

@@ -1,6 +1,6 @@
 --- ============================================================================
 --- Business Laundering
---- Covered/exposed split and settlement of a cash-counter batch.
+--- Covered/exposed split of a launder and the effects it triggers.
 --- ============================================================================
 
 --- Calculates covered and exposed split for a launder action
@@ -26,7 +26,7 @@ local function CalculateCoveredExposed(business, amount, tier)
     return covered, exposed
 end
 
---- Pure calculation shared by the server-controlled cash-counter settlement.
+--- Pure calculation of what laundering amount does to the business (used by the launder cash operation).
 function BuildCashInjection(business, amount)
     local tier = GetTierByType(business.type)
     if not tier then return nil end

@@ -24,7 +24,7 @@ local function applyDeposit(data, announce)
     end
 end
 
---- Cash counter finished: money left the Safe, the bag is now in hand
+--- Withdraw done: money left the Safe, the bag is now in hand
 RegisterNetEvent("t1ger_moneywash:client:bankDepositStarted", function(data)
     applyDeposit(data, true)
 end)

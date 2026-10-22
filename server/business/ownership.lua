@@ -37,10 +37,10 @@ local function ReleaseOwnershipLocks(keys)
     end
 end
 
--- Shared with the counter to exclude transfers/removal while a batch is reserved.
-function AcquireCashCounterOwnershipLocks(keys) return TryAcquireOwnershipLocks(keys) end
+-- Shared with cash operations (launder, withdraw) to exclude transfers and removal while one is running.
+function AcquireCashOperationLocks(keys) return TryAcquireOwnershipLocks(keys) end
 
-function ReleaseCashCounterOwnershipLocks(keys) ReleaseOwnershipLocks(keys) end
+function ReleaseCashOperationLocks(keys) ReleaseOwnershipLocks(keys) end
 
 --- Returns whether a player meets the reputation requirement for a given tier
 --- @param src number

@@ -212,8 +212,6 @@
         "insufficient_dirty_cash": "You're not carrying enough dirty cash",
         "insufficient_safe_cash": "The Safe no longer holds that amount",
         "unsupported_operation": "This cash operation is not available",
-        "count_not_ready": "Wait for the machine to finish counting",
-        "invalid_batch": "This count has expired. Start a new count.",
         "invalid_business_config": "This business is not configured correctly. Contact an administrator.",
         "manual_review": "The cash removal could not be confirmed. Contact an administrator before retrying.",
         "raid_disabled": "Raids are disabled",

@@ -2,11 +2,6 @@
 --- The cash counter on the client is only a visual. The server decides everything:
 --- "limits" gives the amount dialog its maximum, "run" checks again and moves the money.
 
-local CALLBACK = {
-    limits = "t1ger_moneywash:server:cashOperation:limits",
-    run    = "t1ger_moneywash:server:cashOperation:run",
-}
-
 ---@class CashOperationRow An operation that has taken the money and is waiting to be saved
 ---@field id integer
 ---@field identifier string Owner identifier
@@ -46,14 +41,14 @@ end
 --- True while an operation is running for the business (from taking the money until it is saved).
 ---@param businessId integer
 ---@return boolean
-function HasPendingCashCounter(businessId)
+function HasPendingCashOperation(businessId)
     return ByBusiness[businessId] ~= nil
 end
 
 --- True once an operation changed the business in memory but has not saved yet, so autosave must not run.
 ---@param businessId integer
 ---@return boolean
-function IsCashCounterSaveBlocked(businessId)
+function IsCashOperationSaveBlocked(businessId)
     local row = ByBusiness[businessId]
     return row ~= nil and row.applied == true
 end
@@ -198,7 +193,7 @@ local function settle(row)
     end
 
     Pending[row.identifier], ByBusiness[row.businessId] = nil, nil
-    ReleaseCashCounterOwnershipLocks(locks(row))
+    ReleaseCashOperationLocks(locks(row))
 
     operation.publish(GetOnlineSourceByIdentifier(row.identifier), row)
     row.working = false
@@ -210,7 +205,7 @@ end
 ---@param businessId integer
 ---@param operation "launder"|"withdraw"
 ---@return { success: boolean, reason?: string, data?: { max: integer, exposed?: integer, covered?: integer } }
-lib.callback.register(CALLBACK.limits, function(src, businessId, operation)
+lib.callback.register("t1ger_moneywash:server:cashOperation:limits", function(src, businessId, operation)
     local operationType = Operations[operation]
     if not operationType then return failure("unsupported_operation") end
 
@@ -236,7 +231,7 @@ end)
 ---@param operation "launder"|"withdraw"
 ---@param amount integer
 ---@return { success: boolean, reason?: string }
-lib.callback.register(CALLBACK.run, function(src, businessId, operation, amount)
+lib.callback.register("t1ger_moneywash:server:cashOperation:run", function(src, businessId, operation, amount)
     local operationType = Operations[operation]
     if not operationType then return failure("unsupported_operation") end
 
@@ -267,13 +262,13 @@ lib.callback.register(CALLBACK.run, function(src, businessId, operation, amount)
         working    = true,
     }
 
-    if not AcquireCashCounterOwnershipLocks(locks(row)) then return failure("operation_in_progress") end
+    if not AcquireCashOperationLocks(locks(row)) then return failure("operation_in_progress") end
     Pending[identifier], ByBusiness[businessId] = row, row
 
     --- Gives everything back when nothing was taken.
     local function abort(why)
         Pending[identifier], ByBusiness[businessId] = nil, nil
-        ReleaseCashCounterOwnershipLocks(locks(row))
+        ReleaseCashOperationLocks(locks(row))
 
         return failure(why)
     end

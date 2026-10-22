@@ -61,7 +61,3 @@ lib.callback.register("t1ger_moneywash:server:getBusinessStatus", function(sourc
         reviewCooldown  = GetReviewCooldownRemaining(businessId),
     }
 end)
-
-lib.callback.register("t1ger_moneywash:server:getDirtyMoney", function(source)
-    return _API.Player.GetDirtyMoney(source)
-end)

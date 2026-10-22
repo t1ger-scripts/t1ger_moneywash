@@ -1,6 +1,6 @@
 --- ============================================================================
 --- Bank Deposit
---- Safe -> cash counter ("withdraw") -> any ATM -> processing -> personal bank.
+--- Safe -> withdraw (cash operation) -> any ATM -> processing -> personal bank.
 --- One pending deposit per player, persisted in moneywash_deposits.
 --- ============================================================================
 
@@ -78,7 +78,7 @@ function HasBusinessDeposit(businessId)
 end
 
 --- -------------------------------------------------------------------------
---- CASH COUNTER INTEGRATION
+--- WITHDRAW (called by cash_operation.lua)
 --- -------------------------------------------------------------------------
 
 --- Returns an error key if the owner can't start a deposit of `amount`, otherwise nil.
@@ -112,7 +112,7 @@ function ApplyBankDepositWithdrawal(business, amount)
 end
 
 --- Writes the reduced Safe and the deposit row in ONE transaction.
---- Returns false on failure so the cash counter retries.
+--- Returns false on failure so the cash operation retries.
 function PersistBankDepositStart(businessId, identifier, deposit)
     local business = GetBusiness(businessId)
     if not business or business.identifier ~= identifier then return false end

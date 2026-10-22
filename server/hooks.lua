@@ -40,9 +40,7 @@ end
 function OnStockOrderCompleted(identifier, businessId, businessType, unitsOrdered, unitsDelivered, cost)
 end
 
---- Called when a cash-counter batch successfully settles (dirty cash laundered
---- into a business's Safe). Never fires on a failed or retried settlement -
---- only once the result is durably saved.
+--- Called when dirty cash has been laundered into a business's Safe. Never fires on a failed or retried save
 --- @param identifier string business owner
 --- @param businessId number
 --- @param businessType string

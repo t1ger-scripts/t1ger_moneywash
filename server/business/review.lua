@@ -113,7 +113,7 @@ local function validateStart(src, businessId)
         return nil, "raid_in_progress"
     end
 
-    if HasPendingCashCounter and HasPendingCashCounter(business.id) then
+    if HasPendingCashOperation and HasPendingCashOperation(business.id) then
         return nil, "business_busy"
     end
 
@@ -345,7 +345,7 @@ lib.callback.register("t1ger_moneywash:server:review:stamp", function(source, an
         -- Rules may have changed while the player was at the desk.
         if Sealed[business.id] or (business.suspicion or 0) <= 0
             or (IsBusinessRaided and IsBusinessRaided(business.id))
-            or (HasPendingCashCounter and HasPendingCashCounter(business.id))
+            or (HasPendingCashOperation and HasPendingCashOperation(business.id))
         then
             Prepared[source] = nil
             return { success = false, reason = "review_active" }
