@@ -109,7 +109,7 @@ local function openPortal()
 end
 
 RegisterNetEvent("t1ger_moneywash:client:portal:open", openPortal)
-exports("OpenBusinessPortal", openPortal)
+exports("OpenPortal", openPortal)
 
 --- The server says the data changed: fetch it again without resetting the UI's selection.
 RegisterNetEvent("t1ger_moneywash:client:portal:refresh", function()

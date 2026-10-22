@@ -539,7 +539,7 @@ function AdminAddBusiness(identifier, businessType, locationId)
         "INSERT INTO moneywash_businesses " ..
         "(identifier, business_type, location_id, location_x, location_y, location_z, " ..
         "stock, safe_covered, safe_exposed, suspicion, total_laundered, purchased_at) " ..
-        "VALUES (?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, 0, ?)",
+        "VALUES (?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, ?)",
         {
             identifier,
             businessType,
