@@ -1,4 +1,4 @@
---- Client core: handler NPCs, owner blips and server sync events.
+--- Client core: handler NPCs, owner blips, server sync events and the launder/withdraw flow.
 --- Handler NPCs are local peds shown to every player near an owned business.
 --- Map blips and the menu are owner-only.
 
@@ -297,6 +297,56 @@ end)
 RegisterNetEvent("t1ger_moneywash:client:policeAlert", function(alertType, coords, data)
     ShowPoliceAlert(alertType, coords, data)
 end)
+
+--- Launder and withdraw: ask the server for the limit, ask for an amount, run the cash counter,
+--- then the server does the real work. The counter is only a visual: money moves in the last
+--- server call, and only there. The player is told by the server's own events (money laundered,
+--- deposit started).
+
+local cashOperationBusy = false -- Blocks a second start while the dialog or a server call is open
+
+--- Cash counter settings of an operation, from its config block.
+---@param operation "launder"|"withdraw"
+---@return { StackCount?: integer, AutoMoveToRight?: boolean }
+local function counterSettings(operation)
+    local config = operation == "launder" and Config.Laundering or Config.BankDeposit
+    return config.CashCounter or {}
+end
+
+---@param businessId integer
+---@param operation "launder"|"withdraw"
+local function performCashOperation(businessId, operation)
+    local limits = ServerRequest("t1ger_moneywash:server:cashOperation:limits", businessId, operation)
+    if not limits.success then return NotifyError(limits.reason) end
+
+    local amount = AskCashAmount(operation, limits.data) -- menu.lua, nil if closed
+    if not amount then return end
+
+    local settings = counterSettings(operation)
+
+    local counted = OpenCashCounter({
+        amount          = amount,
+        stackCount      = settings.StackCount,
+        autoMoveToRight = settings.AutoMoveToRight,
+    })
+    if not counted then return end -- Closed, died or busy: nothing happened, nothing to undo
+
+    local result = ServerRequest("t1ger_moneywash:server:cashOperation:run", businessId, operation, amount)
+    if not result.success then NotifyError(result.reason) end
+end
+
+--- Starts a launder or a withdraw at a business.
+---@param businessId integer
+---@param operation "launder"|"withdraw"
+function StartCashOperation(businessId, operation)
+    if cashOperationBusy then return end
+
+    cashOperationBusy = true
+    local ok, err = pcall(performCashOperation, businessId, operation)
+    cashOperationBusy = false
+
+    if not ok then DebugPrint("cash_operation", "failed:", err) end
+end
 
 AddEventHandler("onResourceStop", function(resource)
     if resource ~= GetCurrentResourceName() then return end
