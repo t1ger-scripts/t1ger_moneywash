@@ -6,7 +6,6 @@ Config.UiText = {
     common = {
         close = "Close",
         cancel = "Cancel",
-        loading = "Loading...",
         requestFailed = "Unable to reach the server. Try again.",
     },
     portal = {
@@ -83,6 +82,7 @@ Config.UiText = {
         },
     },
     cashCounter = {
+        title = "Cash counter",
         dragToFinish = "Drag cash down to finish",
         putCashAway = "Put cash away",
         releaseToFinish = "Release to finish",
@@ -94,14 +94,9 @@ Config.UiText = {
         collectPile = "Move {amount} to the right tray",
         collectReady = "Collect counted pile",
         countingPile = "Counting pile {current}/{total}",
-        waitingForServer = "Finishing batch...",
-        injectTitle = "Inject cash",
-        withdrawTitle = "Withdraw cash",
         ready = "Ready",
         complete = "Complete",
         counting = "Counting",
-        confirming = "Confirming transaction...",
-        invalidAmount = "Enter a whole amount within your available balance.",
         awaiting = "AWAITING CASH",
         batchComplete = "BATCH COMPLETE",
         dropHere = "DROP CASH HERE",

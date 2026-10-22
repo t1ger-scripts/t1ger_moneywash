@@ -1,241 +1,116 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useUiStore } from '@/shared/stores/ui.store'
-import { failureMessage, installLocaleMessages } from '@/integrations/i18n'
-import {
-    postNui,
-    NUI_CALLBACKS,
-    type NuiCallbackName,
-    type NuiResponse,
-} from '@/integrations/nui'
-import type {
-    CashCounterPayload,
-    CounterBatch,
-    CounterPhase,
-    CounterStatus,
-} from '../cash-counter.types'
-import { splitCash, validAmount } from '../utils/cash-counter.utils'
+import { installLocaleMessages } from '@/integrations/i18n'
+import { postNui, NUI_CALLBACKS } from '@/integrations/nui'
+import type { CashCounterPayload, CounterPhase } from '../cash-counter.types'
+import { splitCash } from '../utils/cash-counter.utils'
 
+/**
+ * Cash counter minigame. Visual only: it counts the amount it was opened with
+ * and tells Lua whether the player finished or closed it.
+ */
 export const useCashCounterStore = defineStore('cash-counter', () => {
     const ui = useUiStore()
 
     const payload = ref<CashCounterPayload | null>(null)
-    const amount = ref(0)
-    const available = ref(0)
-    const batch = ref<CounterBatch | null>(null)
-    const submitting = ref(false)
-    const error = ref('')
-
     const phase = ref<CounterPhase>('idle')
     const completedPileIds = ref<number[]>([])
     const activePileId = ref<number | null>(null)
-
-    const collected = computed(() => completedPileIds.value.length)
     const progress = ref(0)
+    const finished = ref(false)
 
-    let generation = 0
     let startedAt = 0
 
-    const settings = computed(
-        () => batch.value?.settings ?? payload.value?.settings,
-    )
-
-    const busy = computed(() => submitting.value || !!batch.value)
+    const settings = computed(() => payload.value?.settings)
+    const amount = computed(() => payload.value?.amount ?? 0)
 
     const piles = computed(() => {
         if (!settings.value) return []
 
-        if (!batch.value && !validAmount(amount.value, available.value)) {
-            return []
-        }
-
-        return splitCash(
-            batch.value?.amount ?? amount.value,
-            settings.value.stackCount,
-        )
+        return splitCash(amount.value, settings.value.stackCount)
     })
+
+    const collected = computed(() => completedPileIds.value.length)
+
+    const started = computed(
+        () => collected.value > 0 || activePileId.value !== null,
+    )
 
     const activeAmount = computed(() => {
         const id = activePileId.value
         return id === null ? 0 : piles.value[id] ?? 0
     })
 
-    const activeBatch = computed(
-        () => batch.value?.status === 'counting' ||
-            batch.value?.status === 'ready',
-    )
-
-    const running = computed(
-        () => activeBatch.value && phase.value === 'counting',
-    )
+    const running = computed(() => phase.value === 'counting')
 
     const canLoad = computed(
         () => !!payload.value &&
-            !submitting.value &&
+            !finished.value &&
             phase.value === 'idle' &&
-            collected.value < piles.value.length &&
-            (!batch.value || activeBatch.value),
+            collected.value < piles.value.length,
     )
 
     const canCollect = computed(
-        () => activeBatch.value &&
-            !submitting.value &&
+        () => !finished.value &&
             phase.value === 'collect' &&
             activePileId.value !== null,
     )
 
     const allCollected = computed(
-        () => !!batch.value &&
-            piles.value.length > 0 &&
+        () => piles.value.length > 0 &&
             collected.value === piles.value.length &&
             phase.value === 'idle',
     )
 
-    const canConfirm = computed(
-        () => allCollected.value &&
-            batch.value?.status === 'ready' &&
-            !submitting.value,
+    const canFinish = computed(
+        () => allCollected.value && !finished.value,
     )
 
     const countedAmount = computed(() => {
-        const finished = completedPileIds.value.reduce(
+        const done = completedPileIds.value.reduce(
             (sum, id) => sum + (piles.value[id] ?? 0),
             0,
         )
 
         if (phase.value === 'collect') {
-            return finished + activeAmount.value
+            return done + activeAmount.value
         }
 
         if (phase.value === 'counting') {
-            return finished + Math.floor(
+            return done + Math.floor(
                 activeAmount.value * progress.value,
             )
         }
 
-        return finished
+        return done
     })
 
-    function resetSequence() {
+    function reset() {
         phase.value = 'idle'
         completedPileIds.value = []
         activePileId.value = null
         progress.value = 0
+        finished.value = false
         startedAt = 0
     }
 
-    function applyBatch(value?: CounterBatch, forceReset = false) {
-        const next = value ?? null
-
-        if (forceReset || next?.id !== batch.value?.id) {
-            resetSequence()
-        }
-
-        batch.value = next
-
-        if (next?.status === 'complete') {
-            if (completedPileIds.value.length !== piles.value.length) {
-                completedPileIds.value = piles.value.map((_, id) => id)
-            }
-
-            activePileId.value = null
-            phase.value = 'idle'
-            progress.value = 0
-        }
-
-        if (next?.status === 'review' || next?.status === 'settling') {
-            phase.value = 'idle'
-            progress.value = 0
-        }
-    }
-
-    function applyStatus(data: CounterStatus) {
-        available.value = Math.max(0, Math.floor(data.available))
-        applyBatch(data.batch)
-    }
-
+    /** Lua opened the counter. Starts from a clean state every time. */
     function open(data: CashCounterPayload) {
-        generation++
         payload.value = data
 
         installLocaleMessages(data.locale, data.messages)
 
-        available.value = Math.max(0, Math.floor(data.available))
-        amount.value = data.batch?.amount ?? data.amount
-
-        applyBatch(data.batch, true)
-        submitting.value = false
-        error.value = ''
-
+        reset()
         ui.open('cash-counter')
     }
 
-    async function request(
-        callback: NuiCallbackName,
-        data: Record<string, number>,
-    ): Promise<boolean> {
-        if (submitting.value || !payload.value) return false
-
-        const version = ++generation
-        submitting.value = true
-        error.value = ''
-
-        try {
-            const response = await postNui<
-                NuiResponse<CounterStatus>,
-                Record<string, number>
-            >(callback, data)
-
-            if (version !== generation) return false
-
-            if (response.data) applyStatus(response.data)
-
-            if (!response.success) {
-                error.value = failureMessage(response)
-                return false
-            }
-
-            if (!response.data) {
-                error.value = failureMessage()
-                return false
-            }
-
-            return true
-        } catch {
-            if (version === generation) {
-                error.value = failureMessage()
-            }
-
-            return false
-        } finally {
-            if (version === generation) submitting.value = false
-        }
-    }
-
-    async function loadPile(pileId: number) {
+    /** Puts a pile into the machine and starts counting it. */
+    function loadPile(pileId: number) {
         if (
             !canLoad.value ||
             !Number.isInteger(pileId) ||
             pileId < 0 ||
-            pileId >= piles.value.length ||
-            completedPileIds.value.includes(pileId)
-        ) return
-
-        const session = payload.value
-
-        if (!batch.value) {
-            const accepted = await request(
-                NUI_CALLBACKS.cashStart,
-                { amount: amount.value },
-            )
-
-            if (!accepted) return
-        }
-
-        if (
-            payload.value !== session ||
-            !batch.value ||
-            !canLoad.value ||
             pileId >= piles.value.length ||
             completedPileIds.value.includes(pileId)
         ) return
@@ -246,6 +121,7 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
         phase.value = 'counting'
     }
 
+    /** Moves the counted pile to the right tray. */
     function collectPile() {
         if (!canCollect.value || activePileId.value === null) return
 
@@ -260,6 +136,7 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
         phase.value = 'idle'
     }
 
+    /** Advances the pile being counted. Called every animation frame. */
     function tick(now: number) {
         if (!running.value || !settings.value) return
 
@@ -275,94 +152,62 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
         phase.value = 'collect'
     }
 
-    async function confirm() {
-        if (!canConfirm.value || !batch.value) return
+    /** The player put the counted cash away: the count is done. */
+    function complete(): boolean {
+        if (!canFinish.value) return false
 
-        await request(
-            NUI_CALLBACKS.cashConfirm,
-            { batchId: batch.value.id },
-        )
+        finished.value = true
+
+        return true
     }
 
-    async function refresh() {
-        if (
-            !payload.value ||
-            submitting.value ||
-            ui.activeScreen !== 'cash-counter'
-        ) return
-
-        const version = generation
-
-        try {
-            const response = await postNui<NuiResponse<CounterStatus>>(
-                NUI_CALLBACKS.cashStatus,
-            )
-
-            if (
-                version !== generation ||
-                !response.success ||
-                !response.data
-            ) return
-
-            applyStatus(response.data)
-
-            if (batch.value?.status === 'complete') {
-                error.value = ''
-            }
-        } catch {
-            // The next poll retries. Transactions never complete locally.
-        }
-    }
-
+    /** Hides the screen and forgets everything. Does not tell Lua. */
     function dismiss() {
-        generation++
         ui.close('cash-counter')
         payload.value = null
-        batch.value = null
-        submitting.value = false
-        error.value = ''
-        resetSequence()
+        reset()
     }
 
+    /** Closes the screen and tells Lua: finished if the count was done, otherwise closed. */
     async function close() {
+        const done = finished.value
+
         dismiss()
 
         try {
-            await postNui(NUI_CALLBACKS.cashClose)
+            await postNui(
+                done ? NUI_CALLBACKS.cashFinish : NUI_CALLBACKS.cashClose,
+            )
         } catch {
-            // Resource shutdown also performs server-side cleanup.
+            // Lua releases the screen itself when the resource stops.
         }
     }
 
     return {
         payload,
         amount,
-        available,
-        batch,
         settings,
-        submitting,
-        error,
-        busy,
         phase,
-        collected,
-        progress,
         piles,
+        collected,
+        started,
+        progress,
+        finished,
         activeAmount,
         running,
         canLoad,
         canCollect,
         allCollected,
-        canConfirm,
+        canFinish,
         countedAmount,
+        completedPileIds,
+        activePileId,
         open,
         loadPile,
         collectPile,
         tick,
-        confirm,
-        refresh,
+        complete,
         dismiss,
         close,
-        completedPileIds,
-        activePileId,
     }
 })

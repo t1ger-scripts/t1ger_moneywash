@@ -1,9 +1,7 @@
 export const NUI_CALLBACKS = {
     uiReady: 't1ger_moneywash:ui:ready',
 
-    cashStart: 't1ger_moneywash:cashCounter:start',
-    cashConfirm: 't1ger_moneywash:cashCounter:confirm',
-    cashStatus: 't1ger_moneywash:cashCounter:status',
+    cashFinish: 't1ger_moneywash:cashCounter:finish',
     cashClose: 't1ger_moneywash:cashCounter:close',
 
     raidFinish: 't1ger_moneywash:raid:finish',

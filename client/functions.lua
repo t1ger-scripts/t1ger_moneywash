@@ -186,3 +186,15 @@ end
 function ErrorResponse(reason)
     return { success = false, reason = reason, message = GetErrorMessage(reason) }
 end
+
+--- Prints a debug line tagged with the feature name. Only prints when Config.Debug is on.
+---@param tag string Feature name, e.g. "cash_counter"
+---@param ... any
+function DebugPrint(tag, ...)
+    if not Config.Debug then return end
+
+    local parts = table.pack(...)
+    for i = 1, parts.n do parts[i] = tostring(parts[i]) end
+
+    print(("[t1ger_moneywash:%s] %s"):format(tag, table.concat(parts, " ")))
+end

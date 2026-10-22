@@ -13,7 +13,7 @@ import CounterMachine from './components/CounterMachine.vue'
 import { useCashCounterStore } from './stores/cash-counter.store'
 import { useSceneDrag } from '@/shared/composables/useSceneDrag'
 import { useCounterSound } from './composables/useCounterSound'
-import { cashCounterImages, cashPileGeometry, trayPilePosition, validAmount } from './utils/cash-counter.utils'
+import { cashCounterImages, cashPileGeometry, trayPilePosition } from './utils/cash-counter.utils'
 import type { CashPile } from './cash-counter.types'
 import CashPaper from './components/CashPaper.vue'
 import './styles/cash-counter.scss'
@@ -66,16 +66,14 @@ const format = (amount: number) =>
         Math.max(0, amount),
     ).toLocaleString(store.payload?.locale ?? 'en')}`
 
-const complete = computed(() => store.batch?.status === 'complete')
-const settling = computed(() => store.batch?.status === 'settling')
-const reviewing = computed(() => store.batch?.status === 'review')
+const complete = computed(() => store.finished)
 
-async function loadPile() {
+function loadPile() {
     const id = selectedPileId.value
     if (id === null) return
 
     sound.prime()
-    await store.loadPile(id)
+    store.loadPile(id)
 
     if (store.running) sound.loaded()
 }
@@ -101,17 +99,10 @@ const collectDrag = useSceneDrag(
 const finalDrag = useSceneDrag(
     root,
     () =>
-        store.canConfirm &&
+        store.canFinish &&
         !feedDrag.dragging.value &&
         !collectDrag.dragging.value,
-    async () => {
-        await store.confirm()
-
-        return (
-            store.batch?.status === 'complete' ||
-            store.batch?.status === 'settling'
-        )
-    },
+    () => store.complete(),
     '[data-cash-finish]',
     '[data-cash-final-pile]',
 )
@@ -160,14 +151,6 @@ function keyboardFinish() {
 
 const finalHint = computed(() => {
     if (complete.value) return t('cashCounter.complete')
-
-    if (store.submitting || settling.value) {
-        return t('cashCounter.confirming')
-    }
-
-    if (!store.canConfirm && store.allCollected) {
-        return t('cashCounter.waitingForServer')
-    }
 
     if (finalDrag.over.value) {
         return t('cashCounter.releaseToFinish')
@@ -239,9 +222,6 @@ function keyboardCollect() {
 
 const status = computed(() => {
     if (complete.value) return t('cashCounter.complete')
-    if (settling.value) return t('cashCounter.confirming')
-    if (reviewing.value) return store.batch?.message ?? ''
-    if (store.submitting) return t('common.loading')
 
     if (store.running) {
         return t('cashCounter.countingPile', {
@@ -252,13 +232,7 @@ const status = computed(() => {
 
     if (store.canCollect) return t('cashCounter.collectReady')
 
-    if (store.allCollected) {
-        return t(
-            store.canConfirm
-                ? 'cashCounter.dragToFinish'
-                : 'cashCounter.waitingForServer',
-        )
-    }
+    if (store.allCollected) return t('cashCounter.dragToFinish')
 
     return t('cashCounter.ready')
 })
@@ -266,13 +240,12 @@ const status = computed(() => {
 const feederLabel = computed(() => {
     if (feedDrag.over.value) return t('cashCounter.releasePile')
     if (complete.value) return t('cashCounter.complete')
-    if (settling.value) return t('cashCounter.confirming')
     if (store.running) return t('cashCounter.counting')
     if (store.canCollect) return t('cashCounter.collectReady')
     if (store.allCollected) return t('cashCounter.batchComplete')
 
     return t(
-        store.batch
+        store.started
             ? 'cashCounter.nextPile'
             : 'cashCounter.dropHere',
     )
@@ -280,26 +253,11 @@ const feederLabel = computed(() => {
 
 const displayState = computed(() => {
     if (complete.value) return t('cashCounter.complete')
-    if (settling.value) return t('cashCounter.confirming')
     if (store.running) return t('cashCounter.counting')
     if (store.canCollect) return t('cashCounter.collectReady')
     if (store.allCollected) return t('cashCounter.batchComplete')
 
     return t('cashCounter.awaiting')
-})
-
-const errorMessage = computed(() => {
-    if (reviewing.value) return store.batch?.message ?? ''
-
-    if (store.error) return store.error
-
-    if (
-        !store.busy &&
-        store.amount > 0 &&
-        !validAmount(store.amount, store.available)
-    ) return t('cashCounter.invalidAmount')
-
-    return ''
 })
 
 watch(() => store.running, (running) => {
@@ -353,14 +311,9 @@ watch(complete, (value) => {
     finalDrag.cancel()
 
     const session = store.payload
-    const batchId = store.batch?.id
 
     closeTimer = window.setTimeout(() => {
-        if (
-            store.payload === session &&
-            store.batch?.id === batchId &&
-            store.batch?.status === 'complete'
-        ) {
+        if (store.payload === session && store.finished) {
             void store.close()
         }
     }, 1200)
@@ -383,20 +336,6 @@ function escape(event: KeyboardEvent) {
 }
 
 let animation = 0
-let poll = 0
-let polling = false
-
-async function refresh() {
-    if (polling) return
-
-    polling = true
-
-    try {
-        await store.refresh()
-    } finally {
-        polling = false
-    }
-}
 
 onMounted(() => {
 
@@ -411,13 +350,11 @@ onMounted(() => {
     }
 
     tick()
-    poll = window.setInterval(() => void refresh(), 250)
     document.addEventListener('keydown', escape)
 })
 
 onUnmounted(() => {
     cancelAnimationFrame(animation)
-    clearInterval(poll)
     clearTimeout(closeTimer)
     feedDrag.cancel()
     collectDrag.cancel()
@@ -434,13 +371,7 @@ onUnmounted(() => {
             <img class="counter-scene-image" :src="cashCounterImages.scene" alt="" draggable="false" />
 
             <h1 id="cash-counter-title" class="counter-sr-only">
-                {{
-                    t(
-                        store.payload?.operation === 'withdraw'
-                            ? 'cashCounter.withdrawTitle'
-                            : 'cashCounter.injectTitle'
-                    )
-                }}
+                {{ t('cashCounter.title') }}
             </h1>
 
             <span class="counter-sr-only" role="status">
@@ -451,10 +382,6 @@ onUnmounted(() => {
                 <kbd>ESC</kbd>
                 <span>{{ t('common.close') }}</span>
             </button>
-
-            <p v-if="errorMessage" class="counter-error" role="alert">
-                {{ errorMessage }}
-            </p>
 
             <div class="counter-desk">
                 <div class="counter-source">
@@ -486,10 +413,10 @@ onUnmounted(() => {
                     'is-target': collectDrag.dragging.value,
                     'is-over': collectDrag.over.value,
                     'is-final-lifted':
-                        finalDrag.dragging.value || settling || complete,
+                        finalDrag.dragging.value || complete,
                     'is-final-hovered':
                         finalPileHovered &&
-                        store.canConfirm &&
+                        store.canFinish &&
                         !finalDrag.dragging.value,
                 }">
                     <div class="counter-tray" data-cash-output>
@@ -501,7 +428,7 @@ onUnmounted(() => {
 
                         <div v-if="store.allCollected" class="counter-final-pile-region">
                             <button class="counter-final-pile" type="button" data-cash-final-pile
-                                :style="finalPileStyle" :disabled="!store.canConfirm"
+                                :style="finalPileStyle" :disabled="!store.canFinish"
                                 :aria-label="t('cashCounter.dragToFinish')" @pointerdown="pickFinalPile"
                                 @pointermove="finalDrag.move" @pointerup="finalDrag.up"
                                 @pointerenter="finalPileHovered = true" @pointerleave="finalPileHovered = false"
@@ -530,10 +457,8 @@ onUnmounted(() => {
                 'is-visible':
                     store.allCollected ||
                     finalDrag.dragging.value ||
-                    settling ||
                     complete,
                 'is-over': finalDrag.over.value,
-                'is-pending': store.submitting || settling,
                 'is-complete': complete,
             }" data-cash-finish aria-hidden="true">
                 <span class="counter-finish-arrow">↓</span>
@@ -547,7 +472,7 @@ onUnmounted(() => {
                     <CashPaper banded />
                 </span>
                 <span class="counter-drag-amount">
-                    {{ format(store.batch?.amount ?? store.amount) }}
+                    {{ format(store.amount) }}
                 </span>
             </div>
 

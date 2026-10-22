@@ -8,7 +8,6 @@ const fallbackMessages: LocaleMessages = {
     common: {
         close: 'Close',
         cancel: 'Cancel',
-        loading: 'Loading...',
         requestFailed: 'Unable to reach the server. Try again.',
     },
 }

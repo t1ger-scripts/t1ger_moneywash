@@ -8,15 +8,6 @@ export const cashCounterImages = {
     note: `${imageRoot}cash-note.png`,
 } as const
 
-export function validAmount(
-    amount: number,
-    available: number,
-): boolean {
-    return Number.isSafeInteger(amount) &&
-        amount > 0 &&
-        amount <= available
-}
-
 export function splitCash(
     amount: number,
     stackCount: number,

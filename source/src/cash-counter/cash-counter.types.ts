@@ -6,32 +6,13 @@ export interface CashCounterSettings {
     autoMoveToRight: boolean
 }
 
-export interface CounterBatch {
-    id: number
-    amount: number
-    durationMs: number
-    remainingMs: number
-    status: 'counting' | 'ready' | 'settling' | 'complete' | 'review'
-    /** Set by Lua when the status is "review": why an administrator is needed. */
-    message?: string
-    settings: CashCounterSettings
-}
-
+/** Sent by Lua when OpenCashCounter is called. */
 export interface CashCounterPayload {
-    businessId: number
-    operation: string
     amount: number
-    available: number
     currency: string
     locale: string
     messages: LocaleMessages
     settings: CashCounterSettings
-    batch?: CounterBatch
-}
-
-export interface CounterStatus {
-    available: number
-    batch?: CounterBatch
 }
 
 export type CounterPhase = 'idle' | 'counting' | 'collect'
