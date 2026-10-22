@@ -10,16 +10,16 @@ import {
 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
-import { usePortalActions } from '@/portal/composables/usePortalActions.js'
+import { usePortalActions } from '@/portal/composables/usePortalActions'
 import AppBadge from '@/portal/components/ui/AppBadge.vue'
 import AppButton from '@/portal/components/ui/AppButton.vue'
 import AppSurface from '@/portal/components/ui/AppSurface.vue'
-import type { PurchaseBlockReason } from '@/portal/stores/portal.store.js'
-import { usePortalStore } from '@/portal/stores/portal.store.js'
+import type { PurchaseBlockReason } from '@/portal/stores/portal.store'
+import { usePortalStore } from '@/portal/stores/portal.store'
 import {
     formatCurrency,
     formatNumber,
-} from '@/portal/utils/formatters.js'
+} from '@/portal/utils/formatters'
 
 import BusinessTypeIcon from './BusinessTypeIcon.vue'
 

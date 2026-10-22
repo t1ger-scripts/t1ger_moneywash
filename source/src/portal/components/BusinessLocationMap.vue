@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import L from 'leaflet'
 
 import type { PortalLocation } from '@/portal/portal.types'
-import { usePortalStore } from '@/portal/stores/portal.store.js'
+import { usePortalStore } from '@/portal/stores/portal.store'
 
 import BusinessTypeIcon from './BusinessTypeIcon.vue'
 

@@ -26,7 +26,7 @@ useUiLifecycle()
 </script>
 
 <template>
-    <PortalView v-if="ui.activeScreen === 'marketplace'" />
+    <PortalView v-if="ui.activeScreen === 'portal'" />
 
     <CashCounterView v-else-if="ui.activeScreen === 'cash-counter'" />
 

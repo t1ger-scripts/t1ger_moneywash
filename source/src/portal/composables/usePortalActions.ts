@@ -11,7 +11,7 @@ export function usePortalActions() {
 
     /** Closes the portal here first, then tells the game. */
     async function requestPortalClose(): Promise<void> {
-        ui.close('marketplace')
+        ui.close('portal')
         portal.resetInteractionState()
 
         if (!isFiveMEnvironment()) return

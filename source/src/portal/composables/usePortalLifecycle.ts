@@ -21,7 +21,7 @@ export function usePortalLifecycle(): void {
         portal.resetInteractionState()
         portal.replaceSnapshot(payload)
 
-        ui.open('marketplace')
+        ui.open('portal')
     }
 
     /** New data while the portal is open: the selection stays. */
@@ -30,7 +30,7 @@ export function usePortalLifecycle(): void {
     }
 
     function close(): void {
-        ui.close('marketplace')
+        ui.close('portal')
         portal.resetInteractionState()
     }
 

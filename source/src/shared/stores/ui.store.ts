@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export type UiScreen =
-    | 'marketplace'
+    | 'portal'
     | 'cash-counter'
     | 'raid'
     | 'review'

@@ -57,23 +57,23 @@ const formattedInvestorScore = computed(() => {
 </script>
 
 <template>
-    <header v-if="profile" class="marketplace-header">
-        <section class="marketplace-header__identity">
-            <Building2 class="marketplace-header__logo" :size="42" :stroke-width="1.8" aria-hidden="true" />
+    <header v-if="profile" class="portal-header">
+        <section class="portal-header__identity">
+            <Building2 class="portal-header__logo" :size="42" :stroke-width="1.8" aria-hidden="true" />
 
-            <div class="marketplace-header__brand">
-                <strong class="marketplace-header__city">
+            <div class="portal-header__brand">
+                <strong class="portal-header__city">
                     {{ t('portal.header.city') }}
                 </strong>
 
-                <span class="marketplace-header__portal-name">
+                <span class="portal-header__portal-name">
                     {{ t('portal.header.portalName') }}
                 </span>
             </div>
 
-            <div class="marketplace-header__separator" />
+            <div class="portal-header__separator" />
 
-            <div class="marketplace-header__exchange">
+            <div class="portal-header__exchange">
                 <strong>
                     {{ t('portal.header.exchangeName') }}
                 </strong>
@@ -84,56 +84,56 @@ const formattedInvestorScore = computed(() => {
             </div>
         </section>
 
-        <section class="marketplace-header__account">
-            <div class="marketplace-header__account-item">
-                <CircleUserRound class="marketplace-header__account-icon" :size="27" :stroke-width="2"
+        <section class="portal-header__account">
+            <div class="portal-header__account-item">
+                <CircleUserRound class="portal-header__account-icon" :size="27" :stroke-width="2"
                     aria-hidden="true" />
 
-                <div class="marketplace-header__account-content">
-                    <strong class="marketplace-header__account-value">
+                <div class="portal-header__account-content">
+                    <strong class="portal-header__account-value">
                         {{ profile.characterName }}
                     </strong>
 
-                    <span class="marketplace-header__account-label">
+                    <span class="portal-header__account-label">
                         {{ profile.investorProgress.rank }}
                     </span>
                 </div>
             </div>
 
-            <div class="marketplace-header__separator" />
+            <div class="portal-header__separator" />
 
-            <div class="marketplace-header__account-item">
-                <Landmark class="marketplace-header__account-icon" :size="25" aria-hidden="true" />
+            <div class="portal-header__account-item">
+                <Landmark class="portal-header__account-icon" :size="25" aria-hidden="true" />
 
-                <div class="marketplace-header__account-content">
-                    <span class="marketplace-header__account-label">
+                <div class="portal-header__account-content">
+                    <span class="portal-header__account-label">
                         {{ t('portal.header.bankBalance') }}
                     </span>
 
-                    <strong class="marketplace-header__account-value">
+                    <strong class="portal-header__account-value">
                         {{ formattedBankBalance }}
                     </strong>
                 </div>
             </div>
 
-            <div class="marketplace-header__separator" />
+            <div class="portal-header__separator" />
 
             <div class="
-          marketplace-header__account-item
-          marketplace-header__account-item--score
+          portal-header__account-item
+          portal-header__account-item--score
         ">
                 <Star class="
-            marketplace-header__account-icon
-            marketplace-header__account-icon--score
+            portal-header__account-icon
+            portal-header__account-icon--score
           " :size="25" fill="currentColor" aria-hidden="true" />
 
-                <div class="marketplace-header__score-content">
-                    <div class="marketplace-header__score-heading">
-                        <span class="marketplace-header__account-label">
+                <div class="portal-header__score-content">
+                    <div class="portal-header__score-heading">
+                        <span class="portal-header__account-label">
                             {{ t('portal.header.investorScore') }}
                         </span>
 
-                        <strong class="marketplace-header__account-value">
+                        <strong class="portal-header__account-value">
                             {{ formattedInvestorScore }}
                         </strong>
                     </div>
@@ -143,7 +143,7 @@ const formattedInvestorScore = computed(() => {
                 </div>
             </div>
 
-            <div class="marketplace-header__separator" />
+            <div class="portal-header__separator" />
 
             <AppIconButton variant="ghost" :label="t('common.close')" @click="requestPortalClose">
                 <X :size="25" aria-hidden="true" />
@@ -153,7 +153,7 @@ const formattedInvestorScore = computed(() => {
 </template>
 
 <style scoped lang="scss">
-.marketplace-header {
+.portal-header {
     display: flex;
     min-height: 4.75rem;
     align-items: center;
@@ -287,7 +287,7 @@ const formattedInvestorScore = computed(() => {
 }
 
 @container portal (max-width: 80rem) {
-    .marketplace-header {
+    .portal-header {
         gap: var(--space-4);
         padding-inline: var(--space-4);
 

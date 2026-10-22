@@ -3,8 +3,8 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import type { PortalTier } from '@/portal/portal.types'
-import { usePortalStore } from '@/portal/stores/portal.store.js'
-import { formatNumber } from '@/portal/utils/formatters.js'
+import { usePortalStore } from '@/portal/stores/portal.store'
+import { formatNumber } from '@/portal/utils/formatters'
 
 import BusinessTypeIcon from './BusinessTypeIcon.vue'
 

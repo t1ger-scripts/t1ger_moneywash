@@ -6,7 +6,7 @@ import PurchaseBusinessModal from './PurchaseBusinessModal.vue'
 </script>
 
 <template>
-    <main class="marketplace-workspace">
+    <main class="portal-workspace">
         <BusinessLocationList />
         <BusinessLocationMap />
         <BusinessLocationDetails />
@@ -16,7 +16,7 @@ import PurchaseBusinessModal from './PurchaseBusinessModal.vue'
 </template>
 
 <style scoped lang="scss">
-.marketplace-workspace {
+.portal-workspace {
     display: grid;
     min-width: 0;
     min-height: 0;

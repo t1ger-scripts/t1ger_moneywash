@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import BusinessTierSelector from './components/BusinessTierSelector.vue'
-import MarketplaceHeader from './components/MarketplaceHeader.vue'
-import MarketplaceWorkspace from './components/MarketplaceWorkspace.vue'
+import PortalHeader from './components/PortalHeader.vue'
+import PortalWorkspace from './components/PortalWorkspace.vue'
 </script>
 
 <template>
     <div class="portal-root">
         <div class="portal-root__window">
-            <main class="marketplace-view">
-                <MarketplaceHeader />
+            <main class="portal-view">
+                <PortalHeader />
                 <BusinessTierSelector />
-                <MarketplaceWorkspace />
+                <PortalWorkspace />
             </main>
         </div>
     </div>
@@ -44,7 +44,7 @@ import MarketplaceWorkspace from './components/MarketplaceWorkspace.vue'
     }
 }
 
-.marketplace-view {
+.portal-view {
     display: grid;
     width: 100%;
     height: 100%;

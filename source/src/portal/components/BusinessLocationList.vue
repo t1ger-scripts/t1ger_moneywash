@@ -6,8 +6,8 @@ import { useI18n } from 'vue-i18n'
 import AppBadge from '@/portal/components/ui/AppBadge.vue'
 import AppSearchInput from '@/portal/components/ui/AppSearchInput.vue'
 import AppSurface from '@/portal/components/ui/AppSurface.vue'
-import { usePortalStore } from '@/portal/stores/portal.store.js'
-import { formatNumber } from '@/portal/utils/formatters.js'
+import { usePortalStore } from '@/portal/stores/portal.store'
+import { formatNumber } from '@/portal/utils/formatters'
 
 import BusinessLocationListItem from './BusinessLocationListItem.vue'
 

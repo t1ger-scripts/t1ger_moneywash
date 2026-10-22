@@ -23,7 +23,7 @@ export function useUiLifecycle() {
     function keydown(event: KeyboardEvent) {
         if (event.key !== 'Escape' || event.defaultPrevented) return
 
-        if (ui.activeScreen === 'marketplace') {
+        if (ui.activeScreen === 'portal') {
             void portal.requestPortalClose()
         }
 
