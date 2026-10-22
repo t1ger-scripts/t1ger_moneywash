@@ -56,6 +56,7 @@ server_scripts {
     'server/functions.lua',
     'server/customize.lua',
     'server/hooks.lua',
+    'server/portal.lua',
 
     'server/business/store.lua',
     'server/business/persistence.lua',
@@ -68,7 +69,6 @@ server_scripts {
     'server/business/stock.lua',
     'server/business/callbacks.lua',
     'server/business/commands.lua',
-    'server/business/portal.lua',
     'server/business/cash_operation.lua',
     
     'server/main.lua',
