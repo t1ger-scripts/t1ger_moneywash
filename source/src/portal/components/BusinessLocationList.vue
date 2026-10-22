@@ -49,9 +49,9 @@ const emptyStateTranslation = computed(() => {
 })
 
 async function scrollSelectedLocationIntoView(
-    locationId: string,
+    locationKey: string,
 ): Promise<void> {
-    if (!locations.value.some((location) => location.id === locationId)) {
+    if (!locations.value.some((location) => location.key === locationKey)) {
         portalStore.setSearchQuery('')
     }
 
@@ -65,10 +65,10 @@ async function scrollSelectedLocationIntoView(
 
     const selectedItem = Array.from(
         listElement.querySelectorAll<HTMLElement>(
-            '[data-location-id]',
+            '[data-location-key]',
         ),
     ).find(
-        (item) => item.dataset.locationId === locationId,
+        (item) => item.dataset.locationKey === locationKey,
     )
 
     selectedItem?.scrollIntoView({
@@ -79,13 +79,13 @@ async function scrollSelectedLocationIntoView(
 }
 
 watch(
-    () => portalStore.selectedLocationId,
-    (locationId) => {
-        if (!locationId) {
+    () => portalStore.selectedLocationKey,
+    (locationKey) => {
+        if (!locationKey) {
             return
         }
 
-        void scrollSelectedLocationIntoView(locationId)
+        void scrollSelectedLocationIntoView(locationKey)
     },
     {
         immediate: true,
@@ -93,8 +93,8 @@ watch(
     },
 )
 
-function selectLocation(locationId: string): void {
-    portalStore.selectLocation(locationId)
+function selectLocation(locationKey: string): void {
+    portalStore.selectLocation(locationKey)
 }
 
 function updateSearchQuery(value: string): void {
@@ -127,8 +127,8 @@ function updateSearchQuery(value: string): void {
         </header>
 
         <div v-if="locations.length > 0" ref="locationListElement" class="business-list__locations app-scrollbar">
-            <BusinessLocationListItem v-for="location in locations" :key="location.id" :location="location"
-                :currency-symbol="portalStore.currencySymbol" :selected="portalStore.selectedLocationId === location.id
+            <BusinessLocationListItem v-for="location in locations" :key="location.key" :location="location"
+                :currency-symbol="portalStore.currencySymbol" :selected="portalStore.selectedLocationKey === location.key
                     " @select="selectLocation" />
         </div>
 

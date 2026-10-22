@@ -12,7 +12,6 @@ export const NUI_CALLBACKS = {
     reviewCancel: 't1ger_moneywash:review:cancel',
     reviewClose: 't1ger_moneywash:review:close',
 
-    ready: 't1ger_moneywash:portal:ready',
     purchase: 't1ger_moneywash:portal:purchase',
     waypoint: 't1ger_moneywash:portal:waypoint',
     close: 't1ger_moneywash:portal:close',

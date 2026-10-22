@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import type { BusinessTier } from '@/portal/portal.model.js'
+import type { PortalTier } from '@/portal/portal.types'
 import { usePortalStore } from '@/portal/stores/portal.store.js'
 import { formatNumber } from '@/portal/utils/formatters.js'
 
@@ -13,7 +13,7 @@ const { locale, t } = useI18n()
 
 const tiers = computed(() => portalStore.tiers)
 
-function isTierAccessible(tier: BusinessTier): boolean {
+function isTierAccessible(tier: PortalTier): boolean {
     if (tier.isUnlocked) return true
 
     return portalStore.locations.some(
@@ -23,17 +23,17 @@ function isTierAccessible(tier: BusinessTier): boolean {
     )
 }
 
-function isTierSelected(tier: BusinessTier): boolean {
+function isTierSelected(tier: PortalTier): boolean {
     return portalStore.selectedTierNumber === tier.tierNumber
 }
 
-function selectTier(tier: BusinessTier): void {
+function selectTier(tier: PortalTier): void {
     if (!isTierAccessible(tier)) return
 
     portalStore.selectTier(tier.tierNumber)
 }
 
-function createTierLabel(tier: BusinessTier): string {
+function createTierLabel(tier: PortalTier): string {
     const status = isTierAccessible(tier)
         ? t('portal.tierSelector.available')
         : t('portal.tierSelector.locked')

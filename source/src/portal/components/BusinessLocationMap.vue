@@ -4,7 +4,7 @@ import { LocateFixed, Minus, Plus, RotateCcw, TriangleAlert } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import L from 'leaflet'
 
-import type { BusinessLocation } from '@/portal/portal.model.js'
+import type { PortalLocation } from '@/portal/portal.types'
 import { usePortalStore } from '@/portal/stores/portal.store.js'
 
 import BusinessTypeIcon from './BusinessTypeIcon.vue'
@@ -63,7 +63,7 @@ const gtaCrs = Object.assign({}, L.CRS.Simple, {
     infinite: true,
 })
 
-function getLocationCoordinates(location: BusinessLocation): L.LatLngExpression {
+function getLocationCoordinates(location: PortalLocation): L.LatLngExpression {
     return [location.coordinates.y, location.coordinates.x]
 }
 
@@ -76,7 +76,7 @@ function clearRenderedIcons() {
 }
 
 function createMarkerIcon(
-    location: BusinessLocation,
+    location: PortalLocation,
     isSelected: boolean,
 ): L.DivIcon {
     const markerElement = document.createElement('span')
@@ -129,7 +129,7 @@ function renderMarkers() {
 
     for (const location of portalStore.selectedTierLocations) {
         const isSelected =
-            portalStore.selectedLocationId === location.id
+            portalStore.selectedLocationKey === location.key
 
         const marker = L.marker(getLocationCoordinates(location), {
             icon: createMarkerIcon(location, isSelected),
@@ -138,7 +138,7 @@ function renderMarkers() {
         })
 
         marker.on('click', () => {
-            portalStore.selectLocation(location.id)
+            portalStore.selectLocation(location.key)
         })
 
         marker.addTo(markerLayer)
@@ -365,11 +365,11 @@ watch(
 )
 
 watch(
-    () => portalStore.selectedLocationId,
-    (selectedLocationId) => {
+    () => portalStore.selectedLocationKey,
+    (selectedLocationKey) => {
         renderMarkers()
 
-        if (selectedLocationId) {
+        if (selectedLocationKey) {
             focusSelectedLocation()
         } else {
             showEntireMap()

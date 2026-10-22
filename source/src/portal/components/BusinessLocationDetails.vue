@@ -125,7 +125,7 @@ const purchaseBlockMessage = computed(() => {
 })
 
 watch(
-    () => selectedLocation.value?.id,
+    () => selectedLocation.value?.key,
     () => {
         imageFailed.value = false
     },
@@ -139,7 +139,7 @@ function openPurchaseDialog(): void {
     const location = selectedLocation.value
     if (!location) return
 
-    portalStore.openPurchaseDialog(location.id)
+    portalStore.openPurchaseDialog(location.key)
 }
 
 async function setWaypoint(): Promise<void> {

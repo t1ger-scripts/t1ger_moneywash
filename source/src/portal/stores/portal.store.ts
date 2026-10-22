@@ -2,10 +2,9 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
 import type {
-    BusinessLocation,
-    BusinessTier,
-    MarketplaceSnapshot,
-} from '@/portal/portal.model'
+    PortalLocation,
+    PortalSnapshot,
+} from '@/portal/portal.types'
 
 export type PurchaseBlockReason =
     | 'alreadyOwnsBusiness'
@@ -13,310 +12,196 @@ export type PurchaseBlockReason =
     | 'tierLocked'
     | 'locationUnavailable'
 
-function tierContainsOwnedBusiness(
-    snapshot: MarketplaceSnapshot,
-    tier: BusinessTier,
-): boolean {
-    return snapshot.locations.some(
+/** A tier can be opened when it is unlocked, or when the player owns a business in it. */
+function isTierAccessible(snapshot: PortalSnapshot, tierNumber: number): boolean {
+    const tier = snapshot.tiers.find((candidate) => candidate.tierNumber === tierNumber)
+    if (!tier) return false
+
+    return tier.isUnlocked || snapshot.locations.some(
         (location) =>
             location.businessType === tier.businessType
             && location.ownership === 'ownedByPlayer',
     )
 }
 
-function isTierAccessible(
-    snapshot: MarketplaceSnapshot,
-    tier: BusinessTier,
-): boolean {
-    return tier.isUnlocked || tierContainsOwnedBusiness(snapshot, tier)
-}
+/** The tier to show first: the one with the player's business, else the first open one. */
+function pickTier(snapshot: PortalSnapshot): number | null {
+    const owned = snapshot.locations.find((location) => location.ownership === 'ownedByPlayer')
+    const ownedTier = snapshot.tiers.find((tier) => tier.businessType === owned?.businessType)
 
-function findOwnedBusinessTierNumber(
-    snapshot: MarketplaceSnapshot,
-): number | null {
-    const ownedLocation = snapshot.locations.find(
-        (location) => location.ownership === 'ownedByPlayer',
-    )
-
-    if (!ownedLocation) return null
-
-    const tier = snapshot.tiers.find(
-        (candidate) =>
-            candidate.businessType === ownedLocation.businessType,
-    )
+    const tier = ownedTier
+        ?? snapshot.tiers.find((candidate) => isTierAccessible(snapshot, candidate.tierNumber))
 
     return tier?.tierNumber ?? null
 }
 
-function findPreferredLocationId(
-    snapshot: MarketplaceSnapshot,
-    tierNumber: number | null,
-): string | null {
-    const tier = snapshot.tiers.find(
-        (candidate) => candidate.tierNumber === tierNumber,
-    )
-
+/** The location to select in a tier: the player's own, else the first one. */
+function pickLocation(snapshot: PortalSnapshot, tierNumber: number | null): string | null {
+    const tier = snapshot.tiers.find((candidate) => candidate.tierNumber === tierNumber)
     if (!tier) return null
 
-    const tierLocations = snapshot.locations.filter(
-        (location) =>
-            location.businessType === tier.businessType,
+    const inTier = snapshot.locations.filter(
+        (location) => location.businessType === tier.businessType,
     )
+    const owned = inTier.find((location) => location.ownership === 'ownedByPlayer')
 
-    const ownedLocation = tierLocations.find(
-        (location) => location.ownership === 'ownedByPlayer',
-    )
-
-    return ownedLocation?.id ?? tierLocations[0]?.id ?? null
+    return (owned ?? inTier[0])?.key ?? null
 }
 
-export const usePortalStore = defineStore('marketplace', () => {
-    const snapshot = ref<MarketplaceSnapshot | null>(null)
+export const usePortalStore = defineStore('portal', () => {
+    const snapshot = ref<PortalSnapshot | null>(null)
     const selectedTierNumber = ref<number | null>(null)
-    const selectedLocationId = ref<string | null>(null)
-    const purchaseDialogLocationId = ref<string | null>(null)
-    const pendingPurchaseLocationId = ref<string | null>(null)
+    const selectedLocationKey = ref<string | null>(null)
+    const purchaseDialogLocationKey = ref<string | null>(null)
+    const pendingPurchaseLocationKey = ref<string | null>(null)
     const searchQuery = ref('')
 
     const profile = computed(() => snapshot.value?.profile ?? null)
     const tiers = computed(() => snapshot.value?.tiers ?? [])
     const locations = computed(() => snapshot.value?.locations ?? [])
-    const currencySymbol = computed(
-        () => snapshot.value?.currencySymbol ?? '$',
-    )
+    const currencySymbol = computed(() => snapshot.value?.settings.currencySymbol ?? '$')
+
+    function findLocation(key: string | null): PortalLocation | null {
+        return locations.value.find((location) => location.key === key) ?? null
+    }
 
     const selectedTier = computed(() =>
-        tiers.value.find(
-            (tier) => tier.tierNumber === selectedTierNumber.value,
-        ) ?? null,
+        tiers.value.find((tier) => tier.tierNumber === selectedTierNumber.value) ?? null,
     )
 
-    const selectedTierLocations = computed(() => {
-        if (!selectedTier.value) return []
+    const selectedTierLocations = computed(() =>
+        locations.value.filter(
+            (location) => location.businessType === selectedTier.value?.businessType,
+        ),
+    )
 
-        return locations.value.filter(
-            (location) =>
-                location.businessType === selectedTier.value?.businessType,
-        )
-    })
-
+    /** The selected tier's locations that match the search text. */
     const filteredLocations = computed(() => {
-        const normalizedQuery = searchQuery.value.trim().toLocaleLowerCase()
+        const query = searchQuery.value.trim().toLocaleLowerCase()
+        if (!query) return selectedTierLocations.value
 
-        if (!normalizedQuery) {
-            return selectedTierLocations.value
-        }
-
-        return selectedTierLocations.value.filter((location) => {
-            const searchableValues = [
+        return selectedTierLocations.value.filter((location) =>
+            [
                 location.displayName,
                 location.address.zone,
                 location.address.street,
                 location.address.crossingRoad,
-            ]
-
-            return searchableValues.some((value) =>
-                value?.toLocaleLowerCase().includes(normalizedQuery),
-            )
-        })
+            ].some((text) => text?.toLocaleLowerCase().includes(query)),
+        )
     })
 
-    const selectedLocation = computed(() =>
-        locations.value.find(
-            (location) => location.id === selectedLocationId.value,
-        ) ?? null,
-    )
+    const selectedLocation = computed(() => findLocation(selectedLocationKey.value))
+    const purchaseDialogLocation = computed(() => findLocation(purchaseDialogLocationKey.value))
+    const isPurchaseDialogOpen = computed(() => purchaseDialogLocation.value !== null)
+    const isPurchasePending = computed(() => pendingPurchaseLocationKey.value !== null)
 
-    const purchaseDialogLocation = computed(() =>
-        locations.value.find(
-            (location) => location.id === purchaseDialogLocationId.value,
-        ) ?? null,
-    )
+    /** Why the player can't buy this location, or null when they can. */
+    function getPurchaseBlockReason(location: PortalLocation): PurchaseBlockReason | null {
+        const current = snapshot.value
 
-    const isPurchaseDialogOpen = computed(
-        () => purchaseDialogLocation.value !== null,
-    )
+        if (!current || location.ownership !== 'available') return 'locationUnavailable'
+        if (current.profile.ownsBusiness) return 'alreadyOwnsBusiness'
 
-    const isPurchasePending = computed(
-        () => pendingPurchaseLocationId.value !== null,
-    )
+        const tier = current.tiers.find((candidate) => candidate.businessType === location.businessType)
+        if (!tier?.isUnlocked) return 'tierLocked'
 
-    function getPurchaseBlockReason(
-        location: BusinessLocation,
-    ): PurchaseBlockReason | null {
-        const currentSnapshot = snapshot.value
-
-        if (!currentSnapshot || location.ownership !== 'available') {
-            return 'locationUnavailable'
-        }
-
-        if (currentSnapshot.profile.ownsBusiness) {
-            return 'alreadyOwnsBusiness'
-        }
-
-        const tier = currentSnapshot.tiers.find(
-            (candidate) =>
-                candidate.businessType === location.businessType,
-        )
-
-        if (!tier?.isUnlocked) {
-            return 'tierLocked'
-        }
-
-        if (currentSnapshot.profile.bankBalance < location.price) {
-            return 'insufficientFunds'
-        }
+        if (current.profile.bankBalance < location.price) return 'insufficientFunds'
 
         return null
     }
 
-    function replaceSnapshot(nextSnapshot: MarketplaceSnapshot): void {
-        snapshot.value = nextSnapshot
+    /** Takes new data and keeps the selection when it is still valid. */
+    function replaceSnapshot(next: PortalSnapshot): void {
+        snapshot.value = next
 
-        const currentTier = nextSnapshot.tiers.find(
-            (tier) => tier.tierNumber === selectedTierNumber.value,
-        )
-
-        if (
-            !currentTier
-            || !isTierAccessible(nextSnapshot, currentTier)
-        ) {
-            selectedTierNumber.value =
-                findOwnedBusinessTierNumber(nextSnapshot)
-                ?? nextSnapshot.tiers.find(
-                    (tier) => isTierAccessible(nextSnapshot, tier),
-                )?.tierNumber
-                ?? null
+        if (!isTierAccessible(next, selectedTierNumber.value ?? -1)) {
+            selectedTierNumber.value = pickTier(next)
         }
 
-        const activeTier = nextSnapshot.tiers.find(
-            (tier) =>
-                tier.tierNumber === selectedTierNumber.value,
-        )
-
-        const selectedLocationStillExists =
-            nextSnapshot.locations.some(
-                (location) =>
-                    location.id === selectedLocationId.value
-                    && location.businessType === activeTier?.businessType,
-            )
-
-        if (!selectedLocationStillExists) {
-            selectedLocationId.value = findPreferredLocationId(
-                nextSnapshot,
-                selectedTierNumber.value,
-            )
-        }
-
-        const dialogLocation = nextSnapshot.locations.find(
+        const tier = next.tiers.find((candidate) => candidate.tierNumber === selectedTierNumber.value)
+        const selectionStillValid = next.locations.some(
             (location) =>
-                location.id === purchaseDialogLocationId.value,
+                location.key === selectedLocationKey.value
+                && location.businessType === tier?.businessType,
         )
 
-        if (!dialogLocation || dialogLocation.ownership !== 'available') {
-            purchaseDialogLocationId.value = null
+        if (!selectionStillValid) {
+            selectedLocationKey.value = pickLocation(next, selectedTierNumber.value)
         }
 
-        if (
-            pendingPurchaseLocationId.value
-            && !nextSnapshot.locations.some(
-                (location) =>
-                    location.id === pendingPurchaseLocationId.value
-                    && location.ownership === 'available',
-            )
-        ) {
-            pendingPurchaseLocationId.value = null
-        }
+        const isAvailable = (key: string | null) =>
+            next.locations.some((location) => location.key === key && location.ownership === 'available')
+
+        if (!isAvailable(purchaseDialogLocationKey.value)) purchaseDialogLocationKey.value = null
+        if (!isAvailable(pendingPurchaseLocationKey.value)) pendingPurchaseLocationKey.value = null
     }
 
     function selectTier(tierNumber: number): void {
-        const currentSnapshot = snapshot.value
-        if (!currentSnapshot) return
-
-        const tier = currentSnapshot.tiers.find(
-            (candidate) => candidate.tierNumber === tierNumber,
-        )
-
-        if (!tier || !isTierAccessible(currentSnapshot, tier)) return
+        if (!snapshot.value || !isTierAccessible(snapshot.value, tierNumber)) return
 
         selectedTierNumber.value = tierNumber
-        selectedLocationId.value = findPreferredLocationId(
-            currentSnapshot,
-            tierNumber,
-        )
-        purchaseDialogLocationId.value = null
+        selectedLocationKey.value = pickLocation(snapshot.value, tierNumber)
+        purchaseDialogLocationKey.value = null
         searchQuery.value = ''
     }
 
-    function selectLocation(locationId: string | null): void {
-        if (locationId === null) {
-            selectedLocationId.value = null
+    function selectLocation(key: string | null): void {
+        if (key === null) {
+            selectedLocationKey.value = null
             return
         }
 
-        const location = locations.value.find(
-            (candidate) => candidate.id === locationId,
-        )
+        const location = findLocation(key)
+        if (!location || location.businessType !== selectedTier.value?.businessType) return
 
-        if (!location) return
-        if (location.businessType !== selectedTier.value?.businessType) return
-
-        selectedLocationId.value = locationId
+        selectedLocationKey.value = key
     }
 
     function setSearchQuery(value: string): void {
         searchQuery.value = value
     }
 
-    function openPurchaseDialog(locationId: string): void {
-        const location = locations.value.find(
-            (candidate) => candidate.id === locationId,
-        )
+    function openPurchaseDialog(key: string): void {
+        const location = findLocation(key)
+        if (!location || getPurchaseBlockReason(location) !== null) return
 
-        if (!location) return
-        if (getPurchaseBlockReason(location) !== null) return
-
-        purchaseDialogLocationId.value = locationId
+        purchaseDialogLocationKey.value = key
     }
 
     function closePurchaseDialog(): void {
         if (isPurchasePending.value) return
 
-        purchaseDialogLocationId.value = null
+        purchaseDialogLocationKey.value = null
     }
 
-    function beginPurchase(locationId: string): boolean {
-        if (pendingPurchaseLocationId.value !== null) return false
+    /** Marks a purchase as running. Returns false when one is already running or the location can't be bought. */
+    function beginPurchase(key: string): boolean {
+        if (isPurchasePending.value) return false
 
-        const location = locations.value.find(
-            (candidate) => candidate.id === locationId,
-        )
+        const location = findLocation(key)
+        if (!location || getPurchaseBlockReason(location) !== null) return false
 
-        if (!location) return false
-        if (getPurchaseBlockReason(location) !== null) return false
-
-        pendingPurchaseLocationId.value = locationId
+        pendingPurchaseLocationKey.value = key
         return true
     }
 
     function finishPurchase(): void {
-        pendingPurchaseLocationId.value = null
+        pendingPurchaseLocationKey.value = null
     }
 
+    /** Clears the selection, search and purchase state (the data stays). */
     function resetInteractionState(): void {
         selectedTierNumber.value = null
-        selectedLocationId.value = null
-        purchaseDialogLocationId.value = null
-        pendingPurchaseLocationId.value = null
+        selectedLocationKey.value = null
+        purchaseDialogLocationKey.value = null
+        pendingPurchaseLocationKey.value = null
         searchQuery.value = ''
     }
 
     return {
-        snapshot,
         selectedTierNumber,
-        selectedLocationId,
-        purchaseDialogLocationId,
-        pendingPurchaseLocationId,
+        selectedLocationKey,
+        purchaseDialogLocationKey,
         searchQuery,
 
         profile,

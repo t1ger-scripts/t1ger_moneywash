@@ -36,7 +36,7 @@ const modalTitle = computed(() =>
 )
 
 watch(
-    () => portalStore.purchaseDialogLocationId,
+    () => portalStore.purchaseDialogLocationKey,
     () => {
         errorMessage.value = ''
     },
@@ -50,7 +50,7 @@ async function confirmPurchase(): Promise<void> {
     const selectedLocation = location.value
     if (!selectedLocation) return
 
-    if (!portalStore.beginPurchase(selectedLocation.id)) {
+    if (!portalStore.beginPurchase(selectedLocation.key)) {
         return
     }
 

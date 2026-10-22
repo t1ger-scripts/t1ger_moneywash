@@ -72,7 +72,7 @@ Config.HandlerNPC = {
 Config.WebPortal = {
     -- Target option on laptop props
     Target        = {
-        icon     = "fa-solid fa-building", -- Target icon
+        icon     = "fa-solid fa-globe", -- Target icon
         distance = 2.0,                    -- Target range
         models   = {                       -- Props that open the portal
             "prop_laptop_lester",

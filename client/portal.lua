@@ -18,13 +18,10 @@ local targetRegistered = false
 ---@type table<string, table>
 local addressCache = {}
 
---- Adds the UI text and the street address of every location to a snapshot.
+--- Adds the street address to every location in a snapshot.
 ---@param snapshot table
 ---@return table snapshot
 local function buildNuiSnapshot(snapshot)
-    local localeName, messages = GetMoneywashUiLocale()
-    snapshot.localization = { locale = localeName, messages = messages }
-
     for _, location in ipairs(snapshot.locations or {}) do
         local key = location.key
         addressCache[key] = addressCache[key] or GetLocationAddress(location.coordinates)

@@ -1,73 +1,46 @@
 import { onMounted, onUnmounted } from 'vue'
 
-import { createMarketplaceSnapshot } from '@/portal/portal.model'
 import { installLocaleMessages } from '@/integrations/i18n'
-import { onNuiMessage } from '@/integrations/nui'
-import { NUI_MESSAGES } from '@/integrations/nui'
-import type { PortalBootstrapPayload } from '@/portal/portal.types'
-import { applyTheme } from '@/portal/theme/applyTheme'
+import { NUI_MESSAGES, onNuiMessage } from '@/integrations/nui'
+import type { PortalOpenPayload, PortalSnapshot } from '@/portal/portal.types'
 import { usePortalStore } from '@/portal/stores/portal.store'
+import { applyTheme } from '@/portal/theme/applyTheme'
 import { useUiStore } from '@/shared/stores/ui.store'
 
+/** Listens for the portal's messages from the game. */
 export function usePortalLifecycle(): void {
-    const portalStore = usePortalStore()
+    const portal = usePortalStore()
     const ui = useUiStore()
 
-    const unsubscribeFunctions: Array<() => void> = []
+    let unsubscribe: Array<() => void> = []
 
-    function applyBootstrap(
-        payload: PortalBootstrapPayload,
-        resetInteractionState: boolean,
-    ): void {
-        installLocaleMessages(
-            payload.localization.locale,
-            payload.localization.messages,
-        )
-
+    function open(payload: PortalOpenPayload): void {
+        installLocaleMessages(payload.locale, payload.messages)
         applyTheme(payload.settings.theme)
 
-        if (resetInteractionState) {
-            portalStore.resetInteractionState()
-        }
+        portal.resetInteractionState()
+        portal.replaceSnapshot(payload)
 
-        portalStore.replaceSnapshot(createMarketplaceSnapshot(payload))
-
-        if (resetInteractionState) ui.open('marketplace')
+        ui.open('marketplace')
     }
 
-    function openPortal(payload: PortalBootstrapPayload): void {
-        applyBootstrap(payload, true)
+    /** New data while the portal is open: the selection stays. */
+    function refresh(payload: PortalSnapshot): void {
+        portal.replaceSnapshot(payload)
     }
 
-    function refreshPortal(payload: PortalBootstrapPayload): void {
-        applyBootstrap(payload, false)
-    }
-
-    function closePortal(): void {
+    function close(): void {
         ui.close('marketplace')
-        portalStore.resetInteractionState()
+        portal.resetInteractionState()
     }
 
     onMounted(() => {
-        unsubscribeFunctions.push(
-            onNuiMessage<PortalBootstrapPayload>(NUI_MESSAGES.open, openPortal),
-        )
-
-        unsubscribeFunctions.push(
-            onNuiMessage<PortalBootstrapPayload>(
-                NUI_MESSAGES.refresh,
-                refreshPortal,
-            ),
-        )
-
-        unsubscribeFunctions.push(
-            onNuiMessage<void>(NUI_MESSAGES.close, closePortal),
-        )
+        unsubscribe = [
+            onNuiMessage<PortalOpenPayload>(NUI_MESSAGES.open, open),
+            onNuiMessage<PortalSnapshot>(NUI_MESSAGES.refresh, refresh),
+            onNuiMessage<void>(NUI_MESSAGES.close, close),
+        ]
     })
 
-    onUnmounted(() => {
-        for (const unsubscribe of unsubscribeFunctions) {
-            unsubscribe()
-        }
-    })
+    onUnmounted(() => unsubscribe.forEach((stop) => stop()))
 }

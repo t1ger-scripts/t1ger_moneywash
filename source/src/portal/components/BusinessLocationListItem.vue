@@ -4,17 +4,17 @@ import { Building2 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import AppBadge from '@/portal/components/ui/AppBadge.vue'
-import type { BusinessLocation } from '@/portal/portal.model'
+import type { PortalLocation } from '@/portal/portal.types'
 import { formatCurrency } from '@/portal/utils/formatters'
 
 const props = defineProps<{
-    location: BusinessLocation
+    location: PortalLocation
     currencySymbol: string
     selected: boolean
 }>()
 
 const emit = defineEmits<{
-    select: [locationId: string]
+    select: [locationKey: string]
 }>()
 
 const { locale, t } = useI18n()
@@ -58,14 +58,14 @@ function handleImageError(): void {
 </script>
 
 <template>
-    <button class="business-list-item" :data-location-id="location.id" :class="{
+    <button class="business-list-item" :data-location-key="location.key" :class="{
         'business-list-item--selected': selected,
         'business-list-item--owned':
             location.ownership === 'ownedByPlayer',
     }" type="button" :aria-pressed="selected" :aria-label="t('portal.businessList.selectLocation', {
         business: location.displayName,
     })
-        " @click="emit('select', location.id)">
+        " @click="emit('select', location.key)">
         <span class="business-list-item__thumbnail">
             <img v-if="imageSource" :src="imageSource" :alt="location.displayName" @error="handleImageError" />
 

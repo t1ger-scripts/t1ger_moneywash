@@ -7,30 +7,30 @@ export interface PortalCoordinates {
     z: number
 }
 
+/** Filled in by the client; a part the game has no name for is missing. */
 export interface PortalAddress {
-    street: string | null
-    crossingRoad: string | null
-    zone: string | null
+    street?: string
+    crossingRoad?: string
+    zone?: string
 }
 
-export type PortalLocationOwnership =
-    | 'available'
-    | 'ownedByPlayer'
+export type LocationOwnership = 'available' | 'ownedByPlayer'
 
-export interface PortalBusinessLocation {
+export interface PortalLocation {
+    /** "<businessType>:<locationId>", unique across all business types. */
     key: string
     locationId: number
-    ownedBusinessId: number | null
+    ownedBusinessId?: number
     businessType: string
     displayName: string
-    imageFileName?: string | null
+    imageFileName?: string
     price: number
-    ownership: PortalLocationOwnership
+    ownership: LocationOwnership
     coordinates: PortalCoordinates
     address: PortalAddress
 }
 
-export interface PortalBusinessTier {
+export interface PortalTier {
     tierNumber: number
     businessType: string
     displayName: string
@@ -45,41 +45,38 @@ export interface PortalInvestorProgress {
     points: number
     rank: string
     currentRankPoints: number
-    nextRankPoints: number | null
+    nextRankPoints?: number
     percentage: number
 }
 
-export interface PortalPlayerProfile {
+export interface PortalProfile {
     characterName: string
     bankBalance: number
     ownsBusiness: boolean
     investorProgress: PortalInvestorProgress
 }
 
-export interface PortalRuntimeSettings {
+export interface PortalSettings {
     currencySymbol: string
     theme: PortalThemeConfig
 }
 
-export interface PortalLocalization {
+/** Everything the portal shows. Sent when it opens and again on every refresh. */
+export interface PortalSnapshot {
+    profile: PortalProfile
+    tiers: PortalTier[]
+    locations: PortalLocation[]
+    settings: PortalSettings
+}
+
+/** The first message also carries the UI language. */
+export interface PortalOpenPayload extends PortalSnapshot {
     locale: string
     messages: LocaleMessages
 }
 
-export interface PortalBootstrapPayload {
-    profile: PortalPlayerProfile
-    tiers: PortalBusinessTier[]
-    locations: PortalBusinessLocation[]
-    settings: PortalRuntimeSettings
-    localization: PortalLocalization
-}
-
-export interface PurchaseBusinessRequest {
-    businessType: string
-    locationId: number
-}
-
-export interface SetBusinessWaypointRequest {
+/** Sent with a purchase or waypoint request. */
+export interface PortalLocationRequest {
     businessType: string
     locationId: number
 }
