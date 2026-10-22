@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import {
     Building2,
     ChartColumn,
@@ -10,6 +10,7 @@ import {
 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
+import { useBusinessImage } from '@/portal/composables/useBusinessImage'
 import { usePortalActions } from '@/portal/composables/usePortalActions'
 import AppBadge from '@/portal/components/ui/AppBadge.vue'
 import AppButton from '@/portal/components/ui/AppButton.vue'
@@ -27,8 +28,6 @@ const portalStore = usePortalStore()
 const { requestBusinessWaypoint } = usePortalActions()
 const { locale, t } = useI18n()
 
-const imageFailed = ref(false)
-
 const selectedLocation = computed(
     () => portalStore.selectedLocation,
 )
@@ -37,15 +36,9 @@ const selectedTier = computed(
     () => portalStore.selectedTier,
 )
 
-const imageSource = computed(() => {
-    const fileName = selectedLocation.value?.imageFileName?.trim()
-
-    if (!fileName || imageFailed.value) {
-        return null
-    }
-
-    return `./images/businesses/${encodeURIComponent(fileName)}`
-})
+const { imageSource, handleImageError } = useBusinessImage(
+    () => selectedLocation.value?.imageFileName,
+)
 
 const fullStreet = computed(() => {
     const address = selectedLocation.value?.address
@@ -123,17 +116,6 @@ const purchaseBlockMessage = computed(() => {
         ? t(purchaseBlockTranslationKeys[reason])
         : ''
 })
-
-watch(
-    () => selectedLocation.value?.key,
-    () => {
-        imageFailed.value = false
-    },
-)
-
-function handleImageError(): void {
-    imageFailed.value = true
-}
 
 function openPurchaseDialog(): void {
     const location = selectedLocation.value

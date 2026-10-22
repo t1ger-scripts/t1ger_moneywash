@@ -4,14 +4,13 @@ import { LocateFixed, Minus, Plus, RotateCcw, TriangleAlert } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import L from 'leaflet'
 
+import { useSatelliteTiles } from '@/portal/composables/useSatelliteTiles'
+import { gtaCrs, MAXIMUM_MAP_ZOOM, mapBounds, toLatLng } from '@/portal/map/gtaMap'
 import type { PortalLocation } from '@/portal/portal.types'
 import { usePortalStore } from '@/portal/stores/portal.store'
 
 import BusinessTypeIcon from './BusinessTypeIcon.vue'
 
-type TileExtension = 'jpg' | 'png'
-
-const MAXIMUM_MAP_ZOOM = 5
 const SELECTED_LOCATION_ZOOM = 5
 const OVERVIEW_ZOOM_OFFSET = 0.20
 
@@ -19,53 +18,21 @@ const { t } = useI18n()
 const portalStore = usePortalStore()
 
 const mapElement = ref<HTMLDivElement | null>(null)
-const isLoading = ref(true)
-const hasTileError = ref(false)
 
 let map: L.Map | null = null
-let satelliteLayer: L.TileLayer | null = null
 let markerLayer: L.LayerGroup | null = null
 let resizeObserver: ResizeObserver | null = null
-let loadingTimeout: ReturnType<typeof setTimeout> | null = null
 
+/** Elements the marker icons are drawn into, so they can be cleaned up. */
 const renderedIconHosts: HTMLElement[] = []
 
-const mapBounds = L.latLngBounds([
-    [-4000, -5500],
-    [8000, 6000],
-])
-
-const gtaCrs = Object.assign({}, L.CRS.Simple, {
-    projection: L.Projection.LonLat,
-
-    scale(zoom: number) {
-        return 2 ** zoom
-    },
-
-    zoom(scale: number) {
-        return Math.log(scale) / Math.LN2
-    },
-
-    distance(firstPoint: L.LatLng, secondPoint: L.LatLng) {
-        return Math.hypot(
-            secondPoint.lng - firstPoint.lng,
-            secondPoint.lat - firstPoint.lat,
-        )
-    },
-
-    transformation: new L.Transformation(
-        0.02072,
-        117.3,
-        -0.0205,
-        172.8,
-    ),
-
-    infinite: true,
-})
-
-function getLocationCoordinates(location: PortalLocation): L.LatLngExpression {
-    return [location.coordinates.y, location.coordinates.x]
-}
+const {
+    isLoading,
+    hasTileError,
+    loadSatelliteTiles,
+    retryMapTiles,
+    disposeSatelliteTiles,
+} = useSatelliteTiles(() => map)
 
 function clearRenderedIcons() {
     for (const iconHost of renderedIconHosts) {
@@ -131,7 +98,7 @@ function renderMarkers() {
         const isSelected =
             portalStore.selectedLocationKey === location.key
 
-        const marker = L.marker(getLocationCoordinates(location), {
+        const marker = L.marker(toLatLng(location.coordinates), {
             icon: createMarkerIcon(location, isSelected),
             keyboard: true,
             riseOnHover: true,
@@ -151,7 +118,7 @@ function focusSelectedLocation(animated = true) {
     }
 
     map.flyTo(
-        getLocationCoordinates(portalStore.selectedLocation),
+        toLatLng(portalStore.selectedLocation.coordinates),
         SELECTED_LOCATION_ZOOM,
         {
             animate: animated,
@@ -189,6 +156,7 @@ function zoomOut() {
     map?.zoomOut()
 }
 
+/** Keeps the zoomed-out view fitted to the size of the map area. */
 function updateMinimumZoom() {
     if (!map) {
         return
@@ -208,83 +176,6 @@ function updateMinimumZoom() {
     )
 
     map.setMinZoom(minimumZoom)
-}
-
-function clearLoadingTimeout() {
-    if (!loadingTimeout) {
-        return
-    }
-
-    clearTimeout(loadingTimeout)
-    loadingTimeout = null
-}
-
-function loadSatelliteTiles(preferredExtension: TileExtension = 'jpg') {
-    if (!map) {
-        return
-    }
-
-    if (satelliteLayer) {
-        satelliteLayer.remove()
-        satelliteLayer = null
-    }
-
-    clearLoadingTimeout()
-
-    isLoading.value = true
-    hasTileError.value = false
-
-    satelliteLayer = L.tileLayer(
-        `./mapStyles/styleSatelite/{z}/{x}/{y}.${preferredExtension}`,
-        {
-            minZoom: 0,
-            maxZoom: MAXIMUM_MAP_ZOOM,
-            noWrap: true,
-            updateWhenZooming: true,
-            updateWhenIdle: false,
-            updateInterval: 200,
-            keepBuffer: 2,
-            bounds: mapBounds,
-        },
-    )
-
-    satelliteLayer.on('tileload', () => {
-        clearLoadingTimeout()
-        isLoading.value = false
-        hasTileError.value = false
-    })
-
-    satelliteLayer.on('tileerror', (event: L.TileErrorEvent) => {
-        const tile = event.tile as HTMLImageElement
-
-        if (tile.dataset.fallbackAttempted === 'true') {
-            return
-        }
-
-        tile.dataset.fallbackAttempted = 'true'
-
-        const fallbackExtension: TileExtension =
-            preferredExtension === 'jpg' ? 'png' : 'jpg'
-
-        tile.src = tile.src.replace(
-            /\.(jpg|png)$/,
-            `.${fallbackExtension}`,
-        )
-    })
-
-    satelliteLayer.addTo(map)
-    satelliteLayer.bringToBack()
-
-    loadingTimeout = setTimeout(() => {
-        if (isLoading.value) {
-            isLoading.value = false
-            hasTileError.value = true
-        }
-    }, 7000)
-}
-
-function retryMapTiles() {
-    loadSatelliteTiles('jpg')
 }
 
 function setMapInteractionState(isInteracting: boolean) {
@@ -378,14 +269,13 @@ watch(
 )
 
 onBeforeUnmount(() => {
-    clearLoadingTimeout()
+    disposeSatelliteTiles()
     resizeObserver?.disconnect()
     clearRenderedIcons()
     map?.remove()
 
     resizeObserver = null
     markerLayer = null
-    satelliteLayer = null
     map = null
 })
 </script>

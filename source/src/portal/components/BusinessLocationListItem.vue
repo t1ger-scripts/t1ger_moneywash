@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { Building2 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import AppBadge from '@/portal/components/ui/AppBadge.vue'
+import { useBusinessImage } from '@/portal/composables/useBusinessImage'
 import type { PortalLocation } from '@/portal/portal.types'
 import { formatCurrency } from '@/portal/utils/formatters'
 
@@ -18,17 +19,9 @@ const emit = defineEmits<{
 }>()
 
 const { locale, t } = useI18n()
-const imageFailed = ref(false)
-
-const imageSource = computed(() => {
-    const fileName = props.location.imageFileName?.trim()
-
-    if (!fileName || imageFailed.value) {
-        return null
-    }
-
-    return `./images/businesses/${encodeURIComponent(fileName)}`
-})
+const { imageSource, handleImageError } = useBusinessImage(
+    () => props.location.imageFileName,
+)
 
 const formattedPrice = computed(() =>
     formatCurrency(
@@ -45,16 +38,6 @@ const locationLabel = computed(
         ?? t('portal.businessList.unknownLocation'),
 )
 
-watch(
-    () => props.location.imageFileName,
-    () => {
-        imageFailed.value = false
-    },
-)
-
-function handleImageError(): void {
-    imageFailed.value = true
-}
 </script>
 
 <template>
