@@ -57,15 +57,14 @@ server_scripts {
     'server/customize.lua',
     'server/hooks.lua',
     'server/portal.lua',
-
-    'server/business/store.lua',
-    'server/business/suspicion.lua',
-    'server/business/ownership.lua',
-    'server/business/bank_deposit.lua',
-    'server/business/raid.lua',
-    'server/business/review.lua',
-    'server/business/stock.lua',
-    'server/business/cash_operation.lua',
+    'server/store.lua',
+    'server/suspicion.lua',
+    'server/ownership.lua',
+    'server/bank_deposit.lua',
+    'server/raid.lua',
+    'server/review.lua',
+    'server/stock.lua',
+    'server/cash_operation.lua',
     
     'server/main.lua',
 }
