@@ -198,3 +198,21 @@ function DebugPrint(tag, ...)
 
     print(("[t1ger_moneywash:%s] %s"):format(tag, table.concat(parts, " ")))
 end
+
+--- Calls a server callback and always returns a table, so a callback that errors or
+--- returns nothing can't break the caller. A failed response gets a translated `message`.
+---@param name string Callback name
+---@param ... any Callback arguments
+---@return { success: boolean, reason?: string, message?: string, data?: any }
+function ServerRequest(name, ...)
+    local ok, response = pcall(lib.callback.await, name, false, ...)
+
+    if not ok or type(response) ~= "table" then
+        DebugPrint("server_request", name, "failed:", ok and "no answer" or response)
+        return ErrorResponse("request_failed")
+    end
+
+    if response.success == false then response.message = GetErrorMessage(response.reason) end
+
+    return response
+end

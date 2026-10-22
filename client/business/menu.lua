@@ -57,7 +57,7 @@ function OpenHandlerMenu(businessId)
                 icon        = menuIcons.launder or "fa-solid fa-money-bill-wave",
                 description = locale("menu.handler.launder_desc"),
                 onSelect    = function()
-                    StartLaunderFlow(businessId)
+                    StartCashOperation(businessId, "launder")
                 end,
             },
             {
@@ -255,7 +255,7 @@ function OpenSafeMenu(businessId)
                 description = depositDesc,
                 disabled    = depositDisabled,
                 onSelect    = function()
-                    OpenBankDepositDialog(businessId, status)
+                    StartCashOperation(businessId, "withdraw")
                 end,
             },
         },
@@ -264,49 +264,45 @@ function OpenSafeMenu(businessId)
     lib.showContext("moneywash:handler:safe")
 end
 
---- ============================================================================
---- LAUNDER FLOW
---- ============================================================================
+--- Asks how much to launder or withdraw. Returns a whole number, or nil if the dialog is closed.
+--- Free to restyle: the server checks the amount again whatever is returned here.
+---@param operation "launder"|"withdraw"
+---@param limits { max: integer, exposed?: integer, covered?: integer } What the server allows right now
+---@return integer|nil amount
+function AskCashAmount(operation, limits)
+    local title, label, description
 
---- @param businessId number
-function StartLaunderFlow(businessId)
-    local dirtyMoney = lib.callback.await("t1ger_moneywash:server:getDirtyMoney", false) or 0
-
-    if dirtyMoney <= 0 then
-        NotifyError("insufficient_dirty_cash")
-        return OpenHandlerMenu(businessId)
+    if operation == "launder" then
+        title = locale("menu.launder.title")
+        label = locale("menu.launder.amount_label")
+        description = string.format(locale("menu.launder.amount_desc"), FormatMoney(limits.max))
+    else
+        title = locale("menu.deposit.title")
+        label = string.format(locale("menu.deposit.amount_label"), FormatMoney(limits.max))
+        description = string.format(locale("menu.deposit.exposed_desc"), FormatMoney(limits.exposed), FormatMoney(limits.covered))
     end
 
-    local maximum = math.min(math.floor(dirtyMoney), Config.CashCounter.MaxAmount)
-
-    local input = lib.inputDialog(
-        locale("menu.launder.title"),
+    local input = lib.inputDialog(title, {
         {
-            {
-                type = "number",
-                label = locale("menu.launder.amount_label"),
-                description = string.format(
-                    locale("menu.launder.amount_desc"),
-                    FormatMoney(maximum)
-                ),
-                min = 1,
-                max = maximum,
-                precision = 0,
-                required = true,
-            },
-        }
-    )
+            type        = "number",
+            label       = label,
+            description = description,
+            min         = 1,
+            max         = limits.max,
+            precision   = 0,
+            required    = true,
+        },
+    })
 
-    if not input then return end
+    if not input or not input[1] then return nil end
 
     local amount = tonumber(input[1])
-
-    if not amount or amount ~= amount or amount % 1 ~= 0 or amount < 1 or amount > maximum then
+    if not amount or amount ~= amount or amount % 1 ~= 0 or amount < 1 or amount > limits.max then
         NotifyError("invalid_amount")
-        return
+        return nil
     end
 
-    OpenCashCounter(businessId, amount, "inject")
+    return amount
 end
 
 --- ============================================================================
@@ -377,40 +373,6 @@ function OpenStockOrderDialog(businessId, status)
     end
 
     StartStockMission(businessId, result.missionData)
-end
-
---- ============================================================================
---- BANK DEPOSIT DIALOG
---- ============================================================================
-
---- @param businessId number
---- @param status table
-function OpenBankDepositDialog(businessId, status)
-    local totalSafe = status.safeCovered + status.safeExposed
-    local maximum = math.min(totalSafe, Config.CashCounter.MaxAmount)
-
-    local input = lib.inputDialog(locale("menu.deposit.title"), {
-        {
-            type        = "number",
-            label       = string.format(locale("menu.deposit.amount_label"), FormatMoney(maximum)),
-            description = string.format(locale("menu.deposit.exposed_desc"), FormatMoney(status.safeExposed), FormatMoney(status.safeCovered)),
-            min         = 1,
-            max         = maximum,
-            precision   = 0,
-            required    = true,
-        },
-    })
-
-    if not input or not input[1] then return end
-
-    local amount = tonumber(input[1])
-    if not amount or amount ~= amount or amount % 1 ~= 0 or amount < 1 or amount > maximum then
-        NotifyError("invalid_amount")
-        return
-    end
-
-    -- Money leaves the Safe only when the cash counter completes
-    OpenCashCounter(businessId, amount, "withdraw")
 end
 
 --- ============================================================================
