@@ -1,356 +1,308 @@
---- ============================================================================
---- Business Ownership
---- Purchase, transfer, abandon and admin add/remove, with ownership locks.
---- Callbacks live in callbacks.lua, commands in commands.lua.
---- ============================================================================
+--- Business ownership: buy, transfer, abandon and the admin add/remove.
+--- Each action locks the owner, business and location it touches, so two actions can't change the same business at once.
 
---- ============================================================================
---- PURCHASE / OWNERSHIP
---- ============================================================================
+local locks = {} -- lock keys currently held
 
---- Active ownership mutations.
---- Prevents two simultaneous actions from modifying the same owner or location.
-local OwnershipLocks = {}
-
---- Attempts to acquire all supplied ownership locks.
---- @param keys string[]
---- @return boolean
-local function TryAcquireOwnershipLocks(keys)
+--- Takes every key, or none of them if any is already held.
+--- Cash operations and raids use this too, so they can't run during a transfer or removal.
+---@param keys string[]
+---@return boolean acquired
+function AcquireCashOperationLocks(keys)
     for _, key in ipairs(keys) do
-        if OwnershipLocks[key] then
-            return false
-        end
+        if locks[key] then return false end
     end
 
     for _, key in ipairs(keys) do
-        OwnershipLocks[key] = true
+        locks[key] = true
     end
 
     return true
 end
 
---- Releases previously acquired ownership locks.
---- @param keys string[]
-local function ReleaseOwnershipLocks(keys)
+--- Releases keys taken with AcquireCashOperationLocks.
+---@param keys string[]
+function ReleaseCashOperationLocks(keys)
     for _, key in ipairs(keys) do
-        OwnershipLocks[key] = nil
+        locks[key] = nil
     end
 end
 
--- Shared with cash operations (launder, withdraw) to exclude transfers and removal while one is running.
-function AcquireCashOperationLocks(keys) return TryAcquireOwnershipLocks(keys) end
+local function ownerKey(identifier) return "owner:" .. identifier end
+local function businessKey(businessId) return ("business:%d"):format(businessId) end
+local function locationKey(businessType, locationId) return ("location:%s:%d"):format(businessType, locationId) end
 
-function ReleaseCashOperationLocks(keys) ReleaseOwnershipLocks(keys) end
+--- Runs fn while holding the locks and always releases them. fn returns true, or false and a reason.
+---@param keys string[]
+---@param fn fun(): boolean, string|nil
+---@return boolean success
+---@return string|nil reason
+local function withLocks(keys, fn)
+    if not AcquireCashOperationLocks(keys) then return false, "operation_in_progress" end
 
---- Returns whether a player meets the reputation requirement for a given tier
---- @param src number
---- @param tier table
---- @return boolean
-local function MeetsReputationRequirement(src, tier)
-    if not Config.Reputation.Enable then return true end
-    local rep = GetPlayerReputation(src)
-    if not rep then return false end
-    return rep:GetPoints() >= tier.requiredPoints
+    local ran, success, reason = pcall(fn)
+    ReleaseCashOperationLocks(keys)
+
+    if not ran then
+        print(("^1[MoneyWash] Ownership action failed: %s^7"):format(tostring(success)))
+        return false, "unknown"
+    end
+
+    return success, reason
 end
 
---- Purchases a business for a player
---- @param src number
---- @param businessType string
---- @param locationId number
---- @return boolean success, string reason
-function BuyBusiness(src, businessType, locationId)
-    if not IsBusinessStoreReady() then
-        return false, "business_store_not_ready"
-    end
+--- Converts a value to a whole number, or nil.
+---@param value any
+---@return integer|nil
+local function toInteger(value)
+    value = tonumber(value)
 
-    local identifier = _API.Player.GetIdentifier(src)
-    if not identifier then
-        return false, "invalid_player"
-    end
+    return value and math.tointeger(value) or nil
+end
 
-    if type(businessType) ~= "string" then
-        return false, "invalid_type"
-    end
+--- Checks a business type and location id against the config.
+---@param businessType any
+---@param locationId any
+---@return { type: string, locationId: number, tier: table, location: table }|nil place
+---@return string|nil reason
+local function resolvePlace(businessType, locationId)
+    if type(businessType) ~= "string" then return nil, "invalid_type" end
 
     locationId = tonumber(locationId)
-    if not locationId then
-        return false, "invalid_location"
-    end
+    if not locationId then return nil, "invalid_location" end
 
     local tier = GetTierByType(businessType)
-    if not tier then
-        return false, "invalid_type"
-    end
+    if not tier then return nil, "invalid_type" end
 
     local location = GetLocationConfig(businessType, locationId)
-    if not location or not location.coords then
-        return false, "invalid_location"
-    end
+    if not location or not location.coords then return nil, "invalid_location" end
 
-    local lockKeys = { ("owner:%s"):format(identifier), ("location:%s:%d"):format(businessType, locationId) }
+    return { type = businessType, locationId = locationId, tier = tier, location = location }
+end
 
-    if not TryAcquireOwnershipLocks(lockKeys) then
-        return false, "operation_in_progress"
-    end
+--- Returns the business if the player owns it.
+---@param identifier string
+---@param businessId number
+---@return table|nil business
+---@return string|nil reason
+local function getOwnedBusiness(identifier, businessId)
+    local business = GetBusiness(businessId)
 
-    -- Repeat all mutable checks after acquiring the locks.
-    if IsLocationOwned(businessType, locationId) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "already_owned"
-    end
+    if not business then return nil, "not_found" end
+    if business.identifier ~= identifier then return nil, "not_owner" end
 
-    if PlayerOwnsBusiness(identifier) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "already_owns_business"
-    end
+    return business
+end
 
-    if not MeetsReputationRequirement(src, tier) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "insufficient_reputation"
-    end
+--- Returns why a business can't be moved or removed right now, or nil.
+---@param businessId number
+---@param ownerSrc number|nil Owner's source, to also block on their own stock mission
+---@return string|nil reason
+local function getBusyReason(businessId, ownerSrc)
+    local mission = ownerSrc and GetActiveStockMission(ownerSrc)
 
-    local price = tonumber(location.price)
-    if not price or price <= 0 then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "invalid_price"
-    end
+    if mission and mission.businessId == businessId then return "active_stock_mission" end
+    if IsBusinessRaided(businessId) then return "raid_in_progress" end
+    if HasBusinessDeposit(businessId) then return "pending_business_deposit" end
+    if IsBusinessInReview(businessId) then return "review_in_progress" end
 
-    if _API.Player.GetMoney(src, "bank") < price then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "insufficient_funds"
-    end
+    return nil
+end
 
-    _API.Player.RemoveMoney(src, price, "bank")
+--- Checks the player has enough reputation for a tier.
+---@param src number
+---@param tier table
+---@return boolean
+local function meetsReputation(src, tier)
+    if not Config.Reputation.Enable then return true end
 
+    local reputation = GetPlayerReputation(src)
+
+    return reputation ~= nil and reputation:GetPoints() >= tier.requiredPoints
+end
+
+--- Inserts a new business and adds it to the store.
+---@param identifier string
+---@param place table From resolvePlace
+---@return number|nil id
+---@return any error
+local function insertBusiness(identifier, place)
     local now = os.time()
+    local coords = place.location.coords
 
-    local insertSucceeded, id = pcall(
+    local ok, id = pcall(
         MySQL.insert.await,
         "INSERT INTO moneywash_businesses " ..
         "(identifier, business_type, location_id, location_x, location_y, location_z, " ..
         "stock, safe_covered, safe_exposed, suspicion, total_laundered, purchased_at) " ..
         "VALUES (?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, ?)",
-        {
-            identifier,
-            businessType,
-            locationId,
-            location.coords.x + 0.0,
-            location.coords.y + 0.0,
-            location.coords.z + 0.0,
-            now,
-        }
+        { identifier, place.type, place.locationId, coords.x + 0.0, coords.y + 0.0, coords.z + 0.0, now }
     )
 
-    if not insertSucceeded or not id then
-        -- Restore the payment if the insert failed, including duplicate-key races.
-        _API.Player.AddMoney(src, price, "bank")
-        ReleaseOwnershipLocks(lockKeys)
-
-        if Config.Debug then
-            print(("[MoneyWash] Purchase database error: %s"):format(tostring(id)))
-        end
-
-        return false, "database_error"
-    end
+    if not ok or not id then return nil, id end
 
     AddToStore(id, {
-        identifier      = identifier,
-        business_type   = businessType,
-        location_id     = locationId,
-        stock           = 0,
-        safe_covered    = 0,
-        safe_exposed    = 0,
-        suspicion       = 0,
-        total_laundered = 0,
-        purchased_at    = now,
+        identifier    = identifier,
+        business_type = place.type,
+        location_id   = place.locationId,
+        purchased_at  = now,
     })
 
-    -- The database and in-memory store are now synchronized.
-    ReleaseOwnershipLocks(lockKeys)
+    return id
+end
 
-    -- Award reputation for the purchase.
-    if Config.Reputation.Enable and
-        Config.Reputation.Rewards.businessPurchase.enable
-    then
+--- Deletes a business and its receipts from the database. The caller removes it from the store.
+---@param businessId number
+---@param identifier string
+---@return boolean success
+---@return any error
+local function deleteBusiness(businessId, identifier)
+    local ran, success = pcall(MySQL.transaction.await, {
+        { query = "DELETE FROM moneywash_receipts WHERE business_id = ?", values = { businessId } },
+        { query = "DELETE FROM moneywash_businesses WHERE id = ? AND identifier = ?", values = { businessId, identifier } },
+    })
+
+    return ran and success == true, success
+end
+
+--- Returns whether two players are close enough to transfer a business.
+---@param first number
+---@param second number
+---@return boolean
+local function arePlayersNear(first, second)
+    local firstPed, secondPed = GetPlayerPed(first), GetPlayerPed(second)
+
+    if not firstPed or firstPed == 0 or not secondPed or secondPed == 0 then return false end
+
+    return #(GetEntityCoords(firstPed) - GetEntityCoords(secondPed)) <= (Config.HandlerNPC.TransferDistance or 10.0)
+end
+
+--- Buys a business: takes the price from the player's bank and gives them the location.
+---@param src number
+---@param businessType string
+---@param locationId number
+---@return boolean success
+---@return string reason
+function BuyBusiness(src, businessType, locationId)
+    if not IsBusinessStoreReady() then return false, "business_store_not_ready" end
+
+    local identifier = _API.Player.GetIdentifier(src)
+    if not identifier then return false, "invalid_player" end
+
+    local place, placeReason = resolvePlace(businessType, locationId)
+    if not place then return false, placeReason end
+
+    local price, id
+
+    local success, reason = withLocks({ ownerKey(identifier), locationKey(place.type, place.locationId) }, function()
+        if IsLocationOwned(place.type, place.locationId) then return false, "already_owned" end
+        if PlayerOwnsBusiness(identifier) then return false, "already_owns_business" end
+        if not meetsReputation(src, place.tier) then return false, "insufficient_reputation" end
+
+        price = tonumber(place.location.price)
+        if not price or price <= 0 then return false, "invalid_price" end
+
+        if _API.Player.GetMoney(src, "bank") < price then return false, "insufficient_funds" end
+
+        _API.Player.RemoveMoney(src, price, "bank")
+
+        local newId, err = insertBusiness(identifier, place)
+        if not newId then
+            _API.Player.AddMoney(src, price, "bank") -- Give the money back, e.g. after a duplicate-key race
+
+            if Config.Debug then
+                print(("[MoneyWash] Purchase database error: %s"):format(tostring(err)))
+            end
+
+            return false, "database_error"
+        end
+
+        id = newId
+
+        return true
+    end)
+
+    if not success then return false, reason end
+
+    if Config.Reputation.Enable and Config.Reputation.Rewards.businessPurchase.enable then
         AwardReputationPoints(src, identifier, Config.Reputation.Rewards.businessPurchase.points)
     end
 
-    TriggerClientEvent("t1ger_moneywash:client:businessPurchased", src, id, businessType, locationId)
+    TriggerClientEvent("t1ger_moneywash:client:businessPurchased", src, id, place.type, place.locationId)
     BroadcastBusinessLocations()
 
-    RunHook("OnBusinessPurchased", identifier, businessType, locationId, price)
+    RunHook("OnBusinessPurchased", identifier, place.type, place.locationId, price)
 
     if Config.Debug then
-        print(("[MoneyWash] %s purchased %s #%d for $%d"):format(identifier, businessType, locationId, price))
+        print(("[MoneyWash] %s purchased %s #%d for $%d"):format(identifier, place.type, place.locationId, price))
     end
 
     return true, "success"
 end
 
---- Returns whether two players are within the configured transfer distance.
---- @param sourcePlayer number
---- @param targetPlayer number
---- @return boolean
-local function ArePlayersWithinTransferDistance(sourcePlayer, targetPlayer)
-    local sourcePed = GetPlayerPed(sourcePlayer)
-    local targetPed = GetPlayerPed(targetPlayer)
-
-    if not sourcePed or sourcePed == 0 then
-        return false
-    end
-
-    if not targetPed or targetPed == 0 then
-        return false
-    end
-
-    local sourceCoords = GetEntityCoords(sourcePed)
-    local targetCoords = GetEntityCoords(targetPed)
-    local distance = #(sourceCoords - targetCoords)
-
-    return distance <= (Config.HandlerNPC.TransferDistance or 10.0)
-end
-
---- Transfers a business to another nearby online player.
---- The new owner inherits the complete business state.
---- @param src number Current owner's server ID
---- @param targetSrc number New owner's server ID
---- @param businessId number
---- @return boolean success, string reason
+--- Transfers a business, with all its state, to another nearby online player.
+---@param src number Current owner
+---@param targetSrc number New owner
+---@param businessId number
+---@return boolean success
+---@return string reason
 function TransferBusiness(src, targetSrc, businessId)
     local identifier = _API.Player.GetIdentifier(src)
-    if not identifier then
-        return false, "invalid_player"
-    end
+    if not identifier then return false, "invalid_player" end
 
     targetSrc = tonumber(targetSrc)
-    businessId = tonumber(businessId)
+    if not targetSrc then return false, "target_not_online" end
 
-    if not targetSrc then
-        return false, "target_not_online"
-    end
+    businessId = toInteger(businessId)
+    if not businessId then return false, "not_found" end
 
-    if not businessId then
-        return false, "not_found"
-    end
-
-    if targetSrc == src then
-        return false, "self_transfer"
-    end
+    if targetSrc == src then return false, "self_transfer" end
 
     local targetIdentifier = _API.Player.GetIdentifier(targetSrc)
-    if not targetIdentifier then
-        return false, "target_not_online"
-    end
+    if not targetIdentifier then return false, "target_not_online" end
 
-    local business = GetBusiness(businessId)
-    if not business then
-        return false, "not_found"
-    end
+    local business
 
-    if business.identifier ~= identifier then
-        return false, "not_owner"
-    end
+    local success, reason = withLocks({ businessKey(businessId), ownerKey(identifier), ownerKey(targetIdentifier) }, function()
+        local owned, ownedReason = getOwnedBusiness(identifier, businessId)
+        if not owned then return false, ownedReason end
 
-    if not ArePlayersWithinTransferDistance(src, targetSrc) then
-        return false, "target_too_far"
-    end
+        business = owned
 
-    local lockKeys = { ("business:%d"):format(businessId), ("owner:%s"):format(identifier), ("owner:%s"):format(
-    targetIdentifier) }
+        if not arePlayersNear(src, targetSrc) then return false, "target_too_far" end
 
-    if not TryAcquireOwnershipLocks(lockKeys) then
-        return false, "operation_in_progress"
-    end
+        local busy = getBusyReason(businessId, src)
+        if busy then return false, busy end
 
-    -- Revalidate all mutable state after acquiring the locks.
-    business = GetBusiness(businessId)
+        if PlayerOwnsBusiness(targetIdentifier) then return false, "target_owns_business" end
 
-    if not business then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "not_found"
-    end
+        local tier = GetTierByType(business.type)
+        if not tier then return false, "invalid_type" end
 
-    if business.identifier ~= identifier then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "not_owner"
-    end
+        if not meetsReputation(targetSrc, tier) then return false, "target_insufficient_reputation" end
 
-    targetIdentifier = _API.Player.GetIdentifier(targetSrc)
+        local ran, affected = pcall(
+            MySQL.update.await,
+            "UPDATE moneywash_businesses SET identifier = ? WHERE id = ? AND identifier = ?",
+            { targetIdentifier, businessId, identifier }
+        )
 
-    if not targetIdentifier then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "target_not_online"
-    end
+        if not ran or affected ~= 1 then
+            if Config.Debug then
+                print(("[MoneyWash] Transfer database error: %s"):format(tostring(affected)))
+            end
 
-    if not ArePlayersWithinTransferDistance(src, targetSrc) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "target_too_far"
-    end
-
-    local stockMission = GetActiveStockMission(src)
-
-    if stockMission and stockMission.businessId == businessId then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "active_stock_mission"
-    end
-
-    if IsBusinessRaided(businessId) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "raid_in_progress"
-    end
-
-    if HasBusinessDeposit(businessId) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "pending_business_deposit"
-    end
-
-    if IsBusinessInReview(businessId) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "review_in_progress"
-    end
-
-    if PlayerOwnsBusiness(targetIdentifier) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "target_owns_business"
-    end
-
-    local tier = GetTierByType(business.type)
-
-    if not tier then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "invalid_type"
-    end
-
-    if not MeetsReputationRequirement(targetSrc, tier) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "target_insufficient_reputation"
-    end
-
-    local updateSucceeded, affectedRows = pcall(
-        MySQL.update.await, "UPDATE moneywash_businesses SET identifier = ? WHERE id = ? AND identifier = ?", {
-            targetIdentifier,
-            businessId,
-            identifier,
-        }
-    )
-
-    if not updateSucceeded or affectedRows ~= 1 then
-        ReleaseOwnershipLocks(lockKeys)
-
-        if Config.Debug then
-            print(("[MoneyWash] Transfer database error: %s"):format(tostring(affectedRows)))
+            return false, "database_error"
         end
 
-        return false, "database_error"
-    end
+        UpdateBusiness(businessId, "identifier", targetIdentifier)
 
-    UpdateBusiness(businessId, "identifier", targetIdentifier)
-    ReleaseOwnershipLocks(lockKeys)
+        return true
+    end)
+
+    if not success then return false, reason end
 
     TriggerClientEvent("t1ger_moneywash:client:businessTransferred", src, businessId)
-
-    TriggerClientEvent("t1ger_moneywash:client:businessReceived", targetSrc, businessId, business.type,
-        business.locationId)
+    TriggerClientEvent("t1ger_moneywash:client:businessReceived", targetSrc, businessId, business.type, business.locationId)
 
     RunHook("OnBusinessTransferred", identifier, targetIdentifier, businessId, business.type, business.locationId)
     RefreshPortalViewers()
@@ -362,105 +314,49 @@ function TransferBusiness(src, targetSrc, businessId)
     return true, "success"
 end
 
---- Abandons a business with zero refund.
---- Safe balance, stock and all business progress are forfeited.
---- @param src number
---- @param businessId number
---- @return boolean success, string reason
+--- Abandons a business with no refund. Its safe, stock and progress are lost.
+---@param src number
+---@param businessId number
+---@return boolean success
+---@return string reason
 function AbandonBusiness(src, businessId)
     local identifier = _API.Player.GetIdentifier(src)
-    if not identifier then
-        return false, "invalid_player"
-    end
+    if not identifier then return false, "invalid_player" end
 
-    businessId = tonumber(businessId)
-    if not businessId then
-        return false, "not_found"
-    end
+    businessId = toInteger(businessId)
+    if not businessId then return false, "not_found" end
 
-    local business = GetBusiness(businessId)
-    if not business then
-        return false, "not_found"
-    end
+    local business, ownedReason = getOwnedBusiness(identifier, businessId)
+    if not business then return false, ownedReason end
 
-    if business.identifier ~= identifier then
-        return false, "not_owner"
-    end
-
-    local lockKeys = {
-        ("business:%d"):format(businessId),
-        ("owner:%s"):format(identifier),
-        ("location:%s:%d"):format(business.type, business.locationId),
+    local keys = {
+        businessKey(businessId),
+        ownerKey(identifier),
+        locationKey(business.type, business.locationId),
     }
 
-    if not TryAcquireOwnershipLocks(lockKeys) then
-        return false, "operation_in_progress"
-    end
+    local success, reason = withLocks(keys, function()
+        local owned, lockedReason = getOwnedBusiness(identifier, businessId)
+        if not owned then return false, lockedReason end
 
-    -- Revalidate ownership after acquiring the locks.
-    business = GetBusiness(businessId)
+        local busy = getBusyReason(businessId, src)
+        if busy then return false, busy end
 
-    if not business then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "not_found"
-    end
+        local deleted, err = deleteBusiness(businessId, identifier)
+        if not deleted then
+            if Config.Debug then
+                print(("[MoneyWash] Abandon database error: %s"):format(tostring(err)))
+            end
 
-    if business.identifier ~= identifier then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "not_owner"
-    end
-
-    local stockMission = GetActiveStockMission(src)
-
-    if stockMission and stockMission.businessId == businessId then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "active_stock_mission"
-    end
-
-    if IsBusinessRaided(businessId) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "raid_in_progress"
-    end
-
-    if HasBusinessDeposit(businessId) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "pending_business_deposit"
-    end
-
-    if IsBusinessInReview(businessId) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "review_in_progress"
-    end
-
-    local transactionExecuted, transactionSucceeded = pcall(
-        MySQL.transaction.await,
-        {
-            {
-                query = "DELETE FROM moneywash_receipts WHERE business_id = ?",
-                values = { businessId },
-            },
-            {
-                query = "DELETE FROM moneywash_businesses WHERE id = ? AND identifier = ?",
-                values = {
-                    businessId,
-                    identifier,
-                },
-            },
-        }
-    )
-
-    if not transactionExecuted or not transactionSucceeded then
-        ReleaseOwnershipLocks(lockKeys)
-
-        if Config.Debug then
-            print(("[MoneyWash] Abandon database error: %s"):format(tostring(transactionSucceeded)))
+            return false, "database_error"
         end
 
-        return false, "database_error"
-    end
+        RemoveFromStore(businessId)
 
-    RemoveFromStore(businessId)
-    ReleaseOwnershipLocks(lockKeys)
+        return true
+    end)
+
+    if not success then return false, reason end
 
     TriggerClientEvent("t1ger_moneywash:client:businessAbandoned", src, businessId)
     BroadcastBusinessLocations()
@@ -475,116 +371,52 @@ function AbandonBusiness(src, businessId)
     return true, "success"
 end
 
---- ============================================================================
---- ADMIN
---- ============================================================================
-
---- Admin: forcibly adds a business while preserving ownership invariants.
---- Reputation andprice requirements are bypassed.
---- @param identifier string
---- @param businessType string
---- @param locationId number
---- @return boolean success, string reason
+--- Admin: gives a player a business. Skips the reputation and price requirements.
+---@param identifier string
+---@param businessType string
+---@param locationId number
+---@return boolean success
+---@return string reason
 function AdminAddBusiness(identifier, businessType, locationId)
-    if not IsBusinessStoreReady() then
-        return false, "business_store_not_ready"
-    end
+    if not IsBusinessStoreReady() then return false, "business_store_not_ready" end
 
-    if type(identifier) ~= "string" or identifier == "" then
-        return false, "invalid_player"
-    end
+    if type(identifier) ~= "string" or identifier == "" then return false, "invalid_player" end
 
-    if type(businessType) ~= "string" then
-        return false, "invalid_type"
-    end
+    local place, placeReason = resolvePlace(businessType, locationId)
+    if not place then return false, placeReason end
 
-    locationId = tonumber(locationId)
-    if not locationId then
-        return false, "invalid_location"
-    end
+    local id
 
-    local tier = GetTierByType(businessType)
-    if not tier then
-        return false, "invalid_type"
-    end
+    local success, reason = withLocks({ ownerKey(identifier), locationKey(place.type, place.locationId) }, function()
+        if IsLocationOwned(place.type, place.locationId) then return false, "already_owned" end
+        if PlayerOwnsBusiness(identifier) then return false, "already_owns_business" end
 
-    local location = GetLocationConfig(businessType, locationId)
-    if not location or not location.coords then
-        return false, "invalid_location"
-    end
+        local newId, err = insertBusiness(identifier, place)
+        if not newId then
+            if Config.Debug then
+                print(("[MoneyWash] Admin add database error: %s"):format(tostring(err)))
+            end
 
-    local lockKeys = {
-        ("owner:%s"):format(identifier),
-        ("location:%s:%d"):format(businessType, locationId),
-    }
-
-    if not TryAcquireOwnershipLocks(lockKeys) then
-        return false, "operation_in_progress"
-    end
-
-    if IsLocationOwned(businessType, locationId) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "already_owned"
-    end
-
-    if PlayerOwnsBusiness(identifier) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "already_owns_business"
-    end
-
-    local now = os.time()
-
-    local insertSucceeded, id = pcall(
-        MySQL.insert.await,
-        "INSERT INTO moneywash_businesses " ..
-        "(identifier, business_type, location_id, location_x, location_y, location_z, " ..
-        "stock, safe_covered, safe_exposed, suspicion, total_laundered, purchased_at) " ..
-        "VALUES (?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, ?)",
-        {
-            identifier,
-            businessType,
-            locationId,
-            location.coords.x + 0.0,
-            location.coords.y + 0.0,
-            location.coords.z + 0.0,
-            now,
-        }
-    )
-
-    if not insertSucceeded or not id then
-        ReleaseOwnershipLocks(lockKeys)
-
-        if Config.Debug then
-            print(("[MoneyWash] Admin add database error: %s"):format(tostring(id)))
+            return false, "database_error"
         end
 
-        return false, "database_error"
-    end
+        id = newId
 
-    AddToStore(id, {
-        identifier      = identifier,
-        business_type   = businessType,
-        location_id     = locationId,
-        stock           = 0,
-        safe_covered    = 0,
-        safe_exposed    = 0,
-        suspicion       = 0,
-        total_laundered = 0,
-        purchased_at    = now,
-    })
+        return true
+    end)
 
-    ReleaseOwnershipLocks(lockKeys)
+    if not success then return false, reason end
 
     local ownerSrc = GetOnlineSourceByIdentifier(identifier)
     if ownerSrc then
-        TriggerClientEvent("t1ger_moneywash:client:businessPurchased", ownerSrc, id, businessType, locationId)
+        TriggerClientEvent("t1ger_moneywash:client:businessPurchased", ownerSrc, id, place.type, place.locationId)
     end
 
     BroadcastBusinessLocations()
     RefreshPortalViewers()
 
     if Config.Debug then
-        print(("[MoneyWash] Admin added %s #%d to %s"):format(businessType, locationId, identifier))
+        print(("[MoneyWash] Admin added %s #%d to %s"):format(place.type, place.locationId, identifier))
     end
 
     return true, "success"
@@ -592,95 +424,61 @@ end
 
 exports("AddBusiness", AdminAddBusiness)
 
---- Admin: forcibly removes a business and returns its location to the market.
---- @param businessType string
---- @param locationId number
---- @return boolean success, string reason
+--- Admin: removes a business and puts its location back on the market.
+--- An active stock order for it is cancelled and refunded.
+---@param businessType string
+---@param locationId number
+---@return boolean success
+---@return string reason
 function AdminRemoveBusiness(businessType, locationId)
-    if type(businessType) ~= "string" then
-        return false, "invalid_type"
-    end
+    if type(businessType) ~= "string" then return false, "invalid_type" end
 
     locationId = tonumber(locationId)
-    if not locationId then
-        return false, "invalid_location"
-    end
+    if not locationId then return false, "invalid_location" end
 
     local business = GetBusinessByLocation(businessType, locationId)
-    if not business then
-        return false, "not_owned"
-    end
+    if not business then return false, "not_owned" end
 
-    local businessId = business.id
-    local identifier = business.identifier
+    local businessId, identifier = business.id, business.identifier
 
-    local lockKeys = {
-        ("business:%d"):format(businessId),
-        ("owner:%s"):format(identifier),
-        ("location:%s:%d"):format(businessType, locationId),
+    local keys = {
+        businessKey(businessId),
+        ownerKey(identifier),
+        locationKey(businessType, business.locationId),
     }
 
-    if not TryAcquireOwnershipLocks(lockKeys) then
-        return false, "operation_in_progress"
-    end
+    local success, reason = withLocks(keys, function()
+        if GetBusinessByLocation(businessType, locationId) ~= business then return false, "not_owned" end
 
-    -- Revalidate after acquiring the locks.
-    business = GetBusinessByLocation(businessType, locationId)
+        local busy = getBusyReason(businessId)
+        if busy then return false, busy end
 
-    if not business or business.id ~= businessId then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "not_owned"
-    end
+        local deleted, err = deleteBusiness(businessId, identifier)
+        if not deleted then
+            if Config.Debug then
+                print(("[MoneyWash] Admin remove database error: %s"):format(tostring(err)))
+            end
 
-    if IsBusinessRaided(businessId) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "raid_in_progress"
-    end
-
-    if HasBusinessDeposit(businessId) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "pending_business_deposit"
-    end
-
-    if IsBusinessInReview(businessId) then
-        ReleaseOwnershipLocks(lockKeys)
-        return false, "review_in_progress"
-    end
-
-    local transactionExecuted, transactionSucceeded = pcall(
-        MySQL.transaction.await,
-        {
-            { query = "DELETE FROM moneywash_receipts WHERE business_id = ?", values = { businessId } },
-            { query = "DELETE FROM moneywash_businesses WHERE id = ?",        values = { businessId } },
-        }
-    )
-
-    if not transactionExecuted or not transactionSucceeded then
-        ReleaseOwnershipLocks(lockKeys)
-
-        if Config.Debug then
-            print(("[MoneyWash] Admin remove database error: %s"):format(tostring(transactionSucceeded)))
+            return false, "database_error"
         end
 
-        return false, "database_error"
-    end
-
-    -- Refund an active stock order belonging to this business.
-    local ownerSrc = GetOnlineSourceByIdentifier(identifier)
-    if ownerSrc then
-        local mission = GetActiveStockMission(ownerSrc)
+        local ownerSrc = GetOnlineSourceByIdentifier(identifier)
+        local mission = ownerSrc and GetActiveStockMission(ownerSrc)
 
         if mission and mission.businessId == businessId then
             CancelStockMission(ownerSrc)
         end
-    end
 
-    RemoveFromStore(businessId)
-    ReleaseOwnershipLocks(lockKeys)
+        RemoveFromStore(businessId)
 
-    local removedOwnerSrc = GetOnlineSourceByIdentifier(identifier)
-    if removedOwnerSrc then
-        TriggerClientEvent("t1ger_moneywash:client:businessRemoved", removedOwnerSrc, businessId)
+        return true
+    end)
+
+    if not success then return false, reason end
+
+    local ownerSrc = GetOnlineSourceByIdentifier(identifier)
+    if ownerSrc then
+        TriggerClientEvent("t1ger_moneywash:client:businessRemoved", ownerSrc, businessId)
     end
 
     BroadcastBusinessLocations()
