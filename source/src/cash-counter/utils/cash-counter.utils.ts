@@ -1,5 +1,7 @@
-const imageRoot =
-    `${import.meta.env.BASE_URL}images/cash-counter/`
+const imageRoot = `${import.meta.env.BASE_URL}images/cash-counter/`
+
+/** Counting time per pile in ms. */
+export const COUNT_DURATION_MS = 1000
 
 export const cashCounterImages = {
     scene: `${imageRoot}counter-scene.png`,

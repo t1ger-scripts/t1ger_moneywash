@@ -13,7 +13,7 @@ import CounterMachine from './components/CounterMachine.vue'
 import { useCashCounterStore } from './stores/cash-counter.store'
 import { useSceneDrag } from '@/shared/composables/useSceneDrag'
 import { useCounterSound } from './composables/useCounterSound'
-import { cashCounterImages, cashPileGeometry, trayPilePosition } from './utils/cash-counter.utils'
+import { cashCounterImages, cashPileGeometry, COUNT_DURATION_MS, trayPilePosition } from './utils/cash-counter.utils'
 import type { CashPile } from './cash-counter.types'
 import CashPaper from './components/CashPaper.vue'
 import './styles/cash-counter.scss'
@@ -316,7 +316,7 @@ watch(complete, (value) => {
         if (store.payload === session && store.finished) {
             void store.close()
         }
-    }, 1200)
+    }, 400)
 })
 
 function escape(event: KeyboardEvent) {
@@ -342,8 +342,8 @@ onMounted(() => {
     function tick() {
         store.tick(performance.now())
 
-        if (store.running && store.settings) {
-            sound.feed(store.settings.stackDurationMs / 12)
+        if (store.running) {
+            sound.feed(COUNT_DURATION_MS / 12)
         }
 
         animation = requestAnimationFrame(tick)
@@ -398,7 +398,7 @@ onUnmounted(() => {
                 </div>
 
                 <CounterMachine :value="format(store.countedAmount)" :display-state="displayState"
-                    :feeder-label="feederLabel" :running="store.running" :over="feedDrag.over.value" :duration-ms="store.settings?.stackDurationMs ?? 800
+                    :feeder-label="feederLabel" :running="store.running" :over="feedDrag.over.value" :duration-ms="COUNT_DURATION_MS
                         " :collectable="store.canCollect" :collect-label="t('cashCounter.collectPile', {
                             amount: format(store.activeAmount),
                         })

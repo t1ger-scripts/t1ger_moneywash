@@ -201,15 +201,6 @@ Config.BankDeposit = {
     },
 }
 
--- Cash counter: piles shown, counting speed and limits
-Config.CashCounter = {
-    StackCount          = 3,        -- Piles representing the amount (1-20)
-    StackDurationMs     = 1000,     -- Ms to count each pile
-    AutoMoveToRight     = false,    -- true = a counted pile moves to the right tray automatically (loading the next pile stays manual)
-    MaxAmount           = 10000000, -- Max amount per batch
-    InteractionDistance = 5.0,      -- Max distance from the business handler
-}
-
 -- Review books: owners hand stock-delivery receipts to an accountant to lower suspicion
 -- One "cycle of paperwork" = receipts covering the business's expectedRevenue (units x LaunderDollarsPerUnit)
 Config.Review = {

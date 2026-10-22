@@ -4,7 +4,7 @@ import { useUiStore } from '@/shared/stores/ui.store'
 import { installLocaleMessages } from '@/integrations/i18n'
 import { postNui, NUI_CALLBACKS } from '@/integrations/nui'
 import type { CashCounterPayload, CounterPhase } from '../cash-counter.types'
-import { splitCash } from '../utils/cash-counter.utils'
+import { COUNT_DURATION_MS, splitCash } from '../utils/cash-counter.utils'
 
 /**
  * Cash counter minigame. Visual only: it counts the amount it was opened with
@@ -28,7 +28,10 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
     const piles = computed(() => {
         if (!settings.value) return []
 
-        return splitCash(amount.value, settings.value.stackCount)
+        return splitCash(
+            amount.value,
+            Math.min(10, Math.max(1, settings.value.stackCount)),
+        )
     })
 
     const collected = computed(() => completedPileIds.value.length)
@@ -138,13 +141,11 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
 
     /** Advances the pile being counted. Called every animation frame. */
     function tick(now: number) {
-        if (!running.value || !settings.value) return
-
-        const duration = Math.max(100, settings.value.stackDurationMs)
+        if (!running.value) return
 
         progress.value = Math.min(
             1,
-            Math.max(0, (now - startedAt) / duration),
+            Math.max(0, (now - startedAt) / COUNT_DURATION_MS),
         )
 
         if (progress.value < 1) return

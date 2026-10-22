@@ -4,10 +4,9 @@
 
 ---@class CashCounterOptions
 ---@field amount number Whole amount to count, at least 1 (required)
----@field stackCount? integer Piles the amount is split into, 1-20 (default Config.CashCounter.StackCount)
----@field stackDurationMs? integer Counting time per pile in ms, 100-60000 (default Config.CashCounter.StackDurationMs)
+---@field stackCount? integer Piles the amount is split into, 1-10 (default Config.CashCounter.StackCount)
 ---@field autoMoveToRight? boolean A counted pile moves to the right tray by itself (default Config.CashCounter.AutoMoveToRight)
----@field currency? string Symbol shown in front of the amounts (default Config.Currency)
+---@field currency? string Symbol shown in front of the amounts (default "$")
 
 local SCREEN = "cash-counter"
 
@@ -51,26 +50,21 @@ local function buildPayload(options)
 
     local config = Config.CashCounter or {}
 
-    local stackCount = clampedInteger(options.stackCount, config.StackCount or 10, 1, 20)
+    local stackCount = clampedInteger(options.stackCount, config.StackCount or 10, 1, 10)
     if not stackCount then return nil, "stackCount must be a number" end
-
-    local stackDurationMs = clampedInteger(options.stackDurationMs, config.StackDurationMs or 800, 100, 60000)
-    if not stackDurationMs then return nil, "stackDurationMs must be a number" end
 
     local autoMoveToRight = options.autoMoveToRight
     if autoMoveToRight == nil then autoMoveToRight = config.AutoMoveToRight == true end
     if type(autoMoveToRight) ~= "boolean" then return nil, "autoMoveToRight must be true or false" end
 
     local currency = options.currency
-    if currency == nil then currency = Config.Currency or "$" end
-    if type(currency) ~= "string" then return nil, "currency must be text" end
+    if currency ~= nil and type(currency) ~= "string" then return nil, "currency must be text" end
 
     return {
         amount   = amount,
         currency = currency,
         settings = {
             stackCount      = stackCount,
-            stackDurationMs = stackDurationMs,
             autoMoveToRight = autoMoveToRight,
         },
     }
@@ -152,9 +146,9 @@ AddEventHandler("onResourceStop", function(resource)
     end
 end)
 
--- TEMPORARY: /countcash [amount] [stackCount] [stackDurationMs] [double]
+-- TEMPORARY: /countcash [amount] [stackCount] [double]
 RegisterCommand("countcash", function(_, args)
-    if args[4] == "double" then
+    if args[3] == "double" then
         CreateThread(function()
             Wait(500)
             local ok, reason = exports[GetCurrentResourceName()]:OpenCashCounter({ amount = 100 })
@@ -165,7 +159,6 @@ RegisterCommand("countcash", function(_, args)
     local ok, reason = exports[GetCurrentResourceName()]:OpenCashCounter({
         amount          = tonumber(args[1]) or 12500,
         stackCount      = tonumber(args[2]),
-        stackDurationMs = tonumber(args[3]),
     })
 
     print(("[countcash] ok=%s reason=%s"):format(tostring(ok), tostring(reason)))
