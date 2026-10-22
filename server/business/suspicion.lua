@@ -41,7 +41,7 @@ function CalculateSuspicionGain(business, amount, tier)
     local turnoverGain       = (progressAfter ^ 2 - progressBefore ^ 2) * BaseMultiplier
 
     -- Stock modifier
-    local stockConsumed      = GetStockConsumed(amount)
+    local stockConsumed      = GetStockUnitsForAmount(amount)
     local stockModifier      = 1.0
     if business.stock <= 0 then
         stockModifier = 1.0 + (Config.Suspicion.NoStockPenalty / 100)
@@ -76,4 +76,17 @@ function RollPoliceNotification(business, notificationChances)
         local coords = location and location.coords or nil
         SendPoliceNotification(business.suspicion >= 100 and "Max" or label.name, coords, { business = GetBusinessLabel(business) })
     end
+end
+
+--- Returns the suspicion label ({ name, color, threshold }) for a suspicion value.
+---@param value number 0-100
+---@return table
+function GetSuspicionLabel(value)
+    local label = Config.Suspicion.Labels[1]
+
+    for _, entry in ipairs(Config.Suspicion.Labels) do
+        if value >= entry.threshold then label = entry end
+    end
+
+    return label
 end

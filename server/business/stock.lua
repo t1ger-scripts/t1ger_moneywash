@@ -455,3 +455,54 @@ lib.callback.register("t1ger_moneywash:server:cancelStockMission", function(sour
     local success, reason, refund = CancelStockMission(source)
     return { success = success, reason = reason, refund = refund }
 end)
+
+--- Most stock units a business can hold at once.
+---@param businessType string
+---@return number|nil
+function GetStockCapacity(businessType)
+    local tier = GetTierByType(businessType)
+    if not tier then return nil end
+
+    local cfg = Config.Stock
+    local unitsPerCycle = tier.expectedRevenue / cfg.LaunderDollarsPerUnit
+
+    return math.floor(unitsPerCycle * cfg.MaxCapacityCycles)
+end
+
+--- Price of one stock unit. The same for every business type.
+---@param businessType string
+---@return number|nil
+function GetUnitPrice(businessType)
+    if not GetTierByType(businessType) then return nil end
+
+    local cfg = Config.Stock
+
+    return math.floor(cfg.LaunderDollarsPerUnit * (cfg.UnitPricePercent / 100))
+end
+
+--- Smallest order, in units.
+---@param businessType string
+---@return number|nil
+function GetMinOrder(businessType)
+    local capacity = GetStockCapacity(businessType)
+    if not capacity then return nil end
+
+    return math.max(1, math.floor(capacity * (Config.Stock.MinOrderPercent / 100)))
+end
+
+--- Largest order, in units.
+---@param businessType string
+---@return number|nil
+function GetMaxOrder(businessType)
+    local capacity = GetStockCapacity(businessType)
+    if not capacity then return nil end
+
+    return math.floor(capacity * (Config.Stock.MaxOrderPercent / 100))
+end
+
+--- Stock units needed to launder a dollar amount.
+---@param amount number
+---@return number
+function GetStockUnitsForAmount(amount)
+    return math.ceil(amount / Config.Stock.LaunderDollarsPerUnit)
+end

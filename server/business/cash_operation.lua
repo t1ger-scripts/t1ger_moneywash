@@ -110,7 +110,7 @@ local function calculateLaunder(business, amount)
     local suspicion = math.min(100, business.suspicion + CalculateSuspicionGain(business, amount, tier))
 
     return {
-        stock          = math.max(0, business.stock - GetStockConsumed(amount)),
+        stock          = math.max(0, business.stock - GetStockUnitsForAmount(amount)),
         safeCovered    = business.safeCovered + covered,
         safeExposed    = business.safeExposed + exposed,
         suspicion      = suspicion,

@@ -69,3 +69,39 @@ function RunHook(name, ...)
         print(("^1[MoneyWash] Hook %s failed: %s^7"):format(name, tostring(err)))
     end
 end
+
+--- Returns the tier config for a business type.
+---@param businessType string
+---@return table|nil
+function GetTierByType(businessType)
+    for _, tier in pairs(Config.Business.Tiers) do
+        if tier.type == businessType then return tier end
+    end
+
+    return nil
+end
+
+--- Returns the config of one business location.
+---@param businessType string
+---@param locationId number
+---@return table|nil
+function GetLocationConfig(businessType, locationId)
+    local locations = Config.Business.Locations[businessType]
+
+    return locations and locations[locationId] or nil
+end
+
+--- Readable business name for players, e.g. "Gas Station (Ron)".
+---@param business table
+---@return string
+function GetBusinessLabel(business)
+    local tier = GetTierByType(business.type)
+    local label = tier and tier.label or business.type
+
+    local location = GetLocationConfig(business.type, business.locationId)
+    if location and location.brand then
+        label = ("%s (%s)"):format(label, location.brand)
+    end
+
+    return label
+end
