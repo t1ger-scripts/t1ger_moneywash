@@ -70,7 +70,7 @@ server_scripts {
     'server/business/callbacks.lua',
     'server/business/commands.lua',
     'server/business/portal.lua',
-    'server/business/cash_counter.lua',
+    'server/business/cash_operation.lua',
     
     'server/main.lua',
 }

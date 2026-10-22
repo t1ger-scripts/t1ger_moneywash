@@ -174,10 +174,24 @@ Config.Suspicion = {
     },
 }
 
+-- Laundering: dirty cash -> cash counter -> Safe
+Config.Laundering = {
+    MaxPerBatch = 10000000, -- Most dirty cash that can be laundered in one go
+
+    CashCounter = {         -- Cash counter shown when laundering
+        StackCount      = 10,    -- Piles the amount is split into (1-10)
+        AutoMoveToRight = false, -- true = a counted pile moves to the right tray automatically
+    },
+}
+
 -- Bank deposit: Safe -> cash counter -> any ATM -> submit -> wait -> personal bank
 Config.BankDeposit = {
     ProcessingTime   = 10,   -- Minutes for a submitted deposit to clear into the personal bank
     MissionTimeout   = 15,   -- Minutes to reach an ATM after the cash counter finishes
+    CashCounter      = {     -- Cash counter shown when withdrawing from the Safe
+        StackCount      = 10,    -- Piles the amount is split into (1-10)
+        AutoMoveToRight = false, -- true = a counted pile moves to the right tray automatically
+    },
     InteractDistance = 2.0,  -- Range to the ATM
     SubmitDuration   = 5000, -- Ms of the depositing progress bar
     Tax              = 20,   -- % taken once when a Safe balance converts to bank money (0 = off)
