@@ -141,24 +141,56 @@ function FormatMoney(amount)
     return Config.Currency .. result
 end
 
+--- Returns a game label as text, or nil when it is empty or "NULL".
+---@param value any
+---@return string|nil
+local function cleanLabel(value)
+    if type(value) ~= "string" then return nil end
+
+    value = value:match("^%s*(.-)%s*$")
+    if value == "" or value == "NULL" then return nil end
+
+    return value
+end
+
+--- Looks up the street, cross street and zone at a position.
+---@param coords vector3|table
+---@return { street: string|nil, crossingRoad: string|nil, zone: string|nil }
+function GetLocationAddress(coords)
+    local x, y, z = coords.x + 0.0, coords.y + 0.0, coords.z + 0.0
+    local streetHash, crossingHash = GetStreetNameAtCoord(x, y, z)
+
+    local street, crossingRoad, zone
+
+    if streetHash ~= 0 then street = cleanLabel(GetStreetNameFromHashKey(streetHash)) end
+
+    if crossingHash ~= 0 and crossingHash ~= streetHash then
+        crossingRoad = cleanLabel(GetStreetNameFromHashKey(crossingHash))
+    end
+
+    local zoneCode = cleanLabel(GetNameOfZone(x, y, z))
+    if zoneCode then zone = cleanLabel(GetLabelText(zoneCode)) or zoneCode end
+
+    return { street = street, crossingRoad = crossingRoad, zone = zone }
+end
+
 --- Builds a readable location for coords: "Street / Cross street, Zone".
 ---@param coords vector3
 ---@return string
 function GetLocationName(coords)
-    local streetHash, crossingHash = GetStreetNameAtCoord(coords.x, coords.y, coords.z)
-    local location = GetStreetNameFromHashKey(streetHash)
+    local address = GetLocationAddress(coords)
 
-    if crossingHash ~= 0 then
-        local crossing = GetStreetNameFromHashKey(crossingHash)
-        if crossing ~= "" then location = ("%s / %s"):format(location, crossing) end
+    local streets = {}
+    if address.street then streets[#streets + 1] = address.street end
+    if address.crossingRoad then streets[#streets + 1] = address.crossingRoad end
+
+    local name = table.concat(streets, " / ")
+
+    if address.zone then
+        name = name ~= "" and ("%s, %s"):format(name, address.zone) or address.zone
     end
 
-    local zone = GetLabelText(GetNameOfZone(coords.x, coords.y, coords.z))
-    if zone ~= "NULL" and zone ~= "" then
-        location = ("%s, %s"):format(location, zone)
-    end
-
-    return location
+    return name
 end
 
 --- Returns the translated message for a failure reason (error.<reason> in the locales).

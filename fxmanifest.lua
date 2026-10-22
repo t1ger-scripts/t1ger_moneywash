@@ -35,7 +35,7 @@ client_scripts {
     'client/customize.lua',
     'client/ui.lua',
     'client/cash_counter.lua',
-    'client/business/portal.lua',
+    'client/portal.lua',
     'client/business/bank_deposit.lua',
     'client/business/raid.lua',
     'client/business/menu.lua',
