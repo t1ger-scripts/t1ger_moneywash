@@ -219,7 +219,7 @@ local function payDeposit(d)
     RunHook("OnBankDepositCompleted", d.identifier, d.businessId, d.amount, net)
 
     if src then
-        RefreshBusinessPortalViewer(src)
+        RefreshPortalViewer(src)
         TriggerClientEvent("t1ger_moneywash:client:bankDepositEnded", src)
         _API.SendNotification(src, string.format(locale("notification.deposit_cleared"), Config.Currency .. net, Config.Currency .. (d.amount - net)), "success")
     end

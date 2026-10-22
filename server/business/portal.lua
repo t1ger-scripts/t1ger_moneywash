@@ -1,23 +1,38 @@
---- Business portal server: builds marketplace snapshots, validates portal actions and syncs open portals on purchase.
+--- Business portal server: builds the portal snapshot, validates portal actions and refreshes open portals.
 
-local ActivePortalViewers = {}
-local QueuedViewerRefresh = {}
+--- Players who currently have the portal open.
+---@type table<number, boolean>
+local viewers = {}
 
---- Counts the entries in a keyed table.
----@param collection table|nil
----@return number
-local function countEntries(collection)
-    local count = 0
-    for _ in pairs(collection or {}) do
-        count = count + 1
-    end
-    return count
+--- Players with a refresh already waiting (see RefreshPortalViewer).
+---@type table<number, boolean>
+local queuedRefresh = {}
+
+--- Turns coordinates into a plain table the UI can receive.
+---@param coords vector3|vector4|table
+---@return { x: number, y: number, z: number }
+local function toCoordinates(coords)
+    return { x = coords.x + 0.0, y = coords.y + 0.0, z = coords.z + 0.0 }
 end
 
---- Returns reputation progression data for the portal header.
+--- Checks the business type and location id sent by the UI.
+---@param businessType any
+---@param locationId any
+---@return string|nil businessType
+---@return number|string|nil locationId The number, or the failure reason when businessType is nil
+local function parseLocation(businessType, locationId)
+    if type(businessType) ~= "string" then return nil, "invalid_type" end
+
+    locationId = tonumber(locationId)
+    if not locationId then return nil, "invalid_location" end
+
+    return businessType, locationId
+end
+
+--- Reputation data for the portal header.
 ---@param source number
 ---@return table
-local function createInvestorProgress(source)
+local function getInvestorProgress(source)
     if not Config.Reputation.Enable then
         return {
             points = 0,
@@ -41,70 +56,59 @@ local function createInvestorProgress(source)
     }
 end
 
-
-
---- Creates a plain coordinate table safe for NUI serialization.
----@param coordinates vector3|vector4|table
----@return table
-local function serializeCoordinates(coordinates)
-    return {
-        x = coordinates.x + 0.0,
-        y = coordinates.y + 0.0,
-        z = coordinates.z + 0.0,
-    }
-end
-
---- Creates the complete player-specific marketplace payload.
+--- Builds everything the portal shows for one player.
+--- Locked locations and locations owned by others are never included, so their coordinates are never sent.
 ---@param source number
----@return table|nil payload
+---@return table|nil snapshot
 ---@return string|nil reason
-local function createMarketplaceSnapshot(source)
-    if type(IsBusinessStoreReady) == "function"
-        and not IsBusinessStoreReady()
-    then
-        return nil, "business_store_not_ready"
-    end
+local function buildSnapshot(source)
+    if not IsBusinessStoreReady() then return nil, "business_store_not_ready" end
 
-    if Config.Reputation.Enable and type(IsReputationReady) == "function" and not IsReputationReady(source) then
+    if Config.Reputation.Enable and not IsReputationReady(source) then
         return nil, "reputation_not_ready"
     end
 
     local identifier = _API.Player.GetIdentifier(source)
-
-    if not identifier then
-        return nil, "invalid_player"
-    end
+    if not identifier then return nil, "invalid_player" end
 
     local playerBusinesses = GetPlayerBusinesses(identifier)
-    local ownsAnyBusiness = #playerBusinesses > 0
 
-    local ownedLocations = {}
-
+    local ownedByPlayer = {}
     for _, business in ipairs(playerBusinesses) do
-        ownedLocations[("%s:%d"):format(business.type, business.locationId)] = business
+        ownedByPlayer[("%s:%d"):format(business.type, business.locationId)] = business
     end
 
     local reputation = GetPlayerReputation(source)
-    local reputationPoints = reputation and reputation:GetPoints() or 0
-
-    local configuredLocations = Config.Business.Locations
+    local points = reputation and reputation:GetPoints() or 0
 
     local tiers = {}
-    local visibleLocations = {}
+    local locations = {}
 
     for tierNumber, tier in pairs(Config.Business.Tiers) do
-        local tierLocations = configuredLocations[tier.type] or {}
-        local totalLocationCount = countEntries(tierLocations)
+        local unlocked = not Config.Reputation.Enable or points >= tier.requiredPoints
+        local totalCount, availableCount = 0, 0
 
-        local isUnlocked = not Config.Reputation.Enable or reputationPoints >= tier.requiredPoints
+        for locationId, location in pairs(Config.Business.Locations[tier.type] or {}) do
+            local key = ("%s:%d"):format(tier.type, locationId)
+            local owned = ownedByPlayer[key]
+            local available = not IsLocationOwned(tier.type, locationId)
 
-        local availableLocationCount = 0
+            totalCount = totalCount + 1
+            if unlocked and available then availableCount = availableCount + 1 end
 
-        if isUnlocked then
-            for locationId in pairs(tierLocations) do
-                if not IsLocationOwned(tier.type, locationId) then
-                    availableLocationCount = availableLocationCount + 1
-                end
+            if owned or (unlocked and available) then
+                locations[#locations + 1] = {
+                    key = key,
+                    locationId = locationId,
+                    ownedBusinessId = owned and owned.id or nil,
+                    businessType = tier.type,
+                    displayName = location.brand or tier.label,
+                    imageFileName = location.image or ("%s_%03d.webp"):format(tier.type, locationId),
+                    price = location.price,
+                    ownership = owned and "ownedByPlayer" or "available",
+                    coordinates = toCoordinates(location.coords),
+                    address = { street = nil, crossingRoad = nil, zone = nil }, -- Filled in by the client
+                }
             end
         end
 
@@ -114,61 +118,28 @@ local function createMarketplaceSnapshot(source)
             displayName = tier.label,
             requiredInvestorScore = tier.requiredPoints,
             projectedRevenue = tier.expectedRevenue,
-            isUnlocked = isUnlocked,
-            availableLocationCount = availableLocationCount,
-            totalLocationCount = totalLocationCount,
+            isUnlocked = unlocked,
+            availableLocationCount = availableCount,
+            totalLocationCount = totalCount,
         }
-
-        for locationId, location in pairs(tierLocations) do
-            local locationKey = ("%s:%d"):format(tier.type, locationId)
-
-            local ownedBusiness = ownedLocations[locationKey]
-            local isAvailable = not IsLocationOwned(tier.type, locationId)
-
-            -- Locked locations and locations owned by other players are never
-            -- sent to the client, preventing their coordinates being exposed.
-            if ownedBusiness or (isUnlocked and isAvailable) then
-                visibleLocations[#visibleLocations + 1] = {
-                    key = locationKey,
-                    locationId = locationId,
-                    ownedBusinessId = ownedBusiness and ownedBusiness.id or nil,
-                    businessType = tier.type,
-                    displayName = location.brand or tier.label,
-                    imageFileName = location.image or ("%s_%03d.webp"):format(tier.type, locationId),
-                    price = location.price,
-                    ownership = ownedBusiness and "ownedByPlayer" or "available",
-                    coordinates = serializeCoordinates(location.coords),
-                    address = { street = nil, crossingRoad = nil, zone = nil },
-                }
-            end
-        end
     end
 
-    table.sort(tiers, function(firstTier, secondTier)
-        return firstTier.tierNumber < secondTier.tierNumber
-    end)
+    table.sort(tiers, function(a, b) return a.tierNumber < b.tierNumber end)
 
-    table.sort(visibleLocations, function(firstLocation, secondLocation)
-        if firstLocation.businessType == secondLocation.businessType then
-            return firstLocation.locationId < secondLocation.locationId
-        end
-
-        return firstLocation.businessType < secondLocation.businessType
+    table.sort(locations, function(a, b)
+        if a.businessType == b.businessType then return a.locationId < b.locationId end
+        return a.businessType < b.businessType
     end)
 
     return {
         profile = {
             characterName = _API.Player.GetCharacterName(source) or GetPlayerName(source) or locale("general.unknown_investor"),
-
             bankBalance = _API.Player.GetMoney(source, "bank"),
-            ownsBusiness = ownsAnyBusiness,
-
-            investorProgress = createInvestorProgress(source),
+            ownsBusiness = #playerBusinesses > 0,
+            investorProgress = getInvestorProgress(source),
         },
-
         tiers = tiers,
-        locations = visibleLocations,
-
+        locations = locations,
         settings = {
             currencySymbol = Config.Currency or "$",
             theme = Config.WebPortal.Theme or {},
@@ -176,124 +147,94 @@ local function createMarketplaceSnapshot(source)
     }
 end
 
-
---- Prompts every player with an open portal to request a fresh snapshot.
----@param excludedSource number|nil
-function RefreshBusinessPortalViewers(excludedSource)
-    for playerSource in pairs(ActivePortalViewers) do
-        if not GetPlayerName(playerSource) then
-            ActivePortalViewers[playerSource] = nil
-        elseif playerSource ~= excludedSource then
-            TriggerClientEvent("t1ger_moneywash:client:portal:refresh", playerSource)
+--- Asks every open portal to fetch a fresh snapshot.
+---@param excludedSource number|nil Player to skip (the one who already has fresh data)
+function RefreshPortalViewers(excludedSource)
+    for source in pairs(viewers) do
+        if not GetPlayerName(source) then
+            viewers[source] = nil
+        elseif source ~= excludedSource then
+            TriggerClientEvent("t1ger_moneywash:client:portal:refresh", source)
         end
     end
 end
 
---- Refreshes one player's open portal. Calls within 500 ms are merged into one refresh.
----@param playerSource number
-function RefreshBusinessPortalViewer(playerSource)
-    if not ActivePortalViewers[playerSource] or QueuedViewerRefresh[playerSource] then
-        return
-    end
+--- Asks one player's open portal to refresh. Calls within 500 ms are merged into one.
+---@param source number
+function RefreshPortalViewer(source)
+    if not viewers[source] or queuedRefresh[source] then return end
 
-    QueuedViewerRefresh[playerSource] = true
+    queuedRefresh[source] = true
 
     SetTimeout(500, function()
-        QueuedViewerRefresh[playerSource] = nil
+        queuedRefresh[source] = nil
 
-        if ActivePortalViewers[playerSource] and GetPlayerName(playerSource) then
-            TriggerClientEvent("t1ger_moneywash:client:portal:refresh", playerSource)
+        if viewers[source] and GetPlayerName(source) then
+            TriggerClientEvent("t1ger_moneywash:client:portal:refresh", source)
         end
     end)
 end
 
---- Returns the initial portal snapshot and registers the player as a viewer.
+--- Returns the portal snapshot and registers the player as a viewer.
 lib.callback.register("t1ger_moneywash:server:portal:snapshot", function(source)
-    local snapshot, reason = createMarketplaceSnapshot(source)
-
+    local snapshot, reason = buildSnapshot(source)
     if not snapshot then
-        return {success = false, reason = reason or "snapshot_unavailable"}
+        return { success = false, reason = reason or "snapshot_unavailable" }
     end
 
-    ActivePortalViewers[source] = true
-
-    return {success = true, data = snapshot}
-end)
-
---- Performs a server-authoritative purchase using the existing business logic.
-lib.callback.register("t1ger_moneywash:server:portal:purchase", function(source, businessType, locationId)
-    if not ActivePortalViewers[source] then
-        return { success = false, reason = "portal_closed" }
-    end
-
-    if type(businessType) ~= "string" then
-        return { success = false, reason = "invalid_type" }
-    end
-
-    locationId = tonumber(locationId)
-
-    if not locationId then
-        return { success = false, reason = "invalid_location" }
-    end
-
-    local purchaseSucceeded, reason = BuyBusiness(source, businessType, locationId)
-
-    if not purchaseSucceeded then
-        return { success = false, reason = reason or "purchase_failed" }
-    end
-
-    local snapshot, snapshotReason = createMarketplaceSnapshot(source)
-
-    -- Other open portals immediately stop exposing the purchased location.
-    RefreshBusinessPortalViewers(source)
-
-    if not snapshot then
-        return { success = true, reason = snapshotReason }
-    end
+    viewers[source] = true
 
     return { success = true, data = snapshot }
 end)
 
---- Validates ownership before returning waypoint coordinates.
+--- Buys a business. Returns a fresh snapshot and refreshes everyone else's portal.
+lib.callback.register("t1ger_moneywash:server:portal:purchase", function(source, businessType, locationId)
+    if not viewers[source] then return { success = false, reason = "portal_closed" } end
+
+    local parsedType, parsedId = parseLocation(businessType, locationId)
+    if not parsedType then return { success = false, reason = parsedId } end
+
+    local bought, reason = BuyBusiness(source, parsedType, parsedId)
+    if not bought then
+        return { success = false, reason = reason or "purchase_failed" }
+    end
+
+    local snapshot, snapshotReason = buildSnapshot(source)
+
+    RefreshPortalViewers(source) -- Other portals stop showing the location
+
+    if not snapshot then return { success = true, reason = snapshotReason } end
+
+    return { success = true, data = snapshot }
+end)
+
+--- Returns the coordinates of a business the player owns.
 lib.callback.register("t1ger_moneywash:server:portal:waypoint", function(source, businessType, locationId)
-    if not ActivePortalViewers[source] then
-        return { success = false, reason = "portal_closed" }
-    end
+    if not viewers[source] then return { success = false, reason = "portal_closed" } end
 
-    if type(businessType) ~= "string" then
-        return { success = false, reason = "invalid_type" }
-    end
-
-    locationId = tonumber(locationId)
-
-    if not locationId then
-        return { success = false, reason = "invalid_location" }
-    end
+    local parsedType, parsedId = parseLocation(businessType, locationId)
+    if not parsedType then return { success = false, reason = parsedId } end
 
     local identifier = _API.Player.GetIdentifier(source)
-    local business = GetBusinessByLocation(businessType, locationId)
-
+    local business = GetBusinessByLocation(parsedType, parsedId)
     if not identifier or not business or business.identifier ~= identifier then
         return { success = false, reason = "not_owner" }
     end
 
-    local location = GetLocationConfig(businessType, locationId)
-
+    local location = GetLocationConfig(parsedType, parsedId)
     if not location or not location.coords then
         return { success = false, reason = "invalid_location" }
     end
 
-    return {
-        success = true,
-        data = serializeCoordinates(location.coords),
-    }
+    return { success = true, data = toCoordinates(location.coords) }
 end)
 
---- Stops sending refresh events after the player closes the portal.
+--- The player closed the portal: stop sending refreshes.
 RegisterNetEvent("t1ger_moneywash:server:portal:closed", function()
-    ActivePortalViewers[source] = nil
+    viewers[source] = nil
 end)
 
 AddEventHandler("playerDropped", function()
-    ActivePortalViewers[source] = nil
+    viewers[source] = nil
+    queuedRefresh[source] = nil
 end)
