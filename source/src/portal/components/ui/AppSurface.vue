@@ -1,16 +1,5 @@
-<script setup lang="ts">
-withDefaults(
-    defineProps<{
-        elevation?: 'base' | 'raised'
-    }>(),
-    {
-        elevation: 'base',
-    },
-)
-</script>
-
 <template>
-    <div class="app-surface" :class="`app-surface--${elevation}`">
+    <div class="app-surface">
         <slot />
     </div>
 </template>
@@ -19,14 +8,6 @@ withDefaults(
 .app-surface {
     border: var(--border-width) solid var(--color-border);
     border-radius: var(--radius-lg);
-
-    &--base {
-        background: var(--color-surface);
-    }
-
-    &--raised {
-        background: var(--color-surface-raised);
-        box-shadow: var(--shadow-surface);
-    }
+    background: var(--color-surface);
 }
 </style>

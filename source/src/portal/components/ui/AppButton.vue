@@ -1,8 +1,8 @@
 <script setup lang="ts">
 withDefaults(
     defineProps<{
-        variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
-        size?: 'small' | 'medium' | 'large'
+        variant?: 'primary' | 'secondary'
+        size?: 'medium' | 'large'
         type?: 'button' | 'submit' | 'reset'
         disabled?: boolean
         loading?: boolean
@@ -55,12 +55,6 @@ withDefaults(
         opacity: 0.5;
     }
 
-    &--small {
-        min-height: 2.25rem;
-        padding: 0 var(--space-3);
-        font-size: var(--font-size-sm);
-    }
-
     &--medium {
         min-height: 2.75rem;
         padding: 0 var(--space-5);
@@ -94,21 +88,6 @@ withDefaults(
         &:not(:disabled):hover {
             background: var(--color-surface-hover);
         }
-    }
-
-    &--ghost {
-        background: transparent;
-        color: var(--color-text-secondary);
-
-        &:not(:disabled):hover {
-            background: var(--color-surface-hover);
-            color: var(--color-text-primary);
-        }
-    }
-
-    &--danger {
-        background: var(--color-danger);
-        color: var(--color-text-inverse);
     }
 
     &--block {

@@ -112,9 +112,7 @@ Config.WebPortal = {
         SuccessColor       = "#20c985",
         SuccessSubtleColor = "rgb(32 201 133 / 14%)",
         WarningColor       = "#f2b84b",
-        WarningSubtleColor = "rgb(242 184 75 / 14%)",
         DangerColor        = "#ef6262",
-        DangerSubtleColor  = "rgb(239 98 98 / 14%)",
     },
 }
 

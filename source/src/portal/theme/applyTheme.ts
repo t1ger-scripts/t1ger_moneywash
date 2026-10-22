@@ -32,9 +32,7 @@ const themeVariables:
     SuccessColor: '--color-success',
     SuccessSubtleColor: '--color-success-subtle',
     WarningColor: '--color-warning',
-    WarningSubtleColor: '--color-warning-subtle',
     DangerColor: '--color-danger',
-    DangerSubtleColor: '--color-danger-subtle',
 }
 
 function isValidCssColor(value: string): boolean {

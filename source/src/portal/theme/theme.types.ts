@@ -19,9 +19,7 @@ export interface PortalThemeConfig {
     SuccessColor?: string
     SuccessSubtleColor?: string
     WarningColor?: string
-    WarningSubtleColor?: string
     DangerColor?: string
-    DangerSubtleColor?: string
 }
 
 export type ThemeVariableName = `--${string}`

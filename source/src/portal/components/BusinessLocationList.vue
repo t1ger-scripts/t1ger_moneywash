@@ -108,7 +108,7 @@ function updateSearchQuery(value: string): void {
             <div class="business-list__heading">
                 <h2>{{ selectedTier.displayName }}</h2>
 
-                <AppBadge tone="primary" shape="rounded">
+                <AppBadge tone="primary">
                     {{
                         t('portal.tierSelector.tier', {
                             number: selectedTier.tierNumber,

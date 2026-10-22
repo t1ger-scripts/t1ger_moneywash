@@ -65,11 +65,11 @@ const locationLabel = computed(
             </span>
         </span>
 
-        <AppBadge v-if="location.ownership === 'ownedByPlayer'" tone="success" shape="rounded">
+        <AppBadge v-if="location.ownership === 'ownedByPlayer'" tone="success">
             {{ t('portal.businessList.owned') }}
         </AppBadge>
 
-        <AppBadge v-else tone="primary" shape="rounded">
+        <AppBadge v-else tone="primary">
             {{ formattedPrice }}
         </AppBadge>
     </button>

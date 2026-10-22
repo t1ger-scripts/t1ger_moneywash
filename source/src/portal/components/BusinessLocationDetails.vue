@@ -151,7 +151,7 @@ async function setWaypoint(): Promise<void> {
                     <AppBadge :tone="selectedLocation.ownership === 'ownedByPlayer'
                         ? 'success'
                         : 'primary'
-                        " shape="rounded">
+                        ">
                         {{
                             selectedLocation.ownership === 'ownedByPlayer'
                                 ? t('portal.businessDetails.owned')
@@ -170,7 +170,7 @@ async function setWaypoint(): Promise<void> {
                         <Building2 :size="18" aria-hidden="true" />
                         {{ zone }}
 
-                        <AppBadge tone="primary" shape="rounded">
+                        <AppBadge tone="primary">
                             {{
                                 t('portal.tierSelector.tier', {
                                     number: selectedTier.tierNumber,
