@@ -148,27 +148,6 @@
         }
     }
 
-    .counter-error {
-        position: absolute;
-        z-index: 110;
-        top: 2.8%;
-        left: 50%;
-        width: max-content;
-        max-width: 65%;
-        padding: 9px 14px;
-        border: 1px solid #ac805b80;
-        border-radius: 3px;
-        background: #2a1b14f2;
-        color: #f1ceb3;
-        font-size: clamp(
-            10px,
-            calc(var(--scene-unit) * 0.8),
-            15px
-        );
-        text-align: center;
-        transform: translateX(-50%);
-    }
-
     /*
      * The desk now holds positioned interaction regions.
      * It no longer lays out separate machine/tray artwork.

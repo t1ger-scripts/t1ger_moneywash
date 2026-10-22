@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import CashPaper from './CashPaper.vue'
 import CashStacks from './CashStacks.vue'
-import { cashCounterImages } from '../utils/cash-counter.utils'
+import { cashCounterImages, COUNT_DURATION_MS } from '../utils/cash-counter.utils'
 
 const props = defineProps<{
     value: string
@@ -10,7 +10,6 @@ const props = defineProps<{
     feederLabel: string
     running: boolean
     over: boolean
-    durationMs: number
     progress: number
     collectable: boolean
     collectLabel: string
@@ -26,71 +25,37 @@ const emit = defineEmits<{
     collect: []
 }>()
 
-const clamp = (value: number) =>
-    Math.max(0, Math.min(1, value))
+const clamp = (value: number) => Math.max(0, Math.min(1, value))
+
+/** Notes falling through the machine. Purely visual, they are not currency denominations. */
+const NOTE_COUNT = Math.max(12, Math.min(48, Math.round(COUNT_DURATION_MS / 45)))
+
+/** Share of the count one note spends falling; the last note lands exactly at progress 1. */
+const TRAVEL = Math.max(0.08, Math.min(0.3, 190 / COUNT_DURATION_MS))
 
 const progress = computed(() =>
     props.collectable ? 1 : clamp(props.progress),
 )
 
-/*
- * These are visual notes, not currency denominations.
- * The chosen amount and transaction remain in the store.
- */
-const noteCount = computed(() =>
-    Math.max(
-        12,
-        Math.min(48, Math.round(props.durationMs / 45)),
-    ),
-)
-
-/*
- * Reserve part of the duration for the final note to land.
- * The last note finishes exactly at progress === 1.
- */
-const travelFraction = computed(() =>
-    Math.max(
-        0.08,
-        Math.min(0.3, 190 / Math.max(100, props.durationMs)),
-    ),
-)
-
 const notes = computed(() => {
-    const travel = travelFraction.value
-    const spacing = (1 - travel) / (noteCount.value - 1)
+    const spacing = (1 - TRAVEL) / (NOTE_COUNT - 1)
 
-    return Array.from(
-        { length: noteCount.value },
-        (_, index) => {
-            const raw =
-                (progress.value - index * spacing) / travel
+    return Array.from({ length: NOTE_COUNT }, (_, index) => {
+        const raw = (progress.value - index * spacing) / TRAVEL
 
-            return {
-                index,
-                raw,
-                position: clamp(raw),
-            }
-        },
-    )
+        return { index, raw, position: clamp(raw) }
+    })
 })
 
 const movingNotes = computed(() =>
-    notes.value.filter((note) =>
-        note.raw >= 0 && note.raw < 1,
-    ),
+    notes.value.filter((note) => note.raw >= 0 && note.raw < 1),
 )
 
-const receivedFill = computed(() => {
-    const landed = notes.value.filter(
-        (note) => note.raw >= 1,
-    ).length
-
-    return landed / noteCount.value
-})
-
-const inputFill = computed(() =>
-    Math.max(0, 1 - progress.value),
+const receivedFill = computed(
+    () => notes.value.filter((note) => note.raw >= 1).length / NOTE_COUNT,
 )
+
+const inputFill = computed(() => Math.max(0, 1 - progress.value))
 
 const inputStyle = computed(() => ({
     transform: `translateY(${progress.value * 58}%)`,
@@ -98,40 +63,28 @@ const inputStyle = computed(() => ({
 }))
 
 /*
- * The stack box starts at 56% of the output path.
- * Its uppermost sheet rises slightly as thickness increases.
- * Moving notes land at that same upper surface.
+ * The received stack starts at 56% of the output path and its top surface
+ * rises as it gets thicker. Moving notes land on that surface.
  */
-const landingTop = computed(() =>
-    56 + 9.6 * (1 - receivedFill.value),
-)
+const landingTop = computed(() => 56 + 9.6 * (1 - receivedFill.value))
 
 function noteStyle(index: number, position: number) {
     const eased = 1 - (1 - position) ** 1.6
 
-    const top =
-        -26 + (landingTop.value + 26) * eased
+    const top = -26 + (landingTop.value + 26) * eased
 
     const flutter =
-        Math.sin(position * Math.PI * 4 + index) *
-        Math.sin(position * Math.PI)
-
-    const sideways = flutter * 0.35
-    const rotation = flutter * 0.65
-    const flatten = 0.62 + eased * 0.38
+        Math.sin(position * Math.PI * 4 + index) * Math.sin(position * Math.PI)
 
     return {
         top: `${top}%`,
-        left: `${7.7 + sideways}%`,
+        left: `${7.7 + flutter * 0.35}%`,
         zIndex: 20 + index,
         opacity: clamp(position * 9),
-        transform:
-            `scaleY(${flatten}) rotate(${rotation}deg)`,
+        transform: `scaleY(${0.62 + eased * 0.38}) rotate(${flutter * 0.65}deg)`,
         filter: [
             `brightness(${0.78 + eased * 0.14})`,
-            `drop-shadow(0 ${
-                1 + (1 - eased) * 3
-            }px 1px #0005)`,
+            `drop-shadow(0 ${1 + (1 - eased) * 3}px 1px #0005)`,
         ].join(' '),
     }
 }

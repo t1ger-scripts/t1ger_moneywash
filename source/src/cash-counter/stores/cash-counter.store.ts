@@ -4,7 +4,7 @@ import { useUiStore } from '@/shared/stores/ui.store'
 import { installLocaleMessages } from '@/integrations/i18n'
 import { postNui, NUI_CALLBACKS } from '@/integrations/nui'
 import type { CashCounterPayload, CounterPhase } from '../cash-counter.types'
-import { COUNT_DURATION_MS, splitCash } from '../utils/cash-counter.utils'
+import { COUNT_DURATION_MS, MAX_STACKS, splitCash } from '../utils/cash-counter.utils'
 
 /**
  * Cash counter minigame. Visual only: it counts the amount it was opened with
@@ -22,23 +22,26 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
 
     let startedAt = 0
 
-    const settings = computed(() => payload.value?.settings)
     const amount = computed(() => payload.value?.amount ?? 0)
 
-    const piles = computed(() => {
-        if (!settings.value) return []
+    /** Lua's options with the UI defaults filled in. */
+    const settings = computed(() => {
+        const given = payload.value?.settings
 
-        return splitCash(
-            amount.value,
-            Math.min(10, Math.max(1, settings.value.stackCount)),
-        )
+        return {
+            stackCount: Math.min(
+                MAX_STACKS,
+                Math.max(1, Math.floor(given?.stackCount ?? MAX_STACKS)),
+            ),
+            autoMoveToRight: given?.autoMoveToRight ?? false,
+        }
     })
 
-    const collected = computed(() => completedPileIds.value.length)
-
-    const started = computed(
-        () => collected.value > 0 || activePileId.value !== null,
+    const piles = computed(
+        () => splitCash(amount.value, settings.value.stackCount),
     )
+
+    const collected = computed(() => completedPileIds.value.length)
 
     const activeAmount = computed(() => {
         const id = activePileId.value
@@ -48,42 +51,32 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
     const running = computed(() => phase.value === 'counting')
 
     const canLoad = computed(
-        () => !!payload.value &&
-            !finished.value &&
-            phase.value === 'idle' &&
-            collected.value < piles.value.length,
+        () => phase.value === 'idle' && collected.value < piles.value.length,
     )
 
-    const canCollect = computed(
-        () => !finished.value &&
-            phase.value === 'collect' &&
-            activePileId.value !== null,
-    )
+    const canCollect = computed(() => phase.value === 'collect')
 
     const allCollected = computed(
-        () => piles.value.length > 0 &&
-            collected.value === piles.value.length &&
-            phase.value === 'idle',
+        () => phase.value === 'idle' &&
+            piles.value.length > 0 &&
+            collected.value === piles.value.length,
     )
 
     const canFinish = computed(
         () => allCollected.value && !finished.value,
     )
 
+    /** What the machine display shows. */
     const countedAmount = computed(() => {
         const done = completedPileIds.value.reduce(
             (sum, id) => sum + (piles.value[id] ?? 0),
             0,
         )
 
-        if (phase.value === 'collect') {
-            return done + activeAmount.value
-        }
+        if (phase.value === 'collect') return done + activeAmount.value
 
         if (phase.value === 'counting') {
-            return done + Math.floor(
-                activeAmount.value * progress.value,
-            )
+            return done + Math.floor(activeAmount.value * progress.value)
         }
 
         return done
@@ -95,7 +88,6 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
         activePileId.value = null
         progress.value = 0
         finished.value = false
-        startedAt = 0
     }
 
     /** Lua opened the counter. Starts from a clean state every time. */
@@ -112,9 +104,7 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
     function loadPile(pileId: number) {
         if (
             !canLoad.value ||
-            !Number.isInteger(pileId) ||
-            pileId < 0 ||
-            pileId >= piles.value.length ||
+            piles.value[pileId] === undefined ||
             completedPileIds.value.includes(pileId)
         ) return
 
@@ -128,12 +118,7 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
     function collectPile() {
         if (!canCollect.value || activePileId.value === null) return
 
-        const id = activePileId.value
-
-        if (!completedPileIds.value.includes(id)) {
-            completedPileIds.value.push(id)
-        }
-
+        completedPileIds.value.push(activePileId.value)
         activePileId.value = null
         progress.value = 0
         phase.value = 'idle'
@@ -148,9 +133,7 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
             Math.max(0, (now - startedAt) / COUNT_DURATION_MS),
         )
 
-        if (progress.value < 1) return
-
-        phase.value = 'collect'
+        if (progress.value === 1) phase.value = 'collect'
     }
 
     /** The player put the counted cash away: the count is done. */
@@ -191,7 +174,6 @@ export const useCashCounterStore = defineStore('cash-counter', () => {
         phase,
         piles,
         collected,
-        started,
         progress,
         finished,
         activeAmount,
