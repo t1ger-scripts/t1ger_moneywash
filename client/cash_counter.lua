@@ -90,7 +90,7 @@ function OpenCashCounter(options)
 
     CreateThread(function()
         while pending == waiting do
-            Wait(250)
+            Wait(500)
 
             local ped = PlayerPedId()
             if pending == waiting and (IsEntityDead(ped) or IsPedCuffed(ped)) then
