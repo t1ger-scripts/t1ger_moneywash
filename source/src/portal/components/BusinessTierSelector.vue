@@ -2,35 +2,24 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { usePortalFormat } from '@/portal/composables/usePortalFormat'
 import type { PortalTier } from '@/portal/portal.types'
 import { usePortalStore } from '@/portal/stores/portal.store'
-import { formatNumber } from '@/portal/utils/formatters'
 
 import BusinessTypeIcon from './BusinessTypeIcon.vue'
 
 const portalStore = usePortalStore()
-const { locale, t } = useI18n()
+const { t } = useI18n()
+const { formatCount } = usePortalFormat()
 
 const tiers = computed(() => portalStore.tiers)
 
 function isTierAccessible(tier: PortalTier): boolean {
-    if (tier.isUnlocked) return true
-
-    return portalStore.locations.some(
-        (location) =>
-            location.businessType === tier.businessType
-            && location.ownership === 'ownedByPlayer',
-    )
+    return portalStore.canOpenTier(tier.tierNumber)
 }
 
 function isTierSelected(tier: PortalTier): boolean {
     return portalStore.selectedTierNumber === tier.tierNumber
-}
-
-function selectTier(tier: PortalTier): void {
-    if (!isTierAccessible(tier)) return
-
-    portalStore.selectTier(tier.tierNumber)
 }
 
 function createTierLabel(tier: PortalTier): string {
@@ -41,10 +30,7 @@ function createTierLabel(tier: PortalTier): string {
     return [
         tier.displayName,
         t('portal.tierSelector.requiredScore', {
-            score: formatNumber(
-                tier.requiredInvestorScore,
-                locale.value,
-            ),
+            score: formatCount(tier.requiredInvestorScore),
         }),
         status,
     ].join(', ')
@@ -53,13 +39,13 @@ function createTierLabel(tier: PortalTier): string {
 
 <template>
     <nav class="tier-selector" :aria-label="t('portal.tierSelector.ariaLabel')">
-        <div class="tier-selector__track app-scrollbar">
+        <div class="tier-selector__track app-scrollbar" :style="{ '--tier-count': tiers.length }">
             <button v-for="tier in tiers" :key="tier.businessType" class="tier-selector__item" :class="{
                 'tier-selector__item--accessible': isTierAccessible(tier),
                 'tier-selector__item--selected': isTierSelected(tier),
                 'tier-selector__item--locked': !isTierAccessible(tier),
             }" type="button" :disabled="!isTierAccessible(tier)" :aria-pressed="isTierSelected(tier)"
-                :aria-label="createTierLabel(tier)" @click="selectTier(tier)">
+                :aria-label="createTierLabel(tier)" @click="portalStore.selectTier(tier.tierNumber)">
                 <span class="tier-selector__icon">
                     <BusinessTypeIcon :business-type="tier.businessType" :size="26" :stroke-width="2.1" />
                 </span>
@@ -72,10 +58,7 @@ function createTierLabel(tier: PortalTier): string {
                     <span class="tier-selector__requirement">
                         {{
                             t('portal.tierSelector.scoreRequirement', {
-                                score: formatNumber(
-                                    tier.requiredInvestorScore,
-                                    locale,
-                                ),
+                                score: formatCount(tier.requiredInvestorScore),
                             })
                         }}
                     </span>
@@ -95,7 +78,7 @@ function createTierLabel(tier: PortalTier): string {
     &__track {
         display: grid;
         overflow-x: auto;
-        grid-template-columns: repeat(9, minmax(9.5rem, 1fr));
+        grid-template-columns: repeat(var(--tier-count), minmax(9.5rem, 1fr));
         gap: var(--space-2);
         padding-bottom: var(--space-1);
     }
@@ -198,7 +181,7 @@ function createTierLabel(tier: PortalTier): string {
 
         &__track {
             grid-template-columns:
-                repeat(9, minmax(9.25rem, 1fr));
+                repeat(var(--tier-count), minmax(9.25rem, 1fr));
         }
     }
 }

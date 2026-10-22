@@ -4,14 +4,15 @@ import { Building2, ShoppingCart } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { failureMessage } from '@/integrations/i18n'
 import { usePortalActions } from '@/portal/composables/usePortalActions'
+import { usePortalFormat } from '@/portal/composables/usePortalFormat'
 import AppButton from '@/portal/components/ui/AppButton.vue'
 import AppModal from '@/portal/components/ui/AppModal.vue'
 import { usePortalStore } from '@/portal/stores/portal.store'
-import { formatCurrency } from '@/portal/utils/formatters'
 
 const portalStore = usePortalStore()
 const { requestBusinessPurchase } = usePortalActions()
-const { locale, t } = useI18n()
+const { t } = useI18n()
+const { formatMoney } = usePortalFormat()
 
 const errorMessage = ref('')
 
@@ -22,11 +23,7 @@ const location = computed(
 const formattedPrice = computed(() => {
     if (!location.value) return ''
 
-    return formatCurrency(
-        location.value.price,
-        portalStore.currencySymbol,
-        locale.value,
-    )
+    return formatMoney(location.value.price)
 })
 
 const modalTitle = computed(() =>
@@ -55,24 +52,16 @@ async function confirmPurchase(): Promise<void> {
     }
 
     errorMessage.value = ''
-    let purchaseSucceeded = false
 
-    try {
-        const response = await requestBusinessPurchase(
-            selectedLocation,
-        )
+    // requestBusinessPurchase never throws: a failed request comes back as a failed response.
+    const response = await requestBusinessPurchase(selectedLocation)
 
-        purchaseSucceeded = response.success
+    portalStore.finishPurchase()
 
-        if (!response.success) {
-            errorMessage.value = failureMessage(response)
-        }
-    } finally {
-        portalStore.finishPurchase()
-    }
-
-    if (purchaseSucceeded) {
+    if (response.success) {
         portalStore.closePurchaseDialog()
+    } else {
+        errorMessage.value = failureMessage(response)
     }
 }
 </script>

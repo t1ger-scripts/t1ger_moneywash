@@ -5,32 +5,24 @@ const model = defineModel<string>({
     default: '',
 })
 
-withDefaults(
-    defineProps<{
-        label: string
-        placeholder?: string
-        clearLabel?: string
-        disabled?: boolean
-    }>(),
-    {
-        placeholder: '',
-        clearLabel: 'Clear search',
-        disabled: false,
-    },
-)
+defineProps<{
+    label: string
+    clearLabel: string
+    placeholder?: string
+}>()
 </script>
 
 <template>
-    <label class="app-search" :class="{ 'app-search--disabled': disabled }">
+    <label class="app-search">
         <span class="app-search__label">
             {{ label }}
         </span>
 
         <Search class="app-search__search-icon" :size="18" aria-hidden="true" />
 
-        <input v-model="model" type="search" :placeholder="placeholder" :disabled="disabled" />
+        <input v-model="model" type="search" :placeholder="placeholder" />
 
-        <button v-if="model && !disabled" type="button" :aria-label="clearLabel" :title="clearLabel"
+        <button v-if="model" type="button" :aria-label="clearLabel" :title="clearLabel"
             @click="model = ''">
             <X :size="16" aria-hidden="true" />
         </button>
@@ -56,11 +48,6 @@ withDefaults(
     &:focus-within {
         border-color: var(--color-primary);
         box-shadow: var(--focus-ring);
-    }
-
-    &--disabled {
-        cursor: not-allowed;
-        opacity: 0.5;
     }
 
     &__label {

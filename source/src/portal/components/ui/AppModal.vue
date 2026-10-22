@@ -9,18 +9,12 @@ import { X } from '@lucide/vue'
 
 import AppIconButton from './AppIconButton.vue'
 
-const props = withDefaults(
-    defineProps<{
-        open: boolean
-        title: string
-        eyebrow?: string
-        closeLabel?: string
-    }>(),
-    {
-        eyebrow: '',
-        closeLabel: 'Close',
-    },
-)
+const props = defineProps<{
+    open: boolean
+    title: string
+    closeLabel: string
+    eyebrow?: string
+}>()
 
 const emit = defineEmits<{
     close: []

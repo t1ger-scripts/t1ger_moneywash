@@ -6,13 +6,14 @@ import { useI18n } from 'vue-i18n'
 import AppBadge from '@/portal/components/ui/AppBadge.vue'
 import AppSearchInput from '@/portal/components/ui/AppSearchInput.vue'
 import AppSurface from '@/portal/components/ui/AppSurface.vue'
+import { usePortalFormat } from '@/portal/composables/usePortalFormat'
 import { usePortalStore } from '@/portal/stores/portal.store'
-import { formatNumber } from '@/portal/utils/formatters'
 
 import BusinessLocationListItem from './BusinessLocationListItem.vue'
 
 const portalStore = usePortalStore()
-const { locale, t } = useI18n()
+const { t } = useI18n()
+const { formatCount } = usePortalFormat()
 
 const locationListElement = ref<HTMLDivElement | null>(null)
 
@@ -29,24 +30,18 @@ const availabilitySummary = computed(() => {
     if (!tier) return ''
 
     return t('portal.businessList.availability', {
-        available: formatNumber(
-            tier.availableLocationCount,
-            locale.value,
-        ),
-        total: formatNumber(
-            tier.totalLocationCount,
-            locale.value,
-        ),
+        available: formatCount(tier.availableLocationCount),
+        total: formatCount(tier.totalLocationCount),
     })
 })
 
-const emptyStateTranslation = computed(() => {
-    if (portalStore.selectedTierLocations.length === 0) {
-        return 'portal.businessList.noLocations'
-    }
-
-    return 'portal.businessList.noSearchResults'
-})
+const emptyMessage = computed(() =>
+    t(
+        portalStore.selectedTierLocations.length === 0
+            ? 'portal.businessList.noLocations'
+            : 'portal.businessList.noSearchResults',
+    ),
+)
 
 async function scrollSelectedLocationIntoView(
     locationKey: string,
@@ -128,7 +123,7 @@ function updateSearchQuery(value: string): void {
 
         <div v-if="locations.length > 0" ref="locationListElement" class="business-list__locations app-scrollbar">
             <BusinessLocationListItem v-for="location in locations" :key="location.key" :location="location"
-                :currency-symbol="portalStore.currencySymbol" :selected="portalStore.selectedLocationKey === location.key
+                :selected="portalStore.selectedLocationKey === location.key
                     " @select="selectLocation" />
         </div>
 
@@ -137,7 +132,7 @@ function updateSearchQuery(value: string): void {
 
             <Building2 v-else :size="30" aria-hidden="true" />
 
-            <p>{{ t(emptyStateTranslation) }}</p>
+            <p>{{ emptyMessage }}</p>
         </div>
     </AppSurface>
 </template>

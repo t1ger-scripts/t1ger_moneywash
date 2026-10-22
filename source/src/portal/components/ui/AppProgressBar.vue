@@ -1,35 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const props = withDefaults(
-    defineProps<{
-        value: number
-        maximum?: number
-        label: string
-    }>(),
-    {
-        maximum: 100,
-    },
-)
+const props = defineProps<{
+    /** Percentage, 0 to 100. Values outside the range are clamped. */
+    value: number
+    label: string
+}>()
 
-const percentage = computed(() => {
-    if (props.maximum <= 0) {
-        return 0
-    }
-
-    const calculatedPercentage =
-        (props.value / props.maximum) * 100
-
-    return Math.min(
-        100,
-        Math.max(0, calculatedPercentage),
-    )
-})
+const percentage = computed(() => Math.min(100, Math.max(0, props.value)))
 </script>
 
 <template>
-    <div class="app-progress" role="progressbar" :aria-label="label" :aria-valuenow="value" aria-valuemin="0"
-        :aria-valuemax="maximum">
+    <div class="app-progress" role="progressbar" :aria-label="label" :aria-valuenow="percentage" aria-valuemin="0"
+        aria-valuemax="100">
         <span class="app-progress__value" :style="{ width: `${percentage}%` }" />
     </div>
 </template>

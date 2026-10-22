@@ -12,21 +12,18 @@ import { useI18n } from 'vue-i18n'
 
 import { useBusinessImage } from '@/portal/composables/useBusinessImage'
 import { usePortalActions } from '@/portal/composables/usePortalActions'
+import { usePortalFormat } from '@/portal/composables/usePortalFormat'
 import AppBadge from '@/portal/components/ui/AppBadge.vue'
 import AppButton from '@/portal/components/ui/AppButton.vue'
 import AppSurface from '@/portal/components/ui/AppSurface.vue'
 import type { PurchaseBlockReason } from '@/portal/stores/portal.store'
 import { usePortalStore } from '@/portal/stores/portal.store'
-import {
-    formatCurrency,
-    formatNumber,
-} from '@/portal/utils/formatters'
-
 import BusinessTypeIcon from './BusinessTypeIcon.vue'
 
 const portalStore = usePortalStore()
 const { requestBusinessWaypoint } = usePortalActions()
-const { locale, t } = useI18n()
+const { t } = useI18n()
+const { formatCount, formatMoney } = usePortalFormat()
 
 const selectedLocation = computed(
     () => portalStore.selectedLocation,
@@ -65,22 +62,14 @@ const formattedPrice = computed(() => {
     const location = selectedLocation.value
     if (!location) return ''
 
-    return formatCurrency(
-        location.price,
-        portalStore.currencySymbol,
-        locale.value,
-    )
+    return formatMoney(location.price)
 })
 
 const formattedRevenue = computed(() => {
     const tier = selectedTier.value
     if (!tier) return ''
 
-    return formatCurrency(
-        tier.projectedRevenue,
-        portalStore.currencySymbol,
-        locale.value,
-    )
+    return formatMoney(tier.projectedRevenue)
 })
 
 const purchaseBlockReason = computed(
@@ -217,10 +206,7 @@ async function setWaypoint(): Promise<void> {
                         <dd>
                             {{
                                 t('portal.businessDetails.investorScoreValue', {
-                                    points: formatNumber(
-                                        selectedTier.requiredInvestorScore,
-                                        locale,
-                                    ),
+                                    points: formatCount(selectedTier.requiredInvestorScore),
                                 })
                             }}
                         </dd>

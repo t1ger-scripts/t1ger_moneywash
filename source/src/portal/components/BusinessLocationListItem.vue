@@ -5,12 +5,11 @@ import { useI18n } from 'vue-i18n'
 
 import AppBadge from '@/portal/components/ui/AppBadge.vue'
 import { useBusinessImage } from '@/portal/composables/useBusinessImage'
+import { usePortalFormat } from '@/portal/composables/usePortalFormat'
 import type { PortalLocation } from '@/portal/portal.types'
-import { formatCurrency } from '@/portal/utils/formatters'
 
 const props = defineProps<{
     location: PortalLocation
-    currencySymbol: string
     selected: boolean
 }>()
 
@@ -18,18 +17,13 @@ const emit = defineEmits<{
     select: [locationKey: string]
 }>()
 
-const { locale, t } = useI18n()
+const { t } = useI18n()
+const { formatMoney } = usePortalFormat()
 const { imageSource, handleImageError } = useBusinessImage(
     () => props.location.imageFileName,
 )
 
-const formattedPrice = computed(() =>
-    formatCurrency(
-        props.location.price,
-        props.currencySymbol,
-        locale.value,
-    ),
-)
+const formattedPrice = computed(() => formatMoney(props.location.price))
 
 const locationLabel = computed(
     () =>

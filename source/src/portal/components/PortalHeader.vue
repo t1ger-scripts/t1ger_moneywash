@@ -12,33 +12,27 @@ import { useI18n } from 'vue-i18n'
 import AppIconButton from '@/portal/components/ui/AppIconButton.vue'
 import AppProgressBar from '@/portal/components/ui/AppProgressBar.vue'
 import { usePortalActions } from '@/portal/composables/usePortalActions'
+import { usePortalFormat } from '@/portal/composables/usePortalFormat'
 import { usePortalStore } from '@/portal/stores/portal.store'
-import { formatCurrency, formatNumber } from '@/portal/utils/formatters'
 
 const portalStore = usePortalStore()
 const { requestPortalClose } = usePortalActions()
-const { locale, t } = useI18n()
+const { t } = useI18n()
+const { formatCount, formatMoney } = usePortalFormat()
 
 const profile = computed(() => portalStore.profile)
 
 const formattedBankBalance = computed(() => {
     if (!profile.value) return ''
 
-    return formatCurrency(
-        profile.value.bankBalance,
-        portalStore.currencySymbol,
-        locale.value,
-    )
+    return formatMoney(profile.value.bankBalance)
 })
 
 const formattedInvestorScore = computed(() => {
     const progress = profile.value?.investorProgress
     if (!progress) return ''
 
-    const currentPoints = formatNumber(
-        progress.points,
-        locale.value,
-    )
+    const currentPoints = formatCount(progress.points)
 
     if (progress.nextRankPoints == null) {
         return t('portal.header.scorePoints', {
@@ -48,10 +42,7 @@ const formattedInvestorScore = computed(() => {
 
     return t('portal.header.scoreProgressValue', {
         current: currentPoints,
-        next: formatNumber(
-            progress.nextRankPoints,
-            locale.value,
-        ),
+        next: formatCount(progress.nextRankPoints),
     })
 })
 </script>
@@ -118,14 +109,9 @@ const formattedInvestorScore = computed(() => {
 
             <div class="portal-header__separator" />
 
-            <div class="
-          portal-header__account-item
-          portal-header__account-item--score
-        ">
-                <Star class="
-            portal-header__account-icon
-            portal-header__account-icon--score
-          " :size="25" fill="currentColor" aria-hidden="true" />
+            <div class="portal-header__account-item portal-header__account-item--score">
+                <Star class="portal-header__account-icon portal-header__account-icon--score" :size="25"
+                    fill="currentColor" aria-hidden="true" />
 
                 <div class="portal-header__score-content">
                     <div class="portal-header__score-heading">
@@ -138,7 +124,7 @@ const formattedInvestorScore = computed(() => {
                         </strong>
                     </div>
 
-                    <AppProgressBar :value="profile.investorProgress.percentage" :maximum="100"
+                    <AppProgressBar :value="profile.investorProgress.percentage"
                         :label="t('portal.header.investorScoreProgress')" />
                 </div>
             </div>

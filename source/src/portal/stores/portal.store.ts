@@ -95,6 +95,11 @@ export const usePortalStore = defineStore('portal', () => {
     const isPurchaseDialogOpen = computed(() => purchaseDialogLocation.value !== null)
     const isPurchasePending = computed(() => pendingPurchaseLocationKey.value !== null)
 
+    /** Whether the player can open this tier (unlocked, or they own a business in it). */
+    function canOpenTier(tierNumber: number): boolean {
+        return snapshot.value !== null && isTierAccessible(snapshot.value, tierNumber)
+    }
+
     /** Why the player can't buy this location, or null when they can. */
     function getPurchaseBlockReason(location: PortalLocation): PurchaseBlockReason | null {
         const current = snapshot.value
@@ -216,6 +221,7 @@ export const usePortalStore = defineStore('portal', () => {
         isPurchaseDialogOpen,
         isPurchasePending,
 
+        canOpenTier,
         getPurchaseBlockReason,
         replaceSnapshot,
         selectTier,
