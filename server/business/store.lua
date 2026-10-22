@@ -297,3 +297,36 @@ function CheckGlobalCycle()
         print("[MoneyWash] New cycle started, cycleLaundered reset for all businesses")
     end
 end
+
+--- Live status of the player's business, for the Handler menu header. Nil if it isn't theirs.
+lib.callback.register("t1ger_moneywash:server:getBusinessStatus", function(source, businessId)
+    local identifier = _API.Player.GetIdentifier(source)
+    local business = GetBusiness(businessId)
+
+    if not business or business.identifier ~= identifier then return nil end
+
+    if IsBusinessRaided(businessId) then return { raided = true } end
+
+    local tier = GetTierByType(business.type)
+    local label = GetSuspicionLabel(business.suspicion)
+    local deposit = GetBankDepositPublic(identifier)
+
+    return {
+        type            = business.type,
+        locationId      = business.locationId,
+        stock           = business.stock,
+        safeCovered     = business.safeCovered,
+        safeExposed     = business.safeExposed,
+        suspicion       = Config.Suspicion.ShowExactValue and business.suspicion or nil,
+        suspicionLabel  = label.name,
+        suspicionColor  = label.color,
+        cycleLaundered  = business.cycleLaundered,
+        deposit         = deposit and deposit.businessId == businessId and deposit or nil,
+        expectedRevenue = tier and tier.expectedRevenue or 0,
+        unitPrice       = GetUnitPrice(business.type),
+        minOrder        = GetMinOrder(business.type),
+        maxOrder        = GetMaxOrder(business.type),
+        reviewActive    = IsBusinessInReview(businessId),
+        reviewCooldown  = GetReviewCooldownRemaining(businessId),
+    }
+end)

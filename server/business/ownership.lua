@@ -492,3 +492,17 @@ function AdminRemoveBusiness(businessType, locationId)
 end
 
 exports("RemoveBusiness", AdminRemoveBusiness)
+
+--- Transfers the player's business to another player.
+lib.callback.register("t1ger_moneywash:server:transferBusiness", function(source, targetId, businessId)
+    local success, reason = TransferBusiness(source, targetId, businessId)
+
+    return { success = success, reason = reason }
+end)
+
+--- Abandons the player's business.
+lib.callback.register("t1ger_moneywash:server:abandonBusiness", function(source, businessId)
+    local success, reason = AbandonBusiness(source, businessId)
+
+    return { success = success, reason = reason }
+end)

@@ -41,6 +41,23 @@ AddEventHandler("playerDropped", function()
     OnPlayerDroppedStockCleanup(src)
 end)
 
+--- Display names for a list of player server ids (the nearby players shown when transferring).
+lib.callback.register("t1ger_moneywash:server:getPlayerNames", function(_, serverIds)
+    local names = {}
+
+    if type(serverIds) ~= "table" then return names end
+
+    for _, targetSrc in ipairs(serverIds) do
+        if type(targetSrc) == "number" then
+            names[targetSrc] = (Config.UseCharacterNames and _API.Player.GetCharacterName(targetSrc))
+                or GetPlayerName(targetSrc)
+                or ("Player %d"):format(targetSrc)
+        end
+    end
+
+    return names
+end)
+
 --- -------------------------------------------------------------------------
 --- MASTER TICK — fires every real minute
 --- -------------------------------------------------------------------------
