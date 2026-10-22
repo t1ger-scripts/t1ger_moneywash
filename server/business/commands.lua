@@ -43,13 +43,3 @@ RegisterCommand("moneywash:removebusiness", function(src, args)
         or ("Failed: %s"):format(reason)
     if isConsole then print(msg) else _API.SendNotification(src, msg, success and "success" or "error") end
 end, true)
-
-RegisterCommand("moneywash:forcecycle", function(src, args)
-    local isConsole = (src == 0)
-    if not isConsole and not _API.Player.IsAdmin(src) then return end
-
-    ForceGlobalCycle()
-
-    local msg = ("Cycle forced — now on cycle %d"):format(GetCurrentCycle())
-    if isConsole then print(msg) else _API.SendNotification(src, msg, "success") end
-end, true)

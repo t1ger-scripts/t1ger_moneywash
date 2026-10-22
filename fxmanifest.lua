@@ -59,8 +59,6 @@ server_scripts {
     'server/portal.lua',
 
     'server/business/store.lua',
-    'server/business/persistence.lua',
-    'server/business/cycle.lua',
     'server/business/suspicion.lua',
     'server/business/ownership.lua',
     'server/business/bank_deposit.lua',
