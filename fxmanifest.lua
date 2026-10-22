@@ -62,7 +62,6 @@ server_scripts {
     'server/business/cycle.lua',
     'server/business/suspicion.lua',
     'server/business/ownership.lua',
-    'server/business/laundering.lua',
     'server/business/bank_deposit.lua',
     'server/business/raid.lua',
     'server/business/review.lua',

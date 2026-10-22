@@ -12,7 +12,7 @@
 ---@field working? boolean True while taking the money or saving
 ---@field applied? boolean True once the change is applied to the business in memory (blocks autosave)
 ---@field persisted? boolean True once the operation's own data is saved, so a retry doesn't save it twice
----@field result? table Launder: label change info from BuildCashInjection
+---@field result? table Launder: label change info from buildCashInjection
 ---@field deposit? table Withdraw: the new bank deposit record
 ---@field nextRetry? integer GetGameTimer() value before which saving isn't retried
 
@@ -78,6 +78,79 @@ local function playerBusiness(src, businessId)
     return business
 end
 
+--- Splits a launder into covered (stock-backed, raid-safe) and exposed (raid-seizable) cash.
+--- Step 1: expectedRevenue check (the overage is always exposed)
+--- Step 2: stock check (the part of the rest that stock can't support is exposed)
+---@param business table
+---@param amount integer Gross amount being laundered
+---@param tier table
+---@return integer covered
+---@return integer exposed
+local function calculateCoveredExposed(business, amount, tier)
+    local remaining = math.max(0, tier.expectedRevenue - business.cycleLaundered)
+    local withinRevenue = math.min(amount, remaining)
+    local overRevenue = amount - withinRevenue
+
+    local stockSupported = math.min(withinRevenue, business.stock * Config.Stock.LaunderDollarsPerUnit)
+
+    return math.floor(stockSupported), math.floor(overRevenue + (withinRevenue - stockSupported))
+end
+
+--- What laundering `amount` does to the business: the new Safe, stock, suspicion and totals.
+--- Pure calculation, nothing is changed here.
+---@param business table
+---@param amount integer
+---@return table|nil fields Business fields to update, nil if the business has no tier
+---@return table|nil result Covered/exposed split and the suspicion label before and after
+local function buildCashInjection(business, amount)
+    local tier = GetTierByType(business.type)
+    if not tier then return nil end
+
+    local covered, exposed = calculateCoveredExposed(business, amount, tier)
+    local suspicion = math.min(100, business.suspicion + CalculateSuspicionGain(business, amount, tier))
+
+    return {
+        stock          = math.max(0, business.stock - GetStockConsumed(amount)),
+        safeCovered    = business.safeCovered + covered,
+        safeExposed    = business.safeExposed + exposed,
+        suspicion      = suspicion,
+        totalLaundered = business.totalLaundered + amount,
+        cycleLaundered = business.cycleLaundered + amount,
+    }, {
+        oldLabel = GetSuspicionLabel(business.suspicion),
+        newLabel = GetSuspicionLabel(suspicion),
+        covered  = covered,
+        exposed  = exposed,
+    }
+end
+
+--- Side effects of a launder. Runs only after the result is saved, never on a client event.
+---@param src integer|nil Owner source, nil if offline
+---@param identifier string
+---@param businessId integer
+---@param amount integer
+---@param result table From buildCashInjection
+local function publishCashInjection(src, identifier, businessId, amount, result)
+    local business = GetBusiness(businessId)
+    if not business then return end
+
+    RunHook("OnMoneyLaundered", identifier, businessId, business.type, amount, result.covered, result.exposed)
+
+    if src then
+        TriggerClientEvent("t1ger_moneywash:client:moneyLaundered", src, amount, result.covered, result.exposed)
+    end
+
+    if Config.Reputation.Enable and Config.Reputation.Rewards.launder.enable then
+        AwardReputationPoints(src, identifier, Config.Reputation.Rewards.launder.points)
+    end
+
+    RollPoliceNotification(business)
+
+    if src and Config.Suspicion.NotifyOnLabelChange and result.newLabel.threshold > result.oldLabel.threshold then
+        TriggerClientEvent("t1ger_moneywash:client:suspicionLabelChanged", src, result.newLabel)
+    end
+end
+
 --- What differs between the operations. Everything else in this file is shared.
 ---@class CashOperation
 ---@field limits fun(src: integer, business: table): table|nil, string? Data for the amount dialog (max, ...), or nil and a reason
@@ -112,7 +185,7 @@ Operations.launder = {
 
     persist = function(row, business)
         if not row.applied then
-            local fields, result = BuildCashInjection(business, row.amount)
+            local fields, result = buildCashInjection(business, row.amount)
             if not fields then return false end
 
             row.result, row.applied = result, true
@@ -123,7 +196,7 @@ Operations.launder = {
     end,
 
     publish = function(src, row)
-        PublishCashInjection(src, row.identifier, row.businessId, row.amount, row.result)
+        publishCashInjection(src, row.identifier, row.businessId, row.amount, row.result)
     end,
 }
 

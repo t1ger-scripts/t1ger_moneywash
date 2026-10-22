@@ -47,7 +47,6 @@ local function SpawnHandlerNPC(data)
 
     while not _Target do Wait(100) end
 
-    -- Despawned while we were waiting
     if HandlerNPCs[businessId] ~= ped then return end
 
     _API.Target.AddLocalEntity(ped, {
@@ -82,7 +81,6 @@ local function SpawnHandlerNPC(data)
             distance    = Config.Police.Raid.Target.distance,
             canInteract = function(entity)
                 if not Config.Police.Raid.Enable then return false end
-                -- Owners can't raid themselves (Config.Debug allows it for testing)
                 if OwnedBusinesses[businessId] and not Config.Debug then return false end
                 if not IsPoliceJobWithGrade(Config.Police.Raid.MinGrade) then return false end
                 return IsEntityValid(entity) and not IsPedInAnyVehicle(PlayerPedId(), false)
@@ -157,7 +155,6 @@ CreateThread(function()
                 entry.near = true
                 CreateThread(function()
                     SpawnHandlerNPC(entry.data)
-                    -- Player left while the ped was still spawning
                     if not entry.near then DespawnHandlerNPC(businessId) end
                 end)
             elseif not isNear and entry.near then
