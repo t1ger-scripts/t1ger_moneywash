@@ -12,7 +12,7 @@
 ---@field working? boolean True while taking the money or saving
 ---@field applied? boolean True once the change is applied to the business in memory (blocks autosave)
 ---@field persisted? boolean True once the operation's own data is saved, so a retry doesn't save it twice
----@field result? table Launder: label change info from buildCashInjection
+---@field result? table Launder: label change info from calculateLaunder
 ---@field deposit? table Withdraw: the new bank deposit record
 ---@field nextRetry? integer GetGameTimer() value before which saving isn't retried
 
@@ -86,7 +86,7 @@ end
 ---@param tier table
 ---@return integer covered
 ---@return integer exposed
-local function calculateCoveredExposed(business, amount, tier)
+local function splitLaunderedCash(business, amount, tier)
     local remaining = math.max(0, tier.expectedRevenue - business.cycleLaundered)
     local withinRevenue = math.min(amount, remaining)
     local overRevenue = amount - withinRevenue
@@ -102,11 +102,11 @@ end
 ---@param amount integer
 ---@return table|nil fields Business fields to update, nil if the business has no tier
 ---@return table|nil result Covered/exposed split and the suspicion label before and after
-local function buildCashInjection(business, amount)
+local function calculateLaunder(business, amount)
     local tier = GetTierByType(business.type)
     if not tier then return nil end
 
-    local covered, exposed = calculateCoveredExposed(business, amount, tier)
+    local covered, exposed = splitLaunderedCash(business, amount, tier)
     local suspicion = math.min(100, business.suspicion + CalculateSuspicionGain(business, amount, tier))
 
     return {
@@ -129,8 +129,8 @@ end
 ---@param identifier string
 ---@param businessId integer
 ---@param amount integer
----@param result table From buildCashInjection
-local function publishCashInjection(src, identifier, businessId, amount, result)
+---@param result table From calculateLaunder
+local function publishLaunder(src, identifier, businessId, amount, result)
     local business = GetBusiness(businessId)
     if not business then return end
 
@@ -185,7 +185,7 @@ Operations.launder = {
 
     persist = function(row, business)
         if not row.applied then
-            local fields, result = buildCashInjection(business, row.amount)
+            local fields, result = calculateLaunder(business, row.amount)
             if not fields then return false end
 
             row.result, row.applied = result, true
@@ -196,7 +196,7 @@ Operations.launder = {
     end,
 
     publish = function(src, row)
-        publishCashInjection(src, row.identifier, row.businessId, row.amount, row.result)
+        publishLaunder(src, row.identifier, row.businessId, row.amount, row.result)
     end,
 }
 
