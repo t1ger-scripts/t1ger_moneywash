@@ -101,7 +101,7 @@ end
 --- Requests the player's current authoritative marketplace snapshot.
 ---@return table|nil response
 local function requestMarketplaceSnapshot()
-    local callbackSucceeded, response = pcall(lib.callback.await, "t1ger_moneywash:server:businessPortal:getSnapshot", false)
+    local callbackSucceeded, response = pcall(lib.callback.await, "t1ger_moneywash:server:portal:snapshot", false)
 
     if not callbackSucceeded then
         if Config.Debug then
@@ -206,15 +206,15 @@ function closeBusinessPortal(notifyNui)
     isPortalOpen = false
     isPortalOpening = false
 
-    TriggerServerEvent("t1ger_moneywash:server:businessPortal:closed")
+    TriggerServerEvent("t1ger_moneywash:server:portal:closed")
 end
 
 --- Allows other client files to open the portal without duplicating logic.
-RegisterNetEvent( "t1ger_moneywash:client:businessPortal:open", OpenBusinessPortal)
+RegisterNetEvent( "t1ger_moneywash:client:portal:open", OpenBusinessPortal)
 exports("OpenBusinessPortal", OpenBusinessPortal)
 
 --- The server requests fresh data when marketplace availability changes.
-RegisterNetEvent("t1ger_moneywash:client:businessPortal:refresh", function()
+RegisterNetEvent("t1ger_moneywash:client:portal:refresh", function()
     refreshBusinessPortal()
 end)
 
@@ -231,7 +231,7 @@ RegisterNUICallback("t1ger_moneywash:portal:close", function(_, callback)
 end)
 
 --- Vue submits a confirmed business purchase.
-RegisterNUICallback("t1ger_moneywash:portal:purchaseBusiness", function(request, callback)
+RegisterNUICallback("t1ger_moneywash:portal:purchase", function(request, callback)
     if not isPortalOpen then
         callback(ErrorResponse("portal_closed"))
         return
@@ -242,7 +242,7 @@ RegisterNUICallback("t1ger_moneywash:portal:purchaseBusiness", function(request,
         return
     end
 
-    local callbackSucceeded, response = pcall(lib.callback.await, "t1ger_moneywash:server:businessPortal:purchaseBusiness", false, request.businessType, request.locationId)
+    local callbackSucceeded, response = pcall(lib.callback.await, "t1ger_moneywash:server:portal:purchase", false, request.businessType, request.locationId)
 
     if not callbackSucceeded or type(response) ~= "table" then
         callback(ErrorResponse("request_failed"))
@@ -264,7 +264,7 @@ RegisterNUICallback("t1ger_moneywash:portal:purchaseBusiness", function(request,
 end)
 
 --- Vue requests a waypoint for the player's owned business.
-RegisterNUICallback("t1ger_moneywash:portal:setBusinessWaypoint", function(request, callback)
+RegisterNUICallback("t1ger_moneywash:portal:waypoint", function(request, callback)
     if not isPortalOpen then
         callback({success = false, reason = "portal_closed" })
         return
@@ -275,7 +275,7 @@ RegisterNUICallback("t1ger_moneywash:portal:setBusinessWaypoint", function(reque
         return
     end
 
-    local callbackSucceeded, response = pcall(lib.callback.await, "t1ger_moneywash:server:businessPortal:getWaypoint", false, request.businessType, request.locationId)
+    local callbackSucceeded, response = pcall(lib.callback.await, "t1ger_moneywash:server:portal:waypoint", false, request.businessType, request.locationId)
 
     if not callbackSucceeded or type(response) ~= "table" then
         callback({ success = false, reason = "request_failed" })

@@ -37,7 +37,7 @@ export function usePortalActions() {
     ): Promise<NuiResponse> {
         try {
             return await postNui<NuiResponse, PurchaseBusinessRequest>(
-                NUI_CALLBACKS.purchaseBusiness,
+                NUI_CALLBACKS.purchase,
                 {
                     businessType: location.businessType,
                     locationId: location.locationId,
@@ -61,7 +61,7 @@ export function usePortalActions() {
     ): Promise<boolean> {
         try {
             const response = await postNui<NuiResponse, SetBusinessWaypointRequest>(
-                NUI_CALLBACKS.setBusinessWaypoint,
+                NUI_CALLBACKS.waypoint,
                 {
                     businessType: location.businessType,
                     locationId: location.locationId,

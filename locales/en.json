@@ -188,6 +188,8 @@
         "business_store_not_ready": "The business system is still loading. Please try again.",
         "reputation_not_ready": "The business system is still loading. Please try again.",
         "snapshot_unavailable": "The business portal is currently unavailable.",
+        "portal_closed": "The business portal is closed.",
+        "invalid_request": "Invalid request",
         "purchase_failed": "The purchase could not be completed. Please try again.",
         "insufficient_funds": "You don't have enough money",
         "self_transfer": "You cannot transfer a business to yourself",

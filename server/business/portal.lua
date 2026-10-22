@@ -184,7 +184,7 @@ function RefreshBusinessPortalViewers(excludedSource)
         if not GetPlayerName(playerSource) then
             ActivePortalViewers[playerSource] = nil
         elseif playerSource ~= excludedSource then
-            TriggerClientEvent("t1ger_moneywash:client:businessPortal:refresh", playerSource)
+            TriggerClientEvent("t1ger_moneywash:client:portal:refresh", playerSource)
         end
     end
 end
@@ -202,13 +202,13 @@ function RefreshBusinessPortalViewer(playerSource)
         QueuedViewerRefresh[playerSource] = nil
 
         if ActivePortalViewers[playerSource] and GetPlayerName(playerSource) then
-            TriggerClientEvent("t1ger_moneywash:client:businessPortal:refresh", playerSource)
+            TriggerClientEvent("t1ger_moneywash:client:portal:refresh", playerSource)
         end
     end)
 end
 
 --- Returns the initial portal snapshot and registers the player as a viewer.
-lib.callback.register("t1ger_moneywash:server:businessPortal:getSnapshot", function(source)
+lib.callback.register("t1ger_moneywash:server:portal:snapshot", function(source)
     local snapshot, reason = createMarketplaceSnapshot(source)
 
     if not snapshot then
@@ -221,7 +221,7 @@ lib.callback.register("t1ger_moneywash:server:businessPortal:getSnapshot", funct
 end)
 
 --- Performs a server-authoritative purchase using the existing business logic.
-lib.callback.register("t1ger_moneywash:server:businessPortal:purchaseBusiness", function(source, businessType, locationId)
+lib.callback.register("t1ger_moneywash:server:portal:purchase", function(source, businessType, locationId)
     if not ActivePortalViewers[source] then
         return { success = false, reason = "portal_closed" }
     end
@@ -255,7 +255,7 @@ lib.callback.register("t1ger_moneywash:server:businessPortal:purchaseBusiness", 
 end)
 
 --- Validates ownership before returning waypoint coordinates.
-lib.callback.register("t1ger_moneywash:server:businessPortal:getWaypoint", function(source, businessType, locationId)
+lib.callback.register("t1ger_moneywash:server:portal:waypoint", function(source, businessType, locationId)
     if not ActivePortalViewers[source] then
         return { success = false, reason = "portal_closed" }
     end
@@ -290,7 +290,7 @@ lib.callback.register("t1ger_moneywash:server:businessPortal:getWaypoint", funct
 end)
 
 --- Stops sending refresh events after the player closes the portal.
-RegisterNetEvent("t1ger_moneywash:server:businessPortal:closed", function()
+RegisterNetEvent("t1ger_moneywash:server:portal:closed", function()
     ActivePortalViewers[source] = nil
 end)
 

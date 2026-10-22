@@ -13,8 +13,8 @@ export const NUI_CALLBACKS = {
     reviewClose: 't1ger_moneywash:review:close',
 
     ready: 't1ger_moneywash:portal:ready',
-    purchaseBusiness: 't1ger_moneywash:portal:purchaseBusiness',
-    setBusinessWaypoint: 't1ger_moneywash:portal:setBusinessWaypoint',
+    purchase: 't1ger_moneywash:portal:purchase',
+    waypoint: 't1ger_moneywash:portal:waypoint',
     close: 't1ger_moneywash:portal:close',
 } as const
 
