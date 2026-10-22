@@ -1,12 +1,10 @@
 import type { LocaleMessages } from '@/integrations/i18n'
 
-/** Optional: anything Lua leaves out falls back to the UI default. */
 export interface CashCounterSettings {
     stackCount?: number
     autoMoveToRight?: boolean
 }
 
-/** Sent by Lua when OpenCashCounter is called. */
 export interface CashCounterPayload {
     amount: number
     currency?: string
