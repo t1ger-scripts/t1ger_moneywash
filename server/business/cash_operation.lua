@@ -151,6 +151,41 @@ local function publishLaunder(src, identifier, businessId, amount, result)
     end
 end
 
+--- Returns a reason if the owner can't withdraw `amount` from the Safe, otherwise nil.
+---@param business table
+---@param amount integer
+---@return string|nil reason deposit_pending or insufficient_safe_cash
+local function withdrawDenied(business, amount)
+    if HasActiveDeposit(business.identifier) then return "deposit_pending" end
+    if business.safeCovered + business.safeExposed < amount then return "insufficient_safe_cash" end
+end
+
+--- Removes `amount` from the Safe in memory (exposed first, then covered) and returns the new
+--- deposit record. The mission file saves it (PersistBankDepositStart).
+---@param business table
+---@param amount integer
+---@return table deposit
+local function withdrawFromSafe(business, amount)
+    local exposed = math.min(amount, business.safeExposed)
+    local covered = amount - exposed
+
+    UpdateBusinessFields(business.id, {
+        safeExposed = business.safeExposed - exposed,
+        safeCovered = business.safeCovered - covered,
+    })
+
+    return {
+        identifier = business.identifier,
+        businessId = business.id,
+        amount     = amount,
+        covered    = covered,
+        exposed    = exposed,
+        state      = "enroute",
+        flagged    = false,
+        createdAt  = os.time(),
+    }
+end
+
 --- What differs between the operations. Everything else in this file is shared.
 ---@class CashOperation
 ---@field limits fun(src: integer, business: table): table|nil, string? Data for the amount dialog (max, ...), or nil and a reason
@@ -202,7 +237,7 @@ Operations.launder = {
 
 Operations.withdraw = {
     limits = function(src, business)
-        local denied = CanStartBankDeposit(business, 1)
+        local denied = withdrawDenied(business, 1)
         if denied then return nil, denied end
 
         return {
@@ -214,10 +249,10 @@ Operations.withdraw = {
 
     take = function(src, business, amount, row)
         -- Nothing yields between this check and the removal, so it can't race.
-        local denied = CanStartBankDeposit(business, amount)
+        local denied = withdrawDenied(business, amount)
         if denied then return denied end
 
-        row.deposit = ApplyBankDepositWithdrawal(business, amount)
+        row.deposit = withdrawFromSafe(business, amount)
         row.applied = true -- Blocks autosave until the deposit is written
     end,
 

@@ -78,38 +78,8 @@ function HasBusinessDeposit(businessId)
 end
 
 --- -------------------------------------------------------------------------
---- WITHDRAW (called by cash_operation.lua)
+--- START (called by cash_operation.lua)
 --- -------------------------------------------------------------------------
-
---- Returns an error key if the owner can't start a deposit of `amount`, otherwise nil.
-function CanStartBankDeposit(business, amount)
-    if Deposits[business.identifier] then return "deposit_pending" end
-    if (business.safeCovered + business.safeExposed) < amount then return "insufficient_safe_cash" end
-    return nil
-end
-
---- Removes `amount` from the Safe in memory (exposed first, then covered).
---- Returns the new deposit record. Persisted afterwards by PersistBankDepositStart.
-function ApplyBankDepositWithdrawal(business, amount)
-    local exposed = math.min(amount, business.safeExposed)
-    local covered = amount - exposed
-
-    UpdateBusinessFields(business.id, {
-        safeExposed = business.safeExposed - exposed,
-        safeCovered = business.safeCovered - covered,
-    })
-
-    return {
-        identifier = business.identifier,
-        businessId = business.id,
-        amount     = amount,
-        covered    = covered,
-        exposed    = exposed,
-        state      = "enroute",
-        flagged    = false,
-        createdAt  = os.time(),
-    }
-end
 
 --- Writes the reduced Safe and the deposit row in ONE transaction.
 --- Returns false on failure so the cash operation retries.
