@@ -76,7 +76,9 @@
             "amount_label": "Amount to deposit (available: %s)",
             "exposed_desc": "Exposed: %s | Covered: %s\n\nExposed funds are drawn first.",
             "cancel_title": "Cancel Deposit",
-            "cancel_body": "Cancel the deposit and return the cash to your Safe?"
+            "cancel_body": "Cancel the deposit and return the cash to your Safe?",
+            "bag_title": "Choose a cash bag",
+            "bag_from": "From %s"
         },
         "review": {
             "cancel_title": "Cancel Review",
@@ -134,6 +136,7 @@
         "deposit_refunded": "Bank deposit cancelled. %s returned to your Safe.",
         "deposit_confiscated": "Police confiscated your pending bank deposit.",
         "deposit_head_to_atm": "Take the cash to any ATM within %d minutes",
+        "cash_bag_received": "You received a cash bag worth %s. Take it to any ATM.",
         "raid_started": "Police are raiding your business!",
         "raid_ended": "The police raid on your business has ended.",
         "raid_seized_owner": "Police seized %s from your Safe.",
@@ -152,7 +155,8 @@
             "High": "Suspicious business activity flagged at %s near %s",
             "Critical": "High-risk laundering activity detected at %s near %s",
             "Max": "Laundering operation at %s is fully exposed, near %s",
-            "Deposit": "Suspicious ATM deposit of %s flagged near %s"
+            "Deposit": "Suspicious ATM deposit of %s flagged near %s",
+            "StolenDeposit": "Cash deposited under someone else's name: %s near %s"
         }
     },
     "progress": {
@@ -209,6 +213,10 @@
         "invalid_atm": "That's not a valid ATM",
         "deposit_pending": "You already have a bank deposit in progress",
         "no_pending_deposit": "There is no pending deposit",
+        "cannot_carry_bag": "You can't carry the cash bag. Make some room first.",
+        "invalid_bag": "That cash bag isn't valid",
+        "empty_bag": "This cash bag is empty",
+        "inventory_unsupported": "Cash bags aren't supported by this server's inventory",
         "not_flagged": "That deposit isn't flagged",
         "invalid_amount": "Choose a whole amount within your available balance.",
         "insufficient_dirty_cash": "You're not carrying enough dirty cash",

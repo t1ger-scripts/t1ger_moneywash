@@ -2,7 +2,7 @@
 --- The client builds the message (with street name) and the blip, see
 --- ShowPoliceAlert in client/customize.lua. Replace this with your own dispatch
 --- system (ps-dispatch, cd_dispatch, etc.) if you like.
---- @param alertType string "Moderate" | "High" | "Critical" | "Max" | "Deposit"
+--- @param alertType string "Moderate" | "High" | "Critical" | "Max" | "Deposit" | "StolenDeposit"
 --- @param coords vector3|vector4|nil where it happened
 --- @param data table|nil { business = string } for suspicion alerts, { amount = number } for deposits
 function SendPoliceNotification(alertType, coords, data)

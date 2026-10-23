@@ -184,6 +184,8 @@ Config.Laundering = {
 
 -- Bank deposit: Safe -> cash counter -> any ATM -> submit -> wait -> personal bank
 Config.BankDeposit = {
+    Item             = "t1ger_cashdeposit", -- Item the owner receives after the cash counter (see the README for the item definition)
+    MaxActive        = 1,    -- Deposits one player can have processing at the same time
     ProcessingTime   = 10,   -- Minutes for a submitted deposit to clear into the personal bank
     MissionTimeout   = 15,   -- Minutes to reach an ATM after the cash counter finishes
     CashCounter      = {     -- Cash counter shown when withdrawing from the Safe
@@ -306,7 +308,7 @@ Config.Police = {
         SuspicionAfter = { Mode = "set", Value = 50 },
     },
 
-    -- Alerts by suspicion label, plus flagged ATM deposits (Enable = false turns one off)
+    -- Alerts by suspicion label, plus flagged and stolen-bag ATM deposits (Enable = false turns one off)
     -- Blip: BlipDuration is in seconds, BlipFlash makes it flash
     -- Texts: locales/en.json > notification.police_alert.<type>
     Alerts                = {
@@ -315,5 +317,6 @@ Config.Police = {
         Critical = { Enable = true, BlipName = "High-risk laundering", BlipSprite = 108, BlipColour = 1,  BlipScale = 1.0, BlipFlash = true,  BlipDuration = 30 },
         Max      = { Enable = true, BlipName = "Exposed laundering",   BlipSprite = 108, BlipColour = 1,  BlipScale = 1.2, BlipFlash = true,  BlipDuration = 30 },
         Deposit  = { Enable = true, BlipName = "Flagged ATM deposit",  BlipSprite = 108, BlipColour = 1,  BlipScale = 1.0, BlipFlash = true,  BlipDuration = 30 },
+        StolenDeposit = { Enable = true, BlipName = "Stolen cash deposit", BlipSprite = 108, BlipColour = 1, BlipScale = 1.0, BlipFlash = true, BlipDuration = 30 },
     },
 }

@@ -50,6 +50,14 @@ end
 function OnMoneyLaundered(identifier, businessId, businessType, amount, coveredAmount, exposedAmount)
 end
 
+--- Called when the cash counter finishes and a cash bag is given to the owner.
+--- @param ownerIdentifier string
+--- @param bagId number
+--- @param businessId number
+--- @param amount number gross amount taken from the Safe
+function OnCashBagCreated(ownerIdentifier, bagId, businessId, amount)
+end
+
 --- Called when a bank deposit clears into the owner's personal bank.
 --- @param identifier string business owner
 --- @param businessId number
@@ -65,6 +73,17 @@ end
 --- @param businessId number
 --- @param amount number gross amount that was seized
 function OnBankDepositConfiscated(officerIdentifier, ownerIdentifier, businessId, amount)
+end
+
+--- Called for each deposit that was still processing when the server restarted. The bag is gone
+--- and the money was not paid out. The row stays in moneywash_cashbags with state 'lost',
+--- so you can log it or refund the depositor yourself.
+--- @param depositorIdentifier string who deposited the bag
+--- @param ownerIdentifier string who withdrew it from the business
+--- @param businessId number
+--- @param amount number gross amount
+--- @param bagId number
+function OnBankDepositLost(depositorIdentifier, ownerIdentifier, businessId, amount, bagId)
 end
 
 --- Called when a raid finishes and the exposed Safe cash is seized. The money

@@ -14,7 +14,7 @@ end
 
 --- Shown to police for every alert: a notification with the street name and a blip on the location.
 --- Replace with your own dispatch alert if needed.
----@param alertType "Moderate"|"High"|"Critical"|"Max"|"Deposit"
+---@param alertType "Moderate"|"High"|"Critical"|"Max"|"Deposit"|"StolenDeposit"
 ---@param coords vector3|nil Alert location (no blip when nil)
 ---@param data { business: string|nil, amount: number|nil }|nil Business name or deposit amount for the message
 function ShowPoliceAlert(alertType, coords, data)
