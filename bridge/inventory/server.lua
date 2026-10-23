@@ -132,6 +132,75 @@ function _API.Inventory.CanCarryItem(src, item, count)
     end
 end
 
+--- Reads a player's stacks of an item, including each stack's metadata. Read-only.
+--- Every inventory names the fields differently, so the result is normalized to one shape.
+--- @param src number The player ID.
+--- @param item string The item name.
+--- @return table[]|nil slots Sorted by slot: { slot = number, count = number, metadata = table }. Empty if the player has none.
+--- @return string|nil reason "unsupported_inventory" or "read_failed" when slots is nil.
+function _API.Inventory.GetItemSlots(src, item)
+    if type(src) ~= "number" then
+        return error("[_API.Inventory.GetItemSlots] Invalid source type. Must be a number equivalent to player ID")
+    end
+
+    if type(item) ~= "string" or item == "" then
+        return error("[_API.Inventory.GetItemSlots] Invalid item type. Must be a non-empty string for the item name")
+    end
+
+    local ok, raw = pcall(function()
+        if _Inventory == "ox_inventory" then
+            return exports[_Inventory]:GetSlotsWithItem(src, item)
+        elseif _Inventory == "qb-inventory" then
+            return exports[_Inventory]:GetItemsByName(src, item)
+        elseif _Inventory == "qs-inventory" then
+            return exports[_Inventory]:GetItemsByName(src, item)
+        elseif _Inventory == "core_inventory" then
+            return exports[_Inventory]:getItems(src, item)
+        elseif _Inventory == "codem-inventory" then
+            return exports[_Inventory]:GetItemsByName(src, item)
+        elseif _Inventory == "origen_inventory" then
+            return exports[_Inventory]:GetItemsByName(src, item)
+        elseif _Inventory == "ak47_inventory" or _Inventory == "ak47_qb_inventory" then
+            return exports[_Inventory]:GetSlotsWithItem(src, item)
+        elseif _Inventory == "tgiann-inventory" then
+            return exports[_Inventory]:GetItemsByName(src, item)
+        end
+
+        return false -- "custom" or unknown: add your own export call above
+    end)
+
+    if not ok then return nil, "read_failed" end
+    if raw == false then return nil, "unsupported_inventory" end
+
+    local slots = {}
+
+    for _, entry in pairs(raw or {}) do
+        if type(entry) == "table" and (entry.name == nil or entry.name == item) then
+            local slot = entry.slot or (type(entry.slots) == "table" and entry.slots[1]) or nil
+            local count = entry.count or entry.amount or 0
+            local metadata = entry.metadata or entry.info
+
+            if type(slot) == "number" and type(count) == "number" and count > 0 then
+                slots[#slots + 1] = {
+                    slot = slot,
+                    count = count,
+                    metadata = type(metadata) == "table" and metadata or {},
+                }
+            end
+        end
+    end
+
+    table.sort(slots, function(a, b) return a.slot < b.slot end)
+
+    if Bridge.Debug then
+        print(("[_API.Inventory.GetItemSlots] %s x%d stack(s) for %s, first raw entry: %s"):format(
+            item, #slots, src, json.encode(type(raw) == "table" and next(raw) and raw[next(raw)] or {})
+        ))
+    end
+
+    return slots
+end
+
 --- Adds an item to the player's inventory. If the inventory system is unsupported, it falls back to framework method: `_API.Player.AddItem`.
 --- @param src number The player ID.
 --- @param item string The item name.
