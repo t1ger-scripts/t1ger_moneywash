@@ -60,3 +60,24 @@ CREATE TABLE IF NOT EXISTS `moneywash_deposits` (
     `created_at`  BIGINT(20)      NOT NULL DEFAULT 0,                   -- unix timestamp the deposit was started
     PRIMARY KEY (`identifier`)
 );
+
+-- Cash bags: one row per t1ger_cashdeposit item, from the withdrawal until it is paid out
+CREATE TABLE IF NOT EXISTS `moneywash_cashbags` (
+    `id`          INT(11)         NOT NULL AUTO_INCREMENT,              -- the bagId stored in the item metadata
+    `owner`       VARCHAR(100)    NOT NULL,                             -- identifier of the player who withdrew it
+    `business_id` INT(11)         NOT NULL,                             -- the business the money came from (the business may be gone later)
+    `label`       VARCHAR(100)    NOT NULL,                             -- business name at withdrawal, shown in the bag menu
+    `amount`      BIGINT(20)      NOT NULL,                             -- gross amount taken from the Safe
+    `state`       VARCHAR(16)     NOT NULL DEFAULT 'carried',           -- 'carried' | 'processing' | 'lost'
+    `depositor`   VARCHAR(100)    DEFAULT NULL,                         -- identifier of whoever deposited it (processing only)
+    `flagged`     TINYINT(1)      NOT NULL DEFAULT 0,                   -- 1 = police were alerted
+    `x`           DECIMAL(12,6)   DEFAULT NULL,                         -- where it was deposited (processing only)
+    `y`           DECIMAL(12,6)   DEFAULT NULL,
+    `z`           DECIMAL(12,6)   DEFAULT NULL,
+    `clears_at`   BIGINT(20)      DEFAULT NULL,                         -- unix timestamp the deposit clears (processing only)
+    `created_at`  BIGINT(20)      NOT NULL DEFAULT 0,                   -- unix timestamp the bag was created
+    PRIMARY KEY (`id`),
+    KEY `owner` (`owner`),
+    KEY `depositor` (`depositor`),
+    KEY `state` (`state`)
+);
