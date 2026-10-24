@@ -45,7 +45,8 @@
             "cycle_cap_reached_desc": "You've laundered your full cycle capacity. Further laundering this cycle is fully exposed - no stock coverage, still uses up stock, and at risk if raided.",
             "order_stock_desc": "Restock inventory to keep the business running",
             "stock_full_desc": "Your storage is full",
-            "order_in_progress": "You have an active order - use /%s to cancel it",
+            "cancel_order": "Cancel Stock Order",
+            "cancel_order_desc": "Get %s back, then wait %d seconds before ordering again",
             "safe_desc": "View your Safe balance and withdraw cash",
             "withdraw_desc": "Take cash out of your Safe as a cash bag",
             "review_books": "Review Books",
@@ -66,7 +67,9 @@
             "price_desc": "Price per unit: %s",
             "order_on_cooldown": "You can place a new order in %d seconds",
             "confirm_title": "Confirm Stock Order",
-            "confirm_body": "Order %d units for %s?\n\nPayment will be taken from your bank."
+            "confirm_body": "Order %d units for %s?\n\nPayment will be taken from your bank.",
+            "cancel_title": "Cancel Stock Order",
+            "cancel_body": "You get %s back and lose %s.\n\nYou can place a new order after %d seconds."
         },
         "deposit": {
             "title": "Withdraw Cash",
@@ -122,7 +125,7 @@
         "stock_picked_up": "Stock picked up, load it in a vehicle.",
         "stock_loaded": "Stock loaded, return to your business with the stock.",
         "stock_delivered": "Stock delivered successfully",
-        "stock_cancelled": "Stock order cancelled",
+        "stock_cancelled": "Stock order cancelled, %s refunded to your bank",
         "stock_expired": "Your stock order ran out of time. The money is lost.",
         "stock_refunded": "Your stock order was cancelled and %s was refunded to your bank.",
         "stock_unloaded": "Stock unloaded",

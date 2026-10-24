@@ -5,6 +5,7 @@
 ---@class StockMission
 ---@field businessId integer
 ---@field units integer Units ordered
+---@field cost integer Paid for the order
 ---@field currentUnits number Units left, only updated from collisions the server confirmed
 ---@field pickupLocation vector4
 ---@field businessCoords? vector3
@@ -350,7 +351,7 @@ end
 
 --- Starts the mission after the server accepted the order (the order dialog is in menu.lua).
 ---@param businessId integer
----@param missionData { units: integer, pickupLocation: vector4, businessCoords?: vector3, minutes: integer }
+---@param missionData { units: integer, cost: integer, pickupLocation: vector4, businessCoords?: vector3, minutes: integer }
 function StartStockMission(businessId, missionData)
     if mission then
         NotifyError("order_already_active")
@@ -360,6 +361,7 @@ function StartStockMission(businessId, missionData)
     mission = {
         businessId     = businessId,
         units          = missionData.units,
+        cost           = missionData.cost,
         currentUnits   = missionData.units,
         pickupLocation = missionData.pickupLocation,
         businessCoords = missionData.businessCoords,
@@ -388,19 +390,33 @@ function DeliverStock()
     _API.ShowNotification(locale("notification.stock_delivered"), "success")
 end
 
---- Cancels the mission (chat command). The server refunds the order minus the penalty.
-local function cancelMission()
-    if not mission then return end
+--- What the player gets back if they cancel now, and what they lose. The server decides the real amounts.
+---@return integer|nil refund Nil when there is no mission
+---@return integer|nil lost
+function GetStockCancelRefund()
+    if not mission then return nil end
+
+    local refund = math.floor(mission.cost * (1 - (Config.Stock.Mission.CancelPenaltyPercent or 0) / 100))
+
+    return refund, mission.cost - refund
+end
+
+--- Cancels the mission. The server refunds the order minus the penalty and starts the cooldown.
+---@return boolean cancelled
+function CancelStockOrder()
+    if not mission then return false end
 
     local response = ServerRequest("t1ger_moneywash:server:cancelStockMission")
 
     if not response.success then
         NotifyError(response.reason)
-        return
+        return false
     end
 
     resetMission()
-    _API.ShowNotification(locale("notification.stock_cancelled"), "inform")
+    _API.ShowNotification(string.format(locale("notification.stock_cancelled"), FormatMoney(response.refund)), "inform")
+
+    return true
 end
 
 --- Restarts the carry animation if something interrupted it while the box is still in the player's hands.
@@ -473,7 +489,7 @@ end)
 --- The server ended the mission (it ran out of time, or the business was removed).
 RegisterNetEvent("t1ger_moneywash:client:stockMissionEnded", resetMission)
 
-RegisterCommand(Config.Stock.Mission.CancelCommand, cancelMission, false)
+RegisterCommand(Config.Stock.Mission.CancelCommand, CancelStockOrder, false)
 
 AddEventHandler("onResourceStop", function(resource)
     if resource == GetCurrentResourceName() then resetMission() end

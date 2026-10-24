@@ -135,17 +135,7 @@ function OpenStockMenu(businessId)
         coverageColor = "green"
     end
 
-    local missionActive = IsStockMissionActive()
     local stockFull = status.stock >= capacity
-    local stockDisabled = missionActive or stockFull
-    local stockDesc
-    if missionActive then
-        stockDesc = string.format(locale("menu.handler.order_in_progress"), Config.Stock.Mission.CancelCommand)
-    elseif stockFull then
-        stockDesc = locale("menu.handler.stock_full_desc")
-    else
-        stockDesc = locale("menu.handler.order_stock_desc")
-    end
 
     local options = {
         {
@@ -181,15 +171,26 @@ function OpenStockMenu(businessId)
         }
     end
 
-    options[#options + 1] = {
-        title       = locale("menu.handler.order_stock"),
-        icon        = menuIcons.orderStock or "fa-solid fa-box",
-        description = stockDesc,
-        disabled    = stockDisabled,
-        onSelect    = function()
-            OpenStockOrderDialog(businessId, status)
-        end,
-    }
+    if IsStockMissionActive() then
+        options[#options + 1] = {
+            title       = locale("menu.handler.cancel_order"),
+            icon        = menuIcons.cancelOrder or "fa-solid fa-ban",
+            description = string.format(locale("menu.handler.cancel_order_desc"), FormatMoney(GetStockCancelRefund()), Config.Stock.Mission.CancelCooldown),
+            onSelect    = function()
+                OpenStockCancelDialog(businessId)
+            end,
+        }
+    else
+        options[#options + 1] = {
+            title       = locale("menu.handler.order_stock"),
+            icon        = menuIcons.orderStock or "fa-solid fa-box",
+            description = locale(stockFull and "menu.handler.stock_full_desc" or "menu.handler.order_stock_desc"),
+            disabled    = stockFull,
+            onSelect    = function()
+                OpenStockOrderDialog(businessId, status)
+            end,
+        }
+    end
 
     lib.registerContext({
         id      = "moneywash:handler:stock",
@@ -354,6 +355,24 @@ function OpenStockOrderDialog(businessId, status)
     end
 
     StartStockMission(businessId, result.missionData)
+end
+
+--- Asks the player to confirm cancelling the stock order, then cancels it.
+--- @param businessId number
+function OpenStockCancelDialog(businessId)
+    local refund, lost = GetStockCancelRefund()
+    if not refund then return OpenStockMenu(businessId) end
+
+    local confirmed = lib.alertDialog({
+        header   = locale("menu.stock.cancel_title"),
+        content  = string.format(locale("menu.stock.cancel_body"), FormatMoney(refund), FormatMoney(lost), Config.Stock.Mission.CancelCooldown),
+        centered = true,
+        cancel   = true,
+    })
+
+    if confirmed == "confirm" then CancelStockOrder() end
+
+    OpenStockMenu(businessId)
 end
 
 --- ============================================================================

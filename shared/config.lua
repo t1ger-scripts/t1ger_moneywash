@@ -57,6 +57,7 @@ Config.HandlerNPC = {
         viewStock      = "fa-solid fa-warehouse",
         cycleReadiness = "fa-solid fa-gauge-high",
         orderStock     = "fa-solid fa-box",
+        cancelOrder    = "fa-solid fa-ban",
         reviewBooks    = "fa-solid fa-folder-open",
         safe           = "fa-solid fa-lock",
         safeCovered    = "fa-solid fa-shield-halved",
