@@ -90,6 +90,23 @@ function _API.Inventory.HasItem(item, count)
     end
 end
 
+--- Registers which item metadata keys the inventory shows in an item's tooltip, with a label for each.
+--- Only inventories that need a registration do anything here. Call it once the inventory is detected.
+--- @param fields table[] Ordered list of { key, label } pairs, e.g. { { "amount", "Amount" } }
+function _API.Inventory.DisplayMetadata(fields)
+    if type(fields) ~= "table" then
+        return error("[_API.Inventory.DisplayMetadata] Invalid fields type. Must be a list of { key, label } pairs")
+    end
+
+    if _Inventory == "ox_inventory" then
+        exports[_Inventory]:displayMetadata(fields)
+    elseif _Inventory == "custom" then
+        -- add custom function in here
+    end
+
+    -- no registration export is known for the other supported inventories, add one here if yours has it
+end
+
 --- Function to open a stash inventory
 --- @param id string The unique identifier for the stash
 --- @param label string The label or name of the stash

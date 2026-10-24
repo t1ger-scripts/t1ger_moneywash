@@ -130,14 +130,11 @@ CreateThread(function()
     })
 end)
 
--- ox_inventory only shows metadata that is registered. Other inventories show it their own way.
+-- Tells the inventory which bag metadata to show in the tooltip (only some inventories need this)
 CreateThread(function()
     while not _Inventory do Wait(100) end
-    if _Inventory ~= "ox_inventory" then return end
 
-    _API.Inventory.DisplayMetadata()
-
-    exports[_Inventory]:displayMetadata({
+    _API.Inventory.DisplayMetadata({
         { "amount", locale("general.cash_bag_amount") },
         { "bagId",  locale("general.cash_bag_id") },
     })
