@@ -58,7 +58,6 @@ server_scripts {
     'server/hooks.lua',
     'server/portal.lua',
     'server/store.lua',
-    'server/suspicion.lua',
     'server/ownership.lua',
     'server/cash_bag.lua',
     'server/raid.lua',
