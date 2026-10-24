@@ -61,7 +61,7 @@ end
 
 --- Runs a hook from server/hooks.lua safely. A broken hook (server-owner code)
 --- prints an error but never interrupts the script's own flow.
---- @param name string Global hook function name, e.g. "OnBankDepositCompleted"
+--- @param name string Global hook function name, e.g. "OnMoneyLaundered"
 --- @param ... any Hook arguments
 function RunHook(name, ...)
     local hook = _G[name]

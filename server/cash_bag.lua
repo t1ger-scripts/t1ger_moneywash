@@ -86,6 +86,7 @@ local function isNearATM(src, x, y, z, distance)
     return IsPlayerNearCoords(src, vector3(x, y, z), distance + 2.0)
 end
 
+--- Finds a bag's stack in a GetItemSlots result.
 ---@param slots table[]|nil
 ---@param serial string
 ---@return table|nil entry
