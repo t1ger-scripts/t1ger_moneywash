@@ -51,6 +51,22 @@ lib.callback.register("t1ger_moneywash:server:getPlayerNames", function(_, serve
     return names
 end)
 
+--- Constant suspicion decay, run per business every real minute. It does not depend on recent
+--- laundering. The gain formula vs. the decay rate defines the "safe laundering rate" per cycle.
+---@param business table
+local function applySuspicionDecay(business)
+    if business.suspicion <= 0 then return end
+
+    local isOnline = GetOnlineSourceByIdentifier(business.identifier) ~= nil
+    local decay = Config.Suspicion.Decay
+    local decayPerCycle = isOnline and decay.OnlinePointsPerCycle or decay.OfflinePointsPerCycle
+
+    -- Convert per-cycle to per-tick (tick = 1 real minute, cycle = CycleDuration minutes)
+    local decayPerTick = decayPerCycle / Config.Business.CycleDuration
+
+    UpdateBusiness(business.id, "suspicion", math.max(0, business.suspicion - decayPerTick))
+end
+
 --- -------------------------------------------------------------------------
 --- MASTER TICK — fires every real minute
 --- -------------------------------------------------------------------------
@@ -69,7 +85,7 @@ CreateThread(function()
         ProcessCashBags()
 
         for _, business in pairs(GetAllBusinesses()) do
-            ApplySuspicionDecay(business)
+            applySuspicionDecay(business)
         end
     end
 end)
