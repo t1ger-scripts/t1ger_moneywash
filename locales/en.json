@@ -241,6 +241,8 @@
     },
     "general": {
         "unknown_location": "an unknown location",
-        "unknown_investor": "Unknown Investor"
+        "unknown_investor": "Unknown Investor",
+        "cash_bag_amount": "Amount",
+        "cash_bag_id": "Bag ID"
     }
 }

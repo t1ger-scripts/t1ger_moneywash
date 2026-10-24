@@ -40,7 +40,9 @@ local function chooseBag(bags)
             title       = FormatMoney(bag.amount),
             description = string.format(locale("menu.deposit.bag_from"), bag.label),
             icon        = "fa-solid fa-sack-dollar",
-            onSelect    = function() finish(bag.id) end,
+            onSelect    = function()
+                finish(bag.id)
+            end,
         }
     end
 
@@ -48,7 +50,11 @@ local function chooseBag(bags)
         id      = "moneywash:cashbag:choose",
         title   = locale("menu.deposit.bag_title"),
         options = options,
-        onExit  = function() SetTimeout(150, function() finish(nil) end) end, -- A selection arrives first
+        onExit  = function()
+            SetTimeout(150, function()
+                finish(nil)
+            end)
+        end, -- A selection arrives first
     })
 
     lib.showContext("moneywash:cashbag:choose")
@@ -79,8 +85,7 @@ local function deposit(atm)
     if not completed then return end
 
     -- On success the server notifies the player itself
-    local result = ServerRequest("t1ger_moneywash:server:depositCashBag", bagId,
-        { x = coords.x, y = coords.y, z = coords.z }, model)
+    local result = ServerRequest("t1ger_moneywash:server:depositCashBag", bagId, { x = coords.x, y = coords.y, z = coords.z }, model)
 
     if not result.success then NotifyError(result.reason) end
 end
@@ -122,5 +127,18 @@ CreateThread(function()
                 OpenPoliceATMMenu()
             end,
         },
+    })
+end)
+
+-- ox_inventory only shows metadata that is registered. Other inventories show it their own way.
+CreateThread(function()
+    while not _Inventory do Wait(100) end
+    if _Inventory ~= "ox_inventory" then return end
+
+    _API.Inventory.DisplayMetadata()
+
+    exports[_Inventory]:displayMetadata({
+        { "amount", locale("general.cash_bag_amount") },
+        { "bagId",  locale("general.cash_bag_id") },
     })
 end)

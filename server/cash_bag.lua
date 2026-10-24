@@ -94,6 +94,13 @@ local function findBagSlot(slots, bagId)
     end
 end
 
+--- The item metadata of a bag. Only the bagId is read back, the amount is for the player to see.
+---@param bag CashBag
+---@return table
+local function bagMetadata(bag)
+    return { bagId = bag.id, amount = Config.Currency .. bag.amount }
+end
+
 --- -------------------------------------------------------------------------
 --- WITHDRAW (called by cash_operation.lua)
 --- -------------------------------------------------------------------------
@@ -173,7 +180,7 @@ end
 local function giveBagItem(src, bag)
     local item = Config.Withdraw.Item
 
-    _API.Inventory.AddItem(src, item, 1, { bagId = bag.id, amount = bag.amount })
+    _API.Inventory.AddItem(src, item, 1, bagMetadata(bag))
 
     return findBagSlot(_API.Inventory.GetItemSlots(src, item), bag.id) ~= nil
 end
@@ -484,7 +491,7 @@ lib.callback.register("t1ger_moneywash:server:depositCashBag", function(src, bag
 
     if not ok or not affected or affected < 1 then
         -- Not saved: the player gets the bag back
-        pcall(_API.Inventory.AddItem, src, Config.Withdraw.Item, 1, { bagId = bag.id, amount = bag.amount })
+        pcall(_API.Inventory.AddItem, src, Config.Withdraw.Item, 1, bagMetadata(bag))
         return fail("database_error")
     end
 
