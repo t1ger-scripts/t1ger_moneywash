@@ -212,8 +212,8 @@ function OpenSafeMenu(businessId)
     end
 
     local menuIcons = Config.HandlerNPC.MenuIcons or {}
-    local depositDisabled = (status.safeCovered + status.safeExposed) <= 0
-    local depositDesc = locale(depositDisabled and "menu.handler.no_safe_balance" or "menu.handler.bank_deposit_desc")
+    local withdrawDisabled = (status.safeCovered + status.safeExposed) <= 0
+    local withdrawDesc = locale(withdrawDisabled and "menu.handler.no_safe_balance" or "menu.handler.withdraw_desc")
 
     lib.registerContext({
         id      = "moneywash:handler:safe",
@@ -231,10 +231,10 @@ function OpenSafeMenu(businessId)
                 description = locale("menu.handler.safe_exposed_desc"),
             },
             {
-                title       = locale("menu.handler.bank_deposit"),
-                icon        = menuIcons.bankDeposit or "fa-solid fa-building-columns",
-                description = depositDesc,
-                disabled    = depositDisabled,
+                title       = locale("menu.handler.withdraw"),
+                icon        = menuIcons.withdraw or "fa-solid fa-building-columns",
+                description = withdrawDesc,
+                disabled    = withdrawDisabled,
                 onSelect    = function()
                     StartCashOperation(businessId, "withdraw")
                 end,
