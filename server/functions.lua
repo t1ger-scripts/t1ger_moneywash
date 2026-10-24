@@ -120,3 +120,16 @@ function ReplyToCommand(src, message, kind)
         _API.SendNotification(src, message, kind or "inform")
     end
 end
+
+--- Returns the suspicion label ({ name, color, threshold }) for a suspicion value.
+---@param value number 0-100
+---@return table
+function GetSuspicionLabel(value)
+    local label = Config.Suspicion.Labels[1]
+
+    for _, entry in ipairs(Config.Suspicion.Labels) do
+        if value >= entry.threshold then label = entry end
+    end
+
+    return label
+end

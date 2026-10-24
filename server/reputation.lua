@@ -1,9 +1,4 @@
---- ============================================================================
 --- Server Reputation
---- OOP reputation class, DB load/save, owner-only client sync and exports.
---- Lifecycle events (playerDropped, autosave, shutdown) are handled in
---- server/main.lua — not here — to avoid double-firing.
---- ============================================================================
 
 --- Resolves level data for a points value. Single source for the title,
 --- thresholds and progress used by the class and the portal.
@@ -117,9 +112,7 @@ function MoneyWashReputation:Sync()
     TriggerClientEvent("t1ger_moneywash:client:reputationSync", self.source, self.points, self.title)
 end
 
---- ============================================================================
 --- PLAYER REGISTRY
---- ============================================================================
 
 ---@type table<number, MoneyWashReputation>
 local PlayerReputation = {}
@@ -208,9 +201,7 @@ function AwardReputationPoints(src, identifier, amount)
     end
 end
 
---- ============================================================================
 --- LOAD / SAVE
---- ============================================================================
 
 --- Loads a player's reputation from DB into memory and syncs statebags
 --- @param src number

@@ -1,9 +1,4 @@
---- ============================================================================
 --- Server Hooks
---- OPEN FILE - safe to edit without touching core logic.
---- Hook functions called by the business system at key moments.
---- Replace these with your own dispatch system, logging, or integrations.
---- ============================================================================
 
 --- Called when a business is successfully purchased
 --- @param identifier string new owner identifier
