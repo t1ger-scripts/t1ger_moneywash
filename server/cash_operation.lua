@@ -413,7 +413,10 @@ lib.callback.register("t1ger_moneywash:server:cashOperation:run", function(src, 
         return abort(reason or "invalid_player")
     end
 
-    if not GetTierByType(business.type) then return abort("invalid_business_config") end
+    if not GetTierByType(business.type) then
+        print(("[MoneyWash] Business %d has type '%s' with no tier in Config.Tiers; cash operation aborted."):format(business.id, tostring(business.type)))
+        return abort("invalid_business_config")
+    end
 
     local denied = operationType.take(src, business, amount, row)
 
