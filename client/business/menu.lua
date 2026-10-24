@@ -201,16 +201,8 @@ function OpenStockMenu(businessId)
     lib.showContext("moneywash:handler:stock")
 end
 
---- Formats seconds as "Xm Ys".
---- @param seconds number
---- @return string
-local function FormatDeposit(seconds)
-    seconds = math.max(0, math.floor(seconds or 0))
-    return string.format("%dm %ds", math.floor(seconds / 60), seconds % 60)
-end
-
 --- Safe submenu - shows the covered/exposed balance breakdown and
---- lets the player make a bank deposit.
+--- lets the player withdraw cash as a cash bag
 --- @param businessId number
 function OpenSafeMenu(businessId)
     local status = lib.callback.await("t1ger_moneywash:server:getBusinessStatus", false, businessId)
@@ -220,19 +212,8 @@ function OpenSafeMenu(businessId)
     end
 
     local menuIcons = Config.HandlerNPC.MenuIcons or {}
-    local deposit = status.deposit
-    local depositDisabled = deposit ~= nil or (status.safeCovered + status.safeExposed) <= 0
-    local depositDesc
-    if deposit then
-        depositDesc = string.format(
-            locale(deposit.state == "processing" and "menu.handler.deposit_processing" or "menu.handler.deposit_enroute"),
-            FormatMoney(deposit.amount),
-            FormatDeposit(deposit.remainingSeconds))
-    elseif depositDisabled then
-        depositDesc = locale("menu.handler.no_safe_balance")
-    else
-        depositDesc = locale("menu.handler.bank_deposit_desc")
-    end
+    local depositDisabled = (status.safeCovered + status.safeExposed) <= 0
+    local depositDesc = locale(depositDisabled and "menu.handler.no_safe_balance" or "menu.handler.bank_deposit_desc")
 
     lib.registerContext({
         id      = "moneywash:handler:safe",
