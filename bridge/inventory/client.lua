@@ -99,12 +99,20 @@ function _API.Inventory.DisplayMetadata(fields)
     end
 
     if _Inventory == "ox_inventory" then
-        exports[_Inventory]:displayMetadata(fields)
+        -- One call per key keeps the order and works on every version
+        for _, field in ipairs(fields) do
+            exports[_Inventory]:displayMetadata(field[1], field[2])
+        end
+    elseif _Inventory == "tgiann-inventory" then
+        for _, field in ipairs(fields) do
+            exports[_Inventory]:DisplayMetadata(field[1], field[2])
+        end
     elseif _Inventory == "custom" then
         -- add custom function in here
     end
 
-    -- no registration export is known for the other supported inventories, add one here if yours has it
+    -- qb-inventory shows every info key on its own, ak47_inventory lists the keys in its own config
+    -- (Config.ShowValueFromItemInfo). No registration export is known for the others.
 end
 
 --- Function to open a stash inventory

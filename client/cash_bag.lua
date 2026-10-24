@@ -130,12 +130,18 @@ CreateThread(function()
     })
 end)
 
--- Tells the inventory which bag metadata to show in the tooltip (only some inventories need this)
-CreateThread(function()
-    while not _Inventory do Wait(100) end
-
+-- Tells the inventory which bag metadata to show in the tooltip. Some inventories forget it when they restart.
+local function registerMetadata()
     _API.Inventory.DisplayMetadata({
         { "amount", locale("general.cash_bag_amount") },
-        { "bagId",  locale("general.cash_bag_id") },
     })
+end
+
+CreateThread(function()
+    while not _Inventory do Wait(100) end
+    registerMetadata()
+end)
+
+AddEventHandler("onClientResourceStart", function(name)
+    if _Inventory and name == _Inventory then registerMetadata() end
 end)
