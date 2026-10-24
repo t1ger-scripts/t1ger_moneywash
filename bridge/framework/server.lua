@@ -71,8 +71,11 @@ function _API.Player.GetSource(identifier)
         if player then 
             return player.source
         end
-    elseif Framework == "qbcore" then 
-        return _FW[Framework].Functions.GetSource(identifier)
+    elseif Framework == "qbcore" then
+        local player = _API.Player.GetFromIdentifier(identifier)
+        if player then
+            return player.PlayerData.source
+        end
     elseif Framework == "qbox" then
         local player = _API.Player.GetFromIdentifier(identifier)
         if player then
