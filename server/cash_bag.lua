@@ -4,7 +4,8 @@
 --- the depositor's bank. Money is never created from the item: a copy of a bag is worth nothing.
 
 ---@class CashBag
----@field id integer Ledger row id, also the bagId in the item metadata
+---@field id integer Ledger row id (internal, never shown)
+---@field serial string Random number on the item, how the ledger finds the bag
 ---@field owner string Identifier of the player who withdrew it
 ---@field businessId integer
 ---@field label string Business name at withdrawal
@@ -44,6 +45,7 @@ end
 local function toBag(row)
     return {
         id         = row.id,
+        serial     = row.serial,
         owner      = row.owner,
         businessId = row.business_id,
         label      = row.label,
@@ -84,21 +86,40 @@ local function isNearATM(src, x, y, z, distance)
     return IsPlayerNearCoords(src, vector3(x, y, z), distance + 2.0)
 end
 
---- Finds a bag's stack in a GetItemSlots result.
 ---@param slots table[]|nil
----@param bagId integer
+---@param serial string
 ---@return table|nil entry
-local function findBagSlot(slots, bagId)
+local function findBagSlot(slots, serial)
     for _, entry in ipairs(slots or {}) do
-        if tonumber(entry.metadata.bagId) == bagId then return entry end
+        if tostring(entry.metadata.serial) == serial then return entry end
     end
 end
 
---- The item metadata of a bag. Only the bagId is read back, the amount is for the player to see.
+--- The item metadata of a bag. Only the serial is read back, the amount is for the player to see.
 ---@param bag CashBag
 ---@return table
 local function bagMetadata(bag)
-    return { bagId = bag.id, amount = Config.Currency .. bag.amount }
+    return { serial = bag.serial, amount = Config.Currency .. bag.amount }
+end
+
+--- Finds a carried or processing bag by the serial on its item.
+---@param serial any
+---@return CashBag|nil
+local function bagBySerial(serial)
+    if serial == nil then return nil end
+    serial = tostring(serial)
+
+    for _, bag in pairs(Bags) do
+        if bag.serial == serial then return bag end
+    end
+end
+
+--- A random 8 digit serial that no active bag uses.
+---@return string
+local function newSerial()
+    local serial
+    repeat serial = tostring(math.random(10000000, 99999999)) until not bagBySerial(serial)
+    return serial
 end
 
 --- -------------------------------------------------------------------------
@@ -140,6 +161,8 @@ end
 ---@param bag CashBag Without id
 ---@return boolean ok
 function PersistCashBag(business, bag)
+    bag.serial = bag.serial or newSerial() -- kept across retries
+
     if not bag.written then
         local ok, result = pcall(MySQL.transaction.await, {
             {
@@ -147,8 +170,8 @@ function PersistCashBag(business, bag)
                 values = { business.safeCovered, business.safeExposed, business.id, bag.owner },
             },
             {
-                query  = "INSERT INTO moneywash_cashbags (owner, business_id, label, amount, exposed, state, created_at) VALUES (?, ?, ?, ?, ?, 'carried', ?)",
-                values = { bag.owner, bag.businessId, bag.label, bag.amount, bag.exposed, bag.createdAt },
+                query  = "INSERT INTO moneywash_cashbags (owner, business_id, label, amount, exposed, serial, state, created_at) VALUES (?, ?, ?, ?, ?, ?, 'carried', ?)",
+                values = { bag.owner, bag.businessId, bag.label, bag.amount, bag.exposed, bag.serial, bag.createdAt },
             },
         })
 
@@ -182,7 +205,7 @@ local function giveBagItem(src, bag)
 
     _API.Inventory.AddItem(src, item, 1, bagMetadata(bag))
 
-    return findBagSlot(_API.Inventory.GetItemSlots(src, item), bag.id) ~= nil
+    return findBagSlot(_API.Inventory.GetItemSlots(src, item), bag.serial) ~= nil
 end
 
 --- Takes a bag that could not be given back out of the world: the money returns to the
@@ -390,11 +413,10 @@ local function carriedBags(src)
     local list, seen = {}, {}
 
     for _, entry in ipairs(slots) do
-        local id = tonumber(entry.metadata.bagId)
-        local bag = id and Bags[id]
+        local bag = bagBySerial(entry.metadata.serial)
 
-        if bag and bag.state == "carried" and not seen[id] then
-            seen[id] = true
+        if bag and bag.state == "carried" and not seen[bag.id] then
+            seen[bag.id] = true
             list[#list + 1] = { stack = entry, bag = bag }
         end
     end

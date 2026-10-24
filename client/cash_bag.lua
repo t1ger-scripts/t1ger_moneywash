@@ -134,6 +134,7 @@ end)
 local function registerMetadata()
     _API.Inventory.DisplayMetadata({
         { "amount", locale("general.cash_bag_amount") },
+        { "serial", locale("general.cash_bag_serial") },
     })
 end
 

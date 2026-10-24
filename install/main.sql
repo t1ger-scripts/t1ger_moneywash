@@ -46,7 +46,8 @@ CREATE TABLE IF NOT EXISTS `moneywash_receipts` (
 
 -- Cash bags: one row per t1ger_cashbag item, from the withdrawal until it is paid out
 CREATE TABLE IF NOT EXISTS `moneywash_cashbags` (
-    `id`          INT(11)         NOT NULL AUTO_INCREMENT,              -- the bagId stored in the item metadata
+    `id`          INT(11)         NOT NULL AUTO_INCREMENT,              -- internal bag id (never shown)
+    `serial`      VARCHAR(12)     NOT NULL DEFAULT '',                  -- random number shown on the item, how the bag is found again
     `owner`       VARCHAR(100)    NOT NULL,                             -- identifier of the player who withdrew it
     `business_id` INT(11)         NOT NULL,                             -- the business the money came from (the business may be gone later)
     `label`       VARCHAR(100)    NOT NULL,                             -- business name at withdrawal, shown in the bag menu
