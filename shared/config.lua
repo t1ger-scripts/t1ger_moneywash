@@ -182,19 +182,21 @@ Config.Laundering = {
     },
 }
 
--- Bank deposit: Safe -> cash counter -> any ATM -> submit -> wait -> personal bank
+-- Bank deposit: Safe -> cash counter -> cash bag -> any ATM -> wait -> personal bank
 Config.BankDeposit = {
     Item             = "t1ger_cashdeposit", -- Item the owner receives after the cash counter (see the README for the item definition)
     MaxActive        = 1,    -- Deposits one player can have processing at the same time
+    MinPolice        = 0,    -- On-duty police needed to start a deposit at an ATM (0 = off)
+    LimitOutstanding = true, -- true = a business can have at most its expectedRevenue out in uncashed bags (false = no limit)
+    OutstandingHours = 24,   -- Bags older than this no longer count towards that limit (lost or thrown away bags)
     ProcessingTime   = 10,   -- Minutes for a submitted deposit to clear into the personal bank
-    MissionTimeout   = 15,   -- Minutes to reach an ATM after the cash counter finishes
     CashCounter      = {     -- Cash counter shown when withdrawing from the Safe
         StackCount      = 3,    -- Piles the amount is split into (1-10)
         AutoMoveToRight = false, -- true = a counted pile moves to the right tray automatically
     },
     InteractDistance = 2.0,  -- Range to the ATM
     SubmitDuration   = 5000, -- Ms of the depositing progress bar
-    Tax              = 20,   -- % taken once when a Safe balance converts to bank money (0 = off)
+    Tax              = 20,   -- % taken from a bag when it is paid into the bank (0 = off)
     Animation        = { dict = "amb@prop_human_atm@male@idle_a", clip = "idle_a" }, -- Played at the ATM
 
     Models           = {     -- ATM models used for deposits and police inspection
@@ -206,13 +208,6 @@ Config.BankDeposit = {
 
     TargetIcon       = "fa-solid fa-credit-card",            -- Owner deposit option
     PoliceTargetIcon = "fa-solid fa-magnifying-glass-dollar", -- Police inspect option
-
-    FlagChance       = {     -- % chance a deposit is flagged, by the business's suspicion label at submit
-        Low      = 0,
-        Moderate = 15,
-        High     = 50,
-        Critical = 95,
-    },
 }
 
 -- Review books: owners hand stock-delivery receipts to an accountant to lower suspicion

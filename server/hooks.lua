@@ -55,24 +55,25 @@ end
 --- @param bagId number
 --- @param businessId number
 --- @param amount number gross amount taken from the Safe
-function OnCashBagCreated(ownerIdentifier, bagId, businessId, amount)
+--- @param exposed number part of the amount that was exposed cash (decides the flag chance)
+function OnCashBagCreated(ownerIdentifier, bagId, businessId, amount, exposed)
 end
 
---- Called when a bank deposit clears into the owner's personal bank.
---- @param identifier string business owner
+--- Called when a bank deposit clears into the depositor's personal bank.
+--- @param depositorIdentifier string who deposited the bag and got the money
+--- @param ownerIdentifier string who withdrew the bag from the business (same player unless it was stolen)
 --- @param businessId number
 --- @param gross number amount taken from the Safe
 --- @param net number amount paid into the bank after tax
-function OnBankDepositCompleted(identifier, businessId, gross, net)
+function OnBankDepositCompleted(depositorIdentifier, ownerIdentifier, businessId, gross, net)
 end
 
---- Called when police confiscate a flagged bank deposit. The money is gone;
---- this is only a notification point (e.g. reward the officer, log to Discord).
 --- @param officerIdentifier string
---- @param ownerIdentifier string the player who made the deposit
+--- @param depositorIdentifier string the player who made the deposit
+--- @param ownerIdentifier string who withdrew the bag from the business
 --- @param businessId number
 --- @param amount number gross amount that was seized
-function OnBankDepositConfiscated(officerIdentifier, ownerIdentifier, businessId, amount)
+function OnBankDepositConfiscated(officerIdentifier, depositorIdentifier, ownerIdentifier, businessId, amount)
 end
 
 --- Called for each deposit that was still processing when the server restarted. The bag is gone

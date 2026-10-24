@@ -44,23 +44,6 @@ CREATE TABLE IF NOT EXISTS `moneywash_receipts` (
     KEY `business_id` (`business_id`)
 ) AUTO_INCREMENT = 1000;
 
--- Bank deposits
-CREATE TABLE IF NOT EXISTS `moneywash_deposits` (
-    `identifier`  VARCHAR(100)    NOT NULL,                             -- owner player identifier
-    `business_id` INT(11)         NOT NULL,                             -- the business the money came from
-    `amount`      BIGINT(20)      NOT NULL,                             -- gross amount taken from the Safe
-    `covered`     INT             NOT NULL DEFAULT 0,
-    `exposed`     INT             NOT NULL DEFAULT 0,
-    `x`           DECIMAL(12,6)   DEFAULT NULL,                         -- where it was submitted (set at the ATM)
-    `y`           DECIMAL(12,6)   DEFAULT NULL,
-    `z`           DECIMAL(12,6)   DEFAULT NULL,
-    `state`       VARCHAR(16)     NOT NULL DEFAULT 'enroute',           -- 'enroute' | 'processing'
-    `flagged`     TINYINT(1)      NOT NULL DEFAULT 0,                   -- 1 = police were alerted
-    `clears_at`   BIGINT(20)      DEFAULT NULL,                         -- unix timestamp the deposit clears (processing only)
-    `created_at`  BIGINT(20)      NOT NULL DEFAULT 0,                   -- unix timestamp the deposit was started
-    PRIMARY KEY (`identifier`)
-);
-
 -- Cash bags: one row per t1ger_cashdeposit item, from the withdrawal until it is paid out
 CREATE TABLE IF NOT EXISTS `moneywash_cashbags` (
     `id`          INT(11)         NOT NULL AUTO_INCREMENT,              -- the bagId stored in the item metadata
@@ -68,6 +51,7 @@ CREATE TABLE IF NOT EXISTS `moneywash_cashbags` (
     `business_id` INT(11)         NOT NULL,                             -- the business the money came from (the business may be gone later)
     `label`       VARCHAR(100)    NOT NULL,                             -- business name at withdrawal, shown in the bag menu
     `amount`      BIGINT(20)      NOT NULL,                             -- gross amount taken from the Safe
+    `exposed`     BIGINT(20)      NOT NULL DEFAULT 0,                   -- part of the amount that was exposed cash (the flag chance)
     `state`       VARCHAR(16)     NOT NULL DEFAULT 'carried',           -- 'carried' | 'processing' | 'lost'
     `depositor`   VARCHAR(100)    DEFAULT NULL,                         -- identifier of whoever deposited it (processing only)
     `flagged`     TINYINT(1)      NOT NULL DEFAULT 0,                   -- 1 = police were alerted
