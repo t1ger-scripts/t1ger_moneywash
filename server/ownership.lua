@@ -95,12 +95,10 @@ end
 
 --- Returns why a business can't be moved or removed right now, or nil.
 ---@param businessId number
----@param ownerSrc number|nil Owner's source, to also block on their own stock mission
+---@param checkStock? boolean Also block while a stock order is running (not for an admin removal, which ends it)
 ---@return string|nil reason
-local function getBusyReason(businessId, ownerSrc)
-    local mission = ownerSrc and GetActiveStockMission(ownerSrc)
-
-    if mission and mission.businessId == businessId then return "active_stock_mission" end
+local function getBusyReason(businessId, checkStock)
+    if checkStock and HasActiveStockOrder(businessId) then return "active_stock_mission" end
     if IsBusinessRaided(businessId) then return "raid_in_progress" end
     if IsBusinessInReview(businessId) then return "review_in_progress" end
 
@@ -269,7 +267,7 @@ function TransferBusiness(src, targetSrc, businessId)
 
         if not arePlayersNear(src, targetSrc) then return false, "target_too_far" end
 
-        local busy = getBusyReason(businessId, src)
+        local busy = getBusyReason(businessId, true)
         if busy then return false, busy end
 
         if PlayerOwnsBusiness(targetIdentifier) then return false, "target_owns_business" end
@@ -338,7 +336,7 @@ function AbandonBusiness(src, businessId)
         local owned, lockedReason = getOwnedBusiness(identifier, businessId)
         if not owned then return false, lockedReason end
 
-        local busy = getBusyReason(businessId, src)
+        local busy = getBusyReason(businessId, true)
         if busy then return false, busy end
 
         local deleted, err = deleteBusiness(businessId, identifier)
@@ -461,12 +459,7 @@ function AdminRemoveBusiness(businessType, locationId)
             return false, "database_error"
         end
 
-        local ownerSrc = GetOnlineSourceByIdentifier(identifier)
-        local mission = ownerSrc and GetActiveStockMission(ownerSrc)
-
-        if mission and mission.businessId == businessId then
-            CancelStockMission(ownerSrc)
-        end
+        EndStockOrderForBusiness(businessId)
 
         RemoveFromStore(businessId)
 

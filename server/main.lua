@@ -12,6 +12,9 @@ RegisterNetEvent("t1ger_moneywash:server:playerLoaded", function()
     -- Load reputation
     LoadReputation(src)
 
+    -- Refund a stock order left behind when the player disconnected
+    PayPendingStockRefund(src)
+
     -- Sync owned businesses to client
     local identifier = _API.Player.GetIdentifier(src)
     local businesses = GetPlayerBusinesses(identifier)
@@ -30,8 +33,8 @@ AddEventHandler("playerDropped", function()
     SavePlayerReputation(src)
     UnloadReputation(src)
 
-    -- Refund any active stock mission
-    OnPlayerDroppedStockCleanup(src)
+    -- End any active stock mission (the refund waits until the player is back)
+    HandleStockPlayerDropped(src)
 end)
 
 --- Display names for a list of player server ids (the nearby players shown when transferring).

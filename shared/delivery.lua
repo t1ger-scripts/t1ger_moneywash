@@ -3,6 +3,7 @@ return {
     CancelCommand         = "cancelstock", -- Chat command to cancel an active mission
     CancelPenaltyPercent  = 10,            -- % of the paid cost lost on a manual cancel
     CancelCooldown        = 300,           -- Seconds before a new order is allowed after a cancel
+    MaxTime               = 30,            -- Minutes until an unfinished order runs out (the money is lost)
 
     PickupDistance        = 25.0,          -- Range at which the pickup box spawns
     PickupTargetDistance  = 2.0,           -- Target range for the ground box and the handler delivery option

@@ -38,8 +38,8 @@ client_scripts {
     'client/cash_bag.lua',
     'client/portal.lua',
     'client/raid.lua',
+    'client/stock.lua',
     'client/business/menu.lua',
-    'client/business/stock.lua',
     'client/business/review.lua',
     'client/main.lua',
 }

@@ -1,203 +1,94 @@
--- ============================================================================
--- STOCK DELIVERY MISSION (server)
--- The server owns the shipment record end-to-end. The client only ever
--- requests a transition (pickup / load / unload / deliver / cancel) or
--- reports "a collision happened" - it never reports or sets how much
--- stock was lost, or whether delivery succeeds.
---
--- Shipment states: awaiting_pickup -> carried -> loaded -> carried -> ... -> delivered
--- ("loaded" and "carried" can alternate any number of times as the player
--- switches vehicles or chooses to walk the rest of the way.)
--- ============================================================================
+--- Stock delivery mission (server). The server owns the mission from order to delivery.
+--- The client only asks for a step (pickup, load, unload, deliver, cancel) or reports a collision,
+--- it never sets how much stock is lost or whether a delivery works.
+--- States: awaiting_pickup -> carried <-> loaded -> delivered. The box can be loaded into a vehicle
+--- and taken out again any number of times.
+--- The order is paid when it is placed and lives in memory only. A disconnect is refunded when the
+--- player is back, a resource restart refunds it, a timeout or a server restart does not.
 
---- Active stock shipments keyed by player source.
---- @field businessId number
---- @field units number             units originally ordered and paid for (fixed)
---- @field currentUnits number      live, decaying deliverable amount (starts == units)
---- @field cost number              amount paid, for refunds
---- @field pickupLocation vector4
---- @field state string             "awaiting_pickup" | "carried" | "loaded"
---- @field vehicleNetId number|nil  set only while state == "loaded"
---- @field lastCollisionCheck number game timer of the last accepted collision ping
-local ActiveStockMissions = {}
+---@class StockMission
+---@field identifier string
+---@field businessId integer
+---@field units integer Units ordered and paid for
+---@field currentUnits number Units that can still be delivered, lowered by collisions
+---@field cost integer Paid for the order, refunded if it is cancelled
+---@field pickupLocation vector4
+---@field pickupIndex integer Index in Config.Stock.Mission.PickupLocations
+---@field state "awaiting_pickup"|"carried"|"loaded"
+---@field vehicleNetId? integer Only while loaded
+---@field lastCollisionCheck integer GetGameTimer() of the last accepted collision report
+---@field expiresAt integer os.time() the order runs out
 
---- Players currently on a cancel cooldown (re-roll gating), keyed by identifier.
+---@type table<integer, StockMission> Active missions by player source
+local Missions = {}
+
+---@type table<string, integer> Refunds for players who disconnected, by identifier. Memory only.
+local PendingRefunds = {}
+
+---@type table<string, integer> os.time() before which a player can't order again, by identifier
 local CancelCooldowns = {}
 
---- Pool indices currently claimed by an active mission, so two players
---- can never be assigned the same pickup location at once.
---- @field [index] boolean
-local OccupiedPickupIndices = {}
+---@type table<integer, boolean> Pickup spots in use, by index in Config.Stock.Mission.PickupLocations
+local OccupiedPickups = {}
 
--- -----------------------------------------------------------------------
--- ORDER
--- -----------------------------------------------------------------------
-
---- Releases a claimed pickup location index so another player's mission
---- can use it. Safe to call even if the index was never actually claimed.
---- @param mission table
-local function ReleasePickupLocation(mission)
-    if mission and mission.pickupIndex then
-        OccupiedPickupIndices[mission.pickupIndex] = nil
-    end
+---@param reason string|nil Nil on success
+---@return { success: boolean, reason?: string }
+local function result(reason)
+    return { success = reason == nil, reason = reason }
 end
 
---- Checks whether a player is currently eligible to place a new stock
---- order (i.e. not on a post-cancel cooldown). This is a convenience for
---- the client to show an early warning before the units-input dialog -
---- OrderStock() still re-checks this itself and remains the real gate.
---- @param src number
---- @return boolean eligible, number|nil cooldownRemaining
-function CanPlaceStockOrder(src)
-    local identifier = _API.Player.GetIdentifier(src)
-    if not identifier then return false end
-
-    local cooldownUntil = CancelCooldowns[identifier]
-    if cooldownUntil and os.time() < cooldownUntil then
-        return false, cooldownUntil - os.time()
-    end
-
-    return true
+--- Ends a mission and frees its pickup spot. Money is not touched here.
+---@param src integer
+---@param mission StockMission
+local function finishMission(src, mission)
+    OccupiedPickups[mission.pickupIndex] = nil
+    Missions[src] = nil
 end
 
---- Validates and starts a stock order.
---- Payment is taken from the personal bank account, not the business Safe.
---- @param src number
---- @param businessId number
---- @param units number
---- @return boolean success, string reason, table|nil missionData
-function OrderStock(src, businessId, units)
-    local identifier = _API.Player.GetIdentifier(src)
-    if not identifier then return false, "invalid_player" end
-
-    local cooldownUntil = CancelCooldowns[identifier]
-    if cooldownUntil and os.time() < cooldownUntil then
-        return false, "order_on_cooldown"
-    end
-
-    local business = GetBusiness(businessId)
-    if not business then return false, "not_found" end
-    if business.identifier ~= identifier then return false, "not_owner" end
-
-    for _, mission in pairs(ActiveStockMissions) do
-        if mission.businessId == businessId then
-            return false, "order_already_active"
-        end
-    end
-
-    local pool = Config.Stock.Mission.PickupLocations
-    if not pool or #pool == 0 then
-        return false, "no_pickup_locations"
-    end
-
-    local freeIndices = {}
-    for i = 1, #pool do
-        if not OccupiedPickupIndices[i] then
-            freeIndices[#freeIndices + 1] = i
-        end
-    end
-
-    if #freeIndices == 0 then
-        return false, "no_pickup_locations"
-    end
-
-    units = math.floor(tonumber(units) or 0)
-
-    local minOrder = GetMinOrder(business.type)
-    local maxOrder = GetMaxOrder(business.type)
-    local unitPrice = GetUnitPrice(business.type)
-
-    if not minOrder or not maxOrder or not unitPrice then
-        return false, "invalid_type"
-    end
-
-    if units < minOrder or units > maxOrder then
-        return false, "invalid_units"
-    end
-
-    local capacity = GetStockCapacity(business.type)
-    if not capacity then
-        return false, "invalid_type"
-    end
-
-    local roomRemaining = capacity - business.stock
-    if roomRemaining <= 0 then
-        return false, "stock_full"
-    end
-
-    if units > roomRemaining then
-        units = roomRemaining -- clamp down rather than reject - never waste the physical trip
-    end
-
-    local totalCost = units * unitPrice
-
-    if _API.Player.GetMoney(src, "bank") < totalCost then
-        return false, "insufficient_funds"
-    end
-
-    _API.Player.RemoveMoney(src, totalCost, "bank")
-
-    local pickupIndex = freeIndices[math.random(1, #freeIndices)]
-    local pickupLocation = pool[pickupIndex]
-    OccupiedPickupIndices[pickupIndex] = true
-
-    ActiveStockMissions[src] = {
-        businessId         = businessId,
-        units              = units,
-        currentUnits       = units,
-        cost               = totalCost,
-        pickupLocation     = pickupLocation,
-        pickupIndex        = pickupIndex,
-        state              = "awaiting_pickup",
-        vehicleNetId       = nil,
-        lastCollisionCheck = 0,
-    }
-
-    if Config.Debug then
-        print(("[MoneyWash] Stock order: player %d | business %d | %d units | $%d"):format(
-            src, businessId, units, totalCost))
-    end
-
-    local location = GetLocationConfig(business.type, business.locationId)
-
-    return true, "success", {
-        units          = units,
-        cost           = totalCost,
-        pickupLocation = pickupLocation,
-        businessCoords = location and location.coords,
-    }
+--- Tells the client its mission is over, so it removes the box, the blips and the meter.
+---@param src integer
+local function notifyMissionEnded(src)
+    TriggerClientEvent("t1ger_moneywash:client:stockMissionEnded", src)
 end
 
--- -----------------------------------------------------------------------
--- PICKUP
--- -----------------------------------------------------------------------
+--- The player's mission, optionally in a required state.
+---@param src integer
+---@param state? "awaiting_pickup"|"carried"|"loaded"
+---@return StockMission|nil mission
+---@return string|nil reason
+local function getMission(src, state)
+    local mission = Missions[src]
+    if not mission then return nil, "no_active_mission" end
+    if state and mission.state ~= state then return nil, "invalid_state" end
 
---- Validates the player is actually at the assigned pickup location before
---- allowing the shipment to progress to "carried". Prevents a modified
---- client from skipping the drive entirely.
---- @param src number
---- @return boolean success, string reason
-function PickupStockShipment(src)
-    local mission = ActiveStockMissions[src]
-    if not mission then return false, "no_active_mission" end
-    if mission.state ~= "awaiting_pickup" then return false, "invalid_state" end
-
-    if not IsPlayerNearCoords(src, mission.pickupLocation, Config.Stock.Mission.PickupDistance) then
-        return false, "pickup_too_far"
-    end
-
-    mission.state = "carried"
-    return true, "success"
+    return mission
 end
 
--- -----------------------------------------------------------------------
--- LOAD / UNLOAD (vehicle transfers)
--- -----------------------------------------------------------------------
+--- Seconds until the player may order again.
+---@param identifier string
+---@return integer seconds 0 when the player may order
+local function getCooldownRemaining(identifier)
+    return math.max(0, (CancelCooldowns[identifier] or 0) - os.time())
+end
 
---- Resolves a network ID to a live vehicle entity, or nil if it doesn't exist.
---- @param netId number
---- @return number|nil
-local function ResolveVehicle(netId)
+--- A random pickup spot that no other mission uses.
+---@return integer|nil index
+local function pickFreePickup()
+    local free = {}
+
+    for index = 1, #Config.Stock.Mission.PickupLocations do
+        if not OccupiedPickups[index] then free[#free + 1] = index end
+    end
+
+    if #free == 0 then return nil end
+
+    return free[math.random(1, #free)]
+end
+
+--- The vehicle entity for a network id, or nil if it doesn't exist.
+---@param netId integer
+---@return integer|nil entity
+local function resolveVehicle(netId)
     if not netId or netId == 0 then return nil end
 
     local entity = NetworkGetEntityFromNetworkId(netId)
@@ -206,254 +97,357 @@ local function ResolveVehicle(netId)
     return entity
 end
 
---- Loads the carried shipment into a vehicle. The player targets the
---- vehicle from outside it, so proximity is validated by distance.
---- @param src number
---- @param vehicleNetId number  the vehicle the client is targeting
---- @return boolean success, string reason
-function LoadStockIntoVehicle(src, vehicleNetId)
-    local mission = ActiveStockMissions[src]
-    if not mission then return false, "no_active_mission" end
-    if mission.state ~= "carried" then return false, "invalid_state" end
+--- True if the business has a stock mission running. Checked by transfer and abandon.
+---@param businessId integer
+---@return boolean
+function HasActiveStockOrder(businessId)
+    for _, mission in pairs(Missions) do
+        if mission.businessId == businessId then return true end
+    end
 
-    local vehicle = ResolveVehicle(vehicleNetId)
-    if not vehicle then return false, "invalid_vehicle" end
+    return false
+end
+
+--- Ends the stock mission of a business that is being removed, and refunds it in full.
+---@param businessId integer
+function EndStockOrderForBusiness(businessId)
+    for src, mission in pairs(Missions) do
+        if mission.businessId == businessId then
+            _API.Player.AddMoney(src, mission.cost, "bank")
+            finishMission(src, mission)
+            _API.SendNotification(src, string.format(locale("notification.stock_refunded"), FormatMoney(mission.cost)), "inform")
+            notifyMissionEnded(src)
+            return
+        end
+    end
+end
+
+--- A player disconnected: the mission ends and the refund waits until they are back.
+--- The refund can't be paid now, the framework has already unloaded the player.
+---@param src integer
+function HandleStockPlayerDropped(src)
+    local mission = Missions[src]
+    if not mission then return end
+
+    PendingRefunds[mission.identifier] = (PendingRefunds[mission.identifier] or 0) + mission.cost
+    finishMission(src, mission)
+end
+
+--- A player loaded in: pays the refund of a mission they left behind when they disconnected.
+---@param src integer
+function PayPendingStockRefund(src)
+    local identifier = _API.Player.GetIdentifier(src)
+    if not identifier then return end
+
+    -- The old connection may not have dropped yet (client crash and a quick reconnect)
+    for oldSrc, mission in pairs(Missions) do
+        if oldSrc ~= src and mission.identifier == identifier then HandleStockPlayerDropped(oldSrc) end
+    end
+
+    local amount = PendingRefunds[identifier]
+    if not amount then return end
+
+    PendingRefunds[identifier] = nil
+    _API.Player.AddMoney(src, amount, "bank")
+    _API.SendNotification(src, string.format(locale("notification.stock_refunded"), FormatMoney(amount)), "inform")
+end
+
+--- Places an order. The money is taken from the bank account, not the Safe.
+---@param src integer
+---@param businessId any
+---@param units any
+---@return string|nil reason
+---@return table|nil missionData
+local function placeOrder(src, businessId, units)
+    local identifier = _API.Player.GetIdentifier(src)
+    if not identifier then return "invalid_player" end
+    if getCooldownRemaining(identifier) > 0 then return "order_on_cooldown" end
+
+    businessId = tonumber(businessId)
+    local business = businessId and GetBusiness(businessId)
+    if not business then return "not_found" end
+    if business.identifier ~= identifier then return "not_owner" end
+    if Missions[src] or HasActiveStockOrder(businessId) then return "order_already_active" end
+
+    local pickupIndex = pickFreePickup()
+    if not pickupIndex then return "no_pickup_locations" end
+
+    local minOrder, maxOrder, unitPrice = GetMinOrder(business.type), GetMaxOrder(business.type), GetUnitPrice(business.type)
+    if not minOrder or not maxOrder or not unitPrice then return "invalid_type" end
+
+    units = math.floor(tonumber(units) or 0)
+    if units < minOrder or units > maxOrder then return "invalid_units" end
+
+    local room = GetStockCapacity(business.type) - business.stock
+    if room <= 0 then return "stock_full" end
+
+    -- Clamped down rather than rejected, so the trip is never wasted
+    units = math.min(units, room)
+
+    local cost = units * unitPrice
+    local bank = _API.Player.GetMoney(src, "bank")
+    if bank < cost then return "insufficient_funds" end
+
+    _API.Player.RemoveMoney(src, cost, "bank")
+    if _API.Player.GetMoney(src, "bank") > bank - cost then return "request_failed" end
+
+    local config = Config.Stock.Mission
+    local pickupLocation = config.PickupLocations[pickupIndex]
+    OccupiedPickups[pickupIndex] = true
+
+    Missions[src] = {
+        identifier         = identifier,
+        businessId         = businessId,
+        units              = units,
+        currentUnits       = units,
+        cost               = cost,
+        pickupLocation     = pickupLocation,
+        pickupIndex        = pickupIndex,
+        state              = "awaiting_pickup",
+        lastCollisionCheck = 0,
+        expiresAt          = os.time() + math.max(1, tonumber(config.MaxTime) or 30) * 60,
+    }
+
+    local location = GetLocationConfig(business.type, business.locationId)
+
+    return nil, {
+        units          = units,
+        cost           = cost,
+        pickupLocation = pickupLocation,
+        businessCoords = location and location.coords,
+        minutes        = math.max(1, tonumber(config.MaxTime) or 30),
+    }
+end
+
+--- The player picks up the box. They must be at the assigned pickup spot.
+---@param src integer
+---@return string|nil reason
+local function pickupShipment(src)
+    local mission, reason = getMission(src, "awaiting_pickup")
+    if not mission then return reason end
+
+    if not IsPlayerNearCoords(src, mission.pickupLocation, Config.Stock.Mission.PickupDistance) then
+        return "pickup_too_far"
+    end
+
+    mission.state = "carried"
+
+    return nil
+end
+
+--- The player loads the carried box into a vehicle they stand next to.
+---@param src integer
+---@param vehicleNetId integer
+---@return string|nil reason
+local function loadShipment(src, vehicleNetId)
+    local mission, reason = getMission(src, "carried")
+    if not mission then return reason end
+
+    local vehicle = resolveVehicle(vehicleNetId)
+    if not vehicle then return "invalid_vehicle" end
 
     if not IsPlayerNearCoords(src, GetEntityCoords(vehicle), Config.Stock.Mission.VehicleTargetDistance) then
-        return false, "vehicle_too_far"
+        return "vehicle_too_far"
     end
 
     mission.state = "loaded"
     mission.vehicleNetId = vehicleNetId
     mission.lastCollisionCheck = 0
 
-    return true, "success"
+    return nil
 end
 
---- Removes the shipment from its current vehicle.
---- @param src number
---- @return boolean success, string reason
-function UnloadStockFromVehicle(src)
-    local mission = ActiveStockMissions[src]
-    if not mission then return false, "no_active_mission" end
-    if mission.state ~= "loaded" then return false, "invalid_state" end
+--- The player takes the box out of the vehicle.
+---@param src integer
+---@return string|nil reason
+local function unloadShipment(src)
+    local mission, reason = getMission(src, "loaded")
+    if not mission then return reason end
 
-    local vehicle = ResolveVehicle(mission.vehicleNetId)
-    if vehicle then
-        if not IsPlayerNearCoords(src, GetEntityCoords(vehicle), Config.Stock.Mission.VehicleTargetDistance) then
-            return false, "vehicle_too_far"
-        end
+    local vehicle = resolveVehicle(mission.vehicleNetId)
+    if vehicle and not IsPlayerNearCoords(src, GetEntityCoords(vehicle), Config.Stock.Mission.VehicleTargetDistance) then
+        return "vehicle_too_far"
     end
 
     mission.state = "carried"
     mission.vehicleNetId = nil
 
-    return true, "success"
+    return nil
 end
 
--- -----------------------------------------------------------------------
--- COLLISION REPORTING
--- -----------------------------------------------------------------------
+--- A collision report from the client. It only says "check now": the server finds the vehicle
+--- itself and rolls the damage, and the client's own vehicle id is never trusted.
+---@param src integer
+---@return boolean applied
+---@return integer|nil deductedPercent
+---@return integer|nil remainingUnits
+local function reportCollision(src)
+    local config = Config.Stock.Mission.CollisionDamage
+    if not config.Enable then return false end
 
---- Lightweight ping from the client's collision detection. Carries no
---- authoritative damage data - it only tells the server "check now". The
---- server independently resolves the real vehicle and rolls the penalty
---- itself; the client's claimed vehicle ID is cross-check-only.
---- @param src number
---- @param clientVehicleNetId number|nil
---- @return boolean applied, number|nil deductedPercent, number|nil currentUnits
-function ReportVehicleCollision(src, clientVehicleNetId)
-    local cfg = Config.Stock.Mission.CollisionDamage
-    if not cfg.Enable then return false end
-
-    local mission = ActiveStockMissions[src]
-    if not mission or mission.state ~= "loaded" then return false end
+    local mission = getMission(src, "loaded")
+    if not mission then return false end
 
     local now = GetGameTimer()
-    if now - (mission.lastCollisionCheck or 0) < cfg.PingCooldown then
-        return false
-    end
+    if now - mission.lastCollisionCheck < config.PingCooldown then return false end
     mission.lastCollisionCheck = now
 
-    -- The server resolves the vehicle itself - it never trusts the client's claim.
-    local playerPed = GetPlayerPed(src)
-    local serverVehicle = GetVehiclePedIsIn(playerPed, false)
-    if serverVehicle == 0 then return false end
+    local vehicle = GetVehiclePedIsIn(GetPlayerPed(src), false)
+    if vehicle == 0 or NetworkGetNetworkIdFromEntity(vehicle) ~= mission.vehicleNetId then return false end
 
-    local serverNetId = NetworkGetNetworkIdFromEntity(serverVehicle)
-    if serverNetId ~= mission.vehicleNetId then return false end
+    local percent = math.random(config.MinDeductionPercent, config.MaxDeductionPercent)
+    mission.currentUnits = math.max(0, mission.currentUnits - mission.currentUnits * (percent / 100))
 
-    if Config.Debug and clientVehicleNetId and clientVehicleNetId ~= serverNetId then
-        print(("[MoneyWash] Stock collision vehicle mismatch for player %d (client: %s, server: %s)"):format(
-            src, tostring(clientVehicleNetId), tostring(serverNetId)))
-    end
-
-    local deductionPercent = math.random(cfg.MinDeductionPercent, cfg.MaxDeductionPercent)
-    mission.currentUnits = math.max(0, mission.currentUnits - (mission.currentUnits * (deductionPercent / 100)))
-
-    if Config.Debug then
-        print(("[MoneyWash] Stock collision: player %d | -%d%% | %.1f units remaining"):format(
-            src, deductionPercent, mission.currentUnits))
-    end
-
-    return true, deductionPercent, math.floor(mission.currentUnits)
+    return true, percent, math.floor(mission.currentUnits)
 end
 
--- -----------------------------------------------------------------------
--- DELIVERY
--- -----------------------------------------------------------------------
-
---- Completes a stock delivery. Requires the shipment to have already been
---- unloaded (state == "carried") - the player must physically be holding
---- it, not still driving with it in the vehicle.
---- @param src number
---- @return boolean success, string reason
-function CompleteStockDelivery(src)
-    local mission = ActiveStockMissions[src]
-    if not mission then return false, "no_active_mission" end
-    if mission.state ~= "carried" then return false, "invalid_state" end
+--- Delivers the box at the business. The player must hold it, not drive with it loaded.
+---@param src integer
+---@return string|nil reason
+local function completeDelivery(src)
+    local mission, reason = getMission(src, "carried")
+    if not mission then return reason end
 
     local business = GetBusiness(mission.businessId)
     if not business then
-        ActiveStockMissions[src] = nil
-        return false, "not_found"
+        _API.Player.AddMoney(src, mission.cost, "bank")
+        finishMission(src, mission)
+        return "not_found"
     end
 
     local location = GetLocationConfig(business.type, business.locationId)
-    if not location or not IsPlayerNearCoords(src, location.coords, 5.0) then
-        return false, "business_too_far"
+    if not location or not IsPlayerNearCoords(src, location.coords, Config.Stock.Mission.PickupTargetDistance + 2.0) then
+        return "business_too_far"
     end
 
-    local deliveredUnits = math.floor(mission.currentUnits)
+    local delivered = math.floor(mission.currentUnits)
+    local capacity = GetStockCapacity(business.type) or business.stock
 
-    UpdateBusiness(mission.businessId, "stock", business.stock + deliveredUnits)
+    UpdateBusiness(mission.businessId, "stock", math.min(capacity, business.stock + delivered))
 
-    MySQL.insert(
+    -- Ended before the database call below, which yields
+    finishMission(src, mission)
+
+    local ok, err = pcall(MySQL.insert.await,
         "INSERT INTO moneywash_receipts (business_id, units, unit_price, total_amount, created_at) VALUES (?, ?, ?, ?, ?)",
-        { mission.businessId, deliveredUnits, GetUnitPrice(business.type), mission.cost, os.time() }
-    )
+        { mission.businessId, delivered, GetUnitPrice(business.type), mission.cost, os.time() })
+
+    if not ok then
+        print(("[MoneyWash] Stock receipt for business %d could not be saved: %s"):format(mission.businessId, tostring(err)))
+    end
 
     if Config.Reputation.Enable and Config.Reputation.Rewards.stockDelivery.enable then
         AwardReputationPoints(src, business.identifier, Config.Reputation.Rewards.stockDelivery.points)
     end
 
-    RunHook("OnStockOrderCompleted", business.identifier, mission.businessId, business.type, mission.units, deliveredUnits, mission.cost)
+    RunHook("OnStockOrderCompleted", business.identifier, mission.businessId, business.type, mission.units, delivered, mission.cost)
 
-    if Config.Debug then
-        print(("[MoneyWash] Stock delivered: business %d | ordered %d | delivered %d units"):format(
-            mission.businessId, mission.units, deliveredUnits))
-    end
-
-    ReleasePickupLocation(mission)
-    ActiveStockMissions[src] = nil
-
-    return true, "success"
+    return nil
 end
 
--- -----------------------------------------------------------------------
--- CANCEL
--- -----------------------------------------------------------------------
+--- The player cancels: the order is refunded minus the penalty, and a cooldown starts.
+---@param src integer
+---@return string|nil reason
+---@return integer|nil refund
+local function cancelOrder(src)
+    local mission, reason = getMission(src)
+    if not mission then return reason end
 
---- Cancels an active mission voluntarily. Refunds the original cost minus
---- a configurable penalty, and applies a cooldown to gate re-rolling for a
---- more favourable pickup location. The penalty is flat and unrelated to
---- any cargo damage already accrued.
---- @param src number
---- @return boolean success, string reason, number|nil refundAmount
-function CancelStockMission(src)
-    local mission = ActiveStockMissions[src]
-    if not mission then return false, "no_active_mission" end
-
-    local identifier = _API.Player.GetIdentifier(src)
-    local penaltyPercent = Config.Stock.Mission.CancelPenaltyPercent or 0
-    local refund = math.floor(mission.cost * (1 - (penaltyPercent / 100)))
+    local penalty = Config.Stock.Mission.CancelPenaltyPercent or 0
+    local refund = math.floor(mission.cost * (1 - penalty / 100))
 
     _API.Player.AddMoney(src, refund, "bank")
-    ReleasePickupLocation(mission)
-    ActiveStockMissions[src] = nil
+    finishMission(src, mission)
+    CancelCooldowns[mission.identifier] = os.time() + (Config.Stock.Mission.CancelCooldown or 0)
 
-    if identifier then
-        CancelCooldowns[identifier] = os.time() + (Config.Stock.Mission.CancelCooldown or 0)
-    end
-
-    if Config.Debug then
-        print(("[MoneyWash] Stock mission cancelled: player %d | refunded $%d (penalty %d%%)"):format(
-            src, refund, penaltyPercent))
-    end
-
-    return true, "success", refund
+    return nil, refund
 end
 
---- Cleans up an active mission on disconnect. Full refund, no penalty -
---- this isn't a voluntary re-roll attempt.
---- @param src number
-function OnPlayerDroppedStockCleanup(src)
-    local mission = ActiveStockMissions[src]
-    if mission then
-        _API.Player.AddMoney(src, mission.cost, "bank")
-        ReleasePickupLocation(mission)
-        ActiveStockMissions[src] = nil
-    end
-end
+--- Callback: places an order.
+---@param src integer
+---@param businessId integer
+---@param units integer
+lib.callback.register("t1ger_moneywash:server:orderStock", function(src, businessId, units)
+    local reason, missionData = placeOrder(src, businessId, units)
 
---- Refunds every active shipment when the resource stops (script restart or
---- server shutdown). Missions only exist in memory, so without this the
---- money the player already paid would be lost. Full refund, no penalty.
+    return { success = reason == nil, reason = reason, missionData = missionData }
+end)
+
+--- Callback: early warning for the order dialog. placeOrder checks the cooldown again.
+---@param src integer
+lib.callback.register("t1ger_moneywash:server:canPlaceStockOrder", function(src)
+    local identifier = _API.Player.GetIdentifier(src)
+    local remaining = identifier and getCooldownRemaining(identifier) or 0
+
+    return { eligible = remaining == 0, cooldownRemaining = remaining > 0 and remaining or nil }
+end)
+
+--- Callback: picks up the box.
+---@param src integer
+lib.callback.register("t1ger_moneywash:server:pickupStockShipment", function(src)
+    return result(pickupShipment(src))
+end)
+
+--- Callback: loads the box into a vehicle.
+---@param src integer
+---@param vehicleNetId integer
+lib.callback.register("t1ger_moneywash:server:loadStockShipment", function(src, vehicleNetId)
+    return result(loadShipment(src, tonumber(vehicleNetId)))
+end)
+
+--- Callback: takes the box out of the vehicle.
+---@param src integer
+lib.callback.register("t1ger_moneywash:server:unloadStockShipment", function(src)
+    return result(unloadShipment(src))
+end)
+
+--- Callback: a collision report. The answer carries the damage the server rolled.
+---@param src integer
+lib.callback.register("t1ger_moneywash:server:reportStockCollision", function(src)
+    local applied, deductedPercent, remainingUnits = reportCollision(src)
+
+    return { success = applied, deductedPercent = deductedPercent, remainingUnits = remainingUnits }
+end)
+
+--- Callback: delivers the box.
+---@param src integer
+lib.callback.register("t1ger_moneywash:server:completeStockDelivery", function(src)
+    return result(completeDelivery(src))
+end)
+
+--- Callback: cancels the order.
+---@param src integer
+lib.callback.register("t1ger_moneywash:server:cancelStockMission", function(src)
+    local reason, refund = cancelOrder(src)
+
+    return { success = reason == nil, reason = reason, refund = refund }
+end)
+
+--- Ends missions that ran out of time. The money is lost, and the player is told.
+CreateThread(function()
+    while true do
+        Wait(next(Missions) and 5000 or 10000)
+
+        local now = os.time()
+
+        for src, mission in pairs(Missions) do
+            if now >= mission.expiresAt then
+                finishMission(src, mission)
+                _API.SendNotification(src, locale("notification.stock_expired"), "error")
+                notifyMissionEnded(src)
+            end
+        end
+    end
+end)
+
+--- Refunds every mission when the resource stops, in full. Players are still online here.
 AddEventHandler("onResourceStop", function(resource)
     if resource ~= GetCurrentResourceName() then return end
 
-    for src, mission in pairs(ActiveStockMissions) do
+    for src, mission in pairs(Missions) do
         _API.Player.AddMoney(src, mission.cost, "bank")
-        ReleasePickupLocation(mission)
-        ActiveStockMissions[src] = nil
+        finishMission(src, mission)
     end
-end)
-
---- Returns a player's active stock mission, if one exists.
---- @param src number
---- @return table|nil
-function GetActiveStockMission(src)
-    return ActiveStockMissions[src]
-end
-
-lib.callback.register("t1ger_moneywash:server:orderStock", function(source, businessId, units)
-    local success, reason, missionData = OrderStock(source, businessId, units)
-    return { success = success, reason = reason, missionData = missionData }
-end)
-
-lib.callback.register("t1ger_moneywash:server:canPlaceStockOrder", function(source)
-    local eligible, cooldownRemaining = CanPlaceStockOrder(source)
-    return { eligible = eligible, cooldownRemaining = cooldownRemaining }
-end)
-
-lib.callback.register("t1ger_moneywash:server:pickupStockShipment", function(source)
-    local success, reason = PickupStockShipment(source)
-    return { success = success, reason = reason }
-end)
-
-lib.callback.register("t1ger_moneywash:server:loadStockShipment", function(source, vehicleNetId)
-    local success, reason = LoadStockIntoVehicle(source, vehicleNetId)
-    return { success = success, reason = reason }
-end)
-
-lib.callback.register("t1ger_moneywash:server:unloadStockShipment", function(source)
-    local success, reason = UnloadStockFromVehicle(source)
-    return { success = success, reason = reason }
-end)
-
-lib.callback.register("t1ger_moneywash:server:reportStockCollision", function(source, vehicleNetId)
-    local applied, deductedPercent, remainingUnits = ReportVehicleCollision(source, vehicleNetId)
-    return applied, deductedPercent, remainingUnits
-end)
-
-lib.callback.register("t1ger_moneywash:server:completeStockDelivery", function(source)
-    local success, reason = CompleteStockDelivery(source)
-    return { success = success, reason = reason }
-end)
-
-lib.callback.register("t1ger_moneywash:server:cancelStockMission", function(source)
-    local success, reason, refund = CancelStockMission(source)
-    return { success = success, reason = reason, refund = refund }
 end)
 
 --- Most stock units a business can hold at once.
