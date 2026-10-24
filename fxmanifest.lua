@@ -39,8 +39,8 @@ client_scripts {
     'client/portal.lua',
     'client/raid.lua',
     'client/stock.lua',
+    'client/review.lua',
     'client/business/menu.lua',
-    'client/business/review.lua',
     'client/main.lua',
 }
 

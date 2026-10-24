@@ -460,6 +460,7 @@ function AdminRemoveBusiness(businessType, locationId)
         end
 
         EndStockOrderForBusiness(businessId)
+        EndReviewForBusiness(businessId)
 
         RemoveFromStore(businessId)
 

@@ -54,7 +54,7 @@
             "review_cooldown": "The accountant is fully booked. Available again in %s",
             "review_cooldown_minutes": "%d min",
             "review_cancel": "Cancel Review",
-            "review_cancel_desc": "Drop the sealed folder. Nothing is charged and your receipts are kept"
+            "review_cancel_desc": "Drop the sealed folder. The fee is refunded minus a penalty"
         },
         "launder": {
             "title": "Launder Money",
@@ -80,9 +80,7 @@
         },
         "review": {
             "cancel_title": "Cancel Review",
-            "cancel_body": "Drop the sealed folder? Nothing is charged and your receipts are kept.",
-            "pay_title": "Accountant",
-            "pay_body": "The accountant will review %d receipts.\n\nSuspicion: %s → %s\nFee: %s (paid from your bank)"
+            "cancel_body": "Drop the sealed folder? The fee is refunded minus %d%%."
         },
         "manage": {
             "title": "Manage Business",
@@ -143,11 +141,12 @@
         "raid_cancel_timeout": "The raid took too long and was called off.",
         "raid_cancel_too_far": "You moved too far from the business. The raid was called off.",
         "raid_cancel_dead": "You went down. The raid was called off.",
-        "review_prepared": "Folder sealed. Deliver it to the accountant. The office is marked on your map.",
+        "review_prepared": "Folder sealed and the fee paid. Deliver it to the accountant. The office is marked on your map.",
         "review_completed": "Books reviewed. Suspicion %s → %s. Fee paid: %s.",
-        "review_cancelled": "Review cancelled. Your receipts are untouched.",
-        "review_cancel_timeout": "You ran out of time. The review was cancelled and your receipts are untouched.",
-        "review_cancel_dead": "You collapsed. The review was cancelled and your receipts are untouched.",
+        "review_cancelled": "Review cancelled. Nothing was charged.",
+        "review_cancel_timeout": "You ran out of time. The review was cancelled and the fee was lost.",
+        "review_cancel_dead": "You collapsed. The review was cancelled and the fee was lost.",
+        "review_refunded": "Accountant fee refunded: %s.",
         "police_alert": {
             "Moderate": "Unusual financial activity reported at %s near %s",
             "High": "Suspicious business activity flagged at %s near %s",
@@ -238,7 +237,7 @@
         "below_minimum": "Those receipts aren't worth enough to review",
         "not_prepared": "Your paperwork expired. Open the books again to start over",
         "no_review": "You aren't carrying a sealed folder",
-        "no_accountant_locations": "No accountant offices are configured"
+        "no_accountant_location": "No accountant office is configured"
     },
     "general": {
         "unknown_location": "an unknown location",

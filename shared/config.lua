@@ -228,12 +228,13 @@ Config.Review = {
     Cooldown             = 60,  -- Minutes between completed reviews of the same business (resets on restart)
     PrepareTimeout       = 15,  -- Minutes before an opened desk is discarded if the folder isn't sealed
     MaxTime              = 20,  -- Minutes to deliver the sealed folder
+    CancelPenaltyPercent = 25,  -- % of the fee lost when the player drops the sealed folder
 
     -- Accountant ped where the folder is delivered
     Accountant           = {
         Model          = "s_f_m_shop_high",
         Scenario       = "WORLD_HUMAN_CLIPBOARD",
-        SpawnDistance  = 50.0,                 -- Ped spawns when a delivering player is this close
+        SpawnDistance  = 50.0,                 -- Ped spawns when any player is this close
         TargetIcon     = "fa-solid fa-folder-open",
         TargetDistance = 2.0,
         Location       = vector4(-555.362610, -227.050537, 38.159668, 218.267715),

@@ -12,7 +12,7 @@ RegisterNetEvent("t1ger_moneywash:server:playerLoaded", function()
     -- Load reputation
     LoadReputation(src)
 
-    -- Refund a stock order left behind when the player disconnected
+    PayPendingStockRefund(src)
     PayPendingStockRefund(src)
 
     -- Sync owned businesses to client

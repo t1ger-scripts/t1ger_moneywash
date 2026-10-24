@@ -4,6 +4,46 @@
 --- Calls into server callbacks for live data before opening each menu.
 --- ============================================================================
 
+--- The Review Books row of the Handler main menu.
+---@param businessId number
+---@param status table From getBusinessStatus
+---@param menuIcons table
+---@return table
+local function buildReviewMenuOption(businessId, status, menuIcons)
+    if status.reviewActive then
+        return {
+            title       = locale("menu.handler.review_cancel"),
+            icon        = "fa-solid fa-ban",
+            description = locale("menu.handler.review_cancel_desc"),
+            onSelect    = function()
+                CancelReview()
+            end,
+        }
+    end
+
+    local icon = menuIcons.reviewBooks or "fa-solid fa-folder-open"
+
+    if (status.reviewCooldown or 0) > 0 then
+        local minutes = locale("menu.handler.review_cooldown_minutes"):format(math.ceil(status.reviewCooldown / 60))
+
+        return {
+            title       = locale("menu.handler.review_books"),
+            icon        = icon,
+            description = locale("menu.handler.review_cooldown"):format(minutes),
+            disabled    = true,
+        }
+    end
+
+    return {
+        title       = locale("menu.handler.review_books"),
+        icon        = icon,
+        description = locale("menu.handler.review_books_desc"),
+        onSelect    = function()
+            OpenBooksReview(businessId)
+        end,
+    }
+end
+
 --- Opens the Handler NPC main menu for an owned business
 --- Fetches live business status from server before opening
 --- @param businessId number
@@ -89,7 +129,7 @@ function OpenHandlerMenu(businessId)
     }
 
     if Config.Review and Config.Review.Enable then
-        table.insert(mainContext.options, 4, BuildReviewMenuOption(businessId, status, menuIcons))
+        table.insert(mainContext.options, 4, buildReviewMenuOption(businessId, status, menuIcons))
     end
 
     lib.registerContext(mainContext)

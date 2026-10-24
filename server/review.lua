@@ -1,97 +1,146 @@
---- ============================================================================
---- Accountant Review (Review Books) Server
---- Server-authoritative: generates the worksheet, keeps the solution, grades
---- the player's answers, locks the result at the stamp and applies it only
---- when the folder is delivered to the accountant and the fee is paid.
---- ============================================================================
+--- Accountant review (server). The server makes the worksheet, keeps the answers, grades them at the
+--- stamp and applies the result when the folder is delivered.
+--- The fee is paid at the stamp. A cancel refunds it minus the penalty, a disconnect is refunded when
+--- the player is back, admin removal and a resource stop refund it in full, a timeout or death does not.
+--- Everything lives in memory only. A server restart loses cooldowns and unpaid refunds.
 
-local CLIENT_EVENTS = {
-    cancelled = "t1ger_moneywash:client:reviewCancelled",
-}
+local CLIENT_EVENT = "t1ger_moneywash:client:reviewCancelled"
 
---- Worksheets waiting for the player to finish (before the stamp)
----@type table<number, table> src -> { businessId, receipts, solution, expiresAt }
-local Prepared = {}
+---@class ReviewWorksheet
+---@field businessId integer
+---@field receipts table[] Receipts the player picked
+---@field units integer Units on those receipts
+---@field expiresAt integer os.time() the desk is discarded
 
---- Sealed reviews waiting for delivery (after the stamp)
----@type table<number, table> businessId -> review
-local Sealed = {}
+---@class SealedReview
+---@field src integer
+---@field identifier string
+---@field businessId integer
+---@field receiptIds integer[]
+---@field reduction number Suspicion removed on delivery
+---@field fee integer Paid at the stamp
+---@field expiresAt integer os.time() the delivery runs out
 
---- src -> businessId for sealed reviews
-local SealedBySource = {}
+---@type table<integer, ReviewWorksheet> Open desks by player source
+local Worksheets = {}
 
---- businessId -> os.time() when the cooldown ends
+---@type table<integer, SealedReview> Paid reviews by business id
+local Reviews = {}
+
+---@type table<integer, integer> Business id of the player's paid review, by source
+local ReviewBySource = {}
+
+---@type table<integer, integer> os.time() a business can be reviewed again, by business id
 local Cooldowns = {}
 
---- Per-player guard against double-click interleaving
+---@type table<string, integer> Refunds for players who disconnected, by identifier
+local PendingRefunds = {}
+
+---@type table<integer, boolean> Players inside a callback, stops double clicks
 local Busy = {}
 
---- ---------------------------------------------------------------------------
---- HELPERS
---- ---------------------------------------------------------------------------
-
---- Releases everything a player holds, without cost and without cooldown.
----@param src number
----@param reason string|nil if set, the client is told the review was cancelled
-local function releasePlayer(src, reason)
-    local hadSomething = Prepared[src] ~= nil
-
-    Prepared[src] = nil
-    Busy[src] = nil
-
-    local businessId = SealedBySource[src]
-    if businessId then
-        hadSomething = true
-        Sealed[businessId] = nil
-        SealedBySource[src] = nil
-    end
-
-    if reason and hadSomething and GetPlayerName(src) then
-        TriggerClientEvent(CLIENT_EVENTS.cancelled, src, reason)
-    end
+--- Removes a paid review from memory. Money is not touched here.
+---@param review SealedReview
+local function finishReview(review)
+    Reviews[review.businessId] = nil
+    ReviewBySource[review.src] = nil
 end
 
---- Is a review running (prepared or sealed) for this business?
----@param businessId number
+--- Tells the client its review is over, so it closes the desk and removes the folder.
+---@param src integer
+---@param reason string
+local function notifyClient(src, reason)
+    if GetPlayerName(src) then TriggerClientEvent(CLIENT_EVENT, src, reason) end
+end
+
+--- Refunds the fee of a review in full and tells the player.
+---@param review SealedReview
+local function refundInFull(review)
+    _API.Player.AddMoney(review.src, review.fee, "bank")
+    _API.SendNotification(review.src, string.format(locale("notification.review_refunded"), FormatMoney(review.fee)), "inform")
+end
+
+--- True if the business has a desk open or a paid review running.
+---@param businessId integer
 ---@return boolean
 function IsBusinessInReview(businessId)
-    if Sealed[businessId] then return true end
+    if Reviews[businessId] then return true end
 
-    for _, prepared in pairs(Prepared) do
-        if prepared.businessId == businessId then return true end
+    for _, worksheet in pairs(Worksheets) do
+        if worksheet.businessId == businessId then return true end
     end
 
     return false
 end
 exports("IsBusinessInReview", IsBusinessInReview)
 
---- Returns the active sealed review of a player (used by the client mission)
----@param src number
----@return table|nil
-function GetActiveReview(src)
-    local businessId = SealedBySource[src]
-    return businessId and Sealed[businessId] or nil
+--- Seconds until a business can be reviewed again.
+---@param businessId integer
+---@return integer seconds 0 when it can be reviewed
+function GetReviewCooldownRemaining(businessId)
+    local remaining = (Cooldowns[businessId] or 0) - os.time()
+    if remaining > 0 then return remaining end
+
+    Cooldowns[businessId] = nil
+
+    return 0
 end
 
---- Seconds left on the cooldown of a business (0 when none).
----@param businessId number
----@return number
-function GetReviewCooldownRemaining(businessId)
-    local endsAt = Cooldowns[businessId]
-    if not endsAt then return 0 end
-
-    local remaining = endsAt - os.time()
-    if remaining <= 0 then
-        Cooldowns[businessId] = nil
-        return 0
+--- Ends the review of a business that is being removed, and refunds it in full.
+---@param businessId integer
+function EndReviewForBusiness(businessId)
+    local review = Reviews[businessId]
+    if review then
+        refundInFull(review)
+        finishReview(review)
+        notifyClient(review.src, "review_removed")
     end
 
-    return remaining
+    for src, worksheet in pairs(Worksheets) do
+        if worksheet.businessId == businessId then
+            Worksheets[src] = nil
+            notifyClient(src, "review_removed")
+        end
+    end
 end
 
---- Common checks before starting a review. Returns the business on success.
----@param src number
----@param businessId number
+--- A player disconnected: the review ends and the refund waits until they are back.
+--- The refund can't be paid now, the framework has already unloaded the player.
+---@param src integer
+local function handlePlayerDropped(src)
+    Worksheets[src] = nil
+    Busy[src] = nil
+
+    local businessId = ReviewBySource[src]
+    local review = businessId and Reviews[businessId]
+    if not review then return end
+
+    PendingRefunds[review.identifier] = (PendingRefunds[review.identifier] or 0) + review.fee
+    finishReview(review)
+end
+
+--- A player loaded in: pays the refund of a review they left behind when they disconnected.
+---@param src integer
+function PayPendingReviewRefund(src)
+    local identifier = _API.Player.GetIdentifier(src)
+    if not identifier then return end
+
+    -- The old connection may not have dropped yet (client crash and a quick reconnect)
+    for _, review in pairs(Reviews) do
+        if review.src ~= src and review.identifier == identifier then handlePlayerDropped(review.src) end
+    end
+
+    local amount = PendingRefunds[identifier]
+    if not amount then return end
+
+    PendingRefunds[identifier] = nil
+    _API.Player.AddMoney(src, amount, "bank")
+    _API.SendNotification(src, string.format(locale("notification.review_refunded"), FormatMoney(amount)), "inform")
+end
+
+--- Checks the player may start a review. Returns the business on success.
+---@param src integer
+---@param businessId any
 ---@return table|nil business
 ---@return string|nil reason
 local function validateStart(src, businessId)
@@ -101,27 +150,18 @@ local function validateStart(src, businessId)
     local identifier = _API.Player.GetIdentifier(src)
     local business = tonumber(businessId) and GetBusiness(tonumber(businessId))
 
-    if not identifier or not business or business.identifier ~= identifier then
-        return nil, "not_owner"
-    end
-
+    if not identifier or not business or business.identifier ~= identifier then return nil, "not_owner" end
     if (business.suspicion or 0) <= 0 then return nil, "nothing_to_review" end
     if GetReviewCooldownRemaining(business.id) > 0 then return nil, "review_cooldown" end
     if IsBusinessInReview(business.id) then return nil, "review_active" end
-
-    if IsBusinessRaided and IsBusinessRaided(business.id) then
-        return nil, "raid_in_progress"
-    end
-
-    if HasPendingCashOperation and HasPendingCashOperation(business.id) then
-        return nil, "business_busy"
-    end
+    if IsBusinessRaided(business.id) then return nil, "raid_in_progress" end
+    if HasPendingCashOperation(business.id) then return nil, "business_busy" end
 
     return business
 end
 
---- Loads the player's receipts for a business, newest first.
----@param businessId number
+--- Receipts of a business, newest first.
+---@param businessId integer
 ---@return table[]
 local function loadReceipts(businessId)
     local rows = MySQL.query.await(
@@ -143,42 +183,33 @@ local function loadReceipts(businessId)
     return receipts
 end
 
---- Receipts that are not reserved by a sealed review.
----@param businessId number
----@return table[]
-local function loadFreeReceipts(businessId)
-    local reserved = Sealed[businessId] and Sealed[businessId].receiptSet or {}
-    local free = {}
+--- The fee of a review. It depends on the business type only.
+---@param business table
+---@return integer
+local function getFee(business)
+    local tier = GetTierByType(business.type)
 
-    for _, receipt in ipairs(loadReceipts(businessId)) do
-        if not reserved[receipt.id] then free[#free + 1] = receipt end
-    end
-
-    return free
+    return math.floor((tier and tier.expectedRevenue or 0) * Config.Review.FeePercent / 100 + 0.5)
 end
 
---- Reduction math shared by open (settings), prepare and seal.
+--- Suspicion a review removes before the quality of the paperwork is applied.
 ---@param business table
----@param selectedUnits number
----@param quality number
----@return number base
----@return number final
----@return number fee
-local function calculate(business, selectedUnits, quality)
+---@param units integer Units on the selected receipts
+---@return number
+local function getBaseReduction(business, units)
     local cfg = Config.Review
     local tier = GetTierByType(business.type)
-    local expectedRevenue = tier and tier.expectedRevenue or 0
-    local unitsPerCycle = math.max(1, expectedRevenue / Config.Stock.LaunderDollarsPerUnit)
+    local unitsPerCycle = math.max(1, (tier and tier.expectedRevenue or 0) / Config.Stock.LaunderDollarsPerUnit)
+    local perUnit = cfg.MaxReduction / cfg.CyclesForMax / unitsPerCycle
 
-    local reductionPerUnit = cfg.MaxReduction / cfg.CyclesForMax / unitsPerCycle
-    local base = math.min(selectedUnits * reductionPerUnit, cfg.MaxReduction, business.suspicion)
-    local final = math.min(base, math.floor(base * quality * 100 + 0.5) / 100)
-    local fee = math.floor(expectedRevenue * cfg.FeePercent / 100 + 0.5)
-
-    return base, final, fee
+    return math.min(units * perUnit, cfg.MaxReduction, business.suspicion)
 end
 
---- Changes a number by roughly `percentage`, never below `minimum`.
+--- Changes a number by about `percentage`, never below `minimum`.
+---@param value number
+---@param percentage number 0.15 = 15%
+---@param minimum number
+---@return number
 local function changeNumber(value, percentage, minimum)
     local difference = math.max(1, math.floor(value * percentage + 0.5))
     local candidate = value + (math.random() < 0.5 and -difference or difference)
@@ -187,6 +218,7 @@ local function changeNumber(value, percentage, minimum)
 end
 
 --- Shuffles a list in place.
+---@param list any[]
 local function shuffle(list)
     for i = #list, 2, -1 do
         local j = math.random(i)
@@ -194,14 +226,16 @@ local function shuffle(list)
     end
 end
 
---- Runs a callback body under the per-player busy guard. Whatever happens
---- (even an error), the guard is released and the player gets a clean reply.
-local function guarded(source, fn)
-    if Busy[source] then return { success = false, reason = "business_busy" } end
-    Busy[source] = true
+--- Runs a callback body once per player at a time. An error gives a clean reply and frees the guard.
+---@param src integer
+---@param fn fun(): table
+---@return table
+local function guarded(src, fn)
+    if Busy[src] then return { success = false, reason = "business_busy" } end
+    Busy[src] = true
 
     local ok, response = pcall(fn)
-    Busy[source] = nil
+    Busy[src] = nil
 
     if not ok then
         print(("^1[MoneyWash] Review error: %s^7"):format(tostring(response)))
@@ -211,21 +245,22 @@ local function guarded(source, fn)
     return response
 end
 
---- ---------------------------------------------------------------------------
---- CALLBACKS
---- ---------------------------------------------------------------------------
-
---- Opens the desk: returns everything the UI needs.
-lib.callback.register("t1ger_moneywash:server:review:open", function(source, businessId)
-    local business, reason = validateStart(source, businessId)
+--- Callback: opens the desk and returns what the UI needs.
+---@param src integer
+---@param businessId integer
+lib.callback.register("t1ger_moneywash:server:review:open", function(src, businessId)
+    local business, reason = validateStart(src, businessId)
     if not business then return { success = false, reason = reason } end
 
-    local receipts = loadFreeReceipts(business.id)
+    local fee = getFee(business)
+    if _API.Player.GetMoney(src, "bank") < fee then return { success = false, reason = "insufficient_funds" } end
+
+    local receipts = loadReceipts(business.id)
     if #receipts == 0 then return { success = false, reason = "nothing_to_review" } end
 
     local location = GetLocationConfig(business.type, business.locationId)
     if not location
-        or not IsPlayerNearCoords(source, location.coords, (Config.HandlerNPC.Target.distance or 2.0) + 4.0)
+        or not IsPlayerNearCoords(src, location.coords, (Config.HandlerNPC.Target.distance or 2.0) + 4.0)
     then
         return { success = false, reason = "business_too_far" }
     end
@@ -242,6 +277,7 @@ lib.callback.register("t1ger_moneywash:server:review:open", function(source, bus
             suspicion             = business.suspicion,
             expectedRevenue       = tier and tier.expectedRevenue or 0,
             launderDollarsPerUnit = Config.Stock.LaunderDollarsPerUnit,
+            fee                   = fee,
             settings = {
                 maxReduction = cfg.MaxReduction,
                 cyclesForMax = cfg.CyclesForMax,
@@ -254,43 +290,43 @@ lib.callback.register("t1ger_moneywash:server:review:open", function(source, bus
     }
 end)
 
---- "Prepare books": validates the selection and returns the shuffled worksheet.
-lib.callback.register("t1ger_moneywash:server:review:prepare", function(source, businessId, ids)
-    return guarded(source, function()
-        -- A second prepare (e.g. after Back) simply replaces the first sheet.
-        Prepared[source] = nil
+--- Callback: checks the selected receipts and returns the shuffled worksheet.
+---@param src integer
+---@param businessId integer
+---@param ids integer[] Receipt ids
+lib.callback.register("t1ger_moneywash:server:review:prepare", function(src, businessId, ids)
+    return guarded(src, function()
+        -- A second prepare (e.g. after Back) replaces the first sheet
+        Worksheets[src] = nil
 
-        local business, reason = validateStart(source, businessId)
+        local business, reason = validateStart(src, businessId)
         if not business then return { success = false, reason = reason } end
 
         if type(ids) ~= "table" or #ids == 0 or #ids > Config.Review.MaxReceiptsPerReview then
             return { success = false, reason = "invalid_selection" }
         end
 
-        local free = {}
-        for _, receipt in ipairs(loadFreeReceipts(business.id)) do free[receipt.id] = receipt end
+        local owned = {}
+        for _, receipt in ipairs(loadReceipts(business.id)) do owned[receipt.id] = receipt end
 
-        local seen, selected, selectedUnits = {}, {}, 0
+        local seen, selected, units = {}, {}, 0
         for _, rawId in ipairs(ids) do
             local id = tonumber(rawId)
-            local receipt = id and free[id]
+            local receipt = id and owned[id]
 
-            if not receipt or seen[id] then
-                return { success = false, reason = "invalid_selection" }
-            end
+            if not receipt or seen[id] then return { success = false, reason = "invalid_selection" } end
 
             seen[id] = true
             selected[#selected + 1] = receipt
-            selectedUnits = selectedUnits + receipt.units
+            units = units + receipt.units
         end
 
-        local base = calculate(business, selectedUnits, 1.0)
-        if base < Config.Review.MinReduction then
+        if getBaseReduction(business, units) < Config.Review.MinReduction then
             return { success = false, reason = "below_minimum" }
         end
 
-        -- One fault per row: either the units or the total is wrong.
-        local rows, solution = {}, {}
+        -- One fault per row: either the units or the total is wrong
+        local rows = {}
         for _, receipt in ipairs(selected) do
             local row = {
                 id          = receipt.id,
@@ -306,16 +342,14 @@ lib.callback.register("t1ger_moneywash:server:review:prepare", function(source, 
             end
 
             rows[#rows + 1] = row
-            solution[receipt.id] = receipt
         end
 
         shuffle(rows)
 
-        Prepared[source] = {
+        Worksheets[src] = {
             businessId = business.id,
             receipts   = selected,
-            solution   = solution,
-            units      = selectedUnits,
+            units      = units,
             expiresAt  = os.time() + Config.Review.PrepareTimeout * 60,
         }
 
@@ -323,43 +357,46 @@ lib.callback.register("t1ger_moneywash:server:review:prepare", function(source, 
     end)
 end)
 
---- Stamp: grade the answers, lock the result and reserve the receipts.
-lib.callback.register("t1ger_moneywash:server:review:stamp", function(source, answers)
-    return guarded(source, function()
-        local prepared = Prepared[source]
-        if not prepared then return { success = false, reason = "not_prepared" } end
+--- Callback: the stamp. Grades the answers, takes the fee and seals the review.
+---@param src integer
+---@param answers table[] { id, matchedReceiptId, units, totalAmount }
+lib.callback.register("t1ger_moneywash:server:review:stamp", function(src, answers)
+    return guarded(src, function()
+        local worksheet = Worksheets[src]
+        if not worksheet then return { success = false, reason = "not_prepared" } end
 
-        if os.time() > prepared.expiresAt then
-            Prepared[source] = nil
+        if os.time() > worksheet.expiresAt then
+            Worksheets[src] = nil
             return { success = false, reason = "not_prepared" }
         end
 
-        local business = GetBusiness(prepared.businessId)
-        local identifier = _API.Player.GetIdentifier(source)
+        local business = GetBusiness(worksheet.businessId)
+        local identifier = _API.Player.GetIdentifier(src)
 
         if not business or business.identifier ~= identifier or type(answers) ~= "table" then
-            Prepared[source] = nil
+            Worksheets[src] = nil
             return { success = false, reason = "not_prepared" }
         end
 
-        -- Rules may have changed while the player was at the desk.
-        if Sealed[business.id] or (business.suspicion or 0) <= 0
-            or (IsBusinessRaided and IsBusinessRaided(business.id))
-            or (HasPendingCashOperation and HasPendingCashOperation(business.id))
+        -- The rules may have changed while the player was at the desk
+        if Reviews[business.id] or (business.suspicion or 0) <= 0
+            or IsBusinessRaided(business.id) or HasPendingCashOperation(business.id)
         then
-            Prepared[source] = nil
+            Worksheets[src] = nil
             return { success = false, reason = "review_active" }
         end
 
+        local fee = getFee(business)
+        local bank = _API.Player.GetMoney(src, "bank")
+        if bank < fee then return { success = false, reason = "insufficient_funds" } end
+
         local answered = {}
         for _, answer in ipairs(answers) do
-            if type(answer) == "table" and tonumber(answer.id) then
-                answered[tonumber(answer.id)] = answer
-            end
+            if type(answer) == "table" and tonumber(answer.id) then answered[tonumber(answer.id)] = answer end
         end
 
         local mistakes = 0
-        for _, receipt in ipairs(prepared.receipts) do
+        for _, receipt in ipairs(worksheet.receipts) do
             local answer = answered[receipt.id]
 
             local correct = answer
@@ -370,32 +407,28 @@ lib.callback.register("t1ger_moneywash:server:review:stamp", function(source, an
             if not correct then mistakes = mistakes + 1 end
         end
 
-        local rowCount = #prepared.receipts
+        local rowCount = #worksheet.receipts
         local quality = math.max(1 - Config.Review.SkillImpact / 100, 1 - mistakes / rowCount)
-        local _, reduction, fee = calculate(business, prepared.units, quality)
+        local reduction = math.floor(getBaseReduction(business, worksheet.units) * quality * 100 + 0.5) / 100
 
-        local receiptIds, receiptSet = {}, {}
-        for _, receipt in ipairs(prepared.receipts) do
-            receiptIds[#receiptIds + 1] = receipt.id
-            receiptSet[receipt.id] = true
-        end
+        _API.Player.RemoveMoney(src, fee, "bank")
+        if _API.Player.GetMoney(src, "bank") > bank - fee then return { success = false, reason = "request_failed" } end
 
-        Prepared[source] = nil
+        local receiptIds = {}
+        for _, receipt in ipairs(worksheet.receipts) do receiptIds[#receiptIds + 1] = receipt.id end
 
-        local review = {
-            src             = source,
-            identifier      = identifier,
-            businessId      = business.id,
-            receiptIds      = receiptIds,
-            receiptSet      = receiptSet,
-            reduction       = reduction,
-            fee             = fee,
-            suspicionBefore = business.suspicion,
-            expiresAt       = os.time() + Config.Review.MaxTime * 60,
+        Worksheets[src] = nil
+
+        Reviews[business.id] = {
+            src        = src,
+            identifier = identifier,
+            businessId = business.id,
+            receiptIds = receiptIds,
+            reduction  = reduction,
+            fee        = fee,
+            expiresAt  = os.time() + Config.Review.MaxTime * 60,
         }
-
-        Sealed[business.id] = review
-        SealedBySource[source] = business.id
+        ReviewBySource[src] = business.id
 
         return {
             success = true,
@@ -412,50 +445,63 @@ lib.callback.register("t1ger_moneywash:server:review:stamp", function(source, an
     end)
 end)
 
---- Cancel (Back button, ESC, mission abandoned): free everything, no cost.
-lib.callback.register("t1ger_moneywash:server:review:cancel", function(source)
-    if Busy[source] then return { success = false, reason = "business_busy" } end
-    releasePlayer(source, nil)
+--- Callback: the desk is closed before the stamp (Back, ESC). Nothing was paid.
+---@param src integer
+lib.callback.register("t1ger_moneywash:server:review:cancel", function(src)
+    if Busy[src] then return { success = false, reason = "business_busy" } end
+
+    Worksheets[src] = nil
+
     return { success = true }
 end)
 
---- Delivery at the accountant: pay the fee, consume receipts, apply the result.
-lib.callback.register("t1ger_moneywash:server:review:deliver", function(source)
-    return guarded(source, function()
-        local review = GetActiveReview(source)
+--- Callback: the player drops the sealed folder. The fee is refunded minus the penalty.
+---@param src integer
+lib.callback.register("t1ger_moneywash:server:review:cancelMission", function(src)
+    return guarded(src, function()
+        local businessId = ReviewBySource[src]
+        local review = businessId and Reviews[businessId]
         if not review then return { success = false, reason = "no_review" } end
 
-        local cfg = Config.Review
-        local office = cfg.Accountant.Location
-        local nearOffice = office ~= nil
-            and IsPlayerNearCoords(source, office, cfg.Accountant.TargetDistance + 3.0)
+        local penalty = Config.Review.CancelPenaltyPercent or 0
+        local refund = math.floor(review.fee * (1 - penalty / 100))
 
-        if not nearOffice then return { success = false, reason = "accountant_too_far" } end
+        _API.Player.AddMoney(src, refund, "bank")
+        finishReview(review)
 
-        local business = GetBusiness(review.businessId)
-        if not business or business.identifier ~= review.identifier then
-            releasePlayer(source, "review_cancelled")
-            return { success = false, reason = "no_review" }
+        return { success = true, refund = refund }
+    end)
+end)
+
+--- Callback: delivery at the accountant. Consumes the receipts and applies the result.
+---@param src integer
+lib.callback.register("t1ger_moneywash:server:review:deliver", function(src)
+    return guarded(src, function()
+        local businessId = ReviewBySource[src]
+        local review = businessId and Reviews[businessId]
+        if not review then return { success = false, reason = "no_review" } end
+
+        local cfg = Config.Review.Accountant
+        if not IsPlayerNearCoords(src, cfg.Location, cfg.TargetDistance + 3.0) then
+            return { success = false, reason = "accountant_too_far" }
         end
 
-        if _API.Player.GetMoney(source, "bank") < review.fee then
-            return { success = false, reason = "insufficient_funds", fee = review.fee }
-        end
-
-        -- Receipts are consumed whole. Delete first: if they changed behind
-        -- our back, nothing is charged.
+        -- Receipts are consumed whole. If they changed behind our back, the fee is refunded.
         local placeholders = string.rep("?,", #review.receiptIds):sub(1, -2)
         local deleted = MySQL.update.await(
             ("DELETE FROM moneywash_receipts WHERE business_id = ? AND id IN (%s)"):format(placeholders),
-            { business.id, table.unpack(review.receiptIds) }
+            { review.businessId, table.unpack(review.receiptIds) }
         )
 
-        if deleted ~= #review.receiptIds then
-            releasePlayer(source, "review_cancelled")
+        -- Read after the database call, other systems may have changed the suspicion meanwhile
+        local business = GetBusiness(review.businessId)
+
+        if deleted ~= #review.receiptIds or not business or business.identifier ~= review.identifier then
+            refundInFull(review)
+            finishReview(review)
+            notifyClient(src, "review_invalid")
             return { success = false, reason = "no_review" }
         end
-
-        _API.Player.RemoveMoney(source, review.fee, "bank")
 
         local before = business.suspicion
         local after = math.max(0, before - review.reduction)
@@ -464,14 +510,10 @@ lib.callback.register("t1ger_moneywash:server:review:deliver", function(source)
         SaveBusiness(business.id, true)
 
         local reward = Config.Reputation.Enable and Config.Reputation.Rewards.accountantReview
-        if reward and reward.enable then
-            AwardReputationPoints(source, review.identifier, reward.points)
-        end
+        if reward and reward.enable then AwardReputationPoints(src, review.identifier, reward.points) end
 
-        Cooldowns[business.id] = os.time() + cfg.Cooldown * 60
-
-        Sealed[business.id] = nil
-        SealedBySource[source] = nil
+        Cooldowns[business.id] = os.time() + Config.Review.Cooldown * 60
+        finishReview(review)
 
         RunHook(
             "OnBusinessBooksReviewed",
@@ -479,45 +521,48 @@ lib.callback.register("t1ger_moneywash:server:review:deliver", function(source)
             before, after, #review.receiptIds
         )
 
-        return {
-            success = true,
-            reduction = review.reduction,
-            fee = review.fee,
-            suspicionBefore = before,
-            suspicionAfter = after,
-        }
+        return { success = true, suspicionBefore = before, suspicionAfter = after, fee = review.fee }
     end)
 end)
 
---- ---------------------------------------------------------------------------
---- CLEANUP
---- ---------------------------------------------------------------------------
-
---- Timeouts (prepare sheet and mission) and dead players.
+--- Ends desks and deliveries that ran out of time, or whose owner died. A late delivery is not refunded.
 CreateThread(function()
     while true do
-        Wait(5000)
+        Wait((next(Worksheets) or next(Reviews)) and 5000 or 10000)
+
         local now = os.time()
 
-        for src, prepared in pairs(Prepared) do
-            if now > prepared.expiresAt then releasePlayer(src, "review_timeout") end
+        for src, worksheet in pairs(Worksheets) do
+            if now > worksheet.expiresAt then
+                Worksheets[src] = nil
+                notifyClient(src, "review_desk_timeout")
+            end
         end
 
-        for _, review in pairs(Sealed) do
+        for _, review in pairs(Reviews) do
             if now > review.expiresAt then
-                releasePlayer(review.src, "review_timeout")
+                finishReview(review)
+                notifyClient(review.src, "review_timeout")
             elseif GetPlayerName(review.src) and GetEntityHealth(GetPlayerPed(review.src)) <= 0 then
-                releasePlayer(review.src, "review_died")
+                finishReview(review)
+                notifyClient(review.src, "review_died")
             end
         end
     end
 end)
 
 AddEventHandler("playerDropped", function()
-    releasePlayer(source, nil)
+    handlePlayerDropped(source)
 end)
 
-AddEventHandler("onResourceStop", function(resourceName)
-    if resourceName ~= GetCurrentResourceName() then return end
-    Prepared, Sealed, SealedBySource = {}, {}, {}
+--- Refunds every paid review when the resource stops, in full. Players are still online here.
+AddEventHandler("onResourceStop", function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+
+    for _, review in pairs(Reviews) do
+        _API.Player.AddMoney(review.src, review.fee, "bank")
+        finishReview(review)
+    end
+
+    Worksheets = {}
 end)
