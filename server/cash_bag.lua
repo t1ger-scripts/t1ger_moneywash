@@ -280,7 +280,7 @@ end
 ---@param src integer|nil
 ---@param identifier string
 local function awardReputation(src, identifier)
-    local reward = Config.Reputation.Rewards.bankDeposit
+    local reward = Config.Reputation.Rewards.cashBagDeposit
     if not (Config.Reputation.Enable and reward and reward.enable) then return end
 
     AwardReputationPoints(src, identifier, reward.points)

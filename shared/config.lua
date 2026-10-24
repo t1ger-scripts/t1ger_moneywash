@@ -265,7 +265,7 @@ Config.Reputation = {
         businessPurchase = { enable = true, points = 50 }, -- Per business purchase
         stockDelivery    = { enable = true, points = 5 },  -- Per completed stock delivery
         launder          = { enable = true, points = 10 }, -- Per successful launder
-        bankDeposit      = { enable = true, points = 5 },  -- When a deposit clears into the personal bank
+        cashBagDeposit   = { enable = true, points = 5 },  -- When a cash bag deposit clears into the bank
         accountantReview = { enable = true, points = 5 }, -- Per completed review delivery
     },
 
