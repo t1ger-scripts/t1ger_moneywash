@@ -13,13 +13,17 @@ function IsPoliceJob()
     return false
 end
 
---- Returns whether the player is police and meets a minimum grade.
+--- Returns whether the player is police and meets a minimum grade (and is on duty if required).
+--- The server checks this again, so this only decides what the player is offered.
 ---@param minGrade number
+---@param onDutyOnly? boolean
 ---@return boolean
-function IsPoliceJobWithGrade(minGrade)
+function IsPoliceJobWithGrade(minGrade, onDutyOnly)
     if not IsPoliceJob() then return false end
 
     local job = _API.Player:GetJob()
+    if onDutyOnly and job.onDuty == false then return false end
+
     return (job.grade or 0) >= minGrade
 end
 

@@ -1,31 +1,29 @@
---- ============================================================================
---- Business Raid
---- A police officer raids a business and seizes its exposed Safe cash.
---- Flow: start -> officer bags the cash in the UI -> finish, or cancel.
---- While a raid runs the owner cannot use the Safe, transfer or abandon
---- (see IsBusinessRaided, checked by cash operations and ownership code).
---- ============================================================================
+--- Police raid: an officer bags the exposed Safe cash of a business and it is gone.
+--- Flow: start, the officer bags the cash in the UI, then finish (or cancel).
+--- While a raid runs the owner cannot use the Safe, transfer or abandon (see IsBusinessRaided).
 
----@type table<integer, table> Active raids by business id
+---@class Raid
+---@field businessId integer
+---@field officer integer Officer source
+---@field officerIdentifier string
+---@field ownerIdentifier string
+---@field expiresAt integer GetGameTimer() value the raid times out at
+---@field working? boolean True while the finish is running
+
+---@type table<integer, Raid> Active raids by business id
 local Raids = {}
 
----@type table<integer, integer> Business id of the raid an officer is running, by officer source
+---@type table<integer, integer> Business id of the raid an officer runs, by officer source
 local BySource = {}
 
 ---@type table<integer, integer> os.time() before which a business can't be raided again, by business id.
 --- Memory only: a resource restart clears all cooldowns.
 local Cooldowns = {}
 
---- Extra distance (on top of the target distance) the officer may drift from the NPC
---- before the raid is called off. Absorbs position lag and small pushes.
-local RANGE_MARGIN = 6.0
-
+---@param reason string Failure reason, see error.<reason> in the locales
+---@return { success: false, reason: string }
 local function fail(reason)
     return { success = false, reason = reason }
-end
-
-local function onlineSource(identifier)
-    return GetOnlineSourceByIdentifier(identifier)
 end
 
 --- True while a raid is running at the business. Checked by cash operations,
@@ -36,22 +34,18 @@ function IsBusinessRaided(businessId)
     return Raids[businessId] ~= nil
 end
 
---- True if the player has a police job with the minimum raid grade.
-local function isRaider(src)
-    local job = _API.Player.GetJob(src)
-    if not job then return false end
-
-    for _, name in ipairs(Config.Police.Jobs) do
-        if job.name == name then
-            return (job.grade or 0) >= Config.Police.Raid.MinGrade
-        end
-    end
-
-    return false
+--- The lock keys a raid takes, so it cannot overlap a transfer or removal.
+---@param businessId integer
+---@param ownerIdentifier string
+---@return string[]
+local function lockKeys(businessId, ownerIdentifier)
+    return { ("business:%d"):format(businessId), "owner:" .. ownerIdentifier }
 end
 
---- Returns why the officer can no longer run this raid, or nil if all is fine.
----@return string|nil reason "gone" | "dead" | "too_far"
+--- Why the officer can no longer run this raid, or nil if all is fine.
+---@param src integer Officer source
+---@param raid Raid
+---@return "gone"|"dead"|"too_far"|nil reason
 local function officerProblem(src, raid)
     local ped = GetPlayerPed(src)
     if not ped or ped == 0 then return "gone" end
@@ -63,15 +57,15 @@ local function officerProblem(src, raid)
     local location = GetLocationConfig(business.type, business.locationId)
     if not location then return "gone" end
 
-    local range = Config.Police.Raid.Target.distance + RANGE_MARGIN
-    if not IsPlayerNearCoords(src, location.coords, range) then return "too_far" end
+    local config = Config.Police.Raid
+    if not IsPlayerNearCoords(src, location.coords, config.Target.distance + config.Margin) then return "too_far" end
 
     return nil
 end
 
---- What a finished raid does to the business suspicion. Never raises it.
+--- The suspicion a business has after a raid (Config.Police.Raid.SuspicionAfter). Never higher than before.
 ---@param current number
----@return number
+---@return number suspicion
 local function suspicionAfterRaid(current)
     local rule = Config.Police.Raid.SuspicionAfter or {}
     local value = math.max(0, math.min(100, tonumber(rule.Value) or 0))
@@ -85,6 +79,7 @@ local function suspicionAfterRaid(current)
     return current
 end
 
+---@param raid Raid
 local function removeRaid(raid)
     Raids[raid.businessId] = nil
 
@@ -94,30 +89,27 @@ local function removeRaid(raid)
 end
 
 --- Ends a raid without seizing anything. Nothing happened, so there is no cooldown.
----@param raid table
----@param reason string "aborted" | "timeout" | "too_far" | "dead" | "gone"
+---@param raid Raid
+---@param reason "aborted"|"timeout"|"too_far"|"dead"|"gone" "aborted" = the officer closed the UI, "gone" = the officer left
 local function cancelRaid(raid, reason)
-    -- A finish is already running: let it complete.
+    -- A finish is already running: let it complete
     if raid.working then return end
 
     removeRaid(raid)
 
-    -- "aborted" means the officer closed the UI themselves; "gone" means they left.
     if reason ~= "aborted" and GetPlayerName(raid.officer) then
         TriggerClientEvent("t1ger_moneywash:client:raidCancelled", raid.officer, reason)
     end
 
-    local owner = onlineSource(raid.ownerIdentifier)
+    local owner = GetOnlineSourceByIdentifier(raid.ownerIdentifier)
     if owner then
         _API.SendNotification(owner, locale("notification.raid_ended"), "inform")
     end
 end
 
---- -------------------------------------------------------------------------
---- CALLBACKS
---- -------------------------------------------------------------------------
-
---- Starts a raid. Returns the exposed amount the UI turns into cash piles.
+--- Callback: starts a raid. Returns the exposed amount the UI turns into cash piles.
+---@param src integer
+---@param businessId integer
 lib.callback.register("t1ger_moneywash:server:raid:start", function(src, businessId)
     local config = Config.Police.Raid
 
@@ -126,7 +118,7 @@ lib.callback.register("t1ger_moneywash:server:raid:start", function(src, busines
 
     local officerIdentifier = _API.Player.GetIdentifier(src)
     if not officerIdentifier then return fail("invalid_player") end
-    if not isRaider(src) then return fail("raid_not_allowed") end
+    if not IsPoliceOfficer(src, config.MinGrade, config.RequireDuty) then return fail("raid_not_allowed") end
     if BySource[src] then return fail("raid_active") end
 
     businessId = tonumber(businessId)
@@ -144,48 +136,26 @@ lib.callback.register("t1ger_moneywash:server:raid:start", function(src, busines
     local readyAt = Cooldowns[businessId]
     if readyAt and readyAt > os.time() then return fail("raid_cooldown") end
 
-    -- A cash operation is running: money is moving right now.
+    -- Money is moving right now
     if HasPendingCashOperation(businessId) then return fail("business_busy") end
+    if business.safeExposed <= 0 then return fail("nothing_to_seize") end
 
-    local lockKeys = { ("business:%d"):format(businessId), "owner:" .. business.identifier }
-
-    if not AcquireCashOperationLocks(lockKeys) then
-        return fail("business_busy")
-    end
-
-    -- No yielding between here and the end of this block, so these checks hold.
-    business = GetBusiness(businessId)
-
-    local problem
-    if not business or (business.identifier == officerIdentifier and not Config.Debug) then
-        problem = "not_found"
-    elseif Raids[businessId] then
-        problem = "raid_in_progress"
-    elseif HasPendingCashOperation(businessId) then
-        problem = "business_busy"
-    elseif business.safeExposed <= 0 then
-        problem = "nothing_to_seize"
-    end
-
-    if problem then
-        ReleaseCashOperationLocks(lockKeys)
-        return fail(problem)
-    end
-
-    local maxTime = math.max(1, tonumber(config.MaxTime) or 5)
+    -- A transfer or removal holds these keys. Nothing yields from the checks above to the release below.
+    local keys = lockKeys(businessId, business.identifier)
+    if not AcquireCashOperationLocks(keys) then return fail("business_busy") end
 
     Raids[businessId] = {
         businessId        = businessId,
         officer           = src,
         officerIdentifier = officerIdentifier,
         ownerIdentifier   = business.identifier,
-        expiresAt         = GetGameTimer() + maxTime * 60000,
+        expiresAt         = GetGameTimer() + math.max(1, tonumber(config.MaxTime) or 5) * 60000,
     }
     BySource[src] = businessId
 
-    ReleaseCashOperationLocks(lockKeys)
+    ReleaseCashOperationLocks(keys)
 
-    local owner = onlineSource(business.identifier)
+    local owner = GetOnlineSourceByIdentifier(business.identifier)
     if owner then
         _API.SendNotification(owner, locale("notification.raid_started"), "error")
     end
@@ -193,8 +163,9 @@ lib.callback.register("t1ger_moneywash:server:raid:start", function(src, busines
     return { success = true, data = { exposed = business.safeExposed } }
 end)
 
---- Finishes a raid: seizes the exposed Safe cash. The amount returned is what
---- the UI shows, so it is always the real seized amount.
+--- Callback: finishes the officer's raid and seizes the exposed Safe cash. The returned
+--- amount is what the UI shows, so it is always the real seized amount.
+---@param src integer
 lib.callback.register("t1ger_moneywash:server:raid:finish", function(src)
     local businessId = BySource[src]
     local raid = businessId and Raids[businessId]
@@ -207,15 +178,12 @@ lib.callback.register("t1ger_moneywash:server:raid:finish", function(src)
         return fail("no_raid")
     end
 
-    local lockKeys = { ("business:%d"):format(businessId), "owner:" .. raid.ownerIdentifier }
-
-    if not AcquireCashOperationLocks(lockKeys) then
-        return fail("business_busy")
-    end
+    local keys = lockKeys(businessId, raid.ownerIdentifier)
+    if not AcquireCashOperationLocks(keys) then return fail("business_busy") end
 
     raid.working = true
 
-    -- An autosave may be writing right now: wait for it, then change the Safe.
+    -- An autosave may be writing right now: wait for it, then change the Safe
     while IsBusinessSaveInProgress(businessId) do
         Wait(20)
     end
@@ -224,7 +192,7 @@ lib.callback.register("t1ger_moneywash:server:raid:finish", function(src)
 
     if not business or business.identifier ~= raid.ownerIdentifier then
         removeRaid(raid)
-        ReleaseCashOperationLocks(lockKeys)
+        ReleaseCashOperationLocks(keys)
         return fail("no_raid")
     end
 
@@ -241,16 +209,13 @@ lib.callback.register("t1ger_moneywash:server:raid:finish", function(src)
     end
 
     removeRaid(raid)
+    Cooldowns[businessId] = os.time() + math.max(0, tonumber(Config.Police.Raid.Cooldown) or 0) * 60
 
-    local cooldown = math.max(0, tonumber(Config.Police.Raid.Cooldown) or 0)
-    Cooldowns[businessId] = os.time() + cooldown * 60
+    ReleaseCashOperationLocks(keys)
 
-    ReleaseCashOperationLocks(lockKeys)
-
-    local owner = onlineSource(raid.ownerIdentifier)
+    local owner = GetOnlineSourceByIdentifier(raid.ownerIdentifier)
     if owner then
-        _API.SendNotification(owner,
-            string.format(locale("notification.raid_seized_owner"), Config.Currency .. seized), "error")
+        _API.SendNotification(owner, string.format(locale("notification.raid_seized_owner"), Config.Currency .. seized), "error")
     end
 
     RunHook("OnBusinessRaided", raid.officerIdentifier, raid.ownerIdentifier, businessId, seized)
@@ -258,7 +223,8 @@ lib.callback.register("t1ger_moneywash:server:raid:finish", function(src)
     return { success = true, data = { seized = seized } }
 end)
 
---- Cancels the officer's running raid (UI closed with ESC, or closed before finishing).
+--- Callback: cancels the officer's running raid (the UI was closed before finishing).
+---@param src integer
 lib.callback.register("t1ger_moneywash:server:raid:cancel", function(src)
     local businessId = BySource[src]
     local raid = businessId and Raids[businessId]
@@ -268,12 +234,8 @@ lib.callback.register("t1ger_moneywash:server:raid:cancel", function(src)
     return { success = true }
 end)
 
---- -------------------------------------------------------------------------
---- WATCHER
 --- Ends raids that time out, or whose officer died, left or moved away.
 --- Sleeps longer while no raid is running.
---- -------------------------------------------------------------------------
-
 CreateThread(function()
     while true do
         Wait(next(Raids) and 1000 or 3000)

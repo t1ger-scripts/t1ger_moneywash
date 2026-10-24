@@ -44,6 +44,24 @@ function GetOnDutyPoliceCount()
     return #GetPoliceSources(true)
 end
 
+--- True if the player has a Config.Police.Jobs job at or above the grade, and is on duty if required.
+--- A framework that doesn't report duty counts as on duty.
+---@param src integer
+---@param minGrade integer
+---@param onDutyOnly? boolean
+---@return boolean
+function IsPoliceOfficer(src, minGrade, onDutyOnly)
+    local job = _API.Player.GetJob(src)
+    if not job or (job.grade or 0) < minGrade then return false end
+    if onDutyOnly and job.onDuty == false then return false end
+
+    for _, name in ipairs(Config.Police.Jobs) do
+        if job.name == name then return true end
+    end
+
+    return false
+end
+
 --- Checks whether the given player's coordinates are within range of a target vector.
 --- @param src number Player source
 --- @param target vector3|vector4 Target coordinates

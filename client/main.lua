@@ -82,7 +82,7 @@ local function SpawnHandlerNPC(data)
             canInteract = function(entity)
                 if not Config.Police.Raid.Enable then return false end
                 if OwnedBusinesses[businessId] and not Config.Debug then return false end
-                if not IsPoliceJobWithGrade(Config.Police.Raid.MinGrade) then return false end
+                if not IsPoliceJobWithGrade(Config.Police.Raid.MinGrade, Config.Police.Raid.RequireDuty) then return false end
                 return IsEntityValid(entity) and not IsPedInAnyVehicle(PlayerPedId(), false)
             end,
             onSelect    = function()

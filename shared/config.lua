@@ -294,10 +294,12 @@ Config.Police = {
     Raid                  = {
         Enable         = true,
         MinGrade       = 1,                                                      -- Min grade to raid
+        RequireDuty    = true,                                                   -- true = officers must be on duty to raid
         Target         = { icon = "fa-solid fa-shield-halved", distance = 2.0 }, -- Target icon and range
         StackCount     = 10,                                                     -- Cash piles in the safe (1-20)
         MaxTime        = 5,                                                      -- Minutes until an unfinished raid is cancelled
         Cooldown       = 60,                                                     -- Minutes before the same business can be raided again (resets on restart)
+        Margin         = 6.0,                                                    -- Extra distance (on top of the target range) the officer may move away before the raid is cancelled
 
         -- Suspicion after a raid (never raises it)
         -- "set": drops to Value if higher | "reduce": lowers by Value % of current
