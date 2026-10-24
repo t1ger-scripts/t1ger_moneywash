@@ -306,7 +306,7 @@ local cashOperationBusy = false -- Blocks a second start while the dialog or a s
 ---@param operation "launder"|"withdraw"
 ---@return { StackCount?: integer, AutoMoveToRight?: boolean }
 local function counterSettings(operation)
-    local config = operation == "launder" and Config.Laundering or Config.BankDeposit
+    local config = operation == "launder" and Config.Laundering or Config.Withdraw
     return config.CashCounter or {}
 end
 

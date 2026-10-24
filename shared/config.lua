@@ -182,32 +182,34 @@ Config.Laundering = {
     },
 }
 
--- Bank deposit: Safe -> cash counter -> cash bag -> any ATM -> wait -> personal bank
-Config.BankDeposit = {
-    Item             = "t1ger_cashdeposit", -- Item the owner receives after the cash counter (see the README for the item definition)
-    MaxActive        = 1,    -- Deposits one player can have processing at the same time
-    MinPolice        = 0,    -- On-duty police needed to start a deposit at an ATM (0 = off)
+-- Withdraw: Safe -> cash counter -> cash bag
+Config.Withdraw = {
+    Item             = "t1ger_cashdeposit", -- Item the owner receives (see the README for the item definition)
     LimitOutstanding = true, -- true = a business can have at most its expectedRevenue out in uncashed bags (false = no limit)
     OutstandingHours = 24,   -- Bags older than this no longer count towards that limit (lost or thrown away bags)
-    ProcessingTime   = 10,   -- Minutes for a submitted deposit to clear into the personal bank
+
     CashCounter      = {     -- Cash counter shown when withdrawing from the Safe
         StackCount      = 3,    -- Piles the amount is split into (1-10)
         AutoMoveToRight = false, -- true = a counted pile moves to the right tray automatically
     },
-    InteractDistance = 2.0,  -- Range to the ATM
-    SubmitDuration   = 5000, -- Ms of the depositing progress bar
-    Tax              = 20,   -- % taken from a bag when it is paid into the bank (0 = off)
-    Animation        = { dict = "amb@prop_human_atm@male@idle_a", clip = "idle_a" }, -- Played at the ATM
+}
 
-    Models           = {     -- ATM models used for deposits and police inspection
+-- Deposit: cash bag -> ATM -> wait -> personal bank
+Config.Deposit = {
+    MinPolice      = 0,    -- On-duty police needed to start a deposit (0 = off)
+    MaxActive      = 1,    -- Deposits one player can have processing at the same time
+    ProcessingTime = 10,   -- Minutes before a deposit clears into the personal bank
+    Tax            = 20,   -- % taken from a bag when it is paid into the bank (0 = off)
+    SubmitDuration = 5000, -- Ms of the depositing progress bar
+    Target         = { icon = "fa-solid fa-credit-card", distance = 2.0 }, -- ATM target icon and range
+    Animation      = { dict = "amb@prop_human_atm@male@idle_a", clip = "idle_a" }, -- Played at the ATM
+
+    Models         = {     -- ATM models used for deposits and police inspection
         "prop_atm_01",
         "prop_atm_02",
         "prop_atm_03",
         "prop_fleeca_atm",
     },
-
-    TargetIcon       = "fa-solid fa-credit-card",            -- Owner deposit option
-    PoliceTargetIcon = "fa-solid fa-magnifying-glass-dollar", -- Police inspect option
 }
 
 -- Review books: owners hand stock-delivery receipts to an accountant to lower suspicion
@@ -286,7 +288,6 @@ Config.Reputation = {
 -- Police: access, business raids and alert blips
 Config.Police = {
     Jobs                  = { "police", "sheriff" }, -- Jobs with police access
-    DepositReviewMinGrade = 2,                       -- Min grade to review flagged deposits
     AlertNotifyDuration   = 10000,                   -- Alert notification time in ms
 
     -- Raid a business via the handler ped
@@ -301,6 +302,12 @@ Config.Police = {
         -- Suspicion after a raid (never raises it)
         -- "set": drops to Value if higher | "reduce": lowers by Value % of current
         SuspicionAfter = { Mode = "set", Value = 50 },
+    },
+
+    -- Inspect flagged deposits at an ATM
+    ATM                   = {
+        MinGrade = 2,                                                                   -- Min grade to inspect and confiscate
+        Target   = { icon = "fa-solid fa-magnifying-glass-dollar", distance = 2.0 },    -- Target icon and range
     },
 
     -- Alerts by suspicion label, plus flagged and stolen-bag ATM deposits (Enable = false turns one off)

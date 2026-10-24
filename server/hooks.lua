@@ -59,24 +59,28 @@ end
 function OnCashBagCreated(ownerIdentifier, bagId, businessId, amount, exposed)
 end
 
---- Called when a bank deposit clears into the depositor's personal bank.
+--- Called when a cash bag clears into the depositor's personal bank.
 --- @param depositorIdentifier string who deposited the bag and got the money
---- @param ownerIdentifier string who withdrew the bag from the business (same player unless it was stolen)
+--- @param ownerIdentifier string who withdrew the bag from the business (the same player unless it was stolen)
 --- @param businessId number
 --- @param gross number amount taken from the Safe
 --- @param net number amount paid into the bank after tax
-function OnBankDepositCompleted(depositorIdentifier, ownerIdentifier, businessId, gross, net)
+--- @param bagId number
+function OnCashBagDeposited(depositorIdentifier, ownerIdentifier, businessId, gross, net, bagId)
 end
 
+--- Called when police confiscate a flagged cash bag deposit. The money is gone;
+--- this is only a notification point (e.g. reward the officer, log to Discord).
 --- @param officerIdentifier string
 --- @param depositorIdentifier string the player who made the deposit
 --- @param ownerIdentifier string who withdrew the bag from the business
 --- @param businessId number
 --- @param amount number gross amount that was seized
-function OnBankDepositConfiscated(officerIdentifier, depositorIdentifier, ownerIdentifier, businessId, amount)
+--- @param bagId number
+function OnCashBagConfiscated(officerIdentifier, depositorIdentifier, ownerIdentifier, businessId, amount, bagId)
 end
 
---- Called for each deposit that was still processing when the server restarted. The bag is gone
+--- Called for each cash bag that was still being deposited when the server restarted. The bag is gone
 --- and the money was not paid out. The row stays in moneywash_cashbags with state 'lost',
 --- so you can log it or refund the depositor yourself.
 --- @param depositorIdentifier string who deposited the bag
@@ -84,7 +88,7 @@ end
 --- @param businessId number
 --- @param amount number gross amount
 --- @param bagId number
-function OnBankDepositLost(depositorIdentifier, ownerIdentifier, businessId, amount, bagId)
+function OnCashBagLost(depositorIdentifier, ownerIdentifier, businessId, amount, bagId)
 end
 
 --- Called when a raid finishes and the exposed Safe cash is seized. The money
