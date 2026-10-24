@@ -215,7 +215,7 @@ lib.callback.register("t1ger_moneywash:server:raid:finish", function(src)
 
     local owner = GetOnlineSourceByIdentifier(raid.ownerIdentifier)
     if owner then
-        _API.SendNotification(owner, string.format(locale("notification.raid_seized_owner"), Config.Currency .. seized), "error")
+        _API.SendNotification(owner, string.format(locale("notification.raid_seized_owner"), FormatMoney(seized)), "error")
     end
 
     RunHook("OnBusinessRaided", raid.officerIdentifier, raid.ownerIdentifier, businessId, seized)

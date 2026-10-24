@@ -151,3 +151,22 @@ function GetSuspicionLabel(value)
 
     return label
 end
+
+--- Formats a number as money with thousands separators, using Config.Currency.
+---@param amount number
+---@return string formatted e.g. "$1,500"
+function FormatMoney(amount)
+    local formatted = tostring(math.floor(amount))
+    local result = ""
+    local count = 0
+
+    for i = #formatted, 1, -1 do
+        if count > 0 and count % 3 == 0 then
+            result = "," .. result
+        end
+        result = formatted:sub(i, i) .. result
+        count = count + 1
+    end
+
+    return Config.Currency .. result
+end

@@ -100,7 +100,7 @@ end
 ---@param bag CashBag
 ---@return table
 local function bagMetadata(bag)
-    return { serial = bag.serial, amount = Config.Currency .. bag.amount }
+    return { serial = bag.serial, amount = FormatMoney(bag.amount) }
 end
 
 --- Finds a carried or processing bag by the serial on its item.
@@ -264,7 +264,7 @@ function PublishCashBag(src, bag)
 
         if ok and given then
             RunHook("OnCashBagCreated", bag.owner, bag.id, bag.businessId, bag.amount, bag.exposed)
-            _API.SendNotification(src, string.format(locale("notification.cash_bag_received"), Config.Currency .. bag.amount), "success")
+            _API.SendNotification(src, string.format(locale("notification.cash_bag_received"), FormatMoney(bag.amount)), "success")
             return
         end
 
@@ -326,7 +326,7 @@ local function payBag(bag)
 
     if src then
         RefreshPortalViewer(src)
-        _API.SendNotification(src, string.format(locale("notification.deposit_cleared"), Config.Currency .. net, Config.Currency .. (bag.amount - net)), "success")
+        _API.SendNotification(src, string.format(locale("notification.deposit_cleared"), FormatMoney(net), FormatMoney(bag.amount - net)), "success")
     end
 end
 
@@ -367,8 +367,7 @@ function LoadCashBags()
         MySQL.update.await("UPDATE moneywash_cashbags SET state = 'lost' WHERE state = 'processing'")
 
         for _, bag in ipairs(lost) do
-            print(("[MoneyWash] Cash bag %d was lost in a restart: %s%d deposited by %s (owner %s)"):format(
-                bag.id, Config.Currency, bag.amount, tostring(bag.depositor), bag.owner))
+            print(("[MoneyWash] Cash bag %d was lost in a restart: %s deposited by %s (owner %s)"):format(bag.id, FormatMoney(bag.amount), tostring(bag.depositor), bag.owner))
             RunHook("OnCashBagLost", bag.depositor, bag.owner, bag.businessId, bag.amount, bag.id)
         end
     end
