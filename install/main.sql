@@ -1,7 +1,5 @@
--- ============================================================
 -- T1GER Money Wash - Installation SQL
 -- Run this file once on first installation
--- ============================================================
 
 -- Player reputation
 CREATE TABLE IF NOT EXISTS `moneywash_reputation` (

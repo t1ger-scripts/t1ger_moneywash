@@ -96,6 +96,43 @@ local function splitLaunderedCash(business, amount, tier)
     return math.floor(stockSupported), math.floor(overRevenue + (withinRevenue - stockSupported))
 end
 
+--- Suspicion a launder adds. Formula: (progressAfter^2 - progressBefore^2) * BaseMultiplier * stockModifier
+---@param business table
+---@param amount number
+---@param tier table
+---@return number gain
+local function calculateSuspicionGain(business, amount, tier)
+    local expectedRevenue    = tier.expectedRevenue
+
+    local progressBefore     = business.cycleLaundered / expectedRevenue
+    local progressAfter      = (business.cycleLaundered + amount) / expectedRevenue
+
+    -- Derive BaseMultiplier from CyclesUntilCritical
+    -- At full expectedRevenue with full stock, gain per cycle = 75 / CyclesUntilCritical
+    local targetGainPerCycle = 75.0 / Config.Suspicion.CyclesUntilCritical
+    local BaseMultiplier     = targetGainPerCycle / (1.0 * (1 - Config.Suspicion.FullStockReduction / 100))
+
+    local turnoverGain       = (progressAfter ^ 2 - progressBefore ^ 2) * BaseMultiplier
+
+    -- Stock modifier
+    local stockConsumed      = GetStockUnitsForAmount(amount)
+    local stockModifier      = 1.0
+    if business.stock <= 0 then
+        stockModifier = 1.0 + (Config.Suspicion.NoStockPenalty / 100)
+    elseif business.stock >= stockConsumed then
+        stockModifier = 1.0 - (Config.Suspicion.FullStockReduction / 100)
+    else
+        -- Partial coverage - scale linearly
+        local coverage = business.stock / stockConsumed
+        local fullReduction = Config.Suspicion.FullStockReduction / 100
+        local noPenalty = Config.Suspicion.NoStockPenalty / 100
+        stockModifier = 1.0 - (coverage * fullReduction) + ((1 - coverage) * noPenalty)
+    end
+
+    local gain = turnoverGain * stockModifier
+    return math.max(0, gain)
+end
+
 --- What laundering `amount` does to the business: the new Safe, stock, suspicion and totals.
 --- Pure calculation, nothing is changed here.
 ---@param business table
@@ -107,7 +144,7 @@ local function calculateLaunder(business, amount)
     if not tier then return nil end
 
     local covered, exposed = splitLaunderedCash(business, amount, tier)
-    local suspicion = math.min(100, business.suspicion + CalculateSuspicionGain(business, amount, tier))
+    local suspicion = math.min(100, business.suspicion + calculateSuspicionGain(business, amount, tier))
 
     return {
         stock          = math.max(0, business.stock - GetStockUnitsForAmount(amount)),
@@ -122,6 +159,23 @@ local function calculateLaunder(business, amount)
         covered  = covered,
         exposed  = exposed,
     }
+end
+
+--- Hidden roll after a launder: the chance that police are told depends on the suspicion label.
+--- The player is never informed of the outcome.
+---@param business table
+local function rollPoliceNotification(business)
+    local label = GetSuspicionLabel(business.suspicion)
+    local chances = Config.Suspicion.NotificationChance
+    local chance = (business.suspicion >= 100 and chances.Max) or chances[label.name] or 0
+
+    if chance <= 0 then return end
+
+    if math.random(1, 100) <= chance then
+        local location = GetLocationConfig(business.type, business.locationId)
+        local coords = location and location.coords or nil
+        SendPoliceNotification(business.suspicion >= 100 and "Max" or label.name, coords, { business = GetBusinessLabel(business) })
+    end
 end
 
 --- Side effects of a launder. Runs only after the result is saved, never on a client event.
@@ -144,7 +198,7 @@ local function publishLaunder(src, identifier, businessId, amount, result)
         AwardReputationPoints(src, identifier, Config.Reputation.Rewards.launder.points)
     end
 
-    RollPoliceNotification(business)
+    rollPoliceNotification(business)
 
     if src and Config.Suspicion.NotifyOnLabelChange and result.newLabel.threshold > result.oldLabel.threshold then
         TriggerClientEvent("t1ger_moneywash:client:suspicionLabelChanged", src, result.newLabel)
