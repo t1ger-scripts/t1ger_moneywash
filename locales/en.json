@@ -48,8 +48,6 @@
             "order_in_progress": "You have an active order - use /%s to cancel it",
             "safe_desc": "View your Safe balance and withdraw cash",
             "bank_deposit_desc": "Take cash out of your Safe as a cash bag",
-            "deposit_enroute": "In progress: take %s to any ATM (%s left)",
-            "deposit_processing": "Processing: %s clears in %s",
             "review_books": "Review Books",
             "review_books_desc": "Hand your stock receipts to an accountant to lower suspicion",
             "review_cooldown": "The accountant is fully booked. Available again in %s",
