@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS `moneywash_receipts` (
     KEY `business_id` (`business_id`)
 ) AUTO_INCREMENT = 1000;
 
--- Cash bags: one row per t1ger_cashdeposit item, from the withdrawal until it is paid out
+-- Cash bags: one row per t1ger_cashbag item, from the withdrawal until it is paid out
 CREATE TABLE IF NOT EXISTS `moneywash_cashbags` (
     `id`          INT(11)         NOT NULL AUTO_INCREMENT,              -- the bagId stored in the item metadata
     `owner`       VARCHAR(100)    NOT NULL,                             -- identifier of the player who withdrew it

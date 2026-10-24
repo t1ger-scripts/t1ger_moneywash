@@ -184,7 +184,7 @@ Config.Laundering = {
 
 -- Withdraw: Safe -> cash counter -> cash bag
 Config.Withdraw = {
-    Item             = "t1ger_cashdeposit", -- Item the owner receives (see the README for the item definition)
+    Item             = "t1ger_cashbag", -- Item the owner receives (see the README for the item definition)
     LimitOutstanding = true, -- true = a business can have at most its expectedRevenue out in uncashed bags (false = no limit)
     OutstandingHours = 24,   -- Bags older than this no longer count towards that limit (lost or thrown away bags)
 

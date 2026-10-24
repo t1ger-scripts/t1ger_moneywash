@@ -17,13 +17,6 @@ RegisterNetEvent("t1ger_moneywash:server:playerLoaded", function()
     local businesses = GetPlayerBusinesses(identifier)
     TriggerClientEvent("t1ger_moneywash:client:syncBusinesses", src, businesses)
     BroadcastBusinessLocations(src)
-    TriggerClientEvent("t1ger_moneywash:client:bankDepositSync", src, GetBankDepositPublic(identifier))
-
-    -- Tell the owner if their unfinished deposit was returned to the Safe by a restart
-    local refunded = ConsumeStartupRefund(identifier)
-    if refunded then
-        _API.SendNotification(src, string.format(locale("notification.deposit_refunded"), Config.Currency .. refunded), "inform")
-    end
 
     if Config.Debug then
         print(("[MoneyWash] Player %d loaded | %d businesses synced"):format(src, #businesses))
@@ -64,16 +57,16 @@ end)
 CreateThread(function()
     if not LoadBusinesses() then return end
 
-    local loaded, err = pcall(LoadBankDeposits)
+    local loaded, err = pcall(LoadCashBags)
     if not loaded then
-        print(("[MoneyWash] Bank deposit startup recovery failed: %s"):format(tostring(err)))
+        print(("[MoneyWash] Loading the cash bags failed, withdrawals and deposits stay off: %s"):format(tostring(err)))
     end
 
     while true do
         Wait(60000)
 
         CheckGlobalCycle()
-        ProcessBankDeposits()
+        ProcessCashBags()
 
         for _, business in pairs(GetAllBusinesses()) do
             ApplySuspicionDecay(business)

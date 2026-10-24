@@ -1,0 +1,1 @@
+["t1ger_cashbag"] = { ["name"] = "t1ger_cashbag", ["label"] = "Cash Bag", ["weight"] = 500, ["type"] = "item", ["image"] = "t1ger_cashbag.png", ["unique"] = true, ["useable"] = false, ["shouldClose"] = true, ["combinable"] = nil, ["description"] = "Take it to an ATM to deposit it." },

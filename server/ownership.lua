@@ -102,7 +102,6 @@ local function getBusyReason(businessId, ownerSrc)
 
     if mission and mission.businessId == businessId then return "active_stock_mission" end
     if IsBusinessRaided(businessId) then return "raid_in_progress" end
-    if HasBusinessDeposit(businessId) then return "pending_business_deposit" end
     if IsBusinessInReview(businessId) then return "review_in_progress" end
 
     return nil

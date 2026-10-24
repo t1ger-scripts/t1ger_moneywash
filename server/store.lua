@@ -309,7 +309,6 @@ lib.callback.register("t1ger_moneywash:server:getBusinessStatus", function(sourc
 
     local tier = GetTierByType(business.type)
     local label = GetSuspicionLabel(business.suspicion)
-    local deposit = GetBankDepositPublic(identifier)
 
     return {
         type            = business.type,
@@ -321,7 +320,6 @@ lib.callback.register("t1ger_moneywash:server:getBusinessStatus", function(sourc
         suspicionLabel  = label.name,
         suspicionColor  = label.color,
         cycleLaundered  = business.cycleLaundered,
-        deposit         = deposit and deposit.businessId == businessId and deposit or nil,
         expectedRevenue = tier and tier.expectedRevenue or 0,
         unitPrice       = GetUnitPrice(business.type),
         minOrder        = GetMinOrder(business.type),

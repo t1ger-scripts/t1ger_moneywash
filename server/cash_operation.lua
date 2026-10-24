@@ -1,4 +1,4 @@
---- Cash operations: launder (dirty cash into the Safe) and withdraw (Safe into a bank deposit).
+--- Cash operations: launder (dirty cash into the Safe) and withdraw (Safe into a cash bag).
 --- The cash counter on the client is only a visual. The server decides everything:
 --- "limits" gives the amount dialog its maximum, "run" checks again and moves the money.
 
@@ -13,7 +13,7 @@
 ---@field applied? boolean True once the change is applied to the business in memory (blocks autosave)
 ---@field persisted? boolean True once the operation's own data is saved, so a retry doesn't save it twice
 ---@field result? table Launder: label change info from calculateLaunder
----@field deposit? table Withdraw: the new bank deposit record
+---@field bag? table Withdraw: the new cash bag (see cash_bag.lua)
 ---@field nextRetry? integer GetGameTimer() value before which saving isn't retried
 
 ---@type table<string, CashOperationRow> Unfinished operations by owner identifier
@@ -154,33 +154,48 @@ end
 --- Returns a reason if the owner can't withdraw `amount` from the Safe, otherwise nil.
 ---@param business table
 ---@param amount integer
----@return string|nil reason deposit_pending or insufficient_safe_cash
+---@return string|nil reason not_ready, insufficient_safe_cash or withdraw_limit
 local function withdrawDenied(business, amount)
-    if HasActiveDeposit(business.identifier) then return "deposit_pending" end
+    if not IsCashBagStoreReady() then return "not_ready" end
     if business.safeCovered + business.safeExposed < amount then return "insufficient_safe_cash" end
+
+    local allowance = GetBagAllowance(business)
+    if allowance and amount > allowance then return "withdraw_limit" end
 end
 
---- Removes `amount` from the Safe in memory (exposed first, then covered) and returns the new
---- deposit record. The mission file saves it (PersistBankDepositStart).
+--- Returns a reason if the player can't receive a cash bag, otherwise nil.
+---@param src integer
+---@return string|nil reason inventory_unsupported, request_failed or cannot_carry_bag
+local function bagInventoryProblem(src)
+    local slots, reason = _API.Inventory.GetItemSlots(src, Config.Withdraw.Item)
+    if not slots then
+        return reason == "unsupported_inventory" and "inventory_unsupported" or "request_failed"
+    end
+
+    if not _API.Inventory.CanCarryItem(src, Config.Withdraw.Item, 1) then return "cannot_carry_bag" end
+end
+
+--- Removes `amount` from the Safe in memory (covered first, so the exposed cash stays
+--- raidable) and returns the new cash bag. cash_bag.lua saves it (PersistCashBag).
 ---@param business table
 ---@param amount integer
----@return table deposit
+---@return table bag
 local function withdrawFromSafe(business, amount)
-    local exposed = math.min(amount, business.safeExposed)
-    local covered = amount - exposed
+    local covered = math.min(amount, business.safeCovered)
+    local exposed = amount - covered
 
     UpdateBusinessFields(business.id, {
-        safeExposed = business.safeExposed - exposed,
         safeCovered = business.safeCovered - covered,
+        safeExposed = business.safeExposed - exposed,
     })
 
     return {
-        identifier = business.identifier,
+        owner      = business.identifier,
         businessId = business.id,
+        label      = GetBusinessLabel(business),
         amount     = amount,
-        covered    = covered,
         exposed    = exposed,
-        state      = "enroute",
+        state      = "carried",
         flagged    = false,
         createdAt  = os.time(),
     }
@@ -237,11 +252,14 @@ Operations.launder = {
 
 Operations.withdraw = {
     limits = function(src, business)
-        local denied = withdrawDenied(business, 1)
+        local denied = withdrawDenied(business, 1) or bagInventoryProblem(src)
         if denied then return nil, denied end
 
+        local safe = business.safeCovered + business.safeExposed
+        local allowance = GetBagAllowance(business)
+
         return {
-            max     = business.safeCovered + business.safeExposed,
+            max     = allowance and math.min(safe, allowance) or safe,
             exposed = business.safeExposed,
             covered = business.safeCovered,
         }
@@ -249,20 +267,20 @@ Operations.withdraw = {
 
     take = function(src, business, amount, row)
         -- Nothing yields between this check and the removal, so it can't race.
-        local denied = withdrawDenied(business, amount)
+        local denied = withdrawDenied(business, amount) or bagInventoryProblem(src)
         if denied then return denied end
 
-        row.deposit = withdrawFromSafe(business, amount)
-        row.applied = true -- Blocks autosave until the deposit is written
+        row.bag = withdrawFromSafe(business, amount)
+        row.applied = true -- Blocks autosave until the bag is written
     end,
 
     persist = function(row, business)
-        -- The reduced Safe and the deposit row are written in one transaction.
-        return PersistBankDepositStart(row.businessId, row.identifier, row.deposit)
+        -- The reduced Safe and the ledger row are written in one transaction.
+        return PersistCashBag(business, row.bag)
     end,
 
     publish = function(src, row)
-        PublishBankDepositStarted(src, row.identifier, row.businessId, row.deposit)
+        PublishCashBag(src, row.bag)
     end,
 }
 
