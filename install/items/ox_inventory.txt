@@ -1,6 +1,6 @@
 ["t1ger_cashbag"] = {
     label = "Cash Bag",
-    weight = 500,
+    weight = 1,
     stack = false,
     close = true,
     description = "Take it to an ATM to deposit it."

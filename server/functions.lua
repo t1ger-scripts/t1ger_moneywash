@@ -5,7 +5,10 @@
 function GetOnlineSourceByIdentifier(identifier)
     if type(identifier) ~= "string" then return nil end
 
-    local src = _API.Player.GetSource(identifier)
+    local ok, player = pcall(_API.Player.GetFromIdentifier, identifier)
+    if not ok or not player then return nil end
+
+    local src = player.source or (player.PlayerData and player.PlayerData.source) -- esx / qb, qbox
     if src and src > 0 then return src end
 
     return nil

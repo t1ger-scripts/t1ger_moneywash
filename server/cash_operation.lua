@@ -224,13 +224,16 @@ Operations.launder = {
         if not _API.Player.HasDirtyMoney(src, amount) then return "insufficient_dirty_cash" end
 
         local before = _API.Player.GetDirtyMoney(src)
-        local ok, removed = pcall(_API.Player.RemoveDirtyMoney, src, amount)
+        pcall(_API.Player.RemoveDirtyMoney, src, amount)
+        local after = _API.Player.GetDirtyMoney(src)
 
-        if not ok or not removed then
-            -- If the cash is gone anyway, don't retry: an administrator has to look at it.
-            if _API.Player.GetDirtyMoney(src) < before then return "review" end
-            return "request_failed"
-        end
+        -- The balance is measured here again: the bridge's own check can read the inventory too early.
+        if after == before - amount then return end
+
+        -- If some of the cash is gone anyway, don't retry: an administrator has to look at it.
+        if after < before then return "review" end
+
+        return "request_failed"
     end,
 
     persist = function(row, business)
