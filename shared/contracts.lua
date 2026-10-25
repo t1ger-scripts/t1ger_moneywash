@@ -92,7 +92,6 @@ return {
         Models           = { "a_m_y_hipster_01", "a_m_m_business_01", "a_m_y_downtown_01", "a_m_m_eastsa_01", "a_m_y_stbla_01", "a_m_y_vinewood_01" },
         SpawnDistance    = 60.0,             -- The contact appears when the player is this close
         GreetingDistance = 4.0,              -- The contact greets the player at this range
-        LeaveTime        = 8,                -- Seconds the contact walks away before disappearing
         Target           = { Icon = "fa-solid fa-sack-dollar", Distance = 2.0 }, -- Handover target
     },
 
@@ -103,7 +102,7 @@ return {
     Betrayal = {
         Chance       = 100,                  -- % chance a contact betrays at the end of a deal (10 is a good live value)
         AttackChance = 50,                   -- % of betrayals where the contact attacks. Otherwise it flees
-        Time         = 30,                   -- Seconds to get the cash back. After that the contact has got away with it
+        Time         = 60,                   -- Seconds to get the cash back. After that the contact betrays
         Health       = 200,                  -- Contact health once it betrays
         Weapons      = { "WEAPON_KNIFE", "WEAPON_BAT", "WEAPON_PISTOL" }, -- An attacking contact carries one of these
         Blip         = { Sprite = 1, Display = 4, Scale = 0.7, Color = 1, Label = "Contact" }, -- Follows the contact while it runs

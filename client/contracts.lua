@@ -6,6 +6,7 @@ local SERVER = "t1ger_moneywash:server:contracts:"
 -- Animations of the deal: both of them talk while the bar runs, then the money changes hands
 local NEGOTIATE = { dict = "misscarsteal4@actor", player = "actor_berating_loop", contact = "actor_berating_loop" }
 local HANDOFF = { dict = "mp_common", player = "givetake1_a", contact = "givetake1_b", time = 1800 }
+local LEAVE_TIME = 8 -- Seconds the contact walks away before disappearing
 
 local cfg = Config.Contracts
 
@@ -164,7 +165,13 @@ end
 ---@param current ContractBetrayal
 local function dropCash(current)
     local cash = cfg.Betrayal.Cash
-    local coords = GetEntityCoords(current.ped)
+    -- Beside the body, on the side of the player, so the body never covers the target
+    local body, player = GetEntityCoords(current.ped), GetEntityCoords(PlayerPedId())
+    local dx, dy = player.x - body.x, player.y - body.y
+    local length = math.sqrt(dx * dx + dy * dy)
+    if length < 0.1 then dx, dy, length = 1.0, 0.0, 1.0 end
+
+    local coords = vec3(body.x + dx / length, body.y + dy / length, body.z)
 
     lib.requestModel(cash.Model)
     if betrayal ~= current then return end
@@ -239,6 +246,9 @@ local function startBetrayal(current, result)
     SetEntityInvincible(ped, false)
     SetEntityMaxHealth(ped, settings.Health)
     SetEntityHealth(ped, settings.Health)
+    -- A dead contact drops nothing of its own: the stack is the only cash
+    SetPedDropsWeaponsWhenDead(ped, false)
+    SetPedMoney(ped, 0)
 
     if result.mode == "attack" then
         GiveWeaponToPed(ped, GetHashKey(result.weapon), 100, false, true)
@@ -271,7 +281,7 @@ local function dismissContact(current)
     ClearPedTasks(ped)
     TaskWanderStandard(ped, 10.0, 10)
 
-    SetTimeout(cfg.Contact.LeaveTime * 1000, function()
+    SetTimeout(LEAVE_TIME * 1000, function()
         leavingPeds[ped] = nil
         DeletePed(ped)
     end)
