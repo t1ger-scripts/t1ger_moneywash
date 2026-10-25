@@ -1,4 +1,4 @@
-Framework, _Framework, _Inventory, _Target, _JobAccount, _Garage, _VehicleKeys = nil, nil, nil, nil, nil, nil, nil  -- Global variables for framework, inventory, targeting, job account, garage and vehicle keys systems
+Framework, _Framework, _Inventory, _Target = nil, nil, nil, nil  -- Global variables for the framework, inventory and targeting systems
 _FW = {} -- Stores framework objects dynamically
 _DB = nil -- global variables for framework's database table/column names
 local qbx = nil
@@ -8,13 +8,13 @@ local supportedFrameworks = {
     {
         name = "esx",
         resource = "es_extended",
-        db = {playerTable = "users", playerColumn = "identifier", vehicleTable = "owned_vehicles", vehiclePropsColumn = "vehicle", vehicleOwnerColumn = "owner"},
+        db = {playerTable = "users", playerColumn = "identifier"},
         getter = function() return exports["es_extended"]:getSharedObject() end
     },
     {
         name = "qbox",
         resource = "qbx_core",
-        db = {playerTable = "players", playerColumn = "citizenid", vehicleTable = "player_vehicles", vehiclePropsColumn = "mods", vehicleOwnerColumn = "citizenid"},
+        db = {playerTable = "players", playerColumn = "citizenid"},
         getter = function() return setmetatable({}, {
             __index = function(_, key) return function(...) return exports["qbx_core"][key](...) end end
         }) end
@@ -22,7 +22,7 @@ local supportedFrameworks = {
     {
         name = "qbcore",
         resource = "qb-core",
-        db = {playerTable = "players", playerColumn = "citizenid", vehicleTable = "player_vehicles", vehiclePropsColumn = "mods", vehicleOwnerColumn = "citizenid"},
+        db = {playerTable = "players", playerColumn = "citizenid"},
         getter = function() return exports["qb-core"]:GetCoreObject() end
     }
 }
@@ -98,84 +98,11 @@ local function InitializeTarget()
     error("[InitializeTarget] No supported targeting system detected. The script requires Ox Target or QB Target")
 end
 
---- Function to Initialize the job account System
-local function InitializeJobAccount()
-    if Bridge.JobAccount ~= "auto" then
-        if GetResourceState(Bridge.JobAccount) == "started" then
-            return Bridge.JobAccount
-        else
-            error(string.format("[InitializeJobAccount] Specified job account system (%s) is not running!", Bridge.JobAccount))
-        end
-    end
-
-    if not Bridge.CompatibleJobAccounts[Framework] then
-        error(string.format("[InitializeJobAccount] Unsupported framework detected: %s", Framework))
-    end
-
-    -- Loop through the prioritized list for the detected framework
-    for _, jobAccount in ipairs(Bridge.CompatibleJobAccounts[Framework]) do
-        if GetResourceState(jobAccount) == "started" then
-            return jobAccount
-        end
-    end
-
-    error("[InitializeJobAccount] No supported job account system detected.")
-end
-
---- Function to Initialize the Garage System
-local function InitializeGarage()
-    if Bridge.Garage ~= "auto" then
-        if GetResourceState(Bridge.Garage) == "started" then
-            return Bridge.Garage
-        else
-            error(string.format("[InitializeGarage] Specified garage system (%s) is not running!", Bridge.Garage))
-        end
-    end
-
-    for _, garage in ipairs(Bridge.CompatibleGarages) do
-        if GetResourceState(garage) == "started" then
-            return garage
-        end
-    end
-
-    return nil
-end
-
---- Function to Initialize the Vehicle Keys System
-local function InitializeVehicleKeys()
-    if Bridge.VehicleKeys ~= "auto" then
-        if GetResourceState(Bridge.VehicleKeys) == "started" then
-            return Bridge.VehicleKeys
-        else
-            error(string.format("[InitializeVehicleKeys] Specified vehicle keys system (%s) is not running!", Bridge.VehicleKeys))
-        end
-    end
-
-    for _, vehicleKey in ipairs(Bridge.CompatibleVehicleKeys) do
-        if GetResourceState(vehicleKey) == "started" then
-            return vehicleKey
-        end
-    end
-
-    return nil
-end
-
 CreateThread(function()
     Wait(1000)
     Framework = InitializeFramework()
     _Inventory = InitializeInventory()
     _Target = InitializeTarget()
-    _JobAccount = InitializeJobAccount()
-    _Garage = InitializeGarage()
-    _VehicleKeys = InitializeVehicleKeys()
 
-    print(string.format("^5[DETECTED SYSTEMS]^7 %s | %s | %s | %s", _Framework, _Inventory, _Target, _JobAccount))
-
-    if _Garage then
-        print(string.format("^5[DETECTED GARAGE SYSTEM]^7 %s", _Garage))
-    end
-
-    if _VehicleKeys then
-        print(string.format("^5[DETECTED VEHICLE KEYS SYSTEM]^7 %s", _VehicleKeys))
-    end
+    print(string.format("^5[DETECTED SYSTEMS]^7 %s | %s | %s", _Framework, _Inventory, _Target))
 end)

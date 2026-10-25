@@ -110,9 +110,6 @@ function _API.Inventory.DisplayMetadata(fields)
     elseif _Inventory == "custom" then
         -- add custom function in here
     end
-
-    -- qb-inventory shows every info key on its own, ak47_inventory lists the keys in its own config
-    -- (Config.ShowValueFromItemInfo). No registration export is known for the others.
 end
 
 --- Function to open a stash inventory

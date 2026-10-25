@@ -50,7 +50,6 @@ server_scripts {
 
     'bridge/framework/server.lua',
     'bridge/inventory/server.lua',
-    'bridge/jobaccount/server.lua',
     'bridge/notification/server.lua',
 
     'server/reputation.lua',
