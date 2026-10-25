@@ -4,7 +4,8 @@
 local SERVER = "t1ger_moneywash:server:contracts:"
 
 -- Animations of the deal: both of them talk while the bar runs, then the money changes hands
-local NEGOTIATE = { dict = "misscarsteal4@actor", player = "actor_berating_loop", contact = "actor_berating_loop" }
+local NEGOTIATE = { dict = "misscarsteal4@actor", clip = "actor_berating_loop" } -- Played by the player while the bar runs
+local PICKUP = { dict = "random@domestic", clip = "pickup_low" }                 -- Played when taking the cash back
 local HANDOFF = { dict = "mp_common", player = "givetake1_a", contact = "givetake1_b", time = 1800 }
 local LEAVE_TIME = 8 -- Seconds the contact walks away before disappearing
 
@@ -147,6 +148,14 @@ end
 local function recoverCash(current)
     if current.picking then return end
     current.picking = true
+
+    -- Bend down for the cash, then the server gives it back
+    lib.requestAnimDict(PICKUP.dict)
+    TaskPlayAnim(PlayerPedId(), PICKUP.dict, PICKUP.clip, 2.0, 2.0, -1, 2, 0, false, false, false)
+    Wait(800)
+    RemoveAnimDict(PICKUP.dict)
+
+    if betrayal ~= current then return end
 
     local response = ServerRequest(SERVER .. "recoverCash")
     if betrayal ~= current then return end
@@ -328,7 +337,6 @@ local function handOverCash(current)
     if contact then
         TaskTurnPedToFaceEntity(player, contact, 600)
         Wait(600)
-        TaskPlayAnim(contact, NEGOTIATE.dict, NEGOTIATE.contact, 8.0, -8.0, started.duration, 49, 0, false, false, false)
     end
 
     local completed = ProgressBar({
@@ -337,11 +345,10 @@ local function handOverCash(current)
         useWhileDead = false,
         canCancel    = true,
         disable      = { move = true, car = true, combat = true },
-        anim         = { dict = NEGOTIATE.dict, clip = NEGOTIATE.player, flag = 49 },
+        anim         = { dict = NEGOTIATE.dict, clip = NEGOTIATE.clip, flag = 49 },
     })
 
     RemoveAnimDict(NEGOTIATE.dict)
-    if contact and DoesEntityExist(contact) then StopAnimTask(contact, NEGOTIATE.dict, NEGOTIATE.contact, -8.0) end
 
     -- Cancelled: nothing was taken, the player can start over
     if not completed then
