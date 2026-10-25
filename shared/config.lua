@@ -74,7 +74,7 @@ Config.HandlerNPC = {
 -- A model without that line stays silent. Set a line to "" to turn only that one off
 Config.PedReactions = {
     Enable           = true,
-    HandlerGreeting  = "GENERIC_HI",     -- Owner opens the Handler menu
+    HandlerGreeting  = "GENERIC_HOWS_IT_GOING",     -- Owner opens the Handler menu
     AccountantThanks = "GENERIC_THANKS", -- The folder is delivered
 }
 
