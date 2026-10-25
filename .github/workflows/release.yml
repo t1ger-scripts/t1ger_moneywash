@@ -67,7 +67,6 @@ jobs:
         run: |
           mkdir -p ./temp2/t1ger_moneywash
           cp ./fxmanifest.source.lua ./temp2/t1ger_moneywash/fxmanifest.lua
-          cp ./temp2/t1ger_moneywash
           cp -r ./{bridge,client,install,locales,server,shared,web} ./temp2/t1ger_moneywash
           tar -c --exclude=node_modules --exclude=dist ./source | tar -x -C ./temp2/t1ger_moneywash
           cd ./temp2 && zip -r ../t1ger_moneywash-source.zip ./t1ger_moneywash

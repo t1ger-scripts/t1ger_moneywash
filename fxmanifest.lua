@@ -96,6 +96,8 @@ ox_libs {
 escrow_ignore {
     'shared/*.lua',
     'bridge/**/*.lua',
-    'client/**/*.lua',
-    'server/**/*.lua',
+    'client/customize.lua',
+    'client/menu.lua',
+    'server/customize.lua',
+    'server/hooks.lua',
 }
