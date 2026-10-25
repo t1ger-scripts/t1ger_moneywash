@@ -89,54 +89,76 @@ local function dismissContact(current)
     end)
 end
 
---- Hands the cash to the contact. The server rolls the amount, takes the cash and pays out.
+--- Makes the deal with the contact. The server takes the cash when the progress bar starts and
+--- pays when it ends, unless the contact has other plans.
 ---@param current ContractDrop
 local function handOverCash(current)
     if current.busy then return end
     current.busy = true
 
-    local response = ServerRequest(SERVER .. "handover")
+    local started = ServerRequest(SERVER .. "beginHandover")
     if drop ~= current then return end
 
-    if not response.success then
+    if not started.success then
         current.busy = false
 
-        if response.reason == "no_contract_shift" then
+        if started.reason == "no_contract_shift" then
             onShift = false
             clearDrop()
         end
 
         -- "shift_over" is announced by the server's own shift ended message
-        if response.reason ~= "shift_over" then NotifyError(response.reason) end
+        if started.reason ~= "shift_over" then NotifyError(started.reason) end
 
         return
     end
 
-    local animation = cfg.Contacts.Animation
+    local deal = cfg.Contacts.Handover
     local player, contact = PlayerPedId(), current.ped
+
+    lib.requestAnimDict(deal.Dict)
 
     if contact then
         TaskTurnPedToFaceEntity(player, contact, 600)
         Wait(600)
-
-        lib.requestAnimDict(animation.Dict)
-        TaskPlayAnim(player, animation.Dict, animation.Player, 8.0, -8.0, animation.Duration, 0, 0, false, false, false)
-        TaskPlayAnim(contact, animation.Dict, animation.Contact, 8.0, -8.0, animation.Duration, 0, 0, false, false, false)
-        RemoveAnimDict(animation.Dict)
-        Wait(animation.Duration)
-
-        if Config.PedReactions.Enable then PedSpeak(contact, Config.PedReactions.ContactThanks) end
+        TaskPlayAnim(contact, deal.Dict, deal.Contact, 8.0, -8.0, started.duration, 49, 0, false, false, false)
     end
+
+    local completed = ProgressBar({
+        duration     = started.duration,
+        label        = locale("progress.contract_handover"),
+        useWhileDead = false,
+        canCancel    = false,
+        disable      = { move = true, car = true, combat = true },
+        anim         = { dict = deal.Dict, clip = deal.Player, flag = 49 },
+    })
+
+    RemoveAnimDict(deal.Dict)
+    if contact and DoesEntityExist(contact) then StopAnimTask(contact, deal.Dict, deal.Contact, -8.0) end
+
+    -- Interrupted: the server gives the cash back when the deal times out
+    if not completed then
+        current.busy = false
+        return
+    end
+
+    local response = ServerRequest(SERVER .. "completeHandover")
+    if drop ~= current then return end
+
+    if not response.success then
+        current.busy = false
+        return NotifyError(response.reason)
+    end
+
+    if contact and Config.PedReactions.Enable then PedSpeak(contact, Config.PedReactions.ContactThanks) end
 
     _API.ShowNotification(
         string.format(locale("notification.contract_handover"), FormatMoney(response.amount), FormatMoney(response.paid)),
         "success"
     )
 
-    if drop == current then
-        dismissContact(current)
-        clearDrop()
-    end
+    dismissContact(current)
+    clearDrop()
 end
 
 --- Shows the contact to a player who is near: spawns it, turns the route off and greets once.

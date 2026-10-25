@@ -19,6 +19,7 @@ local NOTIFY_REASONS = { died = true, missed = true, no_dirty_cash = true }
 ---@field nextDropAt integer os.time() the next drop is assigned, while there is no drop
 ---@field drop? { index: integer, expiresAt: integer } The drop the player is on, index in Config.Contracts.Drops
 ---@field lastDrop? integer Index in Config.Contracts.Drops of the previous drop, not picked again right away
+---@field pending? { amount: integer, paid: integer, startedAt: integer, expiresAt: integer } A deal in progress: the dirty cash is taken, the payout waits
 
 ---@type table<integer, ContractShift> Active shifts by player source
 local Shifts = {}
@@ -125,6 +126,9 @@ local function endShift(shift, reason)
     Shifts[shift.src] = nil
     releaseDrop(shift)
 
+    -- A deal cut short by a resource stop gives the dirty cash back. A death or a disconnect loses it.
+    if shift.pending and reason == "stopped" then _API.Player.AddDirtyMoney(shift.src, shift.pending.amount) end
+
     if reason == "player" or reason == "dropped" then
         Cooldowns[shift.identifier] = os.time() + cfg.Cooldown
     end
@@ -192,6 +196,7 @@ lib.callback.register("t1ger_moneywash:server:contracts:endShift", function(src)
     return guarded(src, function()
         local shift = Shifts[src]
         if not shift then return { success = false, reason = "no_contract_shift" } end
+        if shift.pending then return { success = false, reason = "contract_dealing" } end
 
         endShift(shift, "player")
 
@@ -218,12 +223,14 @@ local function takeDirtyCash(src, amount)
     return false
 end
 
---- Callback: the player hands dirty cash to the contact. The amount is rolled here, never by the client.
+--- Callback: the player starts the deal. The amount is rolled here and the dirty cash is taken at once,
+--- the payout waits for completeHandover.
 ---@param src integer
-lib.callback.register("t1ger_moneywash:server:contracts:handover", function(src)
+lib.callback.register("t1ger_moneywash:server:contracts:beginHandover", function(src)
     return guarded(src, function()
         local shift = Shifts[src]
         if not shift then return { success = false, reason = "no_contract_shift" } end
+        if shift.pending then return { success = false, reason = "contract_dealing" } end
         if not shift.drop or os.time() > shift.drop.expiresAt then return { success = false, reason = "contract_no_drop" } end
 
         if not IsPlayerNearCoords(src, cfg.Drops[shift.drop.index], cfg.Contacts.TargetDistance + 3.0) then
@@ -239,18 +246,46 @@ lib.callback.register("t1ger_moneywash:server:contracts:handover", function(src)
         local amount = math.min(dirty, math.random(cfg.MinHandover, cfg.MaxHandover))
         if not takeDirtyCash(src, amount) then return { success = false, reason = "request_failed" } end
 
-        local paid = math.floor(amount * (100 - cfg.Cut) / 100)
-        _API.Player.AddMoney(src, paid, cfg.PayoutAccount)
+        local duration = cfg.Contacts.Handover.Duration
 
-        shift.handovers, shift.cleaned, shift.paid = shift.handovers + 1, shift.cleaned + amount, shift.paid + paid
+        shift.pending = {
+            amount    = amount,
+            paid      = math.floor(amount * (100 - cfg.Cut) / 100),
+            startedAt = GetGameTimer(),
+            expiresAt = os.time() + math.ceil(duration / 1000) + 15,
+        }
+
+        return { success = true, duration = duration }
+    end)
+end)
+
+--- Callback: the progress bar is done, the contact pays.
+---@param src integer
+lib.callback.register("t1ger_moneywash:server:contracts:completeHandover", function(src)
+    return guarded(src, function()
+        local shift = Shifts[src]
+        if not shift then return { success = false, reason = "no_contract_shift" } end
+
+        local pending = shift.pending
+        if not pending then return { success = false, reason = "contract_no_deal" } end
+
+        -- The client can't finish the deal faster than the progress bar. A little room covers latency.
+        if GetGameTimer() - pending.startedAt < cfg.Contacts.Handover.Duration - 500 then
+            return { success = false, reason = "contract_deal_early" }
+        end
+
+        shift.pending = nil
+        _API.Player.AddMoney(src, pending.paid, cfg.PayoutAccount)
+
+        shift.handovers, shift.cleaned, shift.paid = shift.handovers + 1, shift.cleaned + pending.amount, shift.paid + pending.paid
         scheduleNextDrop(shift, cfg.DropDelay)
 
         local reward = Config.Reputation.Enable and Config.Reputation.Rewards.contractHandover
         if reward and reward.enable then AwardReputationPoints(src, shift.identifier, reward.points) end
 
-        RunHook("OnContractHandover", shift.identifier, amount, paid, shift.handovers)
+        RunHook("OnContractHandover", shift.identifier, pending.amount, pending.paid, shift.handovers)
 
-        return { success = true, amount = amount, paid = paid }
+        return { success = true, amount = pending.amount, paid = pending.paid }
     end)
 end)
 
@@ -258,7 +293,14 @@ end)
 ---@param shift ContractShift
 ---@param now integer
 local function tickShift(shift, now)
-    if shift.drop then
+    if shift.pending then
+        -- A deal that never finished (the client was interrupted): the dirty cash goes back
+        if now > shift.pending.expiresAt then
+            _API.Player.AddDirtyMoney(shift.src, shift.pending.amount)
+            shift.pending = nil
+            _API.SendNotification(shift.src, locale("notification.contract_deal_failed"), "error")
+        end
+    elseif shift.drop then
         if now > shift.drop.expiresAt then endShift(shift, "missed") end
     elseif now >= shift.nextDropAt then
         if math.floor(_API.Player.GetDirtyMoney(shift.src) or 0) < cfg.MinHandover then
@@ -272,7 +314,7 @@ end
 --- Ends the shift of a player who died or left, and moves the others along.
 CreateThread(function()
     while true do
-        Wait(next(Shifts) and 1000 or 10000)
+        Wait(1000)
 
         local now = os.time()
 

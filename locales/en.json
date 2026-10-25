@@ -130,6 +130,7 @@
     },
     "notification": {
         "contract_handover": "Handed over %s. You received %s.",
+        "contract_deal_failed": "The deal fell through. Your dirty cash was returned.",
         "contract_started": "Shift started. Wait for your first contact.",
         "contract_ended": "Shift ended. You can start a new one in %d seconds.",
         "contract_ended_died": "You collapsed. Your shift is over.",
@@ -181,7 +182,8 @@
     "progress": {
         "atm_deposit": "Depositing cash...",
         "atm_inspect": "Pulling the transaction log...",
-        "atm_seize": "Freezing the transaction..."
+        "atm_seize": "Freezing the transaction...",
+        "contract_handover": "Making the deal..."
     },
     "error": {
         "unknown": "Something went wrong",
@@ -247,6 +249,9 @@
         "no_contract_shift": "You are not on a shift",
         "contract_no_drop": "There is no contact waiting for you",
         "contract_too_far": "You are too far from the contact",
+        "contract_dealing": "Finish the deal first",
+        "contract_no_deal": "There is no deal in progress",
+        "contract_deal_early": "The deal isn't finished yet",
         "insufficient_safe_cash": "The Safe no longer holds that amount",
         "unsupported_operation": "This cash operation is not available",
         "raid_disabled": "Raids are disabled",

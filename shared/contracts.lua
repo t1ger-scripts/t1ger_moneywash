@@ -88,7 +88,7 @@ return {
         TargetIcon       = "fa-solid fa-sack-dollar", -- Handover target icon
         TargetDistance   = 2.0,            -- Handover target range
         LeaveTime        = 8,              -- Seconds the contact walks away before disappearing
-        Animation        = { Dict = "mp_common", Player = "givetake1_a", Contact = "givetake1_b", Duration = 2000 }, -- Exchange animation
+        Handover         = { Duration = 5000, Dict = "mp_common", Player = "givetake1_a", Contact = "givetake1_b" }, -- Deal progress bar (ms) and its animations
         Models           = { "a_m_y_hipster_01", "a_m_m_business_01", "a_m_y_downtown_01", "a_m_m_eastsa_01", "a_m_y_stbla_01", "a_m_y_vinewood_01" },
         Scenarios        = { "WORLD_HUMAN_STAND_IMPATIENT", "WORLD_HUMAN_SMOKING", "WORLD_HUMAN_STAND_MOBILE", "WORLD_HUMAN_HANG_OUT_STREET" },
     },
