@@ -6,7 +6,7 @@ local SERVER = "t1ger_moneywash:server:contracts:"
 -- Animations of the deal: the player talks while the bar runs, then the money changes hands
 local NEGOTIATE = { dict = "misscarsteal4@actor", clip = "actor_berating_loop" } -- Played by the player while the bar runs
 local PICKUP = { dict = "random@domestic", clip = "pickup_low" }                 -- Played when taking the cash back
-local HANDOFF = { dict = "mp_common", player = "givetake1_a", contact = "givetake1_b", time = 1800 }
+local HANDOFF = { dict = "mp_common", player = "givetake1_a", contact = "givetake1_b", time = 1500 }
 local LEAVE_TIME = 8 -- Seconds the contact walks away before disappearing
 
 local cfg = Config.Contracts
@@ -308,7 +308,7 @@ local function dismissContact(current)
 
     leavingPeds[ped] = true
     FreezeEntityPosition(ped, false)
-    ClearPedTasks(ped)
+    ClearPedTasksImmediately(ped)
     TaskWanderStandard(ped, 10.0, 10)
 
     SetTimeout(LEAVE_TIME * 1000, function()
