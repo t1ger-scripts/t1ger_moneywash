@@ -71,8 +71,8 @@ return {
     -- The shift
     Shift = {
         Cooldown        = 120,               -- Seconds before a new shift after ending it or disconnecting
-        FirstDropDelay  = { 1, 3 },          -- Seconds from starting the shift to the first drop (random between the two)
-        DropDelay       = { 5, 15 },         -- Seconds between drops after that (random between the two)
+        FirstDropDelay  = { 2, 4 },          -- Seconds from starting the shift to the first drop (random between the two)
+        DropDelay       = { 10, 20 },         -- Seconds between drops after that (random between the two)
         DropTime        = 1200,              -- Seconds to reach a contact. Missing it ends the shift
         MinDropDistance = 500.0,             -- Least distance from the player to a new drop
         MaxDropDistance = 4000.0,            -- Furthest distance from the player to a new drop (if none fits, any free drop is used)
@@ -100,9 +100,10 @@ return {
 
     -- A contact that keeps the cash
     Betrayal = {
-        Chance       = 25,                  -- % chance a contact betrays at the end of a deal (10 is a good live value)
-        AttackChance = 50,                   -- % of betrayals where the contact attacks. Otherwise it flees
+        Chance       = 20,                  -- % chance a contact betrays at the end of a deal (10 is a good live value)
+        AttackChance = 40,                   -- % of betrayals where the contact attacks. Otherwise it flees
         Time         = 60,                   -- Seconds to get the cash back. After that the contact has got away with it.
+        EscapeDistance = 75.0,              -- A contact this far from the player has got away with the cash
         Health       = 200,                  -- Contact health once it betrays
         Weapons      = { "WEAPON_KNIFE", "WEAPON_BAT", "WEAPON_PISTOL" }, -- An attacking contact carries one of these
         Blip         = { Sprite = 1, Display = 4, Scale = 0.7, Color = 1, Label = "Contact" }, -- Follows the contact while it runs

@@ -233,6 +233,11 @@ local function watchBetrayal(current)
         while betrayal == current do
             if not DoesEntityExist(current.ped) then return loseCash() end
 
+            -- A live contact out of reach has got away
+            if not current.prop and not IsPedDeadOrDying(current.ped, true) and #(GetEntityCoords(current.ped) - GetEntityCoords(PlayerPedId())) > cfg.Betrayal.EscapeDistance then
+                return loseCash()
+            end
+
             if not current.prop and IsPedDeadOrDying(current.ped, true) then
                 dropCash(current)
             elseif not current.prop then

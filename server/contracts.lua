@@ -83,6 +83,7 @@ local function validateConfig()
     check(isPercent(cfg.Betrayal.Chance), "Betrayal.Chance must be between 0 and 100")
     check(isPercent(cfg.Betrayal.AttackChance), "Betrayal.AttackChance must be between 0 and 100")
     check(type(cfg.Betrayal.Time) == "number" and cfg.Betrayal.Time > 0, "Betrayal.Time must be above 0")
+    check(type(cfg.Betrayal.EscapeDistance) == "number" and cfg.Betrayal.EscapeDistance > 0, "Betrayal.EscapeDistance must be above 0")
 
     for _, problem in ipairs(problems) do
         print(("^1[MoneyWash] Contracts config: %s. Contracts stay closed until this is fixed.^7"):format(problem))
