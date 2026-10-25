@@ -101,7 +101,7 @@ function MoneyWashReputation:Save()
     })
 end
 
---- Resolves and returns the correct title for current points (no statebag sync)
+--- Resolves and returns the correct title for current points
 --- @return string
 function MoneyWashReputation:_ResolveTitle()
     return GetReputationLevel(self.points).title
@@ -203,7 +203,7 @@ end
 
 --- LOAD / SAVE
 
---- Loads a player's reputation from DB into memory and syncs statebags
+--- Loads a player's reputation from DB into memory and syncs it to their client
 --- @param src number
 function LoadReputation(src)
     if type(src) ~= "number" then return end

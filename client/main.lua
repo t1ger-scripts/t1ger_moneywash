@@ -32,6 +32,16 @@ local function RaidTargetName(businessId)
     return ("t1ger_moneywash:handler:raid:%d"):format(businessId)
 end
 
+--- Lets a ped react to the player (turns, says a line) if Config.PedReactions is on.
+---@param ped integer
+---@param key "HandlerGreeting"|"HandlerRaid" Speech name in Config.PedReactions
+local function React(ped, key)
+    local cfg = Config.PedReactions
+    if not cfg or not cfg.Enable then return end
+
+    ReactPed(ped, cfg[key], Config.HandlerNPC.Scenario, cfg.FaceDuration)
+end
+
 --- Spawns a handler NPC for a business and registers its target options.
 ---@param data { id: number, type: string, locationId: number }
 local function SpawnHandlerNPC(data)
@@ -59,6 +69,7 @@ local function SpawnHandlerNPC(data)
                 return OwnedBusinesses[businessId] ~= nil and CanInteractWithHandlerNPC(entity)
             end,
             onSelect    = function()
+                React(ped, "HandlerGreeting")
                 OpenHandlerMenu(businessId)
             end,
         },
@@ -86,14 +97,13 @@ local function SpawnHandlerNPC(data)
                 return IsEntityValid(entity) and not IsPedInAnyVehicle(PlayerPedId(), false)
             end,
             onSelect    = function()
+                React(ped, "HandlerRaid")
                 StartRaid(businessId)
             end,
         },
     })
 
-    if Config.Debug then
-        print(("[MoneyWash] Handler NPC spawned for business %d (%s)"):format(businessId, data.type))
-    end
+    DebugPrint("handler", ("NPC spawned for business %d (%s)"):format(businessId, data.type))
 end
 
 --- Removes a handler NPC and its target options.
@@ -109,9 +119,7 @@ local function DespawnHandlerNPC(businessId)
     })
     DeletePed(ped)
 
-    if Config.Debug then
-        print(("[MoneyWash] Handler NPC despawned for business %d"):format(businessId))
-    end
+    DebugPrint("handler", ("NPC despawned for business %d"):format(businessId))
 end
 
 --- Starts watching a location. Its NPC exists only while the player is nearby (see the watcher loop).
@@ -175,7 +183,7 @@ local function RefreshHandlerBlips()
             HandlerBlips[businessId] = nil
         end
     end
-    
+
     local blipCfg = Config.HandlerNPC.Blip
     for businessId, data in pairs(OwnedBusinesses) do
         if not HandlerBlips[businessId] then
@@ -223,9 +231,7 @@ RegisterNetEvent("t1ger_moneywash:client:syncLocations", function(list)
         end
     end
 
-    if Config.Debug then
-        print(("[MoneyWash] Synced %d business locations (all owners)"):format(#list))
-    end
+    DebugPrint("handler", ("synced %d business locations"):format(#list))
 end)
 
 --- Initial sync of the player's own businesses on load.
@@ -239,14 +245,8 @@ RegisterNetEvent("t1ger_moneywash:client:syncBusinesses", function(businesses)
 
     RefreshHandlerBlips()
 
-    if Config.Debug then
-        local own = businesses[1]
-        if own then
-            print(("[MoneyWash] Your business: #%s (%s, location %s)"):format(own.id, own.type, own.locationId))
-        else
-            print("[MoneyWash] You do not own a business")
-        end
-    end
+    local own = businesses[1]
+    DebugPrint("handler", own and ("your business: #%s (%s, location %s)"):format(own.id, own.type, own.locationId) or "you do not own a business")
 end)
 
 --- The player bought a business.
@@ -277,7 +277,7 @@ end)
 RegisterNetEvent("t1ger_moneywash:client:businessRemoved", function(businessId)
     OwnedBusinesses[businessId] = nil
     RefreshHandlerBlips()
-    _API.ShowNotification(locale("notification.business_removed"), "error", {})
+    _API.ShowNotification(locale("notification.business_removed"), "error")
 end)
 
 --- Money was laundered into the safe.

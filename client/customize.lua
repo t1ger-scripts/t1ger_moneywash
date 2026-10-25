@@ -55,12 +55,12 @@ end
 ---@param covered number Part covered by stock
 ---@param exposed number Part not covered by stock
 function NotifyMoneyLaundered(amount, covered, exposed)
-    _API.ShowNotification(string.format(locale("notification.money_laundered"), FormatMoney(amount), FormatMoney(covered), FormatMoney(exposed)),"success", {})
+    _API.ShowNotification(string.format(locale("notification.money_laundered"), FormatMoney(amount), FormatMoney(covered), FormatMoney(exposed)),"success")
 end
 
 --- Shown when a launder raises the suspicion label.
 ---@param newLabel { name: string, color: string }
 function NotifySuspicionChanged(newLabel)
     if not Config.Suspicion.NotifyOnLabelChange then return end
-    _API.ShowNotification(string.format(locale("notification.suspicion_changed"), newLabel.name), "inform", {})
+    _API.ShowNotification(string.format(locale("notification.suspicion_changed"), newLabel.name), "inform")
 end

@@ -144,16 +144,13 @@ local function deliverFolder()
         return NotifyError(response.reason)
     end
 
+    local reactions = Config.PedReactions
+    if reactions and reactions.Enable and accountantPed then
+        ReactPed(accountantPed, reactions.AccountantThanks, Config.Review.Accountant.Scenario, reactions.FaceDuration)
+    end
+
     resetMission()
-    _API.ShowNotification(
-        string.format(
-            locale("notification.review_completed"),
-            ("%.1f"):format(response.suspicionBefore),
-            ("%.1f"):format(response.suspicionAfter),
-            FormatMoney(response.fee)
-        ),
-        "success"
-    )
+    _API.ShowNotification(string.format(locale("notification.review_completed"), ("%.1f"):format(response.suspicionBefore), ("%.1f"):format(response.suspicionAfter), FormatMoney(response.fee)), "success")
 end
 
 --- Spawns the accountant ped and registers its target option.

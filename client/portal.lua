@@ -85,7 +85,7 @@ local function openPortal()
         attempts = attempts + 1
 
         if attempts == 1 then
-            _API.ShowNotification(locale("notification.portal_loading"), "inform", {})
+            _API.ShowNotification(locale("notification.portal_loading"), "inform")
         end
 
         Wait(500)

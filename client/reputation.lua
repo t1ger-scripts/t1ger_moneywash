@@ -31,7 +31,5 @@ RegisterNetEvent("t1ger_moneywash:client:reputationSync", function(points, title
     reputation.points = points
     reputation.title  = title
 
-    if Config.Debug then
-        print(("[MoneyWash] Reputation synced: %d points | %s"):format(points, title))
-    end
+    DebugPrint("reputation", ("synced %d points | %s"):format(points, title))
 end)

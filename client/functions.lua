@@ -126,6 +126,48 @@ function DeletePed(pedHandle)
     end
 end
 
+---@type table<integer, { heading: number, token: integer }> Running reactions by ped
+local reactions = {}
+
+--- The ped turns to the player and says a line, then goes back to its idle animation.
+---@param ped integer|nil A local ped
+---@param speech string|nil Ambient speech name, silent when nil
+---@param scenario string|nil Idle scenario to resume
+---@param duration? integer Ms before the ped goes back to idle (default 5000)
+function ReactPed(ped, speech, scenario, duration)
+    if not ped or not DoesEntityExist(ped) then return end
+
+    duration = duration or 5000
+
+    local state = reactions[ped]
+    if not state then
+        state = { heading = GetEntityHeading(ped), token = 0 }
+        reactions[ped] = state
+    end
+
+    state.token = state.token + 1
+    local token = state.token
+
+    ClearPedTasks(ped)
+    FreezeEntityPosition(ped, false)
+    TaskTurnPedToFaceEntity(ped, PlayerPedId(), duration)
+
+    if speech and speech ~= "" then
+        PlayPedAmbientSpeechNative(ped, speech, "SPEECH_PARAMS_FORCE_NORMAL_CLEAR")
+    end
+
+    SetTimeout(duration, function()
+        if reactions[ped] ~= state or state.token ~= token then return end
+
+        reactions[ped] = nil
+        if not DoesEntityExist(ped) then return end
+
+        SetEntityHeading(ped, state.heading)
+        FreezeEntityPosition(ped, true)
+        if scenario then TaskStartScenarioInPlace(ped, scenario, 0, true) end
+    end)
+end
+
 --- Formats a number as money with thousands separators, using Config.Currency.
 ---@param amount number
 ---@return string formatted e.g. "$1,500"
@@ -213,7 +255,7 @@ end
 --- Shows an error notification for a failure reason.
 ---@param reason? string
 function NotifyError(reason)
-    _API.ShowNotification(GetErrorMessage(reason), "error", {})
+    _API.ShowNotification(GetErrorMessage(reason), "error")
 end
 
 --- Builds a failed NUI response. The UI shows `message` as it is.

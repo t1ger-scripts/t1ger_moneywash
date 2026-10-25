@@ -4,6 +4,7 @@ Config = {}
 Config.Debug             = true  -- Debug prints (set to false in production)
 Config.Currency          = "$"   -- Currency symbol in menus and notifications
 Config.UseCharacterNames = true  -- true = character name, false = game name (e.g. transfer picker)
+Config.AutosaveInterval  = 5     -- Minutes between automatic saves of businesses and reputation
 
 -- Business settings: revenue cycle, business ladder and locations
 -- cycleLaundered (memory only) resets each cycle; suspicion, stock, safe balances and receipts persist
@@ -67,6 +68,16 @@ Config.HandlerNPC = {
         transfer       = "fa-solid fa-right-left",
         abandon        = "fa-solid fa-door-open",
     }
+}
+
+-- Handler and accountant peds turn to the player and say a line (GTA ambient speech, played by the ped's own voice)
+-- A model without that line stays silent. Set a line to "" to turn only the speech off
+Config.PedReactions = {
+    Enable           = true,
+    FaceDuration     = 5000,                      -- Ms the ped faces the player before going back to idle
+    HandlerGreeting  = "GENERIC_HI",              -- Owner opens the Handler menu
+    HandlerRaid      = "GENERIC_FRIGHTENED_HIGH", -- An officer starts a raid
+    AccountantThanks = "GENERIC_THANKS",          -- The folder is delivered
 }
 
 -- Web portal: UI colors, laptop target and auto-close range
@@ -251,7 +262,6 @@ Config.Review = {
 -- Reputation: points, admin commands, rewards and titles
 Config.Reputation = {
     Enable            = true,
-    AutosaveInterval  = 5, -- Minutes between automatic database saves
 
     CommandSuggestion = "Usage: /%s <playerId> <amount>", -- Command help text (%s = command name)
 

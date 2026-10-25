@@ -63,7 +63,7 @@ RegisterNetEvent("t1ger_moneywash:client:raidCancelled", function(reason)
 
     seized = nil
 
-    _API.ShowNotification(locale(cancelMessages[reason] or "notification.raid_cancelled"), "error", {})
+    _API.ShowNotification(locale(cancelMessages[reason] or "notification.raid_cancelled"), "error")
 end)
 
 --- NUI: the officer bagged everything and sealed the bag. The server answers with the amount it really seized.
@@ -86,7 +86,7 @@ RegisterNUICallback("t1ger_moneywash:raid:close", function(_, cb)
     cb({ success = true })
 
     if seized then
-        _API.ShowNotification(string.format(locale("notification.raid_seized"), FormatMoney(seized)), "success", {})
+        _API.ShowNotification(string.format(locale("notification.raid_seized"), FormatMoney(seized)), "success")
         seized = nil
         return
     end

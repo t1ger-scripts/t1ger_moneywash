@@ -1,11 +1,5 @@
---- ============================================================================
---- Server Main
---- Wiring only: player lifecycle, master tick, autosave and shutdown handlers.
---- ============================================================================
+--- Server main: player lifecycle, master tick, autosave and shutdown handlers.
 
---- -------------------------------------------------------------------------
---- PLAYER LIFECYCLE
---- -------------------------------------------------------------------------
 RegisterNetEvent("t1ger_moneywash:server:playerLoaded", function()
     local src = source
 
@@ -13,7 +7,7 @@ RegisterNetEvent("t1ger_moneywash:server:playerLoaded", function()
     LoadReputation(src)
 
     PayPendingStockRefund(src)
-    PayPendingStockRefund(src)
+    PayPendingReviewRefund(src)
 
     -- Sync owned businesses to client
     local identifier = _API.Player.GetIdentifier(src)
@@ -70,9 +64,7 @@ local function applySuspicionDecay(business)
     UpdateBusiness(business.id, "suspicion", math.max(0, business.suspicion - decayPerTick))
 end
 
---- -------------------------------------------------------------------------
---- MASTER TICK — fires every real minute
---- -------------------------------------------------------------------------
+--- Master tick, every real minute: cycle, cash bags and suspicion decay.
 CreateThread(function()
     if not LoadBusinesses() then return end
 
@@ -93,17 +85,13 @@ CreateThread(function()
     end
 end)
 
---- -------------------------------------------------------------------------
---- AUTOSAVE
---- -------------------------------------------------------------------------
-lib.cron.new(("*/%d * * * *"):format(Config.Reputation.AutosaveInterval), function()
+--- Autosave of businesses and reputation.
+lib.cron.new(("*/%d * * * *"):format(Config.AutosaveInterval), function()
     SaveAllBusinesses()
     SaveAllReputation()
 end)
 
---- -------------------------------------------------------------------------
---- SHUTDOWN HANDLERS
---- -------------------------------------------------------------------------
+--- Save everything when the resource stops or the server restarts.
 AddEventHandler("onResourceStop", function(resource)
     if resource ~= GetCurrentResourceName() then return end
     SaveAllBusinesses()
