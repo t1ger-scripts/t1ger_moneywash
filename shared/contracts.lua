@@ -34,7 +34,8 @@ return {
     MaxHandover            = 2500,         -- Most dirty cash handed over at one drop (random between min and max)
     Cut                    = 40,           -- % the contact keeps of every handover
     Cooldown               = 120,          -- Seconds before a new shift after ending it or disconnecting
-    DropDelay              = { 30, 60 },   -- Seconds before the first drop and between drops (random between the two)
+    FirstDropDelay         = { 3, 5 },     -- Seconds from starting the shift to the first drop (random between the two)
+    DropDelay              = { 15, 30 },   -- Seconds between drops after that (random between the two)
     DropTime               = 600,          -- Seconds to reach a contact. Missing it ends the shift
     MinDropDistance        = 400.0,        -- Least distance from the player to a new drop
 

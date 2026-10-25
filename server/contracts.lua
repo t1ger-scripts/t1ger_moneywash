@@ -48,9 +48,10 @@ end
 
 --- Plans the next drop after a random delay.
 ---@param shift ContractShift
-local function scheduleNextDrop(shift)
+---@param delay integer[] Min and max seconds
+local function scheduleNextDrop(shift, delay)
     shift.drop = nil
-    shift.nextDropAt = os.time() + math.random(cfg.DropDelay[1], cfg.DropDelay[2])
+    shift.nextDropAt = os.time() + math.random(delay[1], delay[2])
 end
 
 --- Picks a drop at least MinDropDistance from the player, never the same as the last one.
@@ -155,7 +156,7 @@ lib.callback.register("t1ger_moneywash:server:contracts:startShift", function(sr
         if not identifier then return { success = false, reason = reason, remaining = remaining } end
 
         local shift = { src = src, identifier = identifier, handovers = 0, cleaned = 0, paid = 0 }
-        scheduleNextDrop(shift)
+        scheduleNextDrop(shift, cfg.FirstDropDelay)
         Shifts[src] = shift
 
         return { success = true }
@@ -193,7 +194,7 @@ end
 --- Ends the shift of a player who died or left, and moves the others along.
 CreateThread(function()
     while true do
-        Wait(next(Shifts) and 5000 or 10000)
+        Wait(next(Shifts) and 1000 or 10000)
 
         local now = os.time()
 
