@@ -136,6 +136,7 @@
         "contract_betrayed_attack": "It's a trap! The contact pulled a weapon.",
         "contract_cash_recovered": "You took back %s in dirty cash.",
         "contract_cash_lost": "The contact got away with your cash.",
+        "contract_cash_expired": "You were too slow. The cash is gone.",
         "contract_started": "Shift started. Wait for your first contact.",
         "contract_ended": "Shift ended. You can start a new one in %d seconds.",
         "contract_ended_died": "You collapsed. Your shift is over.",

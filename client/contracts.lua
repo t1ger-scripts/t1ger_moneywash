@@ -129,9 +129,8 @@ local function clearBetrayal(delay)
     if DoesEntityExist(current.ped) then removePedLater(current.ped, delay) end
 end
 
---- The contact got away with the cash: the player gives up on it and the shift moves on.
-local function loseCash()
-    _API.ShowNotification(locale("notification.contract_cash_lost"), "error")
+local function loseCash(tooSlow)
+    _API.ShowNotification(locale(tooSlow and "notification.contract_cash_expired" or "notification.contract_cash_lost"), "error")
     clearBetrayal(0)
     ServerRequest(SERVER .. "forfeitCash")
 end
@@ -165,13 +164,22 @@ end
 ---@param current ContractBetrayal
 local function dropCash(current)
     local cash = cfg.Betrayal.Cash
+    -- Wait for the body to stop sliding, so the stack doesn't end up under the legs
+    local settled = GetGameTimer() + 3000
+
+    while betrayal == current and DoesEntityExist(current.ped) and GetEntitySpeed(current.ped) > 0.2 and GetGameTimer() < settled do
+        Wait(100)
+    end
+
+    if betrayal ~= current or not DoesEntityExist(current.ped) then return end
+
     -- Beside the body, on the side of the player, so the body never covers the target
     local body, player = GetEntityCoords(current.ped), GetEntityCoords(PlayerPedId())
     local dx, dy = player.x - body.x, player.y - body.y
     local length = math.sqrt(dx * dx + dy * dy)
     if length < 0.1 then dx, dy, length = 1.0, 0.0, 1.0 end
 
-    local coords = vec3(body.x + dx / length, body.y + dy / length, body.z)
+    local coords = vec3(body.x + dx / length * 1.4, body.y + dy / length * 1.4, body.z)
 
     lib.requestModel(cash.Model)
     if betrayal ~= current then return end
@@ -219,7 +227,10 @@ local function watchBetrayal(current)
                 end
             end
 
-            if betrayal == current and GetGameTimer() >= current.endsAt then return loseCash() end
+            if betrayal == current and GetGameTimer() >= current.endsAt then
+                -- A contact that was put down in time: the player was just too slow
+                return loseCash(current.prop ~= nil or IsPedDeadOrDying(current.ped, true))
+            end
 
             Wait(500)
         end
