@@ -77,7 +77,7 @@ return {
     PayoutAccount          = "cash",       -- Where the clean money is paid: "bank" or "cash"
     Cooldown               = 120,          -- Seconds before a new shift after ending it or disconnecting
     FirstDropDelay         = { 1, 3 },     -- Seconds from starting the shift to the first drop (random between the two)
-    DropDelay              = { 15, 30 },   -- Seconds between drops after that (random between the two)
+    DropDelay              = { 5, 15 },   -- Seconds between drops after that (random between the two)
     DropTime               = 1200,         -- Seconds to reach a contact. Missing it ends the shift
     MinDropDistance        = 500.0,        -- Least distance from the player to a new drop
     MaxDropDistance        = 4000.0,       -- Furthest distance from the player to a new drop (if none fits, any free drop is used)
@@ -90,8 +90,21 @@ return {
         LeaveTime        = 8,              -- Seconds the contact walks away before disappearing
         Handover         = { Duration = 5000, Dict = "mp_common", Player = "givetake1_a", Contact = "givetake1_b" }, -- Deal progress bar (ms) and its animations
         Models           = { "a_m_y_hipster_01", "a_m_m_business_01", "a_m_y_downtown_01", "a_m_m_eastsa_01", "a_m_y_stbla_01", "a_m_y_vinewood_01" },
-        Scenarios        = { "WORLD_HUMAN_STAND_IMPATIENT", "WORLD_HUMAN_SMOKING", "WORLD_HUMAN_STAND_MOBILE", "WORLD_HUMAN_HANG_OUT_STREET" },
     },
 
     Blip                   = { Sprite = 280, Display = 4, Scale = 0.8, Color = 2, Route = true, RouteColor = 2, Label = "Contact" },
+
+    Betrayal               = {
+        Chance          = 100,              -- % chance a contact betrays at the end of a deal (50 for testing, 10 is a good live value)
+        AttackChance    = 50,              -- % of betrayals where the contact attacks. Otherwise it flees
+        Time            = 180,             -- Seconds to get the cash back. After that the contact has got away with it
+        Health          = 200,             -- Contact health once it betrays
+        Weapons         = { "WEAPON_KNIFE", "WEAPON_BAT", "WEAPON_PISTOL" }, -- An attacking contact carries one of these
+        Blip            = { Sprite = 1, Display = 4, Scale = 0.7, Color = 1, Label = "Contact" }, -- Follows the contact while it runs
+        CashModel       = "prop_money_bag_01", -- Dropped where the contact dies
+        TargetIcon      = "fa-solid fa-sack-dollar", -- Pick up target icon
+        TargetDistance  = 2.0,             -- Pick up target range
+        PickupDuration  = 2500,            -- Pick up progress bar (ms)
+        PickupAnimation = { dict = "pickup_object", clip = "pickup_low", flag = 0 }, -- Played while picking up
+    },
 }

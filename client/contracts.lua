@@ -17,10 +17,22 @@ local onShift = false
 ---@field spawning? boolean
 ---@field busy? boolean A handover is running
 
+---@class ContractBetrayal
+---@field ped integer The contact that ran off with the cash
+---@field amount integer Dirty cash it holds
+---@field endsAt integer GetGameTimer() value the cash is gone for good
+---@field blip? integer
+---@field prop? integer Cash dropped by the dead contact
+---@field picking? boolean
+
 ---@type ContractDrop|nil The drop the player is heading to
 local drop = nil
 
+---@type ContractBetrayal|nil The contact the player has to put down
+local betrayal = nil
+
 local TARGET_NAME = "t1ger_moneywash:contact"
+local CASH_TARGET_NAME = "t1ger_moneywash:cash"
 
 ---@type table<integer, boolean> Contacts walking away after a handover
 local leavingPeds = {}
@@ -49,12 +61,10 @@ local function clearDrop()
     DeletePed(detachContact(current))
 end
 
---- Marks the drop on the map with a route.
----@param coords vector4
----@return integer blip
-local function createDropBlip(coords)
-    local settings = cfg.Blip
-    local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
+--- Applies the blip settings of Config.Contracts.Blip to a blip.
+---@param blip integer
+---@param settings table
+local function styleBlip(blip, settings)
     SetBlipSprite(blip, settings.Sprite)
     SetBlipDisplay(blip, settings.Display)
     SetBlipScale(blip, settings.Scale)
@@ -63,6 +73,15 @@ local function createDropBlip(coords)
     BeginTextCommandSetBlipName("STRING")
     AddTextComponentSubstringPlayerName(settings.Label)
     EndTextCommandSetBlipName(blip)
+end
+
+--- Marks the drop on the map with a route.
+---@param coords vector4
+---@return integer blip
+local function createDropBlip(coords)
+    local settings = cfg.Blip
+    local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
+    styleBlip(blip, settings)
 
     if settings.Route then
         SetBlipRoute(blip, true)
@@ -70,6 +89,177 @@ local function createDropBlip(coords)
     end
 
     return blip
+end
+
+--- Deletes a ped after a delay, or at once.
+---@param ped integer
+---@param seconds integer
+local function removePedLater(ped, seconds)
+    if seconds <= 0 then return DeletePed(ped) end
+
+    leavingPeds[ped] = true
+
+    SetTimeout(seconds * 1000, function()
+        leavingPeds[ped] = nil
+        DeletePed(ped)
+    end)
+end
+
+--- Removes the contact that ran off, its blip and the cash it dropped.
+---@param delay integer Seconds before the contact itself disappears
+local function clearBetrayal(delay)
+    local current = betrayal
+    if not current then return end
+
+    betrayal = nil
+
+    if current.blip and DoesBlipExist(current.blip) then RemoveBlip(current.blip) end
+
+    if current.prop and DoesEntityExist(current.prop) then
+        _API.Target.RemoveLocalEntity(current.prop, { names = { CASH_TARGET_NAME }, labels = { locale("target.recover_cash") } })
+        DeleteEntity(current.prop)
+    end
+
+    if DoesEntityExist(current.ped) then removePedLater(current.ped, delay) end
+end
+
+--- Forgets everything of the shift on this client.
+local function resetShift()
+    onShift = false
+    clearDrop()
+    clearBetrayal(0)
+end
+
+--- Takes the cash back from the dead contact. The server gives the dirty cash back.
+---@param current ContractBetrayal
+local function recoverCash(current)
+    if current.picking then return end
+    current.picking = true
+
+    local cash = cfg.Betrayal
+    local completed = ProgressBar({
+        duration     = cash.PickupDuration,
+        label        = locale("progress.contract_recover"),
+        useWhileDead = false,
+        canCancel    = true,
+        disable      = { move = true, car = true, combat = true },
+        anim         = cash.PickupAnimation,
+    })
+
+    if betrayal ~= current then return end
+
+    if not completed then
+        current.picking = false
+        return
+    end
+
+    local response = ServerRequest(SERVER .. "recoverCash")
+    if betrayal ~= current then return end
+
+    if not response.success then
+        current.picking = false
+        return NotifyError(response.reason)
+    end
+
+    _API.ShowNotification(string.format(locale("notification.contract_cash_recovered"), FormatMoney(response.amount)), "success")
+    clearBetrayal(5)
+end
+
+--- Drops the cash where the contact died, for the player to pick up.
+---@param current ContractBetrayal
+local function dropCash(current)
+    local cash = cfg.Betrayal
+    local coords = GetEntityCoords(current.ped)
+
+    lib.requestModel(cash.CashModel)
+    if betrayal ~= current then return end
+
+    local prop = CreateObject(GetHashKey(cash.CashModel), coords.x, coords.y, coords.z, false, false, false)
+    SetModelAsNoLongerNeeded(GetHashKey(cash.CashModel))
+    PlaceObjectOnGroundProperly(prop)
+    FreezeEntityPosition(prop, true)
+
+    current.prop = prop
+
+    _API.Target.AddLocalEntity(prop, {
+        {
+            name        = CASH_TARGET_NAME,
+            icon        = cash.TargetIcon,
+            label       = locale("target.recover_cash"),
+            distance    = cash.TargetDistance,
+            canInteract = function()
+                return betrayal == current and not current.picking
+            end,
+            onSelect    = function()
+                recoverCash(current)
+            end,
+        },
+    })
+end
+
+--- Watches the contact that ran off: drops the cash when it dies, ends it when the time is up.
+---@param current ContractBetrayal
+local function watchBetrayal(current)
+    CreateThread(function()
+        while betrayal == current do
+            if not DoesEntityExist(current.ped) then
+                _API.ShowNotification(locale("notification.contract_cash_lost"), "error")
+                return clearBetrayal(0)
+            end
+
+            if not current.prop and IsPedDeadOrDying(current.ped, true) then dropCash(current) end
+
+            if betrayal == current and GetGameTimer() >= current.endsAt then
+                _API.ShowNotification(locale("notification.contract_cash_lost"), "error")
+                return clearBetrayal(0)
+            end
+
+            Wait(500)
+        end
+    end)
+end
+
+--- The contact keeps the cash: it flees or attacks, and the player has to put it down.
+---@param current ContractDrop
+---@param result { mode: "flee"|"attack", weapon: string, amount: integer, seconds: integer }
+local function startBetrayal(current, result)
+    local ped = detachContact(current)
+    clearDrop()
+    clearBetrayal(0)
+
+    if not ped or not DoesEntityExist(ped) then
+        return _API.ShowNotification(locale("notification.contract_cash_lost"), "error")
+    end
+
+    local settings = cfg.Betrayal
+    local player = PlayerPedId()
+
+    betrayal = { ped = ped, amount = result.amount, endsAt = GetGameTimer() + result.seconds * 1000 }
+
+    FreezeEntityPosition(ped, false)
+    ClearPedTasksImmediately(ped)
+    SetEntityInvincible(ped, false)
+    SetEntityMaxHealth(ped, settings.Health)
+    SetEntityHealth(ped, settings.Health)
+
+    if result.mode == "attack" then
+        GiveWeaponToPed(ped, GetHashKey(result.weapon), 100, false, true)
+        SetPedCombatAttributes(ped, 46, true)
+        SetPedFleeAttributes(ped, 0, false)
+        TaskCombatPed(ped, player, 0, 16)
+    else
+        TaskSmartFleePed(ped, player, 250.0, -1, false, false)
+    end
+
+    SetPedKeepTask(ped, true)
+
+    betrayal.blip = AddBlipForEntity(ped)
+    styleBlip(betrayal.blip, settings.Blip)
+
+    if Config.PedReactions.Enable then PedSpeak(ped, Config.PedReactions.ContactBetray) end
+
+    _API.ShowNotification(locale(result.mode == "attack" and "notification.contract_betrayed_attack" or "notification.contract_betrayed_flee"), "error")
+    watchBetrayal(betrayal)
 end
 
 --- Lets the contact walk away after a handover, and removes it a few seconds later.
@@ -102,10 +292,7 @@ local function handOverCash(current)
     if not started.success then
         current.busy = false
 
-        if started.reason == "no_contract_shift" then
-            onShift = false
-            clearDrop()
-        end
+        if started.reason == "no_contract_shift" then resetShift() end
 
         -- "shift_over" is announced by the server's own shift ended message
         if started.reason ~= "shift_over" then NotifyError(started.reason) end
@@ -149,6 +336,8 @@ local function handOverCash(current)
         current.busy = false
         return NotifyError(response.reason)
     end
+
+    if response.betrayed then return startBetrayal(current, response) end
 
     if contact and Config.PedReactions.Enable then PedSpeak(contact, Config.PedReactions.ContactThanks) end
 
@@ -246,16 +435,12 @@ function EndContractShift()
     local response = ServerRequest(SERVER .. "endShift")
 
     if not response.success then
-        if response.reason == "no_contract_shift" then
-            onShift = false
-            clearDrop()
-        end
+        if response.reason == "no_contract_shift" then resetShift() end
 
         return NotifyError(response.reason)
     end
 
-    onShift = false
-    clearDrop()
+    resetShift()
     _API.ShowNotification(string.format(locale("notification.contract_ended"), response.cooldown or 0), "inform")
 end
 
@@ -273,8 +458,7 @@ end)
 
 --- The server ended the shift without the player asking.
 RegisterNetEvent("t1ger_moneywash:client:contractShiftEnded", function(reason)
-    onShift = false
-    clearDrop()
+    resetShift()
 
     local key = ({
         died          = "notification.contract_ended_died",
@@ -289,6 +473,7 @@ AddEventHandler("onResourceStop", function(resource)
     if resource ~= GetCurrentResourceName() then return end
 
     clearDrop()
+    clearBetrayal(0)
     for ped in pairs(leavingPeds) do DeletePed(ped) end
 end)
 
@@ -314,3 +499,8 @@ CreateThread(function()
         },
     })
 end)
+
+-- TEMP: starts a shift without a payphone. Delete when done testing.
+RegisterCommand("startshift", function()
+    StartContractShift()
+end, false)

@@ -14,7 +14,8 @@
         "raid_business": "Raid Business",
         "accountant": "Hand Over Folder",
         "payphone": "Launder Contracts",
-        "contact_handover": "Hand Over Cash"
+        "contact_handover": "Hand Over Cash",
+        "recover_cash": "Pick Up Cash"
     },
     "menu": {
         "handler": {
@@ -131,6 +132,10 @@
     "notification": {
         "contract_handover": "Handed over %s. You received %s.",
         "contract_deal_failed": "The deal fell through. Your dirty cash was returned.",
+        "contract_betrayed_flee": "The contact ran off with your cash! Stop them.",
+        "contract_betrayed_attack": "It's a trap! The contact pulled a weapon.",
+        "contract_cash_recovered": "You took back %s in dirty cash.",
+        "contract_cash_lost": "The contact got away with your cash.",
         "contract_started": "Shift started. Wait for your first contact.",
         "contract_ended": "Shift ended. You can start a new one in %d seconds.",
         "contract_ended_died": "You collapsed. Your shift is over.",
@@ -183,7 +188,8 @@
         "atm_deposit": "Depositing cash...",
         "atm_inspect": "Pulling the transaction log...",
         "atm_seize": "Freezing the transaction...",
-        "contract_handover": "Making the deal..."
+        "contract_handover": "Making the deal...",
+        "contract_recover": "Picking up the cash..."
     },
     "error": {
         "unknown": "Something went wrong",
@@ -252,6 +258,7 @@
         "contract_dealing": "Finish the deal first",
         "contract_no_deal": "There is no deal in progress",
         "contract_deal_early": "The deal isn't finished yet",
+        "contract_cash_gone": "The cash is gone",
         "insufficient_safe_cash": "The Safe no longer holds that amount",
         "unsupported_operation": "This cash operation is not available",
         "raid_disabled": "Raids are disabled",

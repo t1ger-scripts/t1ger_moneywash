@@ -78,8 +78,9 @@ Config.PedReactions = {
     Enable           = true,
     HandlerGreeting  = "GENERIC_HOWS_IT_GOING",     -- Owner opens the Handler menu
     AccountantThanks = "GENERIC_THANKS", -- The folder is delivered
-    ContactThanks    = "GENERIC_THANKS", -- A launder contract handover is done
     ContactGreeting  = "GENERIC_HI",     -- A launder contract contact sees the player arrive
+    ContactThanks    = "GENERIC_THANKS", -- A launder contract handover is done
+    ContactBetray    = "GENERIC_INSULT_HIGH", -- A launder contract contact betrays the player
 }
 
 -- Web portal: UI colors, laptop target and auto-close range

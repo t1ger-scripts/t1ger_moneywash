@@ -123,3 +123,10 @@ end
 --- @param handovers number completed handovers this shift, including this one
 function OnContractHandover(identifier, dirtyAmount, paidAmount, handovers)
 end
+
+--- Called when a launder contract contact betrays the player and keeps the cash.
+--- The cash can still be recovered by the player until the betrayal time is up.
+--- @param identifier string player identifier
+--- @param dirtyAmount number dirty cash the contact ran off with
+function OnContractBetrayed(identifier, dirtyAmount)
+end

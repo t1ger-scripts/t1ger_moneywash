@@ -20,6 +20,7 @@ local NOTIFY_REASONS = { died = true, missed = true, no_dirty_cash = true }
 ---@field drop? { index: integer, expiresAt: integer } The drop the player is on, index in Config.Contracts.Drops
 ---@field lastDrop? integer Index in Config.Contracts.Drops of the previous drop, not picked again right away
 ---@field pending? { amount: integer, paid: integer, startedAt: integer, expiresAt: integer } A deal in progress: the dirty cash is taken, the payout waits
+---@field betrayal? { amount: integer, expiresAt: integer } Dirty cash a contact ran off with, recoverable until it expires
 
 ---@type table<integer, ContractShift> Active shifts by player source
 local Shifts = {}
@@ -106,7 +107,7 @@ local function assignDrop(shift)
     TriggerClientEvent(DROP_ASSIGNED_EVENT, shift.src, {
         coords   = cfg.Drops[index],
         model    = pick(cfg.Contacts.Models),
-        scenario = pick(cfg.Contacts.Scenarios),
+        scenario = "WORLD_HUMAN_STAND_IMPATIENT",
         seconds  = cfg.DropTime,
     })
 end
@@ -126,8 +127,11 @@ local function endShift(shift, reason)
     Shifts[shift.src] = nil
     releaseDrop(shift)
 
-    -- A deal cut short by a resource stop gives the dirty cash back. A death or a disconnect loses it.
-    if shift.pending and reason == "stopped" then _API.Player.AddDirtyMoney(shift.src, shift.pending.amount) end
+    -- A resource stop gives back the cash of an unfinished deal and of a betrayal. A death or a disconnect loses it.
+    if reason == "stopped" then
+        if shift.pending then _API.Player.AddDirtyMoney(shift.src, shift.pending.amount) end
+        if shift.betrayal then _API.Player.AddDirtyMoney(shift.src, shift.betrayal.amount) end
+    end
 
     if reason == "player" or reason == "dropped" then
         Cooldowns[shift.identifier] = os.time() + cfg.Cooldown
@@ -259,7 +263,7 @@ lib.callback.register("t1ger_moneywash:server:contracts:beginHandover", function
     end)
 end)
 
---- Callback: the progress bar is done, the contact pays.
+--- Callback: the progress bar is done. The contact pays, or betrays and keeps the cash.
 ---@param src integer
 lib.callback.register("t1ger_moneywash:server:contracts:completeHandover", function(src)
     return guarded(src, function()
@@ -275,10 +279,27 @@ lib.callback.register("t1ger_moneywash:server:contracts:completeHandover", funct
         end
 
         shift.pending = nil
+        scheduleNextDrop(shift, cfg.DropDelay)
+
+        local betrayal = cfg.Betrayal
+        if math.random(100) <= betrayal.Chance then
+            shift.betrayal = { amount = pending.amount, expiresAt = os.time() + betrayal.Time + 5 }
+
+            RunHook("OnContractBetrayed", shift.identifier, pending.amount)
+
+            return {
+                success = true,
+                betrayed = true,
+                mode = math.random(100) <= betrayal.AttackChance and "attack" or "flee",
+                weapon = pick(betrayal.Weapons),
+                amount = pending.amount,
+                seconds = betrayal.Time,
+            }
+        end
+
         _API.Player.AddMoney(src, pending.paid, cfg.PayoutAccount)
 
         shift.handovers, shift.cleaned, shift.paid = shift.handovers + 1, shift.cleaned + pending.amount, shift.paid + pending.paid
-        scheduleNextDrop(shift, cfg.DropDelay)
 
         local reward = Config.Reputation.Enable and Config.Reputation.Rewards.contractHandover
         if reward and reward.enable then AwardReputationPoints(src, shift.identifier, reward.points) end
@@ -289,10 +310,29 @@ lib.callback.register("t1ger_moneywash:server:contracts:completeHandover", funct
     end)
 end)
 
+--- Callback: the player took the cash back from the contact they put down.
+---@param src integer
+lib.callback.register("t1ger_moneywash:server:contracts:recoverCash", function(src)
+    return guarded(src, function()
+        local shift = Shifts[src]
+        if not shift then return { success = false, reason = "no_contract_shift" } end
+
+        local betrayal = shift.betrayal
+        if not betrayal or os.time() > betrayal.expiresAt then return { success = false, reason = "contract_cash_gone" } end
+
+        shift.betrayal = nil
+        _API.Player.AddDirtyMoney(src, betrayal.amount)
+
+        return { success = true, amount = betrayal.amount }
+    end)
+end)
+
 --- Moves a shift along: a missed drop ends it, a new drop is assigned while dirty cash is left.
 ---@param shift ContractShift
 ---@param now integer
 local function tickShift(shift, now)
+    if shift.betrayal and now > shift.betrayal.expiresAt then shift.betrayal = nil end
+
     if shift.pending then
         -- A deal that never finished (the client was interrupted): the dirty cash goes back
         if now > shift.pending.expiresAt then
