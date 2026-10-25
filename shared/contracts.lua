@@ -1,19 +1,15 @@
 -- Launder contracts: shifts of street handovers, started at a payphone by players with dirty cash
 return {
-    Target                 = { Icon = "fa-solid fa-phone", Distance = 1.5 }, -- Payphone target icon and range
-    EndCommand             = "endshift",   -- Chat command that ends the shift (nil = no command)
+    EndCommand = "endshift",                 -- Chat command that ends the shift (nil = no command)
 
-    Models                 = {             -- Payphone props that get the target
-        "prop_phonebox_01a",
-        "prop_phonebox_01b",
-        "prop_phonebox_01c",
-        "prop_phonebox_02",
-        "prop_phonebox_03",
-        "prop_phonebox_04",
+    -- Payphones that start and end a shift
+    Payphone = {
+        Models = { "prop_phonebox_01a", "prop_phonebox_01b", "prop_phonebox_01c", "prop_phonebox_02", "prop_phonebox_03", "prop_phonebox_04" },
+        Target = { Icon = "fa-solid fa-phone", Distance = 1.5 },
     },
 
     -- Places a contact can wait: standing height on the pavement, plus the heading
-    Drops                  = {
+    Drops = {
         -- Los Santos:
         vec4(-75.349449, -1824.949463, 26.937744, 232.440948),
         vec4(296.320892, -2095.674805, 17.602905, 116.220474),
@@ -71,38 +67,49 @@ return {
         vec4(-2955.072510, 385.595612, 15.008057, 252.283463),
     },
 
-    MinHandover            = 500,          -- Least dirty cash handed over at one drop
-    MaxHandover            = 5000,         -- Most dirty cash handed over at one drop (random between min and max)
-    Cut                    = 30,           -- % the contact keeps of every handover
-    PayoutAccount          = "cash",       -- Where the clean money is paid: "bank" or "cash"
-    Cooldown               = 120,          -- Seconds before a new shift after ending it or disconnecting
-    FirstDropDelay         = { 1, 3 },     -- Seconds from starting the shift to the first drop (random between the two)
-    DropDelay              = { 5, 15 },   -- Seconds between drops after that (random between the two)
-    DropTime               = 1200,         -- Seconds to reach a contact. Missing it ends the shift
-    MinDropDistance        = 500.0,        -- Least distance from the player to a new drop
-    MaxDropDistance        = 4000.0,       -- Furthest distance from the player to a new drop (if none fits, any free drop is used)
 
-    Contacts               = {
-        SpawnDistance    = 60.0,           -- The contact appears when the player is this close
-        GreetingDistance = 4.0,           -- The contact greets the player at this range
-        TargetIcon       = "fa-solid fa-sack-dollar", -- Handover target icon
-        TargetDistance   = 2.0,            -- Handover target range
-        LeaveTime        = 8,              -- Seconds the contact walks away before disappearing
-        Handover         = { Duration = 5000 }, -- Negotiation progress bar (ms)
-        Models           = { "a_m_y_hipster_01", "a_m_m_business_01", "a_m_y_downtown_01", "a_m_m_eastsa_01", "a_m_y_stbla_01", "a_m_y_vinewood_01" },
+    -- The shift
+    Shift = {
+        Cooldown        = 120,               -- Seconds before a new shift after ending it or disconnecting
+        FirstDropDelay  = { 1, 3 },          -- Seconds from starting the shift to the first drop (random between the two)
+        DropDelay       = { 5, 15 },         -- Seconds between drops after that (random between the two)
+        DropTime        = 1200,              -- Seconds to reach a contact. Missing it ends the shift
+        MinDropDistance = 500.0,             -- Least distance from the player to a new drop
+        MaxDropDistance = 4000.0,            -- Furthest distance from the player to a new drop (if none fits, any free drop is used)
     },
 
-    Blip                   = { Sprite = 280, Display = 4, Scale = 0.8, Color = 2, Route = true, RouteColor = 2, Label = "Contact" },
+    -- A deal with a contact
+    Deal = {
+        MinAmount = 500,                     -- Least dirty cash handed over at one drop
+        MaxAmount = 5000,                    -- Most dirty cash handed over at one drop (random between min and max)
+        Cut       = 30,                      -- % the contact keeps of every handover
+        Account   = "cash",                  -- Where the clean money is paid: "bank" or "cash"
+        Duration  = 3000,                    -- Negotiation progress bar (ms)
+    },
 
-    Betrayal               = {
-        Chance          = 100,              -- % chance a contact betrays at the end of a deal (50 for testing, 10 is a good live value)
-        AttackChance    = 50,              -- % of betrayals where the contact attacks. Otherwise it flees
-        Time            = 30,             -- Seconds to get the cash back. After that the contact has got away with it
-        Health          = 200,             -- Contact health once it betrays
-        Weapons         = { "WEAPON_KNIFE", "WEAPON_BAT", "WEAPON_PISTOL" }, -- An attacking contact carries one of these
-        Blip            = { Sprite = 1, Display = 4, Scale = 0.7, Color = 1, Label = "Contact" }, -- Follows the contact while it runs
-        CashModel       = "prop_cash_pile_01", -- Cash stack dropped where the contact dies
-        TargetIcon      = "fa-solid fa-sack-dollar", -- Pick up target icon
-        TargetDistance  = 2.0,             -- Pick up target range
+    -- The contact waiting at a drop
+    Contact = {
+        Models           = { "a_m_y_hipster_01", "a_m_m_business_01", "a_m_y_downtown_01", "a_m_m_eastsa_01", "a_m_y_stbla_01", "a_m_y_vinewood_01" },
+        SpawnDistance    = 60.0,             -- The contact appears when the player is this close
+        GreetingDistance = 4.0,              -- The contact greets the player at this range
+        LeaveTime        = 8,                -- Seconds the contact walks away before disappearing
+        Target           = { Icon = "fa-solid fa-sack-dollar", Distance = 2.0 }, -- Handover target
+    },
+
+    -- The drop on the map
+    DropBlip = { Sprite = 280, Display = 4, Scale = 0.8, Color = 2, Route = true, RouteColor = 2, Label = "Contact" },
+
+    -- A contact that keeps the cash
+    Betrayal = {
+        Chance       = 100,                  -- % chance a contact betrays at the end of a deal (10 is a good live value)
+        AttackChance = 50,                   -- % of betrayals where the contact attacks. Otherwise it flees
+        Time         = 30,                   -- Seconds to get the cash back. After that the contact has got away with it
+        Health       = 200,                  -- Contact health once it betrays
+        Weapons      = { "WEAPON_KNIFE", "WEAPON_BAT", "WEAPON_PISTOL" }, -- An attacking contact carries one of these
+        Blip         = { Sprite = 1, Display = 4, Scale = 0.7, Color = 1, Label = "Contact" }, -- Follows the contact while it runs
+        Cash         = {                     -- Dropped where the contact dies
+            Model  = "prop_cash_pile_01",
+            Target = { Icon = "fa-solid fa-sack-dollar", Distance = 2.0 },
+        },
     },
 }

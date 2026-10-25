@@ -84,7 +84,7 @@ end
 ---@param coords vector4
 ---@return integer blip
 local function createDropBlip(coords)
-    local settings = cfg.Blip
+    local settings = cfg.DropBlip
     local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
     styleBlip(blip, settings)
 
@@ -163,14 +163,14 @@ end
 --- Drops the cash where the contact died, for the player to pick up.
 ---@param current ContractBetrayal
 local function dropCash(current)
-    local cash = cfg.Betrayal
+    local cash = cfg.Betrayal.Cash
     local coords = GetEntityCoords(current.ped)
 
-    lib.requestModel(cash.CashModel)
+    lib.requestModel(cash.Model)
     if betrayal ~= current then return end
 
-    local prop = CreateObject(GetHashKey(cash.CashModel), coords.x, coords.y, coords.z, false, false, false)
-    SetModelAsNoLongerNeeded(GetHashKey(cash.CashModel))
+    local prop = CreateObject(GetHashKey(cash.Model), coords.x, coords.y, coords.z, false, false, false)
+    SetModelAsNoLongerNeeded(GetHashKey(cash.Model))
     PlaceObjectOnGroundProperly(prop)
     FreezeEntityPosition(prop, true)
 
@@ -179,9 +179,9 @@ local function dropCash(current)
     _API.Target.AddLocalEntity(prop, {
         {
             name        = CASH_TARGET_NAME,
-            icon        = cash.TargetIcon,
+            icon        = cash.Target.Icon,
             label       = locale("target.recover_cash"),
-            distance    = cash.TargetDistance,
+            distance    = cash.Target.Distance,
             canInteract = function()
                 return betrayal == current and not current.picking
             end,
@@ -271,7 +271,7 @@ local function dismissContact(current)
     ClearPedTasks(ped)
     TaskWanderStandard(ped, 10.0, 10)
 
-    SetTimeout(cfg.Contacts.LeaveTime * 1000, function()
+    SetTimeout(cfg.Contact.LeaveTime * 1000, function()
         leavingPeds[ped] = nil
         DeletePed(ped)
     end)
@@ -346,28 +346,24 @@ local function handOverCash(current)
         return
     end
 
-    -- The contact turns on the player: no handoff
-    if response.betrayed then
-        RemoveAnimDict(HANDOFF.dict)
-        return startBetrayal(current, response)
-    end
-
-    -- A clean deal: the money changes hands, and the server settles it in the middle of the animation
+    -- The money changes hands whatever the outcome. The server settles the cash in the middle of the animation.
     contact = current.ped
 
     if contact and DoesEntityExist(contact) then
         TaskPlayAnim(contact, HANDOFF.dict, HANDOFF.contact, 8.0, -8.0, HANDOFF.time, 48, 0, false, false, false)
-        if Config.PedReactions.Enable then PedSpeak(contact, Config.PedReactions.ContactThanks) end
+        if not response.betrayed and Config.PedReactions.Enable then PedSpeak(contact, Config.PedReactions.ContactThanks) end
     end
 
     TaskPlayAnim(PlayerPedId(), HANDOFF.dict, HANDOFF.player, 8.0, -8.0, HANDOFF.time, 48, 0, false, false, false)
 
     Wait(response.delay)
 
-    _API.ShowNotification(
-        string.format(locale("notification.contract_handover"), FormatMoney(response.amount), FormatMoney(response.paid)),
-        "success"
-    )
+    if not response.betrayed then
+        _API.ShowNotification(
+            string.format(locale("notification.contract_handover"), FormatMoney(response.amount), FormatMoney(response.paid)),
+            "success"
+        )
+    end
 
     Wait(math.max(HANDOFF.time - response.delay, 0))
 
@@ -375,6 +371,9 @@ local function handOverCash(current)
     RemoveAnimDict(HANDOFF.dict)
 
     if drop ~= current then return end
+
+    -- The handoff is done: now the contact turns, or walks away
+    if response.betrayed then return startBetrayal(current, response) end
 
     dismissContact(current)
     clearDrop()
@@ -384,7 +383,7 @@ end
 --- The margin on the way out stops the ped flickering at the edge. Runs until the drop is gone.
 ---@param current ContractDrop
 local function watchDrop(current)
-    local contacts = cfg.Contacts
+    local contacts = cfg.Contact
     local coords = vec3(current.coords.x, current.coords.y, current.coords.z)
     local greeted = false
 
@@ -409,9 +408,9 @@ local function watchDrop(current)
                     _API.Target.AddLocalEntity(ped, {
                         {
                             name        = TARGET_NAME,
-                            icon        = contacts.TargetIcon,
+                            icon        = contacts.Target.Icon,
                             label       = locale("target.contact_handover"),
-                            distance    = contacts.TargetDistance,
+                            distance    = contacts.Target.Distance,
                             canInteract = function()
                                 return drop == current and not current.busy
                             end,
@@ -460,7 +459,7 @@ end
 --- Ends the shift after a confirmation. Used by the payphone menu and the end command.
 function EndContractShift()
     if not onShift then return NotifyError("no_contract_shift") end
-    if not ConfirmEndShift(cfg.Cooldown) then return end
+    if not ConfirmEndShift(cfg.Shift.Cooldown) then return end
 
     local response = ServerRequest(SERVER .. "endShift")
 
@@ -514,12 +513,12 @@ end
 CreateThread(function()
     while not _Target do Wait(100) end
 
-    _API.Target.AddModel(cfg.Models, {
+    _API.Target.AddModel(cfg.Payphone.Models, {
         {
             name        = "t1ger_moneywash:payphone",
-            icon        = cfg.Target.Icon,
+            icon        = cfg.Payphone.Target.Icon,
             label       = locale("target.payphone"),
-            distance    = cfg.Target.Distance,
+            distance    = cfg.Payphone.Target.Distance,
             canInteract = function()
                 return not IsPedInAnyVehicle(PlayerPedId(), false)
             end,

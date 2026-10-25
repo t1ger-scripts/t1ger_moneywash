@@ -583,8 +583,8 @@ function OpenContractsMenu()
             icon        = "fa-solid fa-handshake",
             description = locale("menu.contracts.start_description"),
             metadata    = {
-                { label = locale("menu.contracts.per_handover"), value = ("%s - %s"):format(FormatMoney(cfg.MinHandover), FormatMoney(cfg.MaxHandover)) },
-                { label = locale("menu.contracts.cut"),          value = ("%d%%"):format(cfg.Cut) },
+                { label = locale("menu.contracts.per_handover"), value = ("%s - %s"):format(FormatMoney(cfg.Deal.MinAmount), FormatMoney(cfg.Deal.MaxAmount)) },
+                { label = locale("menu.contracts.cut"),          value = ("%d%%"):format(cfg.Deal.Cut) },
             },
             onSelect    = StartContractShift,
         }
