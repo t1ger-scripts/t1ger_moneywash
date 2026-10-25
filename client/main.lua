@@ -355,8 +355,9 @@ AddEventHandler("onResourceStop", function(resource)
     end
 end)
 
---- Returns the player's owned businesses (local cache).
----@return table<number, table>
-exports("GetOwnedBusinesses", function()
-    return OwnedBusinesses
+--- Returns the player's business (local cache), or nil if they own none.
+---@return table|nil
+exports("GetOwnedBusiness", function()
+    local _, business = next(OwnedBusinesses)
+    return business
 end)

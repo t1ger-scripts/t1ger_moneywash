@@ -12,7 +12,6 @@ local reputation = { points = 0, title = "" }
 function GetPlayerReputationPoints()
     return reputation.points
 end
-exports("GetPlayerReputationPoints", GetPlayerReputationPoints)
 
 --- Returns the player's reputation points and level title.
 ---@return PlayerReputation
