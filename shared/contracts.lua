@@ -97,7 +97,7 @@ return {
     Betrayal               = {
         Chance          = 100,              -- % chance a contact betrays at the end of a deal (50 for testing, 10 is a good live value)
         AttackChance    = 50,              -- % of betrayals where the contact attacks. Otherwise it flees
-        Time            = 180,             -- Seconds to get the cash back. After that the contact has got away with it
+        Time            = 30,             -- Seconds to get the cash back. After that the contact has got away with it
         Health          = 200,             -- Contact health once it betrays
         Weapons         = { "WEAPON_KNIFE", "WEAPON_BAT", "WEAPON_PISTOL" }, -- An attacking contact carries one of these
         Blip            = { Sprite = 1, Display = 4, Scale = 0.7, Color = 1, Label = "Contact" }, -- Follows the contact while it runs

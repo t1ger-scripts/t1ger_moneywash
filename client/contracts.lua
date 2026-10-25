@@ -20,6 +20,7 @@ local onShift = false
 ---@class ContractBetrayal
 ---@field ped integer The contact that ran off with the cash
 ---@field amount integer Dirty cash it holds
+---@field mode "flee"|"attack"
 ---@field endsAt integer GetGameTimer() value the cash is gone for good
 ---@field blip? integer
 ---@field prop? integer Cash dropped by the dead contact
@@ -194,7 +195,18 @@ local function watchBetrayal(current)
         while betrayal == current do
             if not DoesEntityExist(current.ped) then return loseCash() end
 
-            if not current.prop and IsPedDeadOrDying(current.ped, true) then dropCash(current) end
+            if not current.prop and IsPedDeadOrDying(current.ped, true) then
+                dropCash(current)
+            elseif not current.prop then
+                -- Keeps the contact on the run (or on the attack) if its task ended
+                local player = PlayerPedId()
+
+                if current.mode == "flee" and not IsPedFleeing(current.ped) then
+                    TaskSmartFleePed(current.ped, player, 1000.0, -1, false, false)
+                elseif current.mode == "attack" and not IsPedInCombat(current.ped, player) then
+                    TaskCombatPed(current.ped, player, 0, 16)
+                end
+            end
 
             if betrayal == current and GetGameTimer() >= current.endsAt then return loseCash() end
 
@@ -216,7 +228,7 @@ local function startBetrayal(current, result)
     local settings = cfg.Betrayal
     local player = PlayerPedId()
 
-    betrayal = { ped = ped, amount = result.amount, endsAt = GetGameTimer() + result.seconds * 1000 }
+    betrayal = { ped = ped, amount = result.amount, mode = result.mode, endsAt = GetGameTimer() + result.seconds * 1000 }
 
     FreezeEntityPosition(ped, false)
     ClearPedTasksImmediately(ped)
@@ -230,7 +242,7 @@ local function startBetrayal(current, result)
         SetPedFleeAttributes(ped, 0, false)
         TaskCombatPed(ped, player, 0, 16)
     else
-        TaskSmartFleePed(ped, player, 250.0, -1, false, false)
+        TaskSmartFleePed(ped, player, 1000.0, -1, false, false)
     end
 
     SetPedKeepTask(ped, true)
