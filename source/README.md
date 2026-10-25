@@ -1,5 +1,23 @@
-# Vue 3 + Vite
+# t1ger_moneywash: NUI source
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Vue 3 + Vite + TypeScript source of the screens (business portal, cash counter, raid, accountant review).
+The built UI goes to `../web` and is what the resource loads. You only need this folder to change the UI.
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## Build
+
+```bash
+npm ci
+npm run build
+```
+
+`npm run build` type-checks first, then builds into `../web` (emptied on every build).
+
+## Layout
+
+- `src/portal`, `src/cash-counter`, `src/raid`, `src/review`: one folder per screen
+- `src/shared`: the screen switcher and drag/seal helpers shared by the screens
+- `src/integrations`: NUI messages and callbacks (`nui.ts`) and translations (`i18n.ts`)
+- `public/images`: pictures. A business picture is named `<type>_<3-digit id>.webp`
+- `public/mapStyles`: map tiles for the business map
+
+All text comes from the Lua side (`shared/ui_text.lua`), never from this source.

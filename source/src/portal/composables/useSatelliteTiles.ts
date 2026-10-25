@@ -3,8 +3,6 @@ import L from 'leaflet'
 
 import { MAXIMUM_MAP_ZOOM, mapBounds } from '@/portal/map/gtaMap'
 
-type TileExtension = 'jpg' | 'png'
-
 const LOADING_TIMEOUT_MS = 7000
 
 /** Loads the satellite tiles onto a map and tracks whether they loaded. */
@@ -22,8 +20,8 @@ export function useSatelliteTiles(getMap: () => L.Map | null) {
         loadingTimeout = null
     }
 
-    /** Tiles may be .jpg or .png; if a tile fails, it is tried once with the other one. */
-    function loadSatelliteTiles(preferredExtension: TileExtension = 'jpg'): void {
+    /** Loads the satellite tiles onto the map. */
+    function loadSatelliteTiles(): void {
         const map = getMap()
         if (!map) return
 
@@ -34,7 +32,7 @@ export function useSatelliteTiles(getMap: () => L.Map | null) {
         hasTileError.value = false
 
         tileLayer = L.tileLayer(
-            `./mapStyles/styleSatelite/{z}/{x}/{y}.${preferredExtension}`,
+            `./mapStyles/styleSatelite/{z}/{x}/{y}.jpg`,
             {
                 minZoom: 0,
                 maxZoom: MAXIMUM_MAP_ZOOM,
@@ -53,16 +51,6 @@ export function useSatelliteTiles(getMap: () => L.Map | null) {
             hasTileError.value = false
         })
 
-        tileLayer.on('tileerror', (event: L.TileErrorEvent) => {
-            const tile = event.tile as HTMLImageElement
-            if (tile.dataset.fallbackAttempted === 'true') return
-
-            tile.dataset.fallbackAttempted = 'true'
-
-            const fallbackExtension: TileExtension = preferredExtension === 'jpg' ? 'png' : 'jpg'
-            tile.src = tile.src.replace(/\.(jpg|png)$/, `.${fallbackExtension}`)
-        })
-
         tileLayer.addTo(map)
         tileLayer.bringToBack()
 
@@ -75,7 +63,7 @@ export function useSatelliteTiles(getMap: () => L.Map | null) {
     }
 
     function retryMapTiles(): void {
-        loadSatelliteTiles('jpg')
+        loadSatelliteTiles()
     }
 
     /** Call when the map is removed. */
