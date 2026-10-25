@@ -202,7 +202,6 @@
         "invalid_player": "Invalid player",
         "invalid_state": "This action isn't available right now",
         "invalid_job": "You are not on duty for this action",
-        "no_permission": "You don't have permission to do this",
         "not_found": "Business not found",
         "not_owner": "You don't own this business",
         "not_owned": "Nobody owns that business",
