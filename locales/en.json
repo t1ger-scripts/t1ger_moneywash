@@ -118,6 +118,8 @@
         },
         "contracts": {
             "title": "Launder Contracts",
+            "start_title": "Start Shift",
+            "start_description": "Meet contacts around the city and hand over dirty cash for clean money.",
             "locked": "Requires %d reputation",
             "per_handover": "Per handover",
             "cut": "Contact's cut",
@@ -126,16 +128,13 @@
             "end_confirm": "Your shift ends and you can't start a new one for %d seconds. Continue?"
         }
     },
-    "contract": {
-        "street_handover": {
-            "title": "Street Handover",
-            "description": "Meet contacts around the city and hand over dirty cash for clean money."
-        }
-    },
     "notification": {
         "contract_started": "Shift started. Wait for your first contact.",
         "contract_ended": "Shift ended. You can start a new one in %d seconds.",
         "contract_ended_died": "You collapsed. Your shift is over.",
+        "contract_ended_missed": "You kept the contact waiting too long. Your shift is over.",
+        "contract_ended_no_cash": "You're out of dirty cash. Your shift is over.",
+        "contract_drop": "A contact is waiting for you. You have %d minutes. The spot is marked on your map.",
         "contract_cooldown": "You need to wait %d seconds before starting a new shift.",
         "portal_loading": "Loading the business portal...",
         "business_removed": "Your business has been permanently removed",
@@ -243,7 +242,6 @@
         "not_flagged": "That deposit isn't flagged",
         "invalid_amount": "Choose a whole amount within your available balance.",
         "insufficient_dirty_cash": "You're not carrying enough dirty cash",
-        "invalid_contract": "That contract doesn't exist",
         "contract_active": "You are already on a shift",
         "no_contract_shift": "You are not on a shift",
         "insufficient_safe_cash": "The Safe no longer holds that amount",

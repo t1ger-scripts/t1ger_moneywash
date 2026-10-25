@@ -1,29 +1,105 @@
---- Launder contracts (client): the payphone target and the start of a contract.
---- The server owns every contract, this file only asks and shows.
+--- Launder contracts (client): the payphone target, the shift and its drops.
+--- The server owns the shift, this file only asks and shows.
 
 local SERVER = "t1ger_moneywash:server:contracts:"
 
----@type string|nil Id of the contract the player is working, nil when off shift
-local activeContractId = nil
+local cfg = Config.Contracts
 
----@param contractId string
----@return table|nil contract Entry of Config.Contracts.List
-local function getContract(contractId)
-    for _, contract in ipairs(Config.Contracts.List) do
-        if contract.Id == contractId then return contract end
+---@type boolean True while the player is on a shift
+local onShift = false
+
+---@class ContractDrop
+---@field coords vector4
+---@field model string
+---@field scenario string
+---@field blip? integer
+---@field ped? integer Local contact ped, only while the player is near
+---@field spawning? boolean
+
+---@type ContractDrop|nil The drop the player is heading to
+local drop = nil
+
+--- Removes the blip and the contact of the current drop.
+local function clearDrop()
+    local current = drop
+    if not current then return end
+
+    drop = nil
+
+    if current.blip and DoesBlipExist(current.blip) then RemoveBlip(current.blip) end
+    DeletePed(current.ped)
+end
+
+--- Marks the drop on the map with a route.
+---@param coords vector4
+---@return integer blip
+local function createDropBlip(coords)
+    local settings = cfg.Blip
+    local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
+    SetBlipSprite(blip, settings.Sprite)
+    SetBlipDisplay(blip, settings.Display)
+    SetBlipScale(blip, settings.Scale)
+    SetBlipColour(blip, settings.Color)
+    SetBlipAsShortRange(blip, false)
+    BeginTextCommandSetBlipName("STRING")
+    AddTextComponentSubstringPlayerName(settings.Label)
+    EndTextCommandSetBlipName(blip)
+
+    if settings.Route then
+        SetBlipRoute(blip, true)
+        SetBlipRouteColour(blip, settings.RouteColor or settings.Color)
     end
+
+    return blip
+end
+
+--- Shows the contact to a player who is near: spawns it, turns the route off and greets once.
+--- The margin on the way out stops the ped flickering at the edge. Runs until the drop is gone.
+---@param current ContractDrop
+local function watchDrop(current)
+    local contacts = cfg.Contacts
+    local coords = vec3(current.coords.x, current.coords.y, current.coords.z)
+    local greeted = false
+
+    CreateThread(function()
+        while drop == current do
+            local distance = #(GetEntityCoords(PlayerPedId()) - coords)
+            local isNear = distance <= (current.ped and contacts.SpawnDistance + 5.0 or contacts.SpawnDistance)
+
+            if isNear and not current.ped and not current.spawning then
+                current.spawning = true
+                SetBlipRoute(current.blip, false)
+
+                CreateThread(function()
+                    local ped = SpawnStaticPed(current.model, current.coords, current.scenario)
+                    current.spawning = false
+
+                    if drop == current then current.ped = ped else DeletePed(ped) end
+                end)
+            elseif not isNear and current.ped then
+                DeletePed(current.ped)
+                current.ped = nil
+            end
+
+            if current.ped and not greeted and distance <= contacts.GreetingDistance then
+                greeted = true
+                if Config.PedReactions.Enable then PedSpeak(current.ped, Config.PedReactions.ContactGreeting) end
+            end
+
+            Wait(1000)
+        end
+    end)
 end
 
 --- True while the player is on a shift.
 ---@return boolean
 function IsContractShiftActive()
-    return activeContractId ~= nil
+    return onShift
 end
 
 --- Asks the server to start a shift.
----@param contractId string Id from Config.Contracts.List
-function StartContractShift(contractId)
-    local response = ServerRequest(SERVER .. "startShift", contractId)
+function StartContractShift()
+    local response = ServerRequest(SERVER .. "startShift")
 
     if not response.success then
         if response.reason == "contract_cooldown" then
@@ -33,48 +109,74 @@ function StartContractShift(contractId)
         return NotifyError(response.reason)
     end
 
-    activeContractId = contractId
+    onShift = true
     _API.ShowNotification(locale("notification.contract_started"), "success")
 end
 
 --- Ends the shift after a confirmation. Used by the payphone menu and the end command.
 function EndContractShift()
-    local contract = activeContractId and getContract(activeContractId)
-    if not contract then return NotifyError("no_contract_shift") end
-    if not ConfirmEndShift(contract.Cooldown) then return end
+    if not onShift then return NotifyError("no_contract_shift") end
+    if not ConfirmEndShift(cfg.Cooldown) then return end
 
     local response = ServerRequest(SERVER .. "endShift")
 
     if not response.success then
-        if response.reason == "no_contract_shift" then activeContractId = nil end
+        if response.reason == "no_contract_shift" then
+            onShift = false
+            clearDrop()
+        end
 
         return NotifyError(response.reason)
     end
 
-    activeContractId = nil
+    onShift = false
+    clearDrop()
     _API.ShowNotification(string.format(locale("notification.contract_ended"), response.cooldown or 0), "inform")
 end
 
---- The server ended the shift without the player asking.
-RegisterNetEvent("t1ger_moneywash:client:contractShiftEnded", function(reason)
-    activeContractId = nil
+--- The server sent the player to a new drop.
+RegisterNetEvent("t1ger_moneywash:client:contractDropAssigned", function(payload)
+    if not onShift or type(payload) ~= "table" then return end
 
-    if reason == "died" then _API.ShowNotification(locale("notification.contract_ended_died"), "inform") end
+    clearDrop()
+    drop = { coords = payload.coords, model = payload.model, scenario = payload.scenario }
+    drop.blip = createDropBlip(payload.coords)
+    watchDrop(drop)
+
+    _API.ShowNotification(string.format(locale("notification.contract_drop"), math.ceil(payload.seconds / 60)), "inform")
 end)
 
-if Config.Contracts.EndCommand then
-    RegisterCommand(Config.Contracts.EndCommand, EndContractShift, false)
+--- The server ended the shift without the player asking.
+RegisterNetEvent("t1ger_moneywash:client:contractShiftEnded", function(reason)
+    onShift = false
+    clearDrop()
+
+    local key = ({
+        died          = "notification.contract_ended_died",
+        missed        = "notification.contract_ended_missed",
+        no_dirty_cash = "notification.contract_ended_no_cash",
+    })[reason]
+
+    if key then _API.ShowNotification(locale(key), "inform") end
+end)
+
+AddEventHandler("onResourceStop", function(resource)
+    if resource == GetCurrentResourceName() then clearDrop() end
+end)
+
+if cfg.EndCommand then
+    RegisterCommand(cfg.EndCommand, EndContractShift, false)
 end
 
 CreateThread(function()
     while not _Target do Wait(100) end
 
-    _API.Target.AddModel(Config.Contracts.Models, {
+    _API.Target.AddModel(cfg.Models, {
         {
             name        = "t1ger_moneywash:payphone",
-            icon        = Config.Contracts.Target.Icon,
+            icon        = cfg.Target.Icon,
             label       = locale("target.payphone"),
-            distance    = Config.Contracts.Target.Distance,
+            distance    = cfg.Target.Distance,
             canInteract = function()
                 return not IsPedInAnyVehicle(PlayerPedId(), false)
             end,
