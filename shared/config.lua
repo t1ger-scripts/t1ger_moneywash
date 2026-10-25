@@ -78,6 +78,7 @@ Config.PedReactions = {
     Enable           = true,
     HandlerGreeting  = "GENERIC_HOWS_IT_GOING",     -- Owner opens the Handler menu
     AccountantThanks = "GENERIC_THANKS", -- The folder is delivered
+    ContactThanks    = "GENERIC_THANKS", -- A launder contract handover is done
     ContactGreeting  = "GENERIC_HI",     -- A launder contract contact sees the player arrive
 }
 
@@ -280,6 +281,7 @@ Config.Reputation = {
         launder          = { enable = true, points = 10 }, -- Per successful launder
         cashBagDeposit   = { enable = true, points = 5 },  -- When a cash bag deposit clears into the bank
         accountantReview = { enable = true, points = 5 }, -- Per completed review delivery
+        contractHandover = { enable = true, points = 3 }, -- Per completed launder contract handover
     },
 
     -- Titles by points, cosmetic only (the script checks points)

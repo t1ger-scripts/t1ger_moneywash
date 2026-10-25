@@ -72,10 +72,11 @@ return {
     },
 
     MinHandover            = 500,          -- Least dirty cash handed over at one drop
-    MaxHandover            = 2500,         -- Most dirty cash handed over at one drop (random between min and max)
-    Cut                    = 40,           -- % the contact keeps of every handover
+    MaxHandover            = 5000,         -- Most dirty cash handed over at one drop (random between min and max)
+    Cut                    = 30,           -- % the contact keeps of every handover
+    PayoutAccount          = "cash",       -- Where the clean money is paid: "bank" or "cash"
     Cooldown               = 120,          -- Seconds before a new shift after ending it or disconnecting
-    FirstDropDelay         = { 3, 5 },     -- Seconds from starting the shift to the first drop (random between the two)
+    FirstDropDelay         = { 1, 3 },     -- Seconds from starting the shift to the first drop (random between the two)
     DropDelay              = { 15, 30 },   -- Seconds between drops after that (random between the two)
     DropTime               = 1200,         -- Seconds to reach a contact. Missing it ends the shift
     MinDropDistance        = 500.0,        -- Least distance from the player to a new drop
@@ -83,7 +84,11 @@ return {
 
     Contacts               = {
         SpawnDistance    = 60.0,           -- The contact appears when the player is this close
-        GreetingDistance = 10.0,           -- The contact greets the player at this range
+        GreetingDistance = 4.0,           -- The contact greets the player at this range
+        TargetIcon       = "fa-solid fa-sack-dollar", -- Handover target icon
+        TargetDistance   = 2.0,            -- Handover target range
+        LeaveTime        = 8,              -- Seconds the contact walks away before disappearing
+        Animation        = { Dict = "mp_common", Player = "givetake1_a", Contact = "givetake1_b", Duration = 2000 }, -- Exchange animation
         Models           = { "a_m_y_hipster_01", "a_m_m_business_01", "a_m_y_downtown_01", "a_m_m_eastsa_01", "a_m_y_stbla_01", "a_m_y_vinewood_01" },
         Scenarios        = { "WORLD_HUMAN_STAND_IMPATIENT", "WORLD_HUMAN_SMOKING", "WORLD_HUMAN_STAND_MOBILE", "WORLD_HUMAN_HANG_OUT_STREET" },
     },

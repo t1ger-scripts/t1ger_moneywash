@@ -199,6 +199,61 @@ lib.callback.register("t1ger_moneywash:server:contracts:endShift", function(src)
     end)
 end)
 
+--- Takes dirty cash and checks the balance really dropped by that amount.
+---@param src integer
+---@param amount integer
+---@return boolean taken
+local function takeDirtyCash(src, amount)
+    local before = _API.Player.GetDirtyMoney(src)
+    pcall(_API.Player.RemoveDirtyMoney, src, amount)
+    local after = _API.Player.GetDirtyMoney(src)
+
+    if after == before - amount then return true end
+
+    -- Some cash may be gone anyway, so don't retry: an administrator has to look at it
+    if after < before then
+        print(("^1[MoneyWash] Contract handover removed %s of %s dirty cash from source %d. Check the player.^7"):format(before - after, amount, src))
+    end
+
+    return false
+end
+
+--- Callback: the player hands dirty cash to the contact. The amount is rolled here, never by the client.
+---@param src integer
+lib.callback.register("t1ger_moneywash:server:contracts:handover", function(src)
+    return guarded(src, function()
+        local shift = Shifts[src]
+        if not shift then return { success = false, reason = "no_contract_shift" } end
+        if not shift.drop or os.time() > shift.drop.expiresAt then return { success = false, reason = "contract_no_drop" } end
+
+        if not IsPlayerNearCoords(src, cfg.Drops[shift.drop.index], cfg.Contacts.TargetDistance + 3.0) then
+            return { success = false, reason = "contract_too_far" }
+        end
+
+        local dirty = math.floor(_API.Player.GetDirtyMoney(src) or 0)
+        if dirty < cfg.MinHandover then
+            endShift(shift, "no_dirty_cash")
+            return { success = false, reason = "shift_over" }
+        end
+
+        local amount = math.min(dirty, math.random(cfg.MinHandover, cfg.MaxHandover))
+        if not takeDirtyCash(src, amount) then return { success = false, reason = "request_failed" } end
+
+        local paid = math.floor(amount * (100 - cfg.Cut) / 100)
+        _API.Player.AddMoney(src, paid, cfg.PayoutAccount)
+
+        shift.handovers, shift.cleaned, shift.paid = shift.handovers + 1, shift.cleaned + amount, shift.paid + paid
+        scheduleNextDrop(shift, cfg.DropDelay)
+
+        local reward = Config.Reputation.Enable and Config.Reputation.Rewards.contractHandover
+        if reward and reward.enable then AwardReputationPoints(src, shift.identifier, reward.points) end
+
+        RunHook("OnContractHandover", shift.identifier, amount, paid, shift.handovers)
+
+        return { success = true, amount = amount, paid = paid }
+    end)
+end)
+
 --- Moves a shift along: a missed drop ends it, a new drop is assigned while dirty cash is left.
 ---@param shift ContractShift
 ---@param now integer

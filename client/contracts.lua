@@ -15,9 +15,28 @@ local onShift = false
 ---@field blip? integer
 ---@field ped? integer Local contact ped, only while the player is near
 ---@field spawning? boolean
+---@field busy? boolean A handover is running
 
 ---@type ContractDrop|nil The drop the player is heading to
 local drop = nil
+
+local TARGET_NAME = "t1ger_moneywash:contact"
+
+---@type table<integer, boolean> Contacts walking away after a handover
+local leavingPeds = {}
+
+--- Takes the contact from the drop and removes its target option.
+---@param current ContractDrop
+---@return integer|nil ped
+local function detachContact(current)
+    local ped = current.ped
+    if not ped then return nil end
+
+    current.ped = nil
+    _API.Target.RemoveLocalEntity(ped, { names = { TARGET_NAME }, labels = { locale("target.contact_handover") } })
+
+    return ped
+end
 
 --- Removes the blip and the contact of the current drop.
 local function clearDrop()
@@ -27,7 +46,7 @@ local function clearDrop()
     drop = nil
 
     if current.blip and DoesBlipExist(current.blip) then RemoveBlip(current.blip) end
-    DeletePed(current.ped)
+    DeletePed(detachContact(current))
 end
 
 --- Marks the drop on the map with a route.
@@ -53,6 +72,73 @@ local function createDropBlip(coords)
     return blip
 end
 
+--- Lets the contact walk away after a handover, and removes it a few seconds later.
+---@param current ContractDrop
+local function dismissContact(current)
+    local ped = detachContact(current)
+    if not ped then return end
+
+    leavingPeds[ped] = true
+    FreezeEntityPosition(ped, false)
+    ClearPedTasks(ped)
+    TaskWanderStandard(ped, 10.0, 10)
+
+    SetTimeout(cfg.Contacts.LeaveTime * 1000, function()
+        leavingPeds[ped] = nil
+        DeletePed(ped)
+    end)
+end
+
+--- Hands the cash to the contact. The server rolls the amount, takes the cash and pays out.
+---@param current ContractDrop
+local function handOverCash(current)
+    if current.busy then return end
+    current.busy = true
+
+    local response = ServerRequest(SERVER .. "handover")
+    if drop ~= current then return end
+
+    if not response.success then
+        current.busy = false
+
+        if response.reason == "no_contract_shift" then
+            onShift = false
+            clearDrop()
+        end
+
+        -- "shift_over" is announced by the server's own shift ended message
+        if response.reason ~= "shift_over" then NotifyError(response.reason) end
+
+        return
+    end
+
+    local animation = cfg.Contacts.Animation
+    local player, contact = PlayerPedId(), current.ped
+
+    if contact then
+        TaskTurnPedToFaceEntity(player, contact, 600)
+        Wait(600)
+
+        lib.requestAnimDict(animation.Dict)
+        TaskPlayAnim(player, animation.Dict, animation.Player, 8.0, -8.0, animation.Duration, 0, 0, false, false, false)
+        TaskPlayAnim(contact, animation.Dict, animation.Contact, 8.0, -8.0, animation.Duration, 0, 0, false, false, false)
+        RemoveAnimDict(animation.Dict)
+        Wait(animation.Duration)
+
+        if Config.PedReactions.Enable then PedSpeak(contact, Config.PedReactions.ContactThanks) end
+    end
+
+    _API.ShowNotification(
+        string.format(locale("notification.contract_handover"), FormatMoney(response.amount), FormatMoney(response.paid)),
+        "success"
+    )
+
+    if drop == current then
+        dismissContact(current)
+        clearDrop()
+    end
+end
+
 --- Shows the contact to a player who is near: spawns it, turns the route off and greets once.
 --- The margin on the way out stops the ped flickering at the edge. Runs until the drop is gone.
 ---@param current ContractDrop
@@ -71,14 +157,31 @@ local function watchDrop(current)
                 SetBlipRoute(current.blip, false)
 
                 CreateThread(function()
+                    while not _Target do Wait(100) end
+
                     local ped = SpawnStaticPed(current.model, current.coords, current.scenario)
                     current.spawning = false
 
-                    if drop == current then current.ped = ped else DeletePed(ped) end
+                    if drop ~= current then return DeletePed(ped) end
+
+                    current.ped = ped
+                    _API.Target.AddLocalEntity(ped, {
+                        {
+                            name        = TARGET_NAME,
+                            icon        = contacts.TargetIcon,
+                            label       = locale("target.contact_handover"),
+                            distance    = contacts.TargetDistance,
+                            canInteract = function()
+                                return drop == current and not current.busy
+                            end,
+                            onSelect    = function()
+                                handOverCash(current)
+                            end,
+                        },
+                    })
                 end)
             elseif not isNear and current.ped then
-                DeletePed(current.ped)
-                current.ped = nil
+                DeletePed(detachContact(current))
             end
 
             if current.ped and not greeted and distance <= contacts.GreetingDistance then
@@ -161,7 +264,10 @@ RegisterNetEvent("t1ger_moneywash:client:contractShiftEnded", function(reason)
 end)
 
 AddEventHandler("onResourceStop", function(resource)
-    if resource == GetCurrentResourceName() then clearDrop() end
+    if resource ~= GetCurrentResourceName() then return end
+
+    clearDrop()
+    for ped in pairs(leavingPeds) do DeletePed(ped) end
 end)
 
 if cfg.EndCommand then

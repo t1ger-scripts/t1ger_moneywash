@@ -115,3 +115,11 @@ end
 --- @param paid number clean money paid out
 function OnContractShiftEnded(identifier, reason, handovers, cleaned, paid)
 end
+
+--- Called when a launder contract handover is completed and paid.
+--- @param identifier string player identifier
+--- @param dirtyAmount number dirty cash handed over
+--- @param paidAmount number clean money paid out, after the contact's cut
+--- @param handovers number completed handovers this shift, including this one
+function OnContractHandover(identifier, dirtyAmount, paidAmount, handovers)
+end
