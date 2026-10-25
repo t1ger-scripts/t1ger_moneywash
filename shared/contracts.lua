@@ -88,5 +88,5 @@ return {
         Scenarios        = { "WORLD_HUMAN_STAND_IMPATIENT", "WORLD_HUMAN_SMOKING", "WORLD_HUMAN_STAND_MOBILE", "WORLD_HUMAN_HANG_OUT_STREET" },
     },
 
-    Blip                   = { Sprite = 280, Display = 4, Scale = 0.8, Color = 1, Route = true, RouteColor = 1, Label = "Contact" },
+    Blip                   = { Sprite = 280, Display = 4, Scale = 0.8, Color = 2, Route = true, RouteColor = 2, Label = "Contact" },
 }
