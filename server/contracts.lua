@@ -241,7 +241,8 @@ local function validateStart(src)
     if not ConfigValid then return nil, "contract_unavailable" end
     if Shifts[src] then return nil, "contract_active" end
 
-    local job = _API.Player.GetJob(src)
+    -- Debug mode lets anyone start a shift, so the feature can be tested on a police character
+    local job = not Config.Debug and _API.Player.GetJob(src)
 
     if job and job.name then
         for _, blocked in ipairs(cfg.BlockedJobs) do
