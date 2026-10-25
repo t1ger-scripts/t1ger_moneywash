@@ -519,8 +519,8 @@ function ConfirmAbandonBusiness(businessId)
     end
 end
 
---- Opens the list of flagged deposits at the ATM the officer is standing at.
----@param deposits { ref: integer, amount: integer, name?: string, business?: string, remainingSeconds: number }[]
+--- Opens the list of flagged transfers at the ATM the officer is standing at.
+---@param deposits { ref: integer, serial: string, amount: integer, name?: string, remainingSeconds: number }[]
 function OpenPoliceATMMenu(deposits)
     local options = {}
 
@@ -529,8 +529,8 @@ function OpenPoliceATMMenu(deposits)
             title    = string.format(locale("menu.police.deposit_entry"), FormatMoney(deposit.amount)),
             icon     = "fa-solid fa-money-bill",
             metadata = {
+                { label = locale("menu.police.reference"), value = deposit.serial },
                 { label = locale("menu.police.depositor"), value = deposit.name or locale("menu.police.unknown") },
-                { label = locale("menu.police.business"),  value = deposit.business or locale("menu.police.unknown") },
                 { label = locale("menu.police.clears_in"), value = formatDuration(deposit.remainingSeconds) },
             },
             onSelect = function()
@@ -548,7 +548,7 @@ function OpenPoliceATMMenu(deposits)
     lib.showContext("moneywash:police:atm")
 end
 
---- Asks the officer to confirm confiscating a deposit.
+--- Asks the officer to confirm seizing a transfer.
 ---@param deposit table One entry of the list given to OpenPoliceATMMenu
 ---@return boolean confirmed
 function ConfirmConfiscate(deposit)
@@ -556,8 +556,8 @@ function ConfirmConfiscate(deposit)
         locale("menu.police.confiscate_title"),
         string.format(
             locale("menu.police.confiscate_body"),
+            deposit.serial,
             deposit.name or locale("menu.police.unknown"),
-            deposit.business or locale("menu.police.unknown"),
             FormatMoney(deposit.amount),
             formatDuration(deposit.remainingSeconds)
         )

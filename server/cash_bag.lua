@@ -558,13 +558,15 @@ lib.callback.register("t1ger_moneywash:server:getFlaggedDeposits", function(src)
         if bag.state == "processing" and bag.flagged and officerNearBag(src, bag) then
             list[#list + 1] = {
                 ref              = bag.id,
+                serial           = bag.serial,
                 amount           = bag.amount,
                 remainingSeconds = remainingSeconds(bag),
                 name             = _API.GetCharacterNameByIdentifier(bag.depositor), -- name only, never the identifier
-                business         = bag.label,
             }
         end
     end
+
+    table.sort(list, function(a, b) return a.remainingSeconds < b.remainingSeconds end)
 
     return list
 end)

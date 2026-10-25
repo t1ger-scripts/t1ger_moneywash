@@ -66,14 +66,31 @@ local function startDeposit(atm)
     if not ok then DebugPrint("cash_bag", "deposit failed:", err) end
 end
 
---- Asks the server for the flagged deposits at this ATM and opens the list.
+--- Shows a progress bar at the ATM, with the officer's animation.
+---@param duration integer Ms
+---@param label string
+---@return boolean completed
+local function atmProgress(duration, label)
+    return ProgressBar({
+        duration     = duration,
+        label        = label,
+        useWhileDead = false,
+        canCancel    = true,
+        disable      = { move = true, car = true, combat = true },
+        anim         = Config.Police.ATM.Animation,
+    })
+end
+
+--- Pulls the flagged transfers at this ATM from the server and opens the list.
 local function inspectATM()
     if busy then return end
 
     busy = true
-    local deposits = ServerRequest("t1ger_moneywash:server:getFlaggedDeposits")
+    local completed = atmProgress(Config.Police.ATM.InspectDuration, locale("progress.atm_inspect"))
+    local deposits = completed and ServerRequest("t1ger_moneywash:server:getFlaggedDeposits")
     busy = false
 
+    if not completed then return end
     if deposits.success == false then return NotifyError(deposits.reason) end
 
     if #deposits == 0 then
@@ -83,12 +100,17 @@ local function inspectATM()
     OpenPoliceATMMenu(deposits)
 end
 
---- Confiscates a flagged deposit after the officer confirms. The money vanishes.
+--- Seizes a flagged transfer after the officer confirms. The money vanishes.
 ---@param deposit table One entry of the list given to OpenPoliceATMMenu
 function ConfiscateDeposit(deposit)
-    if not ConfirmConfiscate(deposit) then return end
+    if busy or not ConfirmConfiscate(deposit) then return end
 
-    local result = ServerRequest("t1ger_moneywash:server:confiscateDeposit", deposit.ref)
+    busy = true
+    local completed = atmProgress(Config.Police.ATM.SeizeDuration, locale("progress.atm_seize"))
+    local result = completed and ServerRequest("t1ger_moneywash:server:confiscateDeposit", deposit.ref)
+    busy = false
+
+    if not completed then return end
 
     if result.success then
         _API.ShowNotification(locale("menu.police.confiscate_success"), "success")

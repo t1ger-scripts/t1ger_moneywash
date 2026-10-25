@@ -312,6 +312,9 @@ Config.Police = {
     ATM                   = {
         MinGrade = 2,                                                                   -- Min grade to inspect and confiscate
         RequireDuty = true,                                                             -- true = officers must be on duty to inspect and confiscate
+        InspectDuration = 4000,                                                         -- Ms of the progress bar when pulling the transaction log
+        SeizeDuration   = 3000,                                                         -- Ms of the progress bar when seizing a transfer
+        Animation       = { dict = "amb@prop_human_atm@male@idle_a", clip = "idle_a" }, -- Played at the ATM
         Target   = { icon = "fa-solid fa-magnifying-glass-dollar", distance = 2.0 },    -- Target icon and range
     },
 

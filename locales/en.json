@@ -10,7 +10,7 @@
         "unload_stock": "Unload Stock",
         "deliver_stock": "Deliver Stock",
         "atm_deposit": "Deposit cash bag",
-        "atm_review": "Review flagged deposits",
+        "atm_review": "Check flagged transactions",
         "raid_business": "Raid Business",
         "accountant": "Hand Over Folder"
     },
@@ -104,16 +104,16 @@
             "success": "Business abandoned"
         },
         "police": {
-            "atm_title": "Flagged Deposits",
-            "deposit_entry": "Pending Deposit — %s",
-            "clears_in": "Clears in",
-            "no_flagged_deposits": "No flagged deposits at this ATM",
-            "confiscate_title": "Confiscate Deposit",
+            "atm_title": "Flagged Transactions",
+            "deposit_entry": "Flagged Transfer — %s",
+            "reference": "Reference",
             "depositor": "Depositor",
-            "business": "Business",
+            "clears_in": "Clears in",
             "unknown": "Unknown",
-            "confiscate_body": "- **Depositor:** %s\n- **Business:** %s\n- **Amount:** %s\n- **Clears in:** %s\n\nThe full amount is seized and removed from the economy. The depositor is notified if they are online. This cannot be undone.",
-            "confiscate_success": "Deposit confiscated successfully"
+            "no_flagged_deposits": "No flagged transactions at this ATM",
+            "confiscate_title": "Seize Transfer",
+            "confiscate_body": "- **Reference:** %s\n- **Depositor:** %s\n- **Amount:** %s\n- **Clears in:** %s\n\nFreeze and seize this transfer as evidence? The depositor will be notified.",
+            "confiscate_success": "Transfer frozen and seized"
         }
     },
     "notification": {
@@ -133,7 +133,7 @@
         "stock_cannot_enter_vehicle": "You can't get in a vehicle while carrying the box. Load it onto the vehicle instead.",
         "deposit_submitted": "Deposit submitted. It will clear in %d minutes.",
         "deposit_cleared": "Bank deposit cleared: %s paid into your bank (%s tax).",
-        "deposit_confiscated": "Police confiscated your pending bank deposit.",
+        "deposit_confiscated": "Your pending transfer was frozen by the bank and handed to police.",
         "cash_bag_received": "You received a cash bag worth %s. Take it to any ATM.",
         "raid_started": "Police are raiding your business!",
         "raid_ended": "The police raid on your business has ended.",
@@ -159,7 +159,9 @@
         }
     },
     "progress": {
-        "atm_deposit": "Depositing cash..."
+        "atm_deposit": "Depositing cash...",
+        "atm_inspect": "Pulling the transaction log...",
+        "atm_seize": "Freezing the transaction..."
     },
     "error": {
         "unknown": "Something went wrong",
