@@ -120,7 +120,10 @@
             "title": "Launder Contracts",
             "locked": "Requires %d reputation",
             "per_handover": "Per handover",
-            "cut": "Contact's cut"
+            "cut": "Contact's cut",
+            "end_title": "End Shift",
+            "end_description": "Stop working. A cooldown applies before you can start again.",
+            "end_confirm": "Your shift ends and you can't start a new one for %d seconds. Continue?"
         }
     },
     "contract": {
@@ -130,7 +133,10 @@
         }
     },
     "notification": {
-        "contract_selected": "Contract selected: %s",
+        "contract_started": "Shift started. Wait for your first contact.",
+        "contract_ended": "Shift ended. You can start a new one in %d seconds.",
+        "contract_ended_died": "You collapsed. Your shift is over.",
+        "contract_cooldown": "You need to wait %d seconds before starting a new shift.",
         "portal_loading": "Loading the business portal...",
         "business_removed": "Your business has been permanently removed",
         "money_laundered": "%s laundered into your Safe (%s covered, %s exposed)",
@@ -237,6 +243,9 @@
         "not_flagged": "That deposit isn't flagged",
         "invalid_amount": "Choose a whole amount within your available balance.",
         "insufficient_dirty_cash": "You're not carrying enough dirty cash",
+        "invalid_contract": "That contract doesn't exist",
+        "contract_active": "You are already on a shift",
+        "no_contract_shift": "You are not on a shift",
         "insufficient_safe_cash": "The Safe no longer holds that amount",
         "unsupported_operation": "This cash operation is not available",
         "raid_disabled": "Raids are disabled",

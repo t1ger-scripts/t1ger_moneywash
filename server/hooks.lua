@@ -106,3 +106,13 @@ end
 --- @param receiptsUsed number how many receipts were consumed
 function OnBusinessBooksReviewed(identifier, businessId, reduction, fee, suspicionBefore, suspicionAfter, receiptsUsed)
 end
+
+--- Called when a launder contract shift ends, for any reason.
+--- @param identifier string player identifier
+--- @param contractId string contract id from Config.Contracts.List
+--- @param reason string "player" (chose to end), "died", "dropped" (disconnected) or "stopped" (resource stop)
+--- @param handovers number completed handovers
+--- @param cleaned number dirty cash handed over
+--- @param paid number clean money paid out
+function OnContractShiftEnded(identifier, contractId, reason, handovers, cleaned, paid)
+end

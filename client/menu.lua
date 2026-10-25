@@ -564,28 +564,39 @@ function ConfirmConfiscate(deposit)
     )
 end
 
---- Opens the contract list from a payphone. Contracts above the player's reputation are greyed out.
+--- Opens the payphone menu. On a shift it only offers to end it, otherwise it lists the contracts,
+--- greyed out when the player's reputation is too low.
 function OpenContractsMenu()
-    local points = GetPlayerReputationPoints()
     local options = {}
 
-    for _, contract in ipairs(Config.Contracts.List) do
-        local locked = points < contract.RequiredReputation
-
-        options[#options + 1] = {
-            title       = locale(("contract.%s.title"):format(contract.Id)),
-            icon        = contract.Icon,
-            description = locked and string.format(locale("menu.contracts.locked"), contract.RequiredReputation)
-                or locale(("contract.%s.description"):format(contract.Id)),
-            metadata    = {
-                { label = locale("menu.contracts.per_handover"), value = ("%s - %s"):format(FormatMoney(contract.MinHandover), FormatMoney(contract.MaxHandover)) },
-                { label = locale("menu.contracts.cut"),          value = ("%d%%"):format(contract.Cut) },
-            },
-            disabled    = locked,
-            onSelect    = function()
-                StartContract(contract.Id)
-            end,
+    if IsContractShiftActive() then
+        options[1] = {
+            title       = locale("menu.contracts.end_title"),
+            icon        = "fa-solid fa-phone-slash",
+            description = locale("menu.contracts.end_description"),
+            onSelect    = EndContractShift,
         }
+    else
+        local points = GetPlayerReputationPoints()
+
+        for _, contract in ipairs(Config.Contracts.List) do
+            local locked = points < contract.RequiredReputation
+
+            options[#options + 1] = {
+                title       = locale(("contract.%s.title"):format(contract.Id)),
+                icon        = contract.Icon,
+                description = locked and string.format(locale("menu.contracts.locked"), contract.RequiredReputation)
+                    or locale(("contract.%s.description"):format(contract.Id)),
+                metadata    = {
+                    { label = locale("menu.contracts.per_handover"), value = ("%s - %s"):format(FormatMoney(contract.MinHandover), FormatMoney(contract.MaxHandover)) },
+                    { label = locale("menu.contracts.cut"),          value = ("%d%%"):format(contract.Cut) },
+                },
+                disabled    = locked,
+                onSelect    = function()
+                    StartContractShift(contract.Id)
+                end,
+            }
+        end
     end
 
     lib.registerContext({
@@ -595,4 +606,11 @@ function OpenContractsMenu()
     })
 
     lib.showContext("moneywash:contracts")
+end
+
+--- Asks for confirmation before a shift ends.
+---@param cooldown integer Seconds before the next shift can start
+---@return boolean confirmed
+function ConfirmEndShift(cooldown)
+    return confirmDialog(locale("menu.contracts.end_title"), string.format(locale("menu.contracts.end_confirm"), cooldown))
 end

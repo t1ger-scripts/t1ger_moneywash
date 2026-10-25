@@ -63,6 +63,7 @@ server_scripts {
     'server/cash_bag.lua',
     'server/raid.lua',
     'server/review.lua',
+    'server/contracts.lua',
     'server/stock.lua',
     'server/cash_operation.lua',
     

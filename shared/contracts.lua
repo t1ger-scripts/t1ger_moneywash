@@ -1,6 +1,7 @@
 -- Launder contracts: started from payphones by players with dirty cash, no business needed
 return {
     Target = { Icon = "fa-solid fa-phone", Distance = 1.5 }, -- Payphone target icon and range
+    EndCommand = "endshift",                                 -- Chat command that ends the shift (nil = no command)    
 
     Models = {                                               -- Payphone props that get the target
         "prop_phonebox_01a",
@@ -20,6 +21,7 @@ return {
             MinHandover        = 500,  -- Least dirty cash handed over at one drop
             MaxHandover        = 2500, -- Most dirty cash handed over at one drop (random between min and max)
             Cut                = 40,   -- % the contact keeps of every handover
+            Cooldown           = 120,  -- Seconds before a new shift after ending it or disconnecting
         },
     },
 }
