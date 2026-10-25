@@ -88,7 +88,7 @@ return {
         TargetIcon       = "fa-solid fa-sack-dollar", -- Handover target icon
         TargetDistance   = 2.0,            -- Handover target range
         LeaveTime        = 8,              -- Seconds the contact walks away before disappearing
-        Handover         = { Duration = 5000, Dict = "mp_common", Player = "givetake1_a", Contact = "givetake1_b" }, -- Deal progress bar (ms) and its animations
+        Handover         = { Duration = 5000 }, -- Negotiation progress bar (ms)
         Models           = { "a_m_y_hipster_01", "a_m_m_business_01", "a_m_y_downtown_01", "a_m_m_eastsa_01", "a_m_y_stbla_01", "a_m_y_vinewood_01" },
     },
 

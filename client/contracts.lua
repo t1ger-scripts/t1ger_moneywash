@@ -3,6 +3,10 @@
 
 local SERVER = "t1ger_moneywash:server:contracts:"
 
+-- Animations of the deal: both of them talk while the bar runs, then the money changes hands
+local NEGOTIATE = { dict = "misscarsteal4@actor", player = "actor_berating_loop", contact = "actor_berating_loop" }
+local HANDOFF = { dict = "mp_common", player = "givetake1_a", contact = "givetake1_b", time = 1800 }
+
 local cfg = Config.Contracts
 
 ---@type boolean True while the player is on a shift
@@ -273,8 +277,8 @@ local function dismissContact(current)
     end)
 end
 
---- Makes the deal with the contact. The progress bar is the negotiation: when it ends the server takes
---- the cash and pays, unless the contact has other plans.
+--- Makes the deal with the contact. The progress bar is the negotiation and can be cancelled.
+--- When it ends the server decides: a clean deal plays the handoff, a betrayal skips it.
 ---@param current ContractDrop
 local function handOverCash(current)
     if current.busy then return end
@@ -294,39 +298,46 @@ local function handOverCash(current)
         return
     end
 
-    local deal = cfg.Contacts.Handover
     local player, contact = PlayerPedId(), current.ped
 
-    lib.requestAnimDict(deal.Dict)
+    lib.requestAnimDict(NEGOTIATE.dict)
+    lib.requestAnimDict(HANDOFF.dict)
 
+    -- Both of them talk with their hands while the bar runs
     if contact then
         TaskTurnPedToFaceEntity(player, contact, 600)
         Wait(600)
-        TaskPlayAnim(contact, deal.Dict, deal.Contact, 8.0, -8.0, started.duration, 49, 0, false, false, false)
+        TaskPlayAnim(contact, NEGOTIATE.dict, NEGOTIATE.contact, 8.0, -8.0, started.duration, 49, 0, false, false, false)
     end
 
     local completed = ProgressBar({
         duration     = started.duration,
         label        = locale("progress.contract_handover"),
         useWhileDead = false,
-        canCancel    = false,
+        canCancel    = true,
         disable      = { move = true, car = true, combat = true },
-        anim         = { dict = deal.Dict, clip = deal.Player, flag = 49 },
+        anim         = { dict = NEGOTIATE.dict, clip = NEGOTIATE.player, flag = 49 },
     })
 
-    RemoveAnimDict(deal.Dict)
-    if contact and DoesEntityExist(contact) then StopAnimTask(contact, deal.Dict, deal.Contact, -8.0) end
+    RemoveAnimDict(NEGOTIATE.dict)
+    if contact and DoesEntityExist(contact) then StopAnimTask(contact, NEGOTIATE.dict, NEGOTIATE.contact, -8.0) end
 
-    -- Interrupted: nothing was taken, the server drops the deal when it times out
+    -- Cancelled: nothing was taken, the player can start over
     if not completed then
-        current.busy = false
+        RemoveAnimDict(HANDOFF.dict)
+        ServerRequest(SERVER .. "cancelHandover")
+
+        if drop == current then current.busy = false end
+
         return
     end
 
     local response = ServerRequest(SERVER .. "completeHandover")
-    if drop ~= current then return end
+
+    if drop ~= current then return RemoveAnimDict(HANDOFF.dict) end
 
     if not response.success then
+        RemoveAnimDict(HANDOFF.dict)
         current.busy = false
 
         -- "shift_over" is announced by the server's own shift ended message
@@ -335,14 +346,35 @@ local function handOverCash(current)
         return
     end
 
-    if response.betrayed then return startBetrayal(current, response) end
+    -- The contact turns on the player: no handoff
+    if response.betrayed then
+        RemoveAnimDict(HANDOFF.dict)
+        return startBetrayal(current, response)
+    end
 
-    if contact and Config.PedReactions.Enable then PedSpeak(contact, Config.PedReactions.ContactThanks) end
+    -- A clean deal: the money changes hands, and the server settles it in the middle of the animation
+    contact = current.ped
+
+    if contact and DoesEntityExist(contact) then
+        TaskPlayAnim(contact, HANDOFF.dict, HANDOFF.contact, 8.0, -8.0, HANDOFF.time, 48, 0, false, false, false)
+        if Config.PedReactions.Enable then PedSpeak(contact, Config.PedReactions.ContactThanks) end
+    end
+
+    TaskPlayAnim(PlayerPedId(), HANDOFF.dict, HANDOFF.player, 8.0, -8.0, HANDOFF.time, 48, 0, false, false, false)
+
+    Wait(response.delay)
 
     _API.ShowNotification(
         string.format(locale("notification.contract_handover"), FormatMoney(response.amount), FormatMoney(response.paid)),
         "success"
     )
+
+    Wait(math.max(HANDOFF.time - response.delay, 0))
+
+    StopAnimTask(PlayerPedId(), HANDOFF.dict, HANDOFF.player, -8.0)
+    RemoveAnimDict(HANDOFF.dict)
+
+    if drop ~= current then return end
 
     dismissContact(current)
     clearDrop()
