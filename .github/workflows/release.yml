@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  create-release:
+    name: Create Tagged Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Archive Tools
+        run: sudo apt install zip
+
+      - name: Checkout Source Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build Web UI
+        working-directory: source
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          npm run build
+
+      - name: Verify Web Build
+        run: test -f web/index.html && test -d web/assets
+
+      - name: Bump Manifest Version
+        run: node .github/actions/bump-manifest-version.js
+        env:
+          TGT_RELEASE_VERSION: ${{ github.ref_name }}
+
+      - name: Push Manifest Commit
+        uses: EndBug/add-and-commit@v8
+        with:
+          add: fxmanifest.lua
+          push: true
+          author_name: t1ger-scripts
+          author_email: 67964693+t1ger-scripts@users.noreply.github.com
+          message: "chore(fxmanifest): bump version to ${{ github.ref_name }}"
+
+      - name: Update Tag Ref
+        uses: EndBug/latest-tag@latest
+        with:
+          tag-name: ${{ github.ref_name }}
+
+      - name: Generate Source-Unlocked Manifest
+        run: node .github/actions/generate-source-manifest.js fxmanifest.source.lua
+
+      - name: Compress Files (Escrowed)
+        run: |
+          mkdir -p ./temp/t1ger_moneywash
+          cp ./fxmanifest.lua ./temp/t1ger_moneywash
+          cp -r ./{bridge,client,install,locales,server,shared,web} ./temp/t1ger_moneywash
+          cd ./temp && zip -r ../t1ger_moneywash.zip ./t1ger_moneywash
+
+      - name: Compress Files (Source-Available)
+        run: |
+          mkdir -p ./temp2/t1ger_moneywash
+          cp ./fxmanifest.source.lua ./temp2/t1ger_moneywash/fxmanifest.lua
+          cp ./temp2/t1ger_moneywash
+          cp -r ./{bridge,client,install,locales,server,shared,web} ./temp2/t1ger_moneywash
+          tar -c --exclude=node_modules --exclude=dist ./source | tar -x -C ./temp2/t1ger_moneywash
+          cd ./temp2 && zip -r ../t1ger_moneywash-source.zip ./t1ger_moneywash
+
+      - name: Create GitHub Release
+        uses: "marvinpinto/action-automatic-releases@v1.2.1"
+        id: auto_release
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          title: "${{ github.ref_name }}"
+          prerelease: false
+          files: |
+            t1ger_moneywash.zip
+            t1ger_moneywash-source.zip
+        env:
+          CI: false
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update Version File in Public Repo
+        run: |
+          git clone https://x-access-token:${{ secrets.VERSIONS_REPO_TOKEN }}@github.com/t1ger-scripts/versions.git
+          cd versions
+
+          VERSION=${{ github.ref_name }}
+          CLEAN_VERSION=${VERSION#v}
+          echo "\"$CLEAN_VERSION\"" > t1ger_moneywash.json
+
+          git config user.name "t1ger-scripts"
+          git config user.email "67964693+t1ger-scripts@users.noreply.github.com"
+          git add t1ger_moneywash.json
+          git commit -m "chore(t1ger_moneywash): bump version to $CLEAN_VERSION"
+          git push
