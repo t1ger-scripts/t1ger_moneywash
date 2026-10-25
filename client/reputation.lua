@@ -21,7 +21,13 @@ function GetPlayerReputation()
         level  = reputation.title,
     }
 end
-exports("GetPlayerReputation", GetPlayerReputation)
+
+exports("GetPlayerReputation", function(src)
+    local reputation = PlayerReputation[src]
+    if not reputation then return nil end
+
+    return { points = reputation.points, level = reputation.title }
+end)
 
 --- The server sends the current reputation when it changes.
 ---@param points integer
