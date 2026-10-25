@@ -419,6 +419,63 @@ function CancelStockOrder()
     return true
 end
 
+--- Asks the player to confirm, then cancels the stock order.
+---@return boolean cancelled
+function RequestStockCancel()
+    local refund, lost = GetStockCancelRefund()
+    if not refund or not ConfirmStockCancel(refund, lost) then return false end
+
+    return CancelStockOrder()
+end
+
+--- Places a stock order: checks the cooldown, asks how many units, asks to confirm, then orders.
+--- The cost is taken from the bank when the order is placed.
+---@param businessId integer
+---@param status table From getBusinessStatus
+---@return boolean started True if the mission started
+function PlaceStockOrder(businessId, status)
+    if IsStockMissionActive() then
+        NotifyError("order_already_active")
+        return false
+    end
+
+    local eligibility = ServerRequest("t1ger_moneywash:server:canPlaceStockOrder")
+
+    if eligibility.success == false then
+        NotifyError(eligibility.reason)
+        return false
+    end
+
+    if not eligibility.eligible then
+        _API.ShowNotification(string.format(locale("menu.stock.order_on_cooldown"), eligibility.cooldownRemaining or 0), "error")
+        return false
+    end
+
+    local maxOrder = math.min(status.maxOrder, status.stockCapacity - status.stock)
+    local minOrder = math.min(status.minOrder, maxOrder)
+
+    local units = AskStockUnits({ min = minOrder, max = maxOrder, unitPrice = status.unitPrice })
+    if not units then return false end
+
+    if units < minOrder or units > maxOrder then
+        NotifyError("invalid_units")
+        return false
+    end
+
+    if not ConfirmStockOrder(units, units * status.unitPrice) then return false end
+
+    local result = ServerRequest("t1ger_moneywash:server:orderStock", businessId, units)
+
+    if not result.success then
+        NotifyError(result.reason)
+        return false
+    end
+
+    StartStockMission(businessId, result.missionData)
+
+    return true
+end
+
 --- Restarts the carry animation if something interrupted it while the box is still in the player's hands.
 CreateThread(function()
     while true do

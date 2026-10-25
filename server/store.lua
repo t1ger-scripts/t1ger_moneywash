@@ -298,19 +298,20 @@ function CheckGlobalCycle()
     end
 end
 
---- Live status of the player's business, for the Handler menu header. Nil if it isn't theirs.
+--- Live status of the player's business, for the Handler menu. A failure reply if it isn't theirs or is being raided.
 lib.callback.register("t1ger_moneywash:server:getBusinessStatus", function(source, businessId)
     local identifier = _API.Player.GetIdentifier(source)
     local business = GetBusiness(businessId)
 
-    if not business or business.identifier ~= identifier then return nil end
+    if not business or business.identifier ~= identifier then return { success = false, reason = "not_found" } end
 
-    if IsBusinessRaided(businessId) then return { raided = true } end
+    if IsBusinessRaided(businessId) then return { success = false, reason = "raid_in_progress" } end
 
     local tier = GetTierByType(business.type)
     local label = GetSuspicionLabel(business.suspicion)
 
     return {
+        success         = true,
         type            = business.type,
         locationId      = business.locationId,
         stock           = business.stock,
@@ -324,6 +325,7 @@ lib.callback.register("t1ger_moneywash:server:getBusinessStatus", function(sourc
         unitPrice       = GetUnitPrice(business.type),
         minOrder        = GetMinOrder(business.type),
         maxOrder        = GetMaxOrder(business.type),
+        stockCapacity   = GetStockCapacity(business.type),
         reviewActive    = IsBusinessInReview(businessId),
         reviewCooldown  = GetReviewCooldownRemaining(businessId),
     }

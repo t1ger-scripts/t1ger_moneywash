@@ -71,10 +71,12 @@
             "cancel_title": "Cancel Stock Order",
             "cancel_body": "You get %s back and lose %s.\n\nYou can place a new order after %d seconds."
         },
-        "deposit": {
+        "withdraw": {
             "title": "Withdraw Cash",
             "amount_label": "Amount to withdraw (available: %s)",
-            "exposed_desc": "Exposed: %s | Covered: %s\n\nCovered cash is taken first.",
+            "exposed_desc": "Exposed: %s | Covered: %s\n\nCovered cash is taken first."
+        },
+        "deposit": {
             "bag_title": "Choose a cash bag",
             "bag_from": "From %s"
         },
@@ -110,7 +112,7 @@
             "depositor": "Depositor",
             "business": "Business",
             "unknown": "Unknown",
-            "confiscate_body": "- **Depositor:** %s\n- **Business:** %s\n- **Amount:** %s\n- **Clears in:** %s\n\nThe full amount is seized and removed from the economy. The owner is notified. This cannot be undone.",
+            "confiscate_body": "- **Depositor:** %s\n- **Business:** %s\n- **Amount:** %s\n- **Clears in:** %s\n\nThe full amount is seized and removed from the economy. The depositor is notified if they are online. This cannot be undone.",
             "confiscate_success": "Deposit confiscated successfully"
         }
     },

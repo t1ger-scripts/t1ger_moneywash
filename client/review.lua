@@ -292,16 +292,7 @@ end
 
 --- Drops the sealed folder after a confirmation. The server refunds the fee minus the penalty.
 function CancelReview()
-    local penalty = Config.Review.CancelPenaltyPercent or 0
-
-    local confirmed = lib.alertDialog({
-        header   = locale("menu.review.cancel_title"),
-        content  = string.format(locale("menu.review.cancel_body"), penalty),
-        centered = true,
-        cancel   = true,
-    })
-
-    if confirmed ~= "confirm" then return end
+    if not ConfirmReviewCancel(Config.Review.CancelPenaltyPercent or 0) then return end
 
     local response = ServerRequest(SERVER .. "cancelMission")
     if not response.success then return NotifyError(response.reason) end

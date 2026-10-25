@@ -536,16 +536,7 @@ end)
 ---@param src integer
 ---@return boolean
 local function isDepositReviewer(src)
-    local job = _API.Player.GetJob(src)
-    if not job then return false end
-
-    for _, name in ipairs(Config.Police.Jobs) do
-        if job.name == name then
-            return (job.grade or 0) >= Config.Police.ATM.MinGrade
-        end
-    end
-
-    return false
+    return IsPoliceOfficer(src, Config.Police.ATM.MinGrade, Config.Police.ATM.RequireDuty)
 end
 
 ---@param src integer

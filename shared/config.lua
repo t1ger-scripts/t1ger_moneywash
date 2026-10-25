@@ -311,6 +311,7 @@ Config.Police = {
     -- Inspect flagged deposits at an ATM
     ATM                   = {
         MinGrade = 2,                                                                   -- Min grade to inspect and confiscate
+        RequireDuty = true,                                                             -- true = officers must be on duty to inspect and confiscate
         Target   = { icon = "fa-solid fa-magnifying-glass-dollar", distance = 2.0 },    -- Target icon and range
     },
 

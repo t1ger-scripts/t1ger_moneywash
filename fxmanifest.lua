@@ -40,7 +40,7 @@ client_scripts {
     'client/raid.lua',
     'client/stock.lua',
     'client/review.lua',
-    'client/business/menu.lua',
+    'client/menu.lua',
     'client/main.lua',
 }
 

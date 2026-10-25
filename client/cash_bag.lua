@@ -24,42 +24,7 @@ end
 local function chooseBag(bags)
     if #bags == 1 then return bags[1].id end
 
-    local choice = promise.new()
-    local done = false
-
-    local function finish(bagId)
-        if done then return end
-        done = true
-        choice:resolve(bagId)
-    end
-
-    local options = {}
-
-    for _, bag in ipairs(bags) do
-        options[#options + 1] = {
-            title       = FormatMoney(bag.amount),
-            description = string.format(locale("menu.deposit.bag_from"), bag.label),
-            icon        = "fa-solid fa-sack-dollar",
-            onSelect    = function()
-                finish(bag.id)
-            end,
-        }
-    end
-
-    lib.registerContext({
-        id      = "moneywash:cashbag:choose",
-        title   = locale("menu.deposit.bag_title"),
-        options = options,
-        onExit  = function()
-            SetTimeout(150, function()
-                finish(nil)
-            end)
-        end, -- A selection arrives first
-    })
-
-    lib.showContext("moneywash:cashbag:choose")
-
-    return Citizen.Await(choice)
+    return ChooseCashBag(bags)
 end
 
 --- Asks the server for the player's bags, lets them choose one and deposits it.
@@ -101,6 +66,37 @@ local function startDeposit(atm)
     if not ok then DebugPrint("cash_bag", "deposit failed:", err) end
 end
 
+--- Asks the server for the flagged deposits at this ATM and opens the list.
+local function inspectATM()
+    if busy then return end
+
+    busy = true
+    local deposits = ServerRequest("t1ger_moneywash:server:getFlaggedDeposits")
+    busy = false
+
+    if deposits.success == false then return NotifyError(deposits.reason) end
+
+    if #deposits == 0 then
+        return _API.ShowNotification(locale("menu.police.no_flagged_deposits"), "inform")
+    end
+
+    OpenPoliceATMMenu(deposits)
+end
+
+--- Confiscates a flagged deposit after the officer confirms. The money vanishes.
+---@param deposit table One entry of the list given to OpenPoliceATMMenu
+function ConfiscateDeposit(deposit)
+    if not ConfirmConfiscate(deposit) then return end
+
+    local result = ServerRequest("t1ger_moneywash:server:confiscateDeposit", deposit.ref)
+
+    if result.success then
+        _API.ShowNotification(locale("menu.police.confiscate_success"), "success")
+    else
+        NotifyError(result.reason)
+    end
+end
+
 CreateThread(function()
     while not _Target do Wait(100) end
 
@@ -121,11 +117,9 @@ CreateThread(function()
             label       = locale("target.atm_review"),
             distance    = Config.Police.ATM.Target.distance,
             canInteract = function()
-                return IsPoliceJobWithGrade(Config.Police.ATM.MinGrade)
+                return IsPoliceJobWithGrade(Config.Police.ATM.MinGrade, Config.Police.ATM.RequireDuty)
             end,
-            onSelect    = function()
-                OpenPoliceATMMenu()
-            end,
+            onSelect    = inspectATM,
         },
     })
 end)
