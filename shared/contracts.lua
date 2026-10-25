@@ -77,8 +77,9 @@ return {
     Cooldown               = 120,          -- Seconds before a new shift after ending it or disconnecting
     FirstDropDelay         = { 3, 5 },     -- Seconds from starting the shift to the first drop (random between the two)
     DropDelay              = { 15, 30 },   -- Seconds between drops after that (random between the two)
-    DropTime               = 600,          -- Seconds to reach a contact. Missing it ends the shift
-    MinDropDistance        = 400.0,        -- Least distance from the player to a new drop
+    DropTime               = 1200,         -- Seconds to reach a contact. Missing it ends the shift
+    MinDropDistance        = 500.0,        -- Least distance from the player to a new drop
+    MaxDropDistance        = 4000.0,       -- Furthest distance from the player to a new drop (if none fits, any free drop is used)
 
     Contacts               = {
         SpawnDistance    = 60.0,           -- The contact appears when the player is this close

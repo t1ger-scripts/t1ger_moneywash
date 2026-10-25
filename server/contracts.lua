@@ -17,8 +17,8 @@ local NOTIFY_REASONS = { died = true, missed = true, no_dirty_cash = true }
 ---@field cleaned integer Dirty cash handed over
 ---@field paid integer Clean money paid out
 ---@field nextDropAt integer os.time() the next drop is assigned, while there is no drop
----@field drop? { expiresAt: integer } The drop the player is on
----@field lastDrop? integer Index in Config.Contracts.Drops, never picked twice in a row
+---@field drop? { index: integer, expiresAt: integer } The drop the player is on, index in Config.Contracts.Drops
+---@field lastDrop? integer Index in Config.Contracts.Drops of the previous drop, not picked again right away
 
 ---@type table<integer, ContractShift> Active shifts by player source
 local Shifts = {}
@@ -28,6 +28,9 @@ local Cooldowns = {}
 
 ---@type table<integer, boolean> Players inside a callback, stops double clicks
 local Busy = {}
+
+---@type table<integer, boolean> Indexes in Config.Contracts.Drops that a player is heading to right now
+local TakenDrops = {}
 
 ---@param identifier string
 ---@return integer seconds 0 when the player can start
@@ -46,39 +49,58 @@ local function pick(list)
     return list[math.random(#list)]
 end
 
+--- Frees the drop a shift is on, so another player can get it.
+---@param shift ContractShift
+local function releaseDrop(shift)
+    if shift.drop then TakenDrops[shift.drop.index] = nil end
+
+    shift.drop = nil
+end
+
 --- Plans the next drop after a random delay.
 ---@param shift ContractShift
 ---@param delay integer[] Min and max seconds
 local function scheduleNextDrop(shift, delay)
-    shift.drop = nil
+    releaseDrop(shift)
     shift.nextDropAt = os.time() + math.random(delay[1], delay[2])
 end
 
---- Picks a drop at least MinDropDistance from the player, never the same as the last one.
+--- Picks a free drop between MinDropDistance and MaxDropDistance from the player, not the previous one.
+--- If none fits it takes any free drop, and the previous one only when nothing else is left.
 ---@param shift ContractShift
----@return integer index In Config.Contracts.Drops
+---@return integer|nil index In Config.Contracts.Drops, nil when every drop is taken
 local function pickDropIndex(shift)
-    local drops = cfg.Drops
     local origin = GetEntityCoords(GetPlayerPed(shift.src))
-    local far, other = {}, {}
+    local inRange, free, previous = {}, {}, nil
 
-    for index, drop in ipairs(drops) do
-        if index ~= shift.lastDrop or #drops == 1 then
-            other[#other + 1] = index
-            if #(origin - vec3(drop.x, drop.y, drop.z)) >= cfg.MinDropDistance then far[#far + 1] = index end
+    for index, drop in ipairs(cfg.Drops) do
+        if not TakenDrops[index] then
+            if index == shift.lastDrop then
+                previous = index
+            else
+                free[#free + 1] = index
+
+                local distance = #(origin - vec3(drop.x, drop.y, drop.z))
+                if distance >= cfg.MinDropDistance and distance <= cfg.MaxDropDistance then inRange[#inRange + 1] = index end
+            end
         end
     end
 
-    return pick(#far > 0 and far or other)
+    if #inRange > 0 then return pick(inRange) end
+    if #free > 0 then return pick(free) end
+
+    return previous
 end
 
---- Sends the player to a new drop.
+--- Sends the player to a new drop. With every drop taken the shift waits and tries again.
 ---@param shift ContractShift
 local function assignDrop(shift)
     local index = pickDropIndex(shift)
+    if not index then return end
 
+    TakenDrops[index] = true
     shift.lastDrop = index
-    shift.drop = { expiresAt = os.time() + cfg.DropTime }
+    shift.drop = { index = index, expiresAt = os.time() + cfg.DropTime }
 
     TriggerClientEvent(DROP_ASSIGNED_EVENT, shift.src, {
         coords   = cfg.Drops[index],
@@ -101,6 +123,7 @@ exports("IsOnContractShift", IsOnContractShift)
 ---@param reason "player"|"died"|"dropped"|"stopped"|"missed"|"no_dirty_cash"
 local function endShift(shift, reason)
     Shifts[shift.src] = nil
+    releaseDrop(shift)
 
     if reason == "player" or reason == "dropped" then
         Cooldowns[shift.identifier] = os.time() + cfg.Cooldown
