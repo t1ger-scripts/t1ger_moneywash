@@ -70,14 +70,12 @@ Config.HandlerNPC = {
     }
 }
 
--- Handler and accountant peds turn to the player and say a line (GTA ambient speech, played by the ped's own voice)
--- A model without that line stays silent. Set a line to "" to turn only the speech off
+-- Handler and accountant peds say a line when you interact (GTA ambient speech, played by the ped's own voice)
+-- A model without that line stays silent. Set a line to "" to turn only that one off
 Config.PedReactions = {
     Enable           = true,
-    FaceDuration     = 5000,                      -- Ms the ped faces the player before going back to idle
-    HandlerGreeting  = "GENERIC_HI",              -- Owner opens the Handler menu
-    HandlerRaid      = "GENERIC_FRIGHTENED_HIGH", -- An officer starts a raid
-    AccountantThanks = "GENERIC_THANKS",          -- The folder is delivered
+    HandlerGreeting  = "GENERIC_HI",     -- Owner opens the Handler menu
+    AccountantThanks = "GENERIC_THANKS", -- The folder is delivered
 }
 
 -- Web portal: UI colors, laptop target and auto-close range

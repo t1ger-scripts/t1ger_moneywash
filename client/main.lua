@@ -32,14 +32,12 @@ local function RaidTargetName(businessId)
     return ("t1ger_moneywash:handler:raid:%d"):format(businessId)
 end
 
---- Lets a ped react to the player (turns, says a line) if Config.PedReactions is on.
+--- Plays a speech line on a ped if Config.PedReactions is on.
 ---@param ped integer
----@param key "HandlerGreeting"|"HandlerRaid" Speech name in Config.PedReactions
-local function React(ped, key)
+---@param key "HandlerGreeting" Speech name in Config.PedReactions
+local function Speak(ped, key)
     local cfg = Config.PedReactions
-    if not cfg or not cfg.Enable then return end
-
-    ReactPed(ped, cfg[key], Config.HandlerNPC.Scenario, cfg.FaceDuration)
+    if cfg and cfg.Enable then PedSpeak(ped, cfg[key]) end
 end
 
 --- Spawns a handler NPC for a business and registers its target options.
@@ -69,7 +67,7 @@ local function SpawnHandlerNPC(data)
                 return OwnedBusinesses[businessId] ~= nil and CanInteractWithHandlerNPC(entity)
             end,
             onSelect    = function()
-                React(ped, "HandlerGreeting")
+                Speak(ped, "HandlerGreeting")
                 OpenHandlerMenu(businessId)
             end,
         },
@@ -97,7 +95,6 @@ local function SpawnHandlerNPC(data)
                 return IsEntityValid(entity) and not IsPedInAnyVehicle(PlayerPedId(), false)
             end,
             onSelect    = function()
-                React(ped, "HandlerRaid")
                 StartRaid(businessId)
             end,
         },

@@ -126,46 +126,13 @@ function DeletePed(pedHandle)
     end
 end
 
----@type table<integer, { heading: number, token: integer }> Running reactions by ped
-local reactions = {}
-
---- The ped turns to the player and says a line, then goes back to its idle animation.
+--- Makes a ped say an ambient speech line: the voice lines of the ped's model, silent if it has none.
 ---@param ped integer|nil A local ped
----@param speech string|nil Ambient speech name, silent when nil
----@param scenario string|nil Idle scenario to resume
----@param duration? integer Ms before the ped goes back to idle (default 5000)
-function ReactPed(ped, speech, scenario, duration)
-    if not ped or not DoesEntityExist(ped) then return end
+---@param speech string|nil Ambient speech name, e.g. "GENERIC_HI"
+function PedSpeak(ped, speech)
+    if not ped or not DoesEntityExist(ped) or not speech or speech == "" then return end
 
-    duration = duration or 5000
-
-    local state = reactions[ped]
-    if not state then
-        state = { heading = GetEntityHeading(ped), token = 0 }
-        reactions[ped] = state
-    end
-
-    state.token = state.token + 1
-    local token = state.token
-
-    ClearPedTasks(ped)
-    FreezeEntityPosition(ped, false)
-    TaskTurnPedToFaceEntity(ped, PlayerPedId(), duration)
-
-    if speech and speech ~= "" then
-        PlayPedAmbientSpeechNative(ped, speech, "SPEECH_PARAMS_FORCE_NORMAL_CLEAR")
-    end
-
-    SetTimeout(duration, function()
-        if reactions[ped] ~= state or state.token ~= token then return end
-
-        reactions[ped] = nil
-        if not DoesEntityExist(ped) then return end
-
-        SetEntityHeading(ped, state.heading)
-        FreezeEntityPosition(ped, true)
-        if scenario then TaskStartScenarioInPlace(ped, scenario, 0, true) end
-    end)
+    PlayPedAmbientSpeechNative(ped, speech, "SPEECH_PARAMS_FORCE_NORMAL_CLEAR")
 end
 
 --- Formats a number as money with thousands separators, using Config.Currency.

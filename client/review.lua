@@ -144,9 +144,8 @@ local function deliverFolder()
         return NotifyError(response.reason)
     end
 
-    local reactions = Config.PedReactions
-    if reactions and reactions.Enable and accountantPed then
-        ReactPed(accountantPed, reactions.AccountantThanks, Config.Review.Accountant.Scenario, reactions.FaceDuration)
+    if Config.PedReactions and Config.PedReactions.Enable then
+        PedSpeak(accountantPed, Config.PedReactions.AccountantThanks)
     end
 
     resetMission()
