@@ -100,7 +100,7 @@ return {
 
     -- A contact that keeps the cash
     Betrayal = {
-        Chance       = 100,                  -- % chance a contact betrays at the end of a deal (10 is a good live value)
+        Chance       = 25,                  -- % chance a contact betrays at the end of a deal (10 is a good live value)
         AttackChance = 50,                   -- % of betrayals where the contact attacks. Otherwise it flees
         Time         = 60,                   -- Seconds to get the cash back. After that the contact betrays
         Health       = 200,                  -- Contact health once it betrays

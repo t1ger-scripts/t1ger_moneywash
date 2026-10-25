@@ -151,8 +151,9 @@ local function recoverCash(current)
 
     -- Bend down for the cash, then the server gives it back
     lib.requestAnimDict(PICKUP.dict)
-    TaskPlayAnim(PlayerPedId(), PICKUP.dict, PICKUP.clip, 2.0, 2.0, -1, 2, 0, false, false, false)
+    TaskPlayAnim(PlayerPedId(), PICKUP.dict, PICKUP.clip, 2.0, 2.0, -1, 0, 0, false, false, false)
     Wait(800)
+    StopAnimTask(PlayerPedId(), PICKUP.dict, PICKUP.clip, 2.0)
     RemoveAnimDict(PICKUP.dict)
 
     if betrayal ~= current then return end
