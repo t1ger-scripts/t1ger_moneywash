@@ -11,8 +11,8 @@ local HandlerPoints = {}
 ---@type table<number, integer> Map blip per business, owner only
 local HandlerBlips = {}
 
----@type table<number, table> The player's own businesses, synced from the server
-local OwnedBusinesses = {}
+---@type { id: integer, type: string, locationId: integer }|nil The player's business, synced from the server (a player owns at most one)
+local OwnedBusiness = nil
 
 ---@param businessId number
 ---@return string
@@ -64,7 +64,7 @@ local function SpawnHandlerNPC(data)
             label       = locale("target.handler_npc"),
             distance    = Config.HandlerNPC.Target.distance or 2.0,
             canInteract = function(entity)
-                return OwnedBusinesses[businessId] ~= nil and CanInteractWithHandlerNPC(entity)
+                return OwnedBusiness ~= nil and OwnedBusiness.id == businessId and CanInteractWithHandlerNPC(entity)
             end,
             onSelect    = function()
                 Speak(ped, "HandlerGreeting")
@@ -90,7 +90,7 @@ local function SpawnHandlerNPC(data)
             distance    = Config.Police.Raid.Target.distance,
             canInteract = function(entity)
                 if not Config.Police.Raid.Enable then return false end
-                if OwnedBusinesses[businessId] and not Config.Debug then return false end
+                if OwnedBusiness and OwnedBusiness.id == businessId and not Config.Debug then return false end
                 if not IsPoliceJobWithGrade(Config.Police.Raid.MinGrade, Config.Police.Raid.RequireDuty) then return false end
                 return IsEntityValid(entity) and not IsPedInAnyVehicle(PlayerPedId(), false)
             end,
@@ -172,33 +172,30 @@ CreateThread(function()
     end
 end)
 
---- Adds blips for the player's businesses and removes blips for ones they no longer own.
+--- Adds a blip for the player's business and removes blips for ones they no longer own.
 local function RefreshHandlerBlips()
     for businessId, blip in pairs(HandlerBlips) do
-        if not OwnedBusinesses[businessId] then
+        if not OwnedBusiness or OwnedBusiness.id ~= businessId then
             RemoveMapBlip(blip)
             HandlerBlips[businessId] = nil
         end
     end
 
-    local blipCfg = Config.HandlerNPC.Blip
-    for businessId, data in pairs(OwnedBusinesses) do
-        if not HandlerBlips[businessId] then
-            local tier = GetBusinessTier(data.type)
-            local location = GetBusinessLocation(data)
+    if not OwnedBusiness or HandlerBlips[OwnedBusiness.id] then return end
 
-            if tier and location then
-                HandlerBlips[businessId] = CreateMapBlip(
-                    location.coords,
-                    blipCfg.sprite or 375,
-                    blipCfg.display or 4,
-                    blipCfg.scale or 0.7,
-                    blipCfg.color or 2,
-                    locale("blip.business"):format(tier.label, location.brand or tier.label)
-                )
-            end
-        end
-    end
+    local tier = GetBusinessTier(OwnedBusiness.type)
+    local location = GetBusinessLocation(OwnedBusiness)
+    if not tier or not location then return end
+
+    local blipCfg = Config.HandlerNPC.Blip
+    HandlerBlips[OwnedBusiness.id] = CreateMapBlip(
+        location.coords,
+        blipCfg.sprite or 375,
+        blipCfg.display or 4,
+        blipCfg.scale or 0.7,
+        blipCfg.color or 2,
+        locale("blip.business"):format(tier.label, location.brand or tier.label)
+    )
 end
 
 --- The bridge fires this once the framework has loaded the player.
@@ -231,49 +228,48 @@ RegisterNetEvent("t1ger_moneywash:client:syncLocations", function(list)
     DebugPrint("handler", ("synced %d business locations"):format(#list))
 end)
 
---- Initial sync of the player's own businesses on load.
+--- Initial sync of the player's own business on load.
 ---@param businesses table[]
 RegisterNetEvent("t1ger_moneywash:client:syncBusinesses", function(businesses)
-    OwnedBusinesses = {}
-
-    for _, business in ipairs(businesses) do
-        OwnedBusinesses[business.id] = business
-    end
+    local own = businesses[1]
+    OwnedBusiness = own and { id = own.id, type = own.type, locationId = own.locationId } or nil
 
     RefreshHandlerBlips()
 
-    local own = businesses[1]
     DebugPrint("handler", own and ("your business: #%s (%s, location %s)"):format(own.id, own.type, own.locationId) or "you do not own a business")
 end)
 
+--- Forgets the player's business when it is the one that went away.
+---@param businessId number
+local function ClearOwnedBusiness(businessId)
+    if OwnedBusiness and OwnedBusiness.id == businessId then
+        OwnedBusiness = nil
+    end
+
+    RefreshHandlerBlips()
+end
+
 --- The player bought a business.
 RegisterNetEvent("t1ger_moneywash:client:businessPurchased", function(businessId, businessType, locationId)
-    OwnedBusinesses[businessId] = { id = businessId, type = businessType, locationId = locationId }
+    OwnedBusiness = { id = businessId, type = businessType, locationId = locationId }
     RefreshHandlerBlips()
 end)
 
 --- The player transferred a business away.
-RegisterNetEvent("t1ger_moneywash:client:businessTransferred", function(businessId)
-    OwnedBusinesses[businessId] = nil
-    RefreshHandlerBlips()
-end)
+RegisterNetEvent("t1ger_moneywash:client:businessTransferred", ClearOwnedBusiness)
 
 --- The player received a business from a transfer.
 RegisterNetEvent("t1ger_moneywash:client:businessReceived", function(businessId, businessType, locationId)
-    OwnedBusinesses[businessId] = { id = businessId, type = businessType, locationId = locationId }
+    OwnedBusiness = { id = businessId, type = businessType, locationId = locationId }
     RefreshHandlerBlips()
 end)
 
 --- The player abandoned a business.
-RegisterNetEvent("t1ger_moneywash:client:businessAbandoned", function(businessId)
-    OwnedBusinesses[businessId] = nil
-    RefreshHandlerBlips()
-end)
+RegisterNetEvent("t1ger_moneywash:client:businessAbandoned", ClearOwnedBusiness)
 
 --- An admin removed a business permanently.
 RegisterNetEvent("t1ger_moneywash:client:businessRemoved", function(businessId)
-    OwnedBusinesses[businessId] = nil
-    RefreshHandlerBlips()
+    ClearOwnedBusiness(businessId)
     _API.ShowNotification(locale("notification.business_removed"), "error")
 end)
 
@@ -356,8 +352,9 @@ AddEventHandler("onResourceStop", function(resource)
 end)
 
 --- Returns the player's business (local cache), or nil if they own none.
----@return table|nil
+---@return { id: integer, type: string, locationId: integer }|nil
 exports("GetOwnedBusiness", function()
-    local _, business = next(OwnedBusinesses)
-    return business
+    if not OwnedBusiness then return nil end
+
+    return { id = OwnedBusiness.id, type = OwnedBusiness.type, locationId = OwnedBusiness.locationId }
 end)
