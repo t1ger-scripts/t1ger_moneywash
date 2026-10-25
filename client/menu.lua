@@ -563,3 +563,36 @@ function ConfirmConfiscate(deposit)
         )
     )
 end
+
+--- Opens the contract list from a payphone. Contracts above the player's reputation are greyed out.
+function OpenContractsMenu()
+    local points = GetPlayerReputationPoints()
+    local options = {}
+
+    for _, contract in ipairs(Config.Contracts.List) do
+        local locked = points < contract.RequiredReputation
+
+        options[#options + 1] = {
+            title       = locale(("contract.%s.title"):format(contract.Id)),
+            icon        = contract.Icon,
+            description = locked and string.format(locale("menu.contracts.locked"), contract.RequiredReputation)
+                or locale(("contract.%s.description"):format(contract.Id)),
+            metadata    = {
+                { label = locale("menu.contracts.per_handover"), value = ("%s - %s"):format(FormatMoney(contract.MinHandover), FormatMoney(contract.MaxHandover)) },
+                { label = locale("menu.contracts.cut"),          value = ("%d%%"):format(contract.Cut) },
+            },
+            disabled    = locked,
+            onSelect    = function()
+                StartContract(contract.Id)
+            end,
+        }
+    end
+
+    lib.registerContext({
+        id      = "moneywash:contracts",
+        title   = locale("menu.contracts.title"),
+        options = options,
+    })
+
+    lib.showContext("moneywash:contracts")
+end

@@ -40,6 +40,7 @@ client_scripts {
     'client/raid.lua',
     'client/stock.lua',
     'client/review.lua',
+    'client/contracts.lua',
     'client/menu.lua',
     'client/main.lua',
 }
@@ -83,6 +84,7 @@ files {
 
     'shared/locations.lua',
     'shared/delivery.lua',
+    'shared/contracts.lua',
 }
 
 ox_libs {

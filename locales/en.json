@@ -12,7 +12,8 @@
         "atm_deposit": "Deposit cash bag",
         "atm_review": "Check flagged transactions",
         "raid_business": "Raid Business",
-        "accountant": "Hand Over Folder"
+        "accountant": "Hand Over Folder",
+        "payphone": "Launder Contracts"
     },
     "menu": {
         "handler": {
@@ -114,9 +115,22 @@
             "confiscate_title": "Seize Transfer",
             "confiscate_body": "- **Reference:** %s\n- **Depositor:** %s\n- **Amount:** %s\n- **Clears in:** %s\n\nFreeze and seize this transfer as evidence? The depositor will be notified.",
             "confiscate_success": "Transfer frozen and seized"
+        },
+        "contracts": {
+            "title": "Launder Contracts",
+            "locked": "Requires %d reputation",
+            "per_handover": "Per handover",
+            "cut": "Contact's cut"
+        }
+    },
+    "contract": {
+        "street_handover": {
+            "title": "Street Handover",
+            "description": "Meet contacts around the city and hand over dirty cash for clean money."
         }
     },
     "notification": {
+        "contract_selected": "Contract selected: %s",
         "portal_loading": "Loading the business portal...",
         "business_removed": "Your business has been permanently removed",
         "money_laundered": "%s laundered into your Safe (%s covered, %s exposed)",

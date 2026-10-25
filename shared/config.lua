@@ -32,6 +32,8 @@ Config.Business = {
     Locations = require("shared/locations") -- all business locations, see shared/locations.lua
 }
 
+Config.Contracts = require("shared/contracts") -- Launder contracts (shared/contracts.lua)
+
 -- Business handler ped: idle animation, spawn range, target option and map blip
 Config.HandlerNPC = {
     Scenario      = "WORLD_HUMAN_STAND_IMPATIENT", -- Idle animation
