@@ -4,10 +4,10 @@ const imageRoot = `${import.meta.env.BASE_URL}images/cash-counter/`
 export const COUNT_DURATION_MS = 800
 
 export const cashCounterImages = {
-    scene: `${imageRoot}counter-scene.png`,
-    bundle: `${imageRoot}cash-bundle.png`,
-    stack: `${imageRoot}cash-stack.png`,
-    note: `${imageRoot}cash-note.png`,
+    scene: `${imageRoot}counter-scene.webp`,
+    bundle: `${imageRoot}cash-bundle.webp`,
+    stack: `${imageRoot}cash-stack.webp`,
+    note: `${imageRoot}cash-note.webp`,
 } as const
 
 /** Most piles the counter shows; also the default. */

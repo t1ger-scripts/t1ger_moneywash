@@ -2,7 +2,7 @@ const imageRoot = `${import.meta.env.BASE_URL}images/`
 
 export const raidImages = {
     scene: `${imageRoot}raid/raid-scene.webp`,
-    bundle: `${imageRoot}cash-counter/cash-bundle.png`,
+    bundle: `${imageRoot}cash-counter/cash-bundle.webp`,
 } as const
 
 export function createSafePileLayout(
