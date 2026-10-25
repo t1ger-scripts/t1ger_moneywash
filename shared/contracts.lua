@@ -101,10 +101,8 @@ return {
         Health          = 200,             -- Contact health once it betrays
         Weapons         = { "WEAPON_KNIFE", "WEAPON_BAT", "WEAPON_PISTOL" }, -- An attacking contact carries one of these
         Blip            = { Sprite = 1, Display = 4, Scale = 0.7, Color = 1, Label = "Contact" }, -- Follows the contact while it runs
-        CashModel       = "prop_money_bag_01", -- Dropped where the contact dies
+        CashModel       = "prop_cash_pile_01", -- Cash stack dropped where the contact dies
         TargetIcon      = "fa-solid fa-sack-dollar", -- Pick up target icon
         TargetDistance  = 2.0,             -- Pick up target range
-        PickupDuration  = 2500,            -- Pick up progress bar (ms)
-        PickupAnimation = { dict = "pickup_object", clip = "pickup_low", flag = 0 }, -- Played while picking up
     },
 }

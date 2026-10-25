@@ -131,7 +131,7 @@
     },
     "notification": {
         "contract_handover": "Handed over %s. You received %s.",
-        "contract_deal_failed": "The deal fell through. Your dirty cash was returned.",
+        "contract_deal_failed": "The deal fell through.",
         "contract_betrayed_flee": "The contact ran off with your cash! Stop them.",
         "contract_betrayed_attack": "It's a trap! The contact pulled a weapon.",
         "contract_cash_recovered": "You took back %s in dirty cash.",
@@ -188,8 +188,7 @@
         "atm_deposit": "Depositing cash...",
         "atm_inspect": "Pulling the transaction log...",
         "atm_seize": "Freezing the transaction...",
-        "contract_handover": "Making the deal...",
-        "contract_recover": "Picking up the cash..."
+        "contract_handover": "Making the deal..."
     },
     "error": {
         "unknown": "Something went wrong",

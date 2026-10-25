@@ -123,6 +123,13 @@ local function clearBetrayal(delay)
     if DoesEntityExist(current.ped) then removePedLater(current.ped, delay) end
 end
 
+--- The contact got away with the cash: the player gives up on it and the shift moves on.
+local function loseCash()
+    _API.ShowNotification(locale("notification.contract_cash_lost"), "error")
+    clearBetrayal(0)
+    ServerRequest(SERVER .. "forfeitCash")
+end
+
 --- Forgets everything of the shift on this client.
 local function resetShift()
     onShift = false
@@ -135,23 +142,6 @@ end
 local function recoverCash(current)
     if current.picking then return end
     current.picking = true
-
-    local cash = cfg.Betrayal
-    local completed = ProgressBar({
-        duration     = cash.PickupDuration,
-        label        = locale("progress.contract_recover"),
-        useWhileDead = false,
-        canCancel    = true,
-        disable      = { move = true, car = true, combat = true },
-        anim         = cash.PickupAnimation,
-    })
-
-    if betrayal ~= current then return end
-
-    if not completed then
-        current.picking = false
-        return
-    end
 
     local response = ServerRequest(SERVER .. "recoverCash")
     if betrayal ~= current then return end
@@ -202,17 +192,11 @@ end
 local function watchBetrayal(current)
     CreateThread(function()
         while betrayal == current do
-            if not DoesEntityExist(current.ped) then
-                _API.ShowNotification(locale("notification.contract_cash_lost"), "error")
-                return clearBetrayal(0)
-            end
+            if not DoesEntityExist(current.ped) then return loseCash() end
 
             if not current.prop and IsPedDeadOrDying(current.ped, true) then dropCash(current) end
 
-            if betrayal == current and GetGameTimer() >= current.endsAt then
-                _API.ShowNotification(locale("notification.contract_cash_lost"), "error")
-                return clearBetrayal(0)
-            end
+            if betrayal == current and GetGameTimer() >= current.endsAt then return loseCash() end
 
             Wait(500)
         end
@@ -227,9 +211,7 @@ local function startBetrayal(current, result)
     clearDrop()
     clearBetrayal(0)
 
-    if not ped or not DoesEntityExist(ped) then
-        return _API.ShowNotification(locale("notification.contract_cash_lost"), "error")
-    end
+    if not ped or not DoesEntityExist(ped) then return loseCash() end
 
     local settings = cfg.Betrayal
     local player = PlayerPedId()
@@ -279,8 +261,8 @@ local function dismissContact(current)
     end)
 end
 
---- Makes the deal with the contact. The server takes the cash when the progress bar starts and
---- pays when it ends, unless the contact has other plans.
+--- Makes the deal with the contact. The progress bar is the negotiation: when it ends the server takes
+--- the cash and pays, unless the contact has other plans.
 ---@param current ContractDrop
 local function handOverCash(current)
     if current.busy then return end
@@ -323,7 +305,7 @@ local function handOverCash(current)
     RemoveAnimDict(deal.Dict)
     if contact and DoesEntityExist(contact) then StopAnimTask(contact, deal.Dict, deal.Contact, -8.0) end
 
-    -- Interrupted: the server gives the cash back when the deal times out
+    -- Interrupted: nothing was taken, the server drops the deal when it times out
     if not completed then
         current.busy = false
         return
@@ -334,7 +316,11 @@ local function handOverCash(current)
 
     if not response.success then
         current.busy = false
-        return NotifyError(response.reason)
+
+        -- "shift_over" is announced by the server's own shift ended message
+        if response.reason ~= "shift_over" then NotifyError(response.reason) end
+
+        return
     end
 
     if response.betrayed then return startBetrayal(current, response) end
