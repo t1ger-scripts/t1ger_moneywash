@@ -120,7 +120,6 @@
             "title": "Launder Contracts",
             "start_title": "Start Shift",
             "start_description": "Meet contacts around the city and hand over dirty cash for clean money.",
-            "locked": "Requires %d reputation",
             "per_handover": "Per handover",
             "cut": "Contact's cut",
             "end_title": "End Shift",

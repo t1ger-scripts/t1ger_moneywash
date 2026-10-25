@@ -139,12 +139,6 @@ local function validateStart(src)
     if not identifier then return nil, "unknown" end
     if Shifts[src] then return nil, "contract_active" end
 
-    if Config.Reputation.Enable then
-        local reputation = GetPlayerReputation(src)
-        if not reputation then return nil, "reputation_not_ready" end
-        if reputation:GetPoints() < cfg.RequiredReputation then return nil, "insufficient_reputation" end
-    end
-
     local remaining = getCooldownRemaining(identifier)
     if remaining > 0 then return nil, "contract_cooldown", remaining end
 

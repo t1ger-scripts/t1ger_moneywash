@@ -578,18 +578,14 @@ function OpenContractsMenu()
             onSelect    = EndContractShift,
         }
     else
-        local locked = GetPlayerReputationPoints() < cfg.RequiredReputation
-
         option = {
             title       = locale("menu.contracts.start_title"),
             icon        = "fa-solid fa-handshake",
-            description = locked and string.format(locale("menu.contracts.locked"), cfg.RequiredReputation)
-                or locale("menu.contracts.start_description"),
+            description = locale("menu.contracts.start_description"),
             metadata    = {
                 { label = locale("menu.contracts.per_handover"), value = ("%s - %s"):format(FormatMoney(cfg.MinHandover), FormatMoney(cfg.MaxHandover)) },
                 { label = locale("menu.contracts.cut"),          value = ("%d%%"):format(cfg.Cut) },
             },
-            disabled    = locked,
             onSelect    = StartContractShift,
         }
     end

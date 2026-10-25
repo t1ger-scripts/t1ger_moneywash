@@ -30,7 +30,6 @@ return {
         vec4(1698.4, 4924.0, 42.06, 325.0),   -- Grapeseed
     },
 
-    RequiredReputation     = 0,            -- Reputation points needed to start a shift
     MinHandover            = 500,          -- Least dirty cash handed over at one drop
     MaxHandover            = 2500,         -- Most dirty cash handed over at one drop (random between min and max)
     Cut                    = 40,           -- % the contact keeps of every handover
