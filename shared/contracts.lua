@@ -1,6 +1,7 @@
 -- Launder contracts: shifts of street handovers, started at a payphone by players with dirty cash
 return {
-    EndCommand = "endshift",                 -- Chat command that ends the shift (nil = no command)
+    EndCommand  = "endshift",                -- Chat command that ends the shift (nil = no command)
+    BlockedJobs = { "police", "sheriff" },   -- Jobs that can't start a shift
 
     -- Payphones that start and end a shift
     Payphone = {
@@ -67,7 +68,6 @@ return {
         vec4(-2955.072510, 385.595612, 15.008057, 252.283463),
     },
 
-
     -- The shift
     Shift = {
         Cooldown        = 120,               -- Seconds before a new shift after ending it or disconnecting
@@ -102,7 +102,7 @@ return {
     Betrayal = {
         Chance       = 25,                  -- % chance a contact betrays at the end of a deal (10 is a good live value)
         AttackChance = 50,                   -- % of betrayals where the contact attacks. Otherwise it flees
-        Time         = 60,                   -- Seconds to get the cash back. After that the contact betrays
+        Time         = 60,                   -- Seconds to get the cash back. After that the contact has got away with it
         Health       = 200,                  -- Contact health once it betrays
         Weapons      = { "WEAPON_KNIFE", "WEAPON_BAT", "WEAPON_PISTOL" }, -- An attacking contact carries one of these
         Blip         = { Sprite = 1, Display = 4, Scale = 0.7, Color = 1, Label = "Contact" }, -- Follows the contact while it runs

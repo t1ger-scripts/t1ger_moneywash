@@ -109,7 +109,7 @@ end
 
 --- Called when a launder contract shift ends, for any reason.
 --- @param identifier string player identifier
---- @param reason string "player" (chose to end), "died", "dropped" (disconnected), "stopped" (resource stop), "missed" (contact kept waiting) or "no_dirty_cash"
+--- @param reason string "player" (chose to end), "died", "dropped" (disconnected), "stopped" (resource stop), "missed" (contact kept waiting), "no_dirty_cash" or "switched" (another character is on the source)
 --- @param handovers number completed handovers
 --- @param cleaned number dirty cash handed over
 --- @param paid number clean money paid out

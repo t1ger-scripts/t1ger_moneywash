@@ -3,7 +3,7 @@
 
 local SERVER = "t1ger_moneywash:server:contracts:"
 
--- Animations of the deal: both of them talk while the bar runs, then the money changes hands
+-- Animations of the deal: the player talks while the bar runs, then the money changes hands
 local NEGOTIATE = { dict = "misscarsteal4@actor", clip = "actor_berating_loop" } -- Played by the player while the bar runs
 local PICKUP = { dict = "random@domestic", clip = "pickup_low" }                 -- Played when taking the cash back
 local HANDOFF = { dict = "mp_common", player = "givetake1_a", contact = "givetake1_b", time = 1800 }
@@ -68,7 +68,7 @@ local function clearDrop()
     DeletePed(detachContact(current))
 end
 
---- Applies the blip settings of Config.Contracts.Blip to a blip.
+--- Applies the blip settings of a Config.Contracts blip entry to a blip.
 ---@param blip integer
 ---@param settings table
 local function styleBlip(blip, settings)
@@ -82,18 +82,25 @@ local function styleBlip(blip, settings)
     EndTextCommandSetBlipName(blip)
 end
 
+--- Turns the route to the drop on or off, when the blip is set up to have one.
+---@param blip integer
+---@param enabled boolean
+local function setRoute(blip, enabled)
+    local settings = cfg.DropBlip
+    if not settings.Route then return end
+
+    SetBlipRoute(blip, enabled)
+
+    if enabled then SetBlipRouteColour(blip, settings.RouteColor or settings.Color) end
+end
+
 --- Marks the drop on the map with a route.
 ---@param coords vector4
 ---@return integer blip
 local function createDropBlip(coords)
-    local settings = cfg.DropBlip
     local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
-    styleBlip(blip, settings)
-
-    if settings.Route then
-        SetBlipRoute(blip, true)
-        SetBlipRouteColour(blip, settings.RouteColor or settings.Color)
-    end
+    styleBlip(blip, cfg.DropBlip)
+    setRoute(blip, true)
 
     return blip
 end
@@ -130,6 +137,8 @@ local function clearBetrayal(delay)
     if DoesEntityExist(current.ped) then removePedLater(current.ped, delay) end
 end
 
+--- The cash is gone for good: the contact got away, or the player was too slow.
+---@param tooSlow? boolean The contact was put down but the cash wasn't picked up in time
 local function loseCash(tooSlow)
     _API.ShowNotification(locale(tooSlow and "notification.contract_cash_expired" or "notification.contract_cash_lost"), "error")
     clearBetrayal(0)
@@ -334,10 +343,17 @@ local function handOverCash(current)
     lib.requestAnimDict(NEGOTIATE.dict)
     lib.requestAnimDict(HANDOFF.dict)
 
-    -- Both of them talk with their hands while the bar runs
+    -- The player turns to the contact and talks while the bar runs
     if contact then
         TaskTurnPedToFaceEntity(player, contact, 600)
         Wait(600)
+    end
+
+    -- The shift ended while the player was turning
+    if drop ~= current then
+        RemoveAnimDict(NEGOTIATE.dict)
+        RemoveAnimDict(HANDOFF.dict)
+        return
     end
 
     local completed = ProgressBar({
@@ -423,7 +439,7 @@ local function watchDrop(current)
 
             if isNear and not current.ped and not current.spawning then
                 current.spawning = true
-                SetBlipRoute(current.blip, false)
+                setRoute(current.blip, false)
 
                 CreateThread(function()
                     while not _Target do Wait(100) end
@@ -441,7 +457,7 @@ local function watchDrop(current)
                             label       = locale("target.contact_handover"),
                             distance    = contacts.Target.Distance,
                             canInteract = function()
-                                return drop == current and not current.busy
+                                return drop == current and not current.busy and not IsPedInAnyVehicle(PlayerPedId(), false) and not IsPedDeadOrDying(PlayerPedId(), true)
                             end,
                             onSelect    = function()
                                 handOverCash(current)
@@ -451,6 +467,7 @@ local function watchDrop(current)
                 end)
             elseif not isNear and current.ped then
                 DeletePed(detachContact(current))
+                setRoute(current.blip, true)
             end
 
             if current.ped and not greeted and distance <= contacts.GreetingDistance then
@@ -461,6 +478,36 @@ local function watchDrop(current)
             Wait(1000)
         end
     end)
+end
+
+--- Shows a drop the server assigned: the blip with its route, and the contact once the player is near.
+---@param payload { coords: vector4, model: string, scenario: string }
+local function showDrop(payload)
+    clearDrop()
+
+    drop = { coords = payload.coords, model = payload.model, scenario = payload.scenario }
+    drop.blip = createDropBlip(payload.coords)
+    watchDrop(drop)
+end
+
+--- Tells the player how the shift went, when there were handovers.
+---@param summary? { handovers: integer, cleaned: integer, paid: integer }
+local function showSummary(summary)
+    if type(summary) ~= "table" or (summary.handovers or 0) < 1 then return end
+
+    _API.ShowNotification(
+        string.format(locale("notification.contract_summary"), summary.handovers, FormatMoney(summary.cleaned), FormatMoney(summary.paid)),
+        "inform"
+    )
+end
+
+--- Picks up a shift the server still has, after this script restarted.
+local function syncShift()
+    local response = ServerRequest(SERVER .. "getShiftState")
+    if not response.success or not response.active then return end
+
+    onShift = true
+    if response.drop then showDrop(response.drop) end
 end
 
 --- True while the player is on a shift.
@@ -500,22 +547,18 @@ function EndContractShift()
 
     resetShift()
     _API.ShowNotification(string.format(locale("notification.contract_ended"), response.cooldown or 0), "inform")
+    showSummary(response)
 end
 
 --- The server sent the player to a new drop.
 RegisterNetEvent("t1ger_moneywash:client:contractDropAssigned", function(payload)
     if not onShift or type(payload) ~= "table" then return end
-
-    clearDrop()
-    drop = { coords = payload.coords, model = payload.model, scenario = payload.scenario }
-    drop.blip = createDropBlip(payload.coords)
-    watchDrop(drop)
-
+    showDrop(payload)
     _API.ShowNotification(string.format(locale("notification.contract_drop"), math.ceil(payload.seconds / 60)), "inform")
 end)
 
 --- The server ended the shift without the player asking.
-RegisterNetEvent("t1ger_moneywash:client:contractShiftEnded", function(reason)
+RegisterNetEvent("t1ger_moneywash:client:contractShiftEnded", function(reason, summary)
     resetShift()
 
     local key = ({
@@ -525,6 +568,7 @@ RegisterNetEvent("t1ger_moneywash:client:contractShiftEnded", function(reason)
     })[reason]
 
     if key then _API.ShowNotification(locale(key), "inform") end
+    showSummary(summary)
 end)
 
 AddEventHandler("onResourceStop", function(resource)
@@ -556,9 +600,6 @@ CreateThread(function()
             end,
         },
     })
-end)
 
--- TEMP: starts a shift without a payphone. Delete when done testing.
-RegisterCommand("startshift", function()
-    StartContractShift()
-end, false)
+    syncShift()
+end)

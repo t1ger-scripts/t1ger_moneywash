@@ -564,8 +564,7 @@ function ConfirmConfiscate(deposit)
     )
 end
 
---- Opens the payphone menu: start a shift, greyed out when the player's reputation is too low,
---- or end the shift they are on.
+--- Opens the payphone menu: start a shift, or end the shift the player is on.
 function OpenContractsMenu()
     local cfg = Config.Contracts
     local option

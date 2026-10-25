@@ -6,11 +6,12 @@ local cfg = Config.Contracts
 
 local HANDOFF_DELAY = 800 -- ms between the end of the negotiation and the cash changing hands, in sync with the handoff animation
 
+local DROP_SCENARIO = "WORLD_HUMAN_STAND_IMPATIENT"
 local SHIFT_ENDED_EVENT = "t1ger_moneywash:client:contractShiftEnded"
 local DROP_ASSIGNED_EVENT = "t1ger_moneywash:client:contractDropAssigned"
 
 ---@type table<string, boolean> End reasons the client is told about. It knows the others already.
-local NOTIFY_REASONS = { died = true, missed = true, no_dirty_cash = true }
+local NOTIFY_REASONS = { died = true, missed = true, no_dirty_cash = true, switched = true }
 
 ---@class ContractShift
 ---@field src integer
@@ -19,7 +20,7 @@ local NOTIFY_REASONS = { died = true, missed = true, no_dirty_cash = true }
 ---@field cleaned integer Dirty cash handed over
 ---@field paid integer Clean money paid out
 ---@field nextDropAt integer os.time() the next drop is assigned, while there is no drop
----@field drop? { index: integer, expiresAt: integer } The drop the player is on, index in Config.Contracts.Drops
+---@field drop? { index: integer, model: string, expiresAt: integer } The drop the player is on, index in Config.Contracts.Drops
 ---@field lastDrop? integer Index in Config.Contracts.Drops of the previous drop, not picked again right away
 ---@field pending? { startedAt: integer, expiresAt: integer, resolving?: boolean } A deal in progress. The cash is taken when it is completed
 ---@field betrayal? { amount: integer, expiresAt: integer } Dirty cash a contact ran off with, recoverable until it expires
@@ -35,6 +36,62 @@ local Busy = {}
 
 ---@type table<integer, boolean> Indexes in Config.Contracts.Drops that a player is heading to right now
 local TakenDrops = {}
+
+--- Checks the config once when the resource starts. A bad value prints what to fix and keeps contracts closed,
+--- instead of failing in the middle of a deal.
+---@return boolean valid
+local function validateConfig()
+    local problems = {}
+
+    local function check(ok, text)
+        if not ok then problems[#problems + 1] = text end
+    end
+
+    local function isWhole(value)
+        return type(value) == "number" and value == math.floor(value)
+    end
+
+    local function isRange(value)
+        return type(value) == "table" and isWhole(value[1]) and isWhole(value[2]) and value[1] >= 0 and value[1] <= value[2]
+    end
+
+    local function isPercent(value)
+        return type(value) == "number" and value >= 0 and value <= 100
+    end
+
+    check(type(cfg.Drops) == "table" and #cfg.Drops > 0, "Drops needs at least one location")
+    check(type(cfg.Contact.Models) == "table" and #cfg.Contact.Models > 0, "Contact.Models needs at least one ped model")
+    check(type(cfg.Betrayal.Weapons) == "table" and #cfg.Betrayal.Weapons > 0, "Betrayal.Weapons needs at least one weapon")
+    check(type(cfg.BlockedJobs) == "table", "BlockedJobs must be a list (it can be empty)")
+
+    check(isRange(cfg.Shift.FirstDropDelay), "Shift.FirstDropDelay must be { min, max } in whole seconds")
+    check(isRange(cfg.Shift.DropDelay), "Shift.DropDelay must be { min, max } in whole seconds")
+    check(type(cfg.Shift.DropTime) == "number" and cfg.Shift.DropTime > 0, "Shift.DropTime must be above 0")
+    check(type(cfg.Shift.Cooldown) == "number" and cfg.Shift.Cooldown >= 0, "Shift.Cooldown must be 0 or more")
+    check(
+        type(cfg.Shift.MinDropDistance) == "number" and type(cfg.Shift.MaxDropDistance) == "number"
+            and cfg.Shift.MinDropDistance <= cfg.Shift.MaxDropDistance,
+        "Shift.MinDropDistance must not be above Shift.MaxDropDistance"
+    )
+
+    check(isWhole(cfg.Deal.MinAmount) and cfg.Deal.MinAmount > 0, "Deal.MinAmount must be a whole number above 0")
+    check(isWhole(cfg.Deal.MaxAmount) and cfg.Deal.MaxAmount >= (cfg.Deal.MinAmount or 0), "Deal.MaxAmount must be a whole number, not below Deal.MinAmount")
+    check(isPercent(cfg.Deal.Cut), "Deal.Cut must be between 0 and 100")
+    check(cfg.Deal.Account == "bank" or cfg.Deal.Account == "cash", 'Deal.Account must be "bank" or "cash"')
+    check(type(cfg.Deal.Duration) == "number" and cfg.Deal.Duration >= 1000, "Deal.Duration must be at least 1000 (ms)")
+
+    check(isPercent(cfg.Betrayal.Chance), "Betrayal.Chance must be between 0 and 100")
+    check(isPercent(cfg.Betrayal.AttackChance), "Betrayal.AttackChance must be between 0 and 100")
+    check(type(cfg.Betrayal.Time) == "number" and cfg.Betrayal.Time > 0, "Betrayal.Time must be above 0")
+
+    for _, problem in ipairs(problems) do
+        print(("^1[MoneyWash] Contracts config: %s. Contracts stay closed until this is fixed.^7"):format(problem))
+    end
+
+    return #problems == 0
+end
+
+local ConfigValid = validateConfig()
 
 ---@param identifier string
 ---@return integer seconds 0 when the player can start
@@ -96,6 +153,20 @@ local function pickDropIndex(shift)
     return previous
 end
 
+--- What the client needs to show the drop the shift is on.
+---@param shift ContractShift
+---@return { coords: vector4, model: string, scenario: string, seconds: integer }
+local function dropPayload(shift)
+    local drop = shift.drop
+
+    return {
+        coords   = cfg.Drops[drop.index],
+        model    = drop.model,
+        scenario = DROP_SCENARIO,
+        seconds  = math.max(drop.expiresAt - os.time(), 1),
+    }
+end
+
 --- Sends the player to a new drop. With every drop taken the shift waits and tries again.
 ---@param shift ContractShift
 local function assignDrop(shift)
@@ -104,14 +175,9 @@ local function assignDrop(shift)
 
     TakenDrops[index] = true
     shift.lastDrop = index
-    shift.drop = { index = index, expiresAt = os.time() + cfg.Shift.DropTime }
+    shift.drop = { index = index, model = pick(cfg.Contact.Models), expiresAt = os.time() + cfg.Shift.DropTime }
 
-    TriggerClientEvent(DROP_ASSIGNED_EVENT, shift.src, {
-        coords   = cfg.Drops[index],
-        model    = pick(cfg.Contact.Models),
-        scenario = "WORLD_HUMAN_STAND_IMPATIENT",
-        seconds  = cfg.Shift.DropTime,
-    })
+    TriggerClientEvent(DROP_ASSIGNED_EVENT, shift.src, dropPayload(shift))
 end
 
 --- True while the player is on a shift.
@@ -124,7 +190,7 @@ exports("IsOnContractShift", IsOnContractShift)
 
 --- Ends a shift. A choice or a disconnect starts the cooldown, a death or a resource stop does not.
 ---@param shift ContractShift
----@param reason "player"|"died"|"dropped"|"stopped"|"missed"|"no_dirty_cash"
+---@param reason "player"|"died"|"dropped"|"stopped"|"missed"|"no_dirty_cash"|"switched"
 local function endShift(shift, reason)
     Shifts[shift.src] = nil
     releaseDrop(shift)
@@ -138,7 +204,9 @@ local function endShift(shift, reason)
         Cooldowns[shift.identifier] = os.time() + cfg.Shift.Cooldown
     end
 
-    if NOTIFY_REASONS[reason] then TriggerClientEvent(SHIFT_ENDED_EVENT, shift.src, reason) end
+    if NOTIFY_REASONS[reason] then
+        TriggerClientEvent(SHIFT_ENDED_EVENT, shift.src, reason, { handovers = shift.handovers, cleaned = shift.cleaned, paid = shift.paid })
+    end
 
     RunHook("OnContractShiftEnded", shift.identifier, reason, shift.handovers, shift.cleaned, shift.paid)
 end
@@ -170,7 +238,16 @@ end
 local function validateStart(src)
     local identifier = _API.Player.GetIdentifier(src)
     if not identifier then return nil, "unknown" end
+    if not ConfigValid then return nil, "contract_unavailable" end
     if Shifts[src] then return nil, "contract_active" end
+
+    local job = _API.Player.GetJob(src)
+
+    if job and job.name then
+        for _, blocked in ipairs(cfg.BlockedJobs) do
+            if job.name == blocked then return nil, "contract_job_blocked" end
+        end
+    end
 
     local remaining = getCooldownRemaining(identifier)
     if remaining > 0 then return nil, "contract_cooldown", remaining end
@@ -205,7 +282,33 @@ lib.callback.register("t1ger_moneywash:server:contracts:endShift", function(src)
 
         endShift(shift, "player")
 
-        return { success = true, cooldown = getCooldownRemaining(shift.identifier) }
+        return {
+            success   = true,
+            cooldown  = getCooldownRemaining(shift.identifier),
+            handovers = shift.handovers,
+            cleaned   = shift.cleaned,
+            paid      = shift.paid,
+        }
+    end)
+end)
+
+--- Callback: a client that just (re)started asks if the player is still on a shift, and where.
+---@param src integer
+lib.callback.register("t1ger_moneywash:server:contracts:getShiftState", function(src)
+    return guarded(src, function()
+        local shift = Shifts[src]
+        if not shift then return { success = true, active = false } end
+
+        -- Another character is playing on this source now
+        if _API.Player.GetIdentifier(src) ~= shift.identifier then
+            endShift(shift, "switched")
+            return { success = true, active = false }
+        end
+
+        -- The client was gone, so it can't be in the middle of a negotiation
+        if shift.pending and not shift.pending.resolving then shift.pending = nil end
+
+        return { success = true, active = true, drop = shift.drop and dropPayload(shift) or nil }
     end)
 end)
 
@@ -236,6 +339,7 @@ lib.callback.register("t1ger_moneywash:server:contracts:beginHandover", function
         if not shift then return { success = false, reason = "no_contract_shift" } end
         if shift.pending then return { success = false, reason = "contract_dealing" } end
         if not shift.drop or os.time() > shift.drop.expiresAt then return { success = false, reason = "contract_no_drop" } end
+        if GetVehiclePedIsIn(GetPlayerPed(src), false) ~= 0 then return { success = false, reason = "contract_in_vehicle" } end
 
         if not IsPlayerNearCoords(src, cfg.Drops[shift.drop.index], cfg.Contact.Target.Distance + 3.0) then
             return { success = false, reason = "contract_too_far" }
@@ -298,6 +402,23 @@ lib.callback.register("t1ger_moneywash:server:contracts:completeHandover", funct
         local betrayal = cfg.Betrayal
         local betrayed = math.random(100) <= betrayal.Chance
 
+        -- Everything the client needs is built before anything is scheduled
+        local response
+
+        if betrayed then
+            response = {
+                success = true,
+                betrayed = true,
+                mode = math.random(100) <= betrayal.AttackChance and "attack" or "flee",
+                weapon = pick(betrayal.Weapons),
+                amount = amount,
+                seconds = betrayal.Time,
+                delay = HANDOFF_DELAY,
+            }
+        else
+            response = { success = true, amount = amount, paid = paid, delay = HANDOFF_DELAY }
+        end
+
         -- The deal is settled while the handoff animation plays
         pending.resolving = true
 
@@ -333,19 +454,7 @@ lib.callback.register("t1ger_moneywash:server:contracts:completeHandover", funct
             RunHook("OnContractHandover", shift.identifier, amount, paid, shift.handovers)
         end)
 
-        if betrayed then
-            return {
-                success = true,
-                betrayed = true,
-                mode = math.random(100) <= betrayal.AttackChance and "attack" or "flee",
-                weapon = pick(betrayal.Weapons),
-                amount = amount,
-                seconds = betrayal.Time,
-                delay = HANDOFF_DELAY,
-            }
-        end
-
-        return { success = true, amount = amount, paid = paid, delay = HANDOFF_DELAY }
+        return response
     end)
 end)
 
@@ -408,7 +517,7 @@ local function tickShift(shift, now)
     end
 end
 
---- Ends the shift of a player who died or left, and moves the others along.
+--- Ends the shift of a player who died, left or switched character, and moves the others along.
 CreateThread(function()
     while true do
         Wait(1000)
@@ -420,6 +529,8 @@ CreateThread(function()
                 endShift(shift, "dropped")
             elseif GetEntityHealth(GetPlayerPed(src)) <= 0 then
                 endShift(shift, "died")
+            elseif _API.Player.GetIdentifier(src) ~= shift.identifier then
+                endShift(shift, "switched")
             else
                 local ok, err = pcall(tickShift, shift, now)
                 if not ok then print(("^1[MoneyWash] Contract error: %s^7"):format(tostring(err))) end
