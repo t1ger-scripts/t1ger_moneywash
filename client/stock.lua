@@ -135,7 +135,7 @@ end
 --- Draws the cargo condition meter for this frame.
 local function drawCargoMeter()
     local config = Config.Stock.Mission.DamageMeter
-    if not config.Enable then return end
+    if not config.Enable or not mission then return end
 
     local percent = math.max(0, math.min(100, (mission.currentUnits / mission.units) * 100))
     local centerX, centerY = (meterPositions[config.Position] or meterPositions["bottom-right"])(config)

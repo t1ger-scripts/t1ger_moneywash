@@ -1,7 +1,7 @@
 Config = {}
 
 -- General settings
-Config.Debug             = true  -- Debug prints (set to false in production)
+Config.Debug             = false  -- Debug prints (set to false in production)
 Config.Currency          = "$"   -- Currency symbol in menus and notifications
 Config.UseCharacterNames = true  -- true = character name, false = game name (e.g. transfer picker)
 Config.AutosaveInterval  = 5     -- Minutes between automatic saves of businesses and reputation
@@ -192,7 +192,7 @@ Config.Laundering = {
     MaxPerBatch = 10000000, -- Most dirty cash that can be laundered in one go
 
     CashCounter = {         -- Cash counter shown when laundering
-        StackCount      = 3,    -- Piles the amount is split into (1-10)
+        StackCount      = 10,    -- Piles the amount is split into (1-10)
         AutoMoveToRight = false, -- true = a counted pile moves to the right tray automatically
     },
 }
@@ -204,7 +204,7 @@ Config.Withdraw = {
     OutstandingHours = 24,   -- Bags older than this no longer count towards that limit (lost or thrown away bags)
 
     CashCounter      = {     -- Cash counter shown when withdrawing from the Safe
-        StackCount      = 3,    -- Piles the amount is split into (1-10)
+        StackCount      = 10,    -- Piles the amount is split into (1-10)
         AutoMoveToRight = false, -- true = a counted pile moves to the right tray automatically
     },
 }
